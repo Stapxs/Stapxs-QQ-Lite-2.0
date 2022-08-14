@@ -191,7 +191,6 @@ html, body {
     background: var(--color-main);
     border-radius: 7px 7px 0 0;
     color: var(--color-font-r);
-    text-align: center;
     font-size: 1rem;
     display: block;
     padding: 10px;
@@ -207,9 +206,9 @@ html, body {
 }
 .friend-list > div:last-child {
     width: calc(100% - 13px);
-    padding: 0 3px 0 10px;
     -webkit-box-flex: 1;
     overflow-y: scroll;
+    padding: 0 0 0 5px;
     font-size: 1rem;
     height: 100%;
     -ms-flex: 1;

@@ -7,8 +7,12 @@ import 'font-awesome/css/font-awesome.css'
 
 import '../src/assets/css/view.css'
 import '../src/assets/css/chat.css'
+import '../src/assets/css/msg.css'
 
-import { waveAnimation } from '../src/assets/js/view.js'
+import { waveAnimation } from './assets/js/ui.js'
+
+import infScroll from 'vue-infinite-scroll'
+Vue.use(infScroll)
 
 /* eslint-disable */
 Vue.config.productionTip = false
@@ -58,4 +62,15 @@ Vue.createAPI = function(action, params, echo) {
 Vue.sendWs = function(str) {
     Vue.ws.send(str)
     Vue.log(Vue.logMode.ws, 'PUT：' + str)
+}
+
+// 构建消息 ID
+Vue.buildMsgIdInfo = function(buffer) {
+  var binary = ''
+  var bytes = new Uint8Array(buffer)
+  var len = bytes.byteLength
+  for (var i=0; i<len; i++) {
+      binary += String.fromCharCode(bytes[i])
+  }
+  return window.btoa(binary)
 }

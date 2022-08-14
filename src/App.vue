@@ -101,14 +101,21 @@
             </div>
           </div>
         </div>
-        <div :class="login.status ? 'layui-tab-item layui-show' : 'layui-tab-item'"></div>
+        <div :class="login.status ? 'layui-tab-item layui-show' : 'layui-tab-item'">
+          <Messages :list="inList" @userClick="setChat" ref="inMessage"></Messages>
+        </div>
         <div class="layui-tab-item">
-          <Friends :list="userList" @userClick="setChat"></Friends>
+          <Friends :list="userList" @userClick="setChat" @addMessage="addIn" @loadHistory="loadHistory"></Friends>
         </div>
         <div class="layui-tab-item">内容4</div>
       </div>
     </div>
-    <Chat :chat="onChat" v-if="login.status && onChat.id != '' && showChat"></Chat>
+    <Chat
+      :chat="onChat"
+      :list="messageList"
+      v-if="login.status && onChat.id != ''"
+      v-show="showChat"
+      ref="chat"></Chat>
   </div>
 </template>
 
@@ -120,26 +127,31 @@ import Util from './assets/js/util'
 
 import Friends from './pages/Friends.vue'
 import Chat from './pages/Chat.vue'
+import Messages from './pages/Messages.vue'
 
 export default {
   name: 'App',
   // 应用组件
   components: {
     Friends,
-    Chat
+    Chat,
+    Messages
   },
   // 应用全局参数
   data () {
     return {
       version: '2.0.0',
-      onChat: { type: '', id: '', name: '', avatar: '', msg: [] },
+      onChat: { type: '', id: '', name: '', avatar: '' },
       login: { address: '', token: '', status: '' },
       showChat: false,
-      userList: []
+      messageList: [],
+      userList: [],
+      inList: []
     }
   },
   // 应用方法
   methods: {
+    // 连接相关
     connect: function () {
       Vue.ws = new WebSocket('ws://' + this.login.address + '?access_token=' + this.login.token)
       Vue.ws.onopen = () => {
@@ -166,23 +178,66 @@ export default {
       const msg = JSON.parse(str)
       if (msg.echo !== undefined) {
         switch (msg.echo) {
-          case 'get_group_list': this.userList = Util.mergeList(this.userList, msg.data); break // 获取群列表
-          case 'get_friend_list': this.userList = Util.mergeList(this.userList, msg.data); break // 获取好友列表
+          case 'getLoginInfo': Vue.loginInfo = msg.data; break // 获取基本信息
+          case 'getGroupList': this.userList = Util.mergeList(this.userList, msg.data); break // 获取群列表
+          case 'getFriendList': this.userList = Util.mergeList(this.userList, msg.data); break // 获取好友列表
+          case 'getChatHistoryFist': { // 首次获取消息记录
+            this.messageList = msg.data
+            setTimeout(() => {
+              this.$refs.chat.scrollBottom()
+            }, 500)
+            break
+          }
+          case 'getChatHistory': { // 追加获取消息记录
+            const items = msg.data
+            items.pop() // 去除最后一条重复的消息
+            if (items.length < 1) {
+              this.$refs.chat.setNoMoreHistory()
+              return
+            }
+            this.messageList = Util.mergeList(items, this.messageList)
+            break
+          }
+        }
+      } else {
+        switch (msg.post_type) {
+          case 'message': this.newMsg(msg); break // 接收到消息
         }
       }
     },
+    // 标签卡相关
     setChat: function (data) {
       this.onChat.type = data.type
       this.onChat.id = data.id
       this.onChat.name = data.name
       this.onChat.avatar = data.avatar
       this.onChat.msg = []
+      if (this.messageList.length > 0) {
+        this.$refs.chat.canLoadHistory = true
+      }
     },
     changeChat: function (info) {
       if (!info) {
         this.showChat = true
       } else {
         this.showChat = false
+      }
+    },
+    // 用户列表交互相关
+    addIn: function (data) {
+      this.$refs.inMessage.addMesage(data)
+    },
+    // 消息相关
+    loadHistory: function (info) {
+      if (!Main.loadHistoryMessage(info.id, info.type)) {
+        // 加载历史消息失败（构建消息 ID 失败）
+      }
+    },
+    newMsg: function (data) {
+      const id = data.from_id ? data.from_id : data.group_id
+      if (id === this.onChat.id) {
+        // 当前聊天窗口
+        this.messageList.push(data)
       }
     }
   }

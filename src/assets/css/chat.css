@@ -1,17 +1,18 @@
 .chat-pan {
     background-color: var(--color-card);
+    color: var(--color-font);
     flex-direction: column;
     pointer-events: none;
     position: absolute;
     display: flex;
     height: 100%;
-    width: 100%;
     left: 371px;
+    right: 0;
     top: 0;
 }
 .chat-pan > div:first-child {
     background: var(--color-card-1);
-    width: calc(100% - 430px);
+    width: calc(100% - 60px);
     pointer-events: all;
     align-items: center;
     border-radius: 7px;
@@ -31,7 +32,10 @@
     font-size: 1rem;
 }
 .chat-pan > div:first-child > div:nth-child(2) span {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 100;
+    margin-top: 3px;
+    display: block;
 }
 .chat-pan > div:first-child > div:nth-child(3) {
     flex: 1;
@@ -47,4 +51,94 @@
     margin: 10px;
     height: 25px;
     width: 25px;
+}
+
+.chat-pan > div:nth-child(2) {
+    max-width: calc(100% - 20px);
+    width: calc(100% - 20px);
+    pointer-events: all;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    flex: 1;
+}
+
+.chat-pan > div:nth-child(3) {
+    border-right: 7px solid var(--color-card);
+    border-radius: 50px 0 0 50px;
+    margin: -50px 20px 0 auto;
+    pointer-events: all;
+    cursor: pointer;
+    height: 50px;
+}
+.chat-pan > div:nth-child(3) > div {
+    background: var(--color-card-1);
+    border-radius: 40px;
+    align-items: center;
+    margin-right: -7px;
+    margin-top: 10px;
+    display: flex;
+    height: 100%;
+    padding: 0;
+}
+.chat-pan > div:nth-child(3) > div > svg {
+    fill: var(--color-font);
+    padding: 16px;
+    height: 17px;
+    width: 17px;
+}
+.chat-pan > div:nth-child(3) > div > span {
+    margin-right: 20px;
+    margin-left: -5px;
+}
+
+.chat-pan > div:nth-child(4) > div {
+    pointer-events: all;
+    display: flex;
+    padding: 20px;
+}
+.chat-pan > div:nth-child(4) > div > div {
+    background: var(--color-card-1);
+    border-radius: 7px;
+}
+.chat-pan > div:nth-child(4) > div > div:first-child {
+    margin-right: 20px;
+    cursor: pointer;
+    height: 50px;
+    width: 50px;
+}
+.chat-pan > div:nth-child(4) > div > div:first-child > svg {
+    fill: var(--color-font-1);
+    margin: 15px;
+    height: 20px;
+    width: 20px;
+}
+.chat-pan > div:nth-child(4) > div > div:nth-child(2) {
+    display: flex;
+    height: 50px;
+    flex: 1;
+}
+.chat-pan > div:nth-child(4) > div > div > input {
+    color: var(--color-font);
+    background: transparent;
+    border-radius: 7px;
+    padding: 0 20px;
+    height: 100%;
+    width: 100%;
+    border: 0;
+}
+.chat-pan > div:nth-child(4) > div > div > div {
+    border-radius: 7px;
+    min-height: 40px;
+    min-width: 40px;
+    cursor: pointer;
+    margin: 5px;
+}
+.chat-pan > div:nth-child(4) > div > div > div:hover {
+    background: var(--color-card-2);
+}
+.chat-pan > div:nth-child(4) > div > div svg {
+    fill: var(--color-font-1);
+    width: 20px;
+    height: 20px;
+    margin: 11px;
 }

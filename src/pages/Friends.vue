@@ -4,13 +4,17 @@
       <div>
         <span>联系人</span>
         <label>
-          <input type="text" placeholder="搜索 ……">
+          <input v-model="searchInfo" @input="search" type="text" placeholder="搜索 ……">
         </label>
       </div>
-      <div id="list">
+      <div id="list"
+      v-infinite-scroll="addLoad"
+      infinite-scroll-disabled="loading"
+      infinite-scroll-distance="10"
+      infinite-scroll-immediate-check="false">
         <FriendBody
-          v-for="item in list"
-          :key="item.user_id ? item.user_id : item.group_id"
+          v-for="item in showData"
+          :key="'fb-' + (item.user_id ? item.user_id : item.group_id)"
           :data="item"
           @click.native="userClick(item)"></FriendBody>
       </div>
@@ -25,21 +29,82 @@
 </template>
 
 <script>
+import Util from '../assets/js/util'
+
 import FriendBody from '../components/FriendBody.vue'
 
 export default {
   name: 'Friends',
   props: ['list'],
+  data () {
+    return {
+      listPage: 1,
+      loading: false,
+      showData: [],
+      isSearch: false,
+      searchInfo: ''
+    }
+  },
   components: { FriendBody },
   methods: {
+    /**
+     * 点击联系人事件
+     * @param { object } item 联系人数据
+     */
     userClick (data) {
+      this.isSearch = false
+      this.searchInfo = ''
+      this.showData = this.list.slice(0, 10)
       const back = {
         type: data.user_id ? 'user' : 'group',
         id: data.user_id ? data.user_id : data.group_id,
         name: data.group_name ? data.group_name : data.remark === data.nickname ? data.nickname : data.remark + '（' + data.nickname + '）',
         avatar: data.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id : 'https://p.qlogo.cn/gh/' + data.group_id + '/' + data.group_id + '/0'
       }
+      // 更新聊天框
       this.$emit('userClick', back)
+      // 追加到正在进行的消息列表内
+      this.$emit('addMessage', data)
+      // 获取历史消息
+      this.$emit('loadHistory', back)
+    },
+    /**
+     * 分段加载回调
+     */
+    addLoad: function () {
+      if (!this.isSearch) {
+        this.loading = true
+        this.showData = Util.mergeList(this.showData, this.list.slice(this.listPage * 10, (this.listPage + 1) * 10))
+        this.listPage++
+        this.loading = false
+      }
+    },
+    /**
+     * 搜索输入事件
+     */
+    search: function (event) {
+      if (event.target.value !== '') {
+        this.isSearch = true
+        this.showData = this.list.filter(item => {
+          const name = (item.user_id ? item.nickname : item.group_name).toLowerCase()
+          const id = item.user_id ? item.user_id : item.group_id
+          return name.indexOf((event.target.value).toLowerCase()) !== -1 || id.toString() === event.target.value
+        })
+      } else {
+        this.showData = this.list.slice(0, 10)
+        this.isSearch = false
+      }
+    },
+    getId: function (data) {
+      return data.user_id ? data.user_id : data.group_id
+    }
+  },
+  watch: {
+    list: {
+      handler (val) {
+        this.showData = val.slice(0, 10)
+      },
+      deep: true
     }
   }
 }
