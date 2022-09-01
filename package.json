@@ -16,6 +16,8 @@
     "font-awesome": "^4.7.0",
     "jquery": "^3.6.0",
     "layui": "^2.7.5",
+    "svg-sprite-loader": "^6.0.11",
+    "uuidv4": "^6.2.13",
     "vue": "^2.5.2",
     "vue-infinite-scroll": "^2.0.2"
   },

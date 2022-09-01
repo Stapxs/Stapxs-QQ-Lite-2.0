@@ -25,8 +25,14 @@
 .message-body.me {
     color: var(--color-font-r);
 }
+.message.merge > div.message-body {
+    max-width: 100%;
+}
 .message-body a {
     color: var(--color-font);
+}
+.message-body.me a {
+    color: var(--color-font-r);
 }
 .message-body a:link {
     opacity: 0.8;
@@ -77,6 +83,15 @@
     fill: var(--color-font-r) !important;
 }
 
+.msg-inline {
+    display: inline-block;
+}
+
+.msg-text {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
 .msg-img {
     margin: 5px 0;
     border-radius: 7px;
@@ -110,11 +125,14 @@
 }
 
 .msg-at {
+    display: inline-block;
+}
+.msg-at > a {
     color: var(--color-main) !important;
     text-decoration: underline;
     cursor: pointer;
 }
-.msg-at.me {
+.msg-at.me > a{
     color: var(--color-font-r) !important;
 }
 

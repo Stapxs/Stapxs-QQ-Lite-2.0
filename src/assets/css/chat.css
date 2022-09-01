@@ -90,55 +90,210 @@
     margin-right: 20px;
     margin-left: -5px;
 }
-
-.chat-pan > div:nth-child(4) > div {
+.chat-pan > div:nth-child(4) {
     pointer-events: all;
+}
+.chat-pan > div:nth-child(4) > div:nth-child(2) {
     display: flex;
     padding: 20px;
 }
-.chat-pan > div:nth-child(4) > div > div {
+.chat-pan > div:nth-child(4) > div:nth-child(2) > div {
     background: var(--color-card-1);
     border-radius: 7px;
 }
-.chat-pan > div:nth-child(4) > div > div:first-child {
+.chat-pan > div:nth-child(4) > div:nth-child(2) > div:first-child {
     margin-right: 20px;
     cursor: pointer;
     height: 50px;
     width: 50px;
 }
-.chat-pan > div:nth-child(4) > div > div:first-child > svg {
+.chat-pan > div:nth-child(4) > div:nth-child(2) > div:first-child > svg {
     fill: var(--color-font-1);
     margin: 15px;
     height: 20px;
     width: 20px;
 }
-.chat-pan > div:nth-child(4) > div > div:nth-child(2) {
+.chat-pan > div:nth-child(4) > div:nth-child(2) > div:nth-child(2) {
     display: flex;
     height: 50px;
     flex: 1;
 }
-.chat-pan > div:nth-child(4) > div > div > input {
+.chat-pan > div:nth-child(4) > div:nth-child(2) > div > textarea {
+    padding: 14px 20px 0 20px;
     color: var(--color-font);
     background: transparent;
+    line-height: 1.1rem;
     border-radius: 7px;
-    padding: 0 20px;
-    height: 100%;
+    margin-top: 5px;
+    max-height: 50px;
+    height: 26px;
+    resize: none;
     width: 100%;
     border: 0;
 }
-.chat-pan > div:nth-child(4) > div > div > div {
+.chat-pan > div:nth-child(4) > div:nth-child(2) > div > div {
     border-radius: 7px;
     min-height: 40px;
     min-width: 40px;
     cursor: pointer;
     margin: 5px;
 }
-.chat-pan > div:nth-child(4) > div > div > div:hover {
+.chat-pan > div:nth-child(4) > div:nth-child(2) > div > div:hover {
     background: var(--color-card-2);
 }
-.chat-pan > div:nth-child(4) > div > div svg {
+.chat-pan > div:nth-child(4) > div:nth-child(2) > div svg {
     fill: var(--color-font-1);
     width: 20px;
     height: 20px;
     margin: 11px;
+}
+
+.more-detail {
+    transition: height .3s;
+    overflow: hidden;
+    display: flex;
+    margin-top: 0;
+    width: 100%;
+    height: 0;
+}
+.more-detail.show {
+    margin-top: 20px;
+    display: flex;
+    height: 50px;
+    width: 100%;
+}
+.more-detail > div {
+    background: var(--color-card-1);
+    border-radius: 7px;
+    margin: 0 10px;
+    cursor: pointer;
+    height: 50px;
+    width: 50px;
+}
+.more-detail > div:first-child {
+    margin-left: 20px;
+}
+.more-detail > div > svg {
+    fill: var(--color-font-1);
+    margin: 15px;
+    height: 20px;
+    width: 20px;
+}
+
+.msg-menu {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    z-index: 10;
+}
+.msg-menu-bg {
+    pointer-events: all;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+}
+
+.merge-pan {
+    align-items: stretch;
+    flex-direction: row;
+    position: absolute;
+    display: flex;
+    height: 100%;
+    width: 100%;
+}
+.merge-pan.show {
+    pointer-events: all;
+}
+.merge-pan > div:first-child {
+    background: var(--color-card-2);
+    transition: background .5s;
+    opacity: 0;
+    flex: 1;
+}
+.merge-pan.show > div:first-child {
+    opacity: 0.7;
+}
+.merge-pan > div:last-child {
+    transition: width .4s;
+    overflow: hidden;
+    min-width: unset;
+    padding: 0;
+    width: 0;
+}
+.merge-pan.show > div:last-child {
+    flex-direction: column;
+    display: flex;
+    width: 50%;
+}
+.merge-pan > div:last-child > div:first-child {
+    align-items: center;
+    display: flex;
+    padding: 20px;
+}
+.merge-pan > div:last-child > div:first-child span {
+    white-space: nowrap;
+    margin-left: 15px;
+    font-size: 1rem;
+    flex: 1;
+}
+.merge-pan > div:last-child > div:first-child svg {
+    fill: var(--color-font);
+    height: 1.5rem;
+}
+.merge-pan > div:last-child > div:last-child {
+    margin: 0 10px 10px 10px;
+    overflow-y: scroll;
+    flex: 1;
+}
+
+.mumber-info {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+}
+.mumber-info span,
+.mumber-info a {
+    color: var(--color-font);
+}
+.mumber-info > div {
+    pointer-events: all;
+}
+.mumber-info > div:first-child {
+    background: var(--color-card-2);
+    padding: 10px 20px 10px 10px;
+    width: fit-content;
+    overflow: hidden;
+    max-width: 35%;
+    display: flex;
+}
+.mumber-info > div:first-child img {
+    border-radius: 7px;
+    height: 50px;
+    width: 50px;
+}
+.mumber-info > div:first-child > div {
+    margin-left: 20px;
+    overflow: hidden;
+    flex: 1;
+}
+.mumber-info > div:first-child > div > span {
+    white-space: nowrap;
+}
+.mumber-info > div:first-child > div > div {
+    margin-bottom: 10px;
+    display: flex;
+}
+.mumber-info > div:first-child > div > div > a {
+    margin-right: 10px;
+    font-weight: bold;
+    font-size: 1rem;
+    display: block;
+}
+.mumber-info > div:first-child > div > div > span {
+    background: var(--color-main);
+    color: var(--color-font-r);
+    padding: 4px 10px 0 10px;
+    border-radius: 2rem;
+    margin-left: 5px;
+    font-size: 0.5rem;
 }

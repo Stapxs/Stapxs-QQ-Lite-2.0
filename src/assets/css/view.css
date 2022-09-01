@@ -181,37 +181,57 @@ html, body {
 .friend-list {
     background: var(--color-card-1);
     flex-direction: column;
+    overflow: hidden;
     display: flex;
     width: 300px;
 }
 .friend-list > div:first-child {
     margin: 15px;
 }
-.friend-list > div:first-child > span {
+.friend-list > div:first-child > div {
     background: var(--color-main);
     border-radius: 7px 7px 0 0;
     color: var(--color-font-r);
+    align-items: center;
     font-size: 1rem;
-    display: block;
     padding: 10px;
+    display: flex;
 }
-.friend-list > div:first-child label > input {
+.friend-list > div:first-child > div > svg {
+    fill: var(--color-font-r);
+    cursor: pointer;
+    opacity: 0.7;
+    height: 1rem;
+}
+.friend-list > div:first-child label {
     background: var(--color-card-2);
     border-radius: 0 0 7px 7px;
     height: calc(1rem + 20px);
-    width: calc(100% - 30px);
+    align-items: center;
+    display: flex;
+    width: 100%;
+}
+.friend-list > div:first-child label > svg {
+    fill: var(--color-font-1);
+    margin: 0 10px;
+    height: 0.9rem;
+}
+.friend-list > div:first-child label > input {
+    background: transparent;
     padding: 0 15px;
+    height: 100%;
+    width: 100%;
     margin: 0;
     border: 0;
+    flex: 1;
 }
 .friend-list > div:last-child {
-    width: calc(100% - 13px);
+    width: calc(100% - 5px);
+    padding: 0 7px 0 5px;
     -webkit-box-flex: 1;
     overflow-y: scroll;
-    padding: 0 0 0 5px;
     font-size: 1rem;
     height: 100%;
-    -ms-flex: 1;
     flex: 1;
 }
 
@@ -300,4 +320,103 @@ html, body {
 }
 .friend-body.active > a {
     color: var(--color-font-1-r);
+}
+
+/* TODO BCUI - 这段 css 将在将来迁移到 Border Card UI 中合并 */
+.menu {
+    box-shadow: 0 0 5px var(--color-shader);
+    background: var(--color-bg);
+    transition: transform .1s;
+    transform-origin: top;
+    transform: scaleY(0);
+    pointer-events: all;
+    min-height: unset;
+    padding: 10px;
+    width: 20%;
+}
+.menu.show {
+    transform: scaleY(1);
+}
+.menu > div {
+    transition: background .3s;
+    background: transparent;
+    align-items: center;
+    border-radius: 7px;
+    padding: 5px 15px;
+    cursor: pointer;
+    display: flex;
+}
+.menu > div:hover {
+    background: var(--color-main);
+}
+.menu > div > div > svg {
+    fill: var(--color-font-1);
+    transition: fill .3s;
+    margin-right: 10px;
+    margin-top: 7px;
+    height: 1rem;
+}
+.menu > div:hover > div > svg {
+    fill: var(--color-font-r);
+}
+.menu > div > a {
+    color: var(--color-font);
+    transition: color .3s;
+}
+.menu > div:hover > a {
+    color: var(--color-font-r);
+}
+
+.app-msg {
+    flex-direction: column-reverse;
+    justify-content: flex-start;
+    height: calc(100% - 20px);
+    pointer-events: none;
+    position: absolute;
+    padding-left: 90px;
+    display: flex;
+    z-index: 10;
+    width: 100%;
+    left: 0;
+    top: 0;
+}
+.app-msg > div {
+    box-shadow: 0 0 5px var(--color-shader);
+    background: var(--color-main);
+    align-items: center;
+    pointer-events: all;
+    width: fit-content;
+    border-radius: 7px;
+    padding: 7px 30px;
+    margin-top: 5px;
+    display: flex;
+}
+.app-msg > div svg {
+    fill: var(--color-font-r);
+}
+.app-msg > div > div:first-child > svg {
+    color: var(--color-font-r);
+    margin-top: 5px;
+    height: 1rem;
+}
+.app-msg > div > a {
+    color: var(--color-font-r);
+    user-select: none;
+    margin: 0 10px;
+}
+.app-msg > div > div:last-child {
+    border-radius: 7px;
+    cursor: pointer;
+    height: 20px;
+    width: 20px;
+}
+.app-msg > div > div:last-child:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+.app-msg > div > div:last-child > svg {
+    color: var(--color-font-1-r);
+    margin-left: 5px;
+    margin-top: 3px;
+    height: 1rem;
+    height: 1rem;
 }

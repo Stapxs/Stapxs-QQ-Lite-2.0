@@ -10,10 +10,7 @@
     <div class="layui-tab layui-tab-brief main-body">
       <ul class="layui-tab-title">
         <li @click="changeChat" :class="login.status ? '' : 'layui-this'" :style="login.status ? 'margin-top: calc(-100% + 5px);' : ''">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
-            <path
-              d="M575.8 255.5C575.8 273.5 560.8 287.6 543.8 287.6H511.8L512.5 447.7C512.5 450.5 512.3 453.1 512 455.8V472C512 494.1 494.1 512 472 512H456C454.9 512 453.8 511.1 452.7 511.9C451.3 511.1 449.9 512 448.5 512H392C369.9 512 352 494.1 352 472V384C352 366.3 337.7 352 320 352H256C238.3 352 224 366.3 224 384V472C224 494.1 206.1 512 184 512H128.1C126.6 512 125.1 511.9 123.6 511.8C122.4 511.9 121.2 512 120 512H104C81.91 512 64 494.1 64 472V360C64 359.1 64.03 358.1 64.09 357.2V287.6H32.05C14.02 287.6 0 273.5 0 255.5C0 246.5 3.004 238.5 10.01 231.5L266.4 8.016C273.4 1.002 281.4 0 288.4 0C295.4 0 303.4 2.004 309.5 7.014L564.8 231.5C572.8 238.5 576.9 246.5 575.8 255.5L575.8 255.5z" />
-          </svg>
+          <svg-icon icon-class="house-solid.svg"/>
         </li>
         <li @click="changeChat(false)" :class="!login.status ? '' : 'layui-this'">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -101,7 +98,7 @@
             </div>
           </div>
         </div>
-        <div :class="login.status ? 'layui-tab-item layui-show' : 'layui-tab-item'">
+        <div id="messageTab" :class="login.status ? 'layui-tab-item layui-show' : 'layui-tab-item'">
           <Messages :list="inList" @userClick="setChat" ref="inMessage"></Messages>
         </div>
         <div class="layui-tab-item">
@@ -110,12 +107,27 @@
         <div class="layui-tab-item">内容4</div>
       </div>
     </div>
+    <!-- 消息主框体 -->
     <Chat
       :chat="onChat"
       :list="messageList"
+      :mergeList="mergeMessageList"
+      :mumberInfo="nowMemberInfo"
       v-if="login.status && onChat.id != ''"
       v-show="showChat"
-      ref="chat"></Chat>
+      ref="chat"
+      @cleanMerge="cleanMerge"
+      @message="showAppMsg"></Chat>
+      <!-- 提示信息显示区 -->
+      <TransitionGroup class="app-msg" name="appmsg" tag="div">
+        <div v-for="msg in appMessageList" :key="'appmsg-' + msg.id">
+          <div v-html="msg.svg"></div>
+          <a>{{ msg.text }}</a>
+          <div v-if="!msg.autoClose" @click="removeAppMsg(msg.id)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>
+          </div>
+        </div>
+      </TransitionGroup>
   </div>
 </template>
 
@@ -128,6 +140,8 @@ import Util from './assets/js/util'
 import Friends from './pages/Friends.vue'
 import Chat from './pages/Chat.vue'
 import Messages from './pages/Messages.vue'
+
+// import { v4 as uuid } from 'uuid'
 
 export default {
   name: 'App',
@@ -144,6 +158,24 @@ export default {
       onChat: { type: '', id: '', name: '', avatar: '' },
       login: { address: '', token: '', status: '' },
       showChat: false,
+      nowMemberInfo: {
+    "group_id": 550920384,
+    "user_id": 1007028430,
+    "nickname": "木",
+    "card": "",
+    "sex": "male",
+    "age": 20,
+    "join_time": 1654868157,
+    "last_sent_time": 1661229736,
+    "level": 1,
+    "role": "admin",
+    "title": "",
+    "title_expire_time": 0,
+    "shutup_time": 0,
+    "update_time": 0,
+},
+      mergeMessageList: [],
+      appMessageList: [],
       messageList: [],
       userList: [],
       inList: []
@@ -161,7 +193,7 @@ export default {
         Main.loadBaseInfo()
       }
       Vue.ws.onmessage = (e) => {
-        // Vue.log(Vue.logMode.debug, 'GET：' + e.data)
+        Vue.log(Vue.logMode.debug, 'GET：' + e.data)
         this.parse(e.data)
       }
       Vue.ws.onclose = (e) => {
@@ -169,8 +201,10 @@ export default {
         this.login.status = false
         if (e.code !== 1000) {
           Vue.log(Vue.logMode.err, '连接失败：' + e.code)
+          this.addAppMsg('连接失败', Vue.appMsgType.err, false)
         } else {
           Vue.log(Vue.logMode.debug, '连接关闭：' + e.code)
+          this.addAppMsg('连接关闭', Vue.appMsgType.err)
         }
       }
     },
@@ -178,9 +212,22 @@ export default {
       const msg = JSON.parse(str)
       if (msg.echo !== undefined) {
         switch (msg.echo) {
-          case 'getLoginInfo': Vue.loginInfo = msg.data; break // 获取基本信息
+          case 'getLoginInfo': console.log(msg.data); Vue.loginInfo = msg.data; break // 获取基本信息
           case 'getGroupList': this.userList = Util.mergeList(this.userList, msg.data); break // 获取群列表
           case 'getFriendList': this.userList = Util.mergeList(this.userList, msg.data); break // 获取好友列表
+          case 'getForwardMsg': { // 获取合并转发消息
+            const list = msg.data
+            // 格式化不规范消息格式
+            for (let i = 0; i < list.length; i++) {
+              list[i].sender = {
+                user_id: list[i].user_id,
+                nickname: list[i].nickname,
+                card: ''
+              }
+            }
+            this.mergeMessageList = list
+            break
+          }
           case 'getChatHistoryFist': { // 首次获取消息记录
             this.messageList = msg.data
             setTimeout(() => {
@@ -198,6 +245,24 @@ export default {
             this.messageList = Util.mergeList(items, this.messageList)
             break
           }
+          case 'sendMsgBack': { // 发送消息回调
+            if (msg.message_id !== undefined) {
+              // 请求消息内容
+              Vue.sendWs(Vue.createAPI(
+                'getMsg',
+                { 'message_id': msg.message_id },
+                'getSendMsg_' + msg.message_id + '_0'
+              ))
+            }
+            break
+          }
+          default: { // 其他情况
+            if (msg.echo.startsWith('getSendMsg')) {
+              // TODO 这里暂时没有考虑消息获取失败的情况（因为没有例子）
+              this.messageList.push(msg)
+              break
+            }
+          }
         }
       } else {
         switch (msg.post_type) {
@@ -207,13 +272,11 @@ export default {
     },
     // 标签卡相关
     setChat: function (data) {
-      this.onChat.type = data.type
-      this.onChat.id = data.id
-      this.onChat.name = data.name
-      this.onChat.avatar = data.avatar
-      this.onChat.msg = []
-      if (this.messageList.length > 0) {
-        this.$refs.chat.canLoadHistory = true
+      this.onChat = {
+        type: data.type,
+        id: data.id,
+        name: data.name,
+        avatar: data.avatar
       }
     },
     changeChat: function (info) {
@@ -225,6 +288,7 @@ export default {
     },
     // 用户列表交互相关
     addIn: function (data) {
+      document.getElementById('messageTab').click()
       this.$refs.inMessage.addMesage(data)
     },
     // 消息相关
@@ -239,10 +303,53 @@ export default {
         // 当前聊天窗口
         this.messageList.push(data)
       }
+    },
+    cleanMerge: function () {
+      this.mergeMessageList = []
+    },
+    addAppMsg: function (msg, type, isAutoOpen) {
+      const data = {
+        id: this.appMessageList.length,
+        svg: type[0],
+        text: msg,
+        autoClose: isAutoOpen === undefined ? true : isAutoOpen
+      }
+      this.appMessageList.splice(this.appMessageList.length, 0, data)
+      // 创建定时器
+      if (data.autoClose) {
+        setTimeout(() => {
+          this.removeAppMsg(data.id)
+        }, 5000)
+      }
+    },
+    removeAppMsg: function (id) {
+      const index = this.appMessageList.findIndex((item) => {
+        return item.id === id
+      })
+      if (index !== -1) {
+        this.appMessageList.splice(index, 1)
+      }
+    },
+    showAppMsg: function (data) {
+      this.addAppMsg(data.text, data.type, data.autoClose)
     }
   }
 }
 </script>
 
 <style>
+  .appmsg-move,
+  .appmsg-enter-active,
+  .appmsg-leave-active {
+    transition: all 0.2s;
+  }
+  .appmsg-leave-active {
+    position: absolute;
+  }
+
+  .appmsg-enter-from,
+  .appmsg-leave-to {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
 </style>

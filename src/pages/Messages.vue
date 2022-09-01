@@ -2,7 +2,7 @@
   <div class="friend-view">
     <div class="friend-list">
       <div>
-        <span style="border-radius: 7px;">消息</span>
+        <div><span style="border-radius: 7px;">消息</span></div>
       </div>
       <div id="list">
         <FriendBody v-for="item in list" :key="'in' + item.user_id ? item.user_id : item.group_id" :data="item"
