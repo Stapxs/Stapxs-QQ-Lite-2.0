@@ -259,6 +259,7 @@
     pointer-events: all;
 }
 .mumber-info > div:first-child {
+    transform: translate(-20px, calc(-100% - 0.8rem));
     background: var(--color-card-2);
     padding: 10px 20px 10px 10px;
     width: fit-content;
@@ -268,8 +269,8 @@
 }
 .mumber-info > div:first-child img {
     border-radius: 7px;
-    height: 50px;
-    width: 50px;
+    height: 60px;
+    width: 60px;
 }
 .mumber-info > div:first-child > div {
     margin-left: 20px;
@@ -279,21 +280,34 @@
 .mumber-info > div:first-child > div > span {
     white-space: nowrap;
 }
+.mumber-info > div:first-child > div > span[name=id] {
+    font-size: 0.8rem;
+    display: block;
+    opacity: 0.5;
+}
 .mumber-info > div:first-child > div > div {
-    margin-bottom: 10px;
+    margin-bottom: 5px;
+    flex-wrap: wrap;
     display: flex;
 }
 .mumber-info > div:first-child > div > div > a {
+    white-space: nowrap;
     margin-right: 10px;
     font-weight: bold;
     font-size: 1rem;
     display: block;
 }
-.mumber-info > div:first-child > div > div > span {
+.mumber-info > div:first-child > div > div > div {
+    margin-top: 4px;
+}
+.mumber-info > div:first-child > div > div > div > span {
     background: var(--color-main);
     color: var(--color-font-r);
     padding: 4px 10px 0 10px;
     border-radius: 2rem;
     margin-left: 5px;
     font-size: 0.5rem;
+}
+.mumber-info > div:first-child > div > div > div > span:first-child {
+    margin-left: 0;
 }

@@ -117,7 +117,8 @@
       v-show="showChat"
       ref="chat"
       @cleanMerge="cleanMerge"
-      @message="showAppMsg"></Chat>
+      @message="showAppMsg"
+      @hiddenUserInfo="hiddenUserInfo"></Chat>
       <!-- 提示信息显示区 -->
       <TransitionGroup class="app-msg" name="appmsg" tag="div">
         <div v-for="msg in appMessageList" :key="'appmsg-' + msg.id">
@@ -141,6 +142,9 @@ import Friends from './pages/Friends.vue'
 import Chat from './pages/Chat.vue'
 import Messages from './pages/Messages.vue'
 
+import { waveAnimation } from './assets/js/ui.js'
+import config from '../package.json'
+
 // import { v4 as uuid } from 'uuid'
 
 export default {
@@ -158,24 +162,9 @@ export default {
       onChat: { type: '', id: '', name: '', avatar: '' },
       login: { address: '', token: '', status: '' },
       showChat: false,
-      nowMemberInfo: {
-    "group_id": 550920384,
-    "user_id": 1007028430,
-    "nickname": "木",
-    "card": "",
-    "sex": "male",
-    "age": 20,
-    "join_time": 1654868157,
-    "last_sent_time": 1661229736,
-    "level": 1,
-    "role": "admin",
-    "title": "",
-    "title_expire_time": 0,
-    "shutup_time": 0,
-    "update_time": 0,
-},
       mergeMessageList: [],
       appMessageList: [],
+      nowMemberInfo: {},
       messageList: [],
       userList: [],
       inList: []
@@ -189,6 +178,8 @@ export default {
       Vue.ws.onopen = () => {
         Vue.log(Vue.logMode.ws, '连接成功')
         this.login.status = true
+        // 保存登录信息（一个月）
+        this.$cookies.set('address', this.login.address, '1m')
         // 加载初始化数据
         Main.loadBaseInfo()
       }
@@ -206,13 +197,17 @@ export default {
           Vue.log(Vue.logMode.debug, '连接关闭：' + e.code)
           this.addAppMsg('连接关闭', Vue.appMsgType.err)
         }
+        // 清空数据
+        const loginAddress = this.login.address
+        Object.assign(this.$data, this.$options.data())
+        this.login.address = loginAddress
       }
     },
     parse: function (str) {
       const msg = JSON.parse(str)
       if (msg.echo !== undefined) {
         switch (msg.echo) {
-          case 'getLoginInfo': console.log(msg.data); Vue.loginInfo = msg.data; break // 获取基本信息
+          case 'getLoginInfo': Vue.loginInfo = msg.data; break // 获取基本信息
           case 'getGroupList': this.userList = Util.mergeList(this.userList, msg.data); break // 获取群列表
           case 'getFriendList': this.userList = Util.mergeList(this.userList, msg.data); break // 获取好友列表
           case 'getForwardMsg': { // 获取合并转发消息
@@ -258,10 +253,18 @@ export default {
           }
           default: { // 其他情况
             if (msg.echo.startsWith('getSendMsg')) {
+              // 发送消息回调
               // TODO 这里暂时没有考虑消息获取失败的情况（因为没有例子）
               this.messageList.push(msg)
-              break
             }
+            if (msg.echo.startsWith('getGroupMemberInfo')) {
+              // 获取群成员信息
+              this.nowMemberInfo = msg
+              const pointInfo = msg.echo.split('_')
+              this.nowMemberInfo.x = pointInfo[1]
+              this.nowMemberInfo.y = pointInfo[2]
+            }
+            break
           }
         }
       } else {
@@ -278,6 +281,8 @@ export default {
         name: data.name,
         avatar: data.avatar
       }
+      // 清空合并转发缓存
+      this.mergeMessageList = []
     },
     changeChat: function (info) {
       if (!info) {
@@ -332,6 +337,27 @@ export default {
     },
     showAppMsg: function (data) {
       this.addAppMsg(data.text, data.type, data.autoClose)
+    },
+    hiddenUserInfo: function () {
+      this.nowMemberInfo = []
+    }
+  },
+  mounted: function () {
+    Vue.log(Vue.logMode.debug, '欢迎使用 Stapxs QQ Lite！当前运行在调试模式。')
+    // 初始化波浪动画
+    waveAnimation(document.getElementById('login-wave'))
+    // 加载 cookie 中的保存登陆信息
+    if (this.$cookies.isKey('address')) {
+      this.login.address = this.$cookies.get('address')
+    }
+    // 检查版本
+    var cmp = require('semver-compare')
+    const appVersion = config.version
+    const cacheVersion = this.$cookies.get('version')
+    if (!this.$cookies.isKey('version') || cmp(appVersion, cacheVersion) === 1) {
+      // 更新 cookie 中的版本信息并抓取更新日志
+      this.$cookies.set('version', appVersion, '1m')
+      Vue.log(Vue.logMode.ss, '版本已更新：' + cacheVersion + ' -> ' + appVersion)
     }
   }
 }

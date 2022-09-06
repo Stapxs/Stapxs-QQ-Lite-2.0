@@ -11,14 +11,14 @@
     "build": "node build/build.js"
   },
   "dependencies": {
-    "@layui/layui-vue": "^1.3.8",
     "date-format": "^4.0.13",
-    "font-awesome": "^4.7.0",
     "jquery": "^3.6.0",
-    "layui": "^2.7.5",
+    "layui": "^2.8.0-beta.2",
+    "semver-compare": "^1.0.0",
     "svg-sprite-loader": "^6.0.11",
     "uuidv4": "^6.2.13",
     "vue": "^2.5.2",
+    "vue-cookies": "^1.8.1",
     "vue-infinite-scroll": "^2.0.2"
   },
   "devDependencies": {

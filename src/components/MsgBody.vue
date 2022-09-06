@@ -13,10 +13,10 @@
       :id="'chat-' + getSeq(data.message_id)"
       :data-sender="data.sender.user_id"
       :data-time="data.time">
-    <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id" v-if="!isMe">
-    <div class="message-space" v-if="data.sender.user_id.toString() === loginId.toString()"></div>
-    <div :class="isMe ? 'message-body me' : 'message-body'">
-      <a  v-if="!isMe">{{ data.sender.card ? data.sender.card : data.sender.nickname }}</a>
+    <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id" v-if="!isMe || isMerge">
+    <div class="message-space" v-if="isMe && !isMerge"></div>
+    <div :class="isMe ? (isMerge ? 'message-body' : 'message-body me') : 'message-body'">
+      <a v-if="!isMe || isMerge">{{ data.sender.card ? data.sender.card : data.sender.nickname }}</a>
       <div>
         <!-- 回复指示框 -->
         <div
@@ -32,9 +32,8 @@
           <img v-if="item.type === 'image'" title="查看图片" alt="群图片" :class="imgStyle(data.message.length, index)" :src="item.url">
           <img v-if="item.type === 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/src/qq-face/' + item.id + '.gif')" title="惊恐">
           <span v-if="item.type === 'bface'" style="font-style: italic;opacity: 0.7;">[ 表情：{{ item.text }} ]</span>
-          <div v-if="item.type === 'at' && isAtShow(data.source, item.qq)" :class="isMe ? 'msg-at me' : 'msg-at'">
-            <AtInfo :mumberInfo="nowMsgAtInfos[index]"></AtInfo>
-            <a @mouseover="getUserInfo" :data-id="item.qq" :data-group="data.group_id">{{ item.text }}</a>
+          <div v-if="item.type === 'at' && isAtShow(data.source, item.qq)" :class="isMe ? (isMerge ? 'msg-at' : 'msg-at me') : 'msg-at'">
+            <a @mouseover="showUserInfo" @mouseleave="hiddenUserInfo" :data-id="item.qq" :data-group="data.group_id">{{ item.text }}</a>
           </div>
           <div
             v-if="item.type === 'xml'"
@@ -51,17 +50,14 @@
 <script>
 import Vue from 'vue'
 import Util from '../assets/js/util.js'
-import AtInfo from './AtInfo.vue'
 
 export default {
   name: 'MsgBody',
   props: ['data', 'isMerge'],
-  components: { AtInfo },
   data () {
     return {
       loginId: Vue.loginInfo.account.uin,
-      isMe: false,
-      nowMsgAtInfos: {}
+      isMe: false
     }
   },
   methods: {
@@ -228,12 +224,21 @@ export default {
         Vue.sendWs(Vue.createAPI('getForwardMsg', { 'resid': sender.dataset.id }))
       }
     },
-    getUserInfo: function (event) {
+    showUserInfo: function (event) {
       const sender = event.currentTarget
       const id = sender.dataset.id
       const group = sender.dataset.group
+      // 获取鼠标位置
+      const pointEvent = event || window.event
+      const pointX = pointEvent.layerX
+      const pointY = pointEvent.clientY
+      // 出界判定不做了怪麻烦的
       // 请求用户信息
-      Vue.sendWs(Vue.createAPI('getGroupMemberInfo', {group_id: group, user_id: id}))
+      Vue.sendWs(Vue.createAPI('getGroupMemberInfo', {group_id: group, user_id: id},
+        'getGroupMemberInfo_' + pointX + '_' + pointY))
+    },
+    hiddenUserInfo: function () {
+      this.$parent.hiddenUserInfo()
     }
   },
   mounted: function () {

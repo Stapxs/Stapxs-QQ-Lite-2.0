@@ -3,7 +3,6 @@ import App from './App'
 
 import 'layui/dist/css/layui.css'
 import 'layui/dist/layui.js'
-import 'font-awesome/css/font-awesome.css'
 
 import '../src/assets/css/view.css'
 import '../src/assets/css/chat.css'
@@ -11,13 +10,14 @@ import '../src/assets/css/msg.css'
 
 import '@/icons'
 
-import { waveAnimation } from './assets/js/ui.js'
-
 import infScroll from 'vue-infinite-scroll'
+import VueCookies from 'vue-cookies'
 Vue.use(infScroll)
+Vue.use(VueCookies)
 
 /* eslint-disable */
 Vue.config.productionTip = false
+
 // 日志组件
 Vue.logMode = {
   ws: ["7abb7e", "fff", "WS"],
@@ -39,12 +39,7 @@ Vue.appMsgType = {
 const app = new Vue({
   el: '#app',
   components: { App },
-  template: '<App/>',
-  mounted() {
-    Vue.log(Vue.logMode.debug, '欢迎使用 Stapxs QQ Lite！当前运行在调试模式。')
-    // 初始化波浪动画
-    waveAnimation(document.getElementById('login-wave'))
-  }
+  template: '<App/>'
 })
 
 // 构建请求结构

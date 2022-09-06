@@ -80,11 +80,30 @@
           <svg @click="closeMergeMsg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>
         </div>
         <div>
+          <!-- 合并转发消息忽略是不是自己的判定 -->
           <MsgBody
             v-for="(msg, index) in mergeList"
             :key="'merge' + index"
             :data="msg"
             :isMerge="true"></MsgBody>
+        </div>
+      </div>
+    </div>
+    <!-- At 信息悬浮窗 -->
+    <div class="mumber-info">
+      <div v-if="Object.keys(mumberInfo).length > 0 && mumberInfo.error === undefined" class="ss-card" :style="getPopPost()">
+        <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + mumberInfo.user_id">
+        <div>
+          <span name="id">{{ mumberInfo.user_id }}</span>
+          <div>
+            <a>{{  mumberInfo.card == '' ? mumberInfo.nickname : mumberInfo.card  }}</a>
+            <div>
+              <span v-if="getRoleTitle(mumberInfo.role) !== ''">{{  getRoleTitle(mumberInfo.role)  }}</span>
+              <span>Lv {{  mumberInfo.level  }}</span>
+              <span> {{  mumberInfo.sex == 'male' ? '♂️' : '♀️'  }} </span>
+            </div>
+          </div>
+          <span> {{  this.formatTime(new Date(mumberInfo.join_time * 1000), 'yyyy 年 MM 月dd 日')  }} 加入群聊 </span>
         </div>
       </div>
     </div>
@@ -297,6 +316,21 @@ export default {
       // 设置消息背景
       this.tags.openedMenuMsg = msg
       msg.style.background = '#00000008'
+    },
+    getRoleTitle: function (role) {
+      switch (role) {
+        case 'admin': return '管理员'
+        case 'owner': return '群主'
+        default: return ''
+      }
+    },
+    getPopPost: function () {
+      const x = this.mumberInfo.x === undefined ? '0' : this.mumberInfo.x
+      const y = this.mumberInfo.y === undefined ? '0' : this.mumberInfo.y
+      return 'margin-left:' + x + 'px;margin-top:' + y + 'px;'
+    },
+    hiddenUserInfo: function () {
+      this.$emit('hiddenUserInfo', null)
     },
     closeMsgMenu: function () {
       // 关闭菜单
