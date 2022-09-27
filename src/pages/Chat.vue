@@ -32,6 +32,7 @@
         :key="msg.message_id"
         :data="msg"
         @scrollToMsg="scrollToMsg"
+        @viewImg="viewImg"
         @contextmenu.native.prevent="showMsgMeun"></MsgBody>
     </div>
     <div v-show="tags.showBottomButton" @click="scrollBottom(true)">
@@ -123,9 +124,12 @@
 <script>
 import MsgBody from '../components/MsgBody.vue'
 import Vue from 'vue'
+
+import { parseMsgId } from '../assets/js/util.js'
+
 export default {
   name: 'Chat',
-  props: ['chat', 'list', 'mergeList', 'mumberInfo'],
+  props: ['chat', 'list', 'mergeList', 'mumberInfo', 'imgView'],
   components: { MsgBody },
   data () {
     return {
@@ -194,7 +198,7 @@ export default {
     chatScroll: function (event) {
       const body = event.target
       // 顶部
-      if (body.scrollTop === 0) {
+      if (body.scrollTop === 0 && this.list.length > 0) {
         this.loadMoreHistory()
       }
       // 底部
@@ -258,6 +262,9 @@ export default {
         }
         this.$emit('message', data)
       }
+    },
+    viewImg: function (msgId) {
+      this.$emit('viewImg', msgId)
     },
     setNoMoreHistory: function () {
       this.tags.canLoadHistory = false
@@ -355,7 +362,11 @@ export default {
       //     msg = '[CQ:image,file=base64://' + Vue.cacheImg[i].substring(Vue.cacheImg[i].indexOf('base64') + 7) + ']' + msg
       //   }
       // }
-      if (this.msg !== '') {
+      if (msg !== '') {
+        // 去除回车发送导致的结尾换行
+        if (msg.slice(-1) === '\n') {
+          msg = msg.substring(0, msg.length - 1)
+        }
         switch (this.chat.type) {
           case 'group': json = Vue.createAPI('sendGroupMsg', {'group_id': this.chat.id, 'message': msg}, 'sendMsgBack'); break
           case 'user': json = Vue.createAPI('sendPrivateMsg', {'user_id': this.chat.id, 'message': msg}, 'sendMsgBack'); break
@@ -372,6 +383,8 @@ export default {
   },
   watch: {
     list: function () {
+      // =================== 刷新统计数据 ===================
+
       // 判断新消息数量
       if (this.tags.showBottomButton && !this.tags.nowGetHistroy && this.listSize > 0) {
         this.NewMsgNum += this.list.length - this.listSize
@@ -382,28 +395,42 @@ export default {
       }
       // 刷新列表长度记录
       this.listSize = this.list.length
+
+      // =================== 渲染监听操作 ===================
+
       // 渲染前的数据
       const pan = document.getElementById('msgPan')
       const height = pan.scrollHeight
       const top = pan.scrollTop
-      // 加载历史记录锁定滚动条位置
-      if (this.tags.nowGetHistroy) {
-        this.$nextTick(() => {
+      // 渲染后操作
+      this.$nextTick(() => {
+        // 加载历史记录锁定滚动条位置
+        if (this.tags.nowGetHistroy) {
           const newPan = document.getElementById('msgPan')
           this.scrollTo(newPan.scrollHeight - height, false)
           this.tags.nowGetHistroy = false
-        })
-      } else {
-        // 解除锁定加载
-        this.tags.nowGetHistroy = false
-      }
-      // 新消息自动下滚
-      this.$nextTick(() => {
+        } else {
+          // 解除锁定加载
+          this.tags.nowGetHistroy = false
+        }
+        // 新消息自动下滚
         const newPan = document.getElementById('msgPan')
         if (top === height - newPan.clientHeight) {
           // 刚刚页面在最底部
           this.scrollBottom(true)
         }
+        // 刷新图片列表
+        let getImgList = []
+        this.list.forEach((item) => {
+          item.message.forEach((msg) => {
+            if (msg.type === 'image' && !msg.asface) {
+              const index = (parseMsgId(item.message_id)).seqid
+              const info = [index, item.message_id, msg.url]
+              getImgList.push(info)
+            }
+          })
+        })
+        this.imgView.srcList = getImgList
       })
     },
     chat: function () {

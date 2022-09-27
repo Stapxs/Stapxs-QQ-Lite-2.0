@@ -1,0 +1,59 @@
+{
+    "name": "Stapxs QQ Lite",
+    "author": "Stapx Steve [林槐]",
+    "description": "一个兼容 oicq-http 的非官方网页版 QQ 客户端",
+    "l10n": {
+        "name": "中文（简体）",
+        "type": "zh_CN",
+        "author": "Stapxs QQ Lite",
+        "description": "你好世界！这是 Stapxs QQ Lite 的默认简体中文。"
+    },
+    "log": {
+        "welcome": "欢迎使用 Stapxs QQ Lite！",
+        "con_success": "连接成功",
+        "con_closed": "连接关闭",
+        "con_fail": "连接失败"
+    },
+    "version": {
+        "updated": "版本已更新"
+    },
+    "home": {
+        "title": "主页",
+        "card": {
+            "title": "连接到 OICQ HTTP",
+            "address": "连接地址",
+            "key": "连接密钥",
+            "save_pwd": "记住密码",
+            "auto_con": "自动连接",
+            "tip": "安全警告：{name} 将以明文保存您的密码，请确保您的设备安全。再次点击确认开启。",
+            "connect": "连接",
+            "how_to_connect": "如何连接"
+        }
+    },
+    "option": {
+        "title": "设置",
+        "bar": {
+            "account": "账号",
+            "view": "界面",
+            "function": "功能",
+            "dev": "开发者"
+        },
+        "info": {
+            "visit_github": "访问仓库"
+        },
+        "view": {
+            "l10n": "本土化",
+            "l10n_author": "作者",
+            "language": "语言（Language）",
+            "choice_lang": "Choice ……",
+            "language_tip": "喵喵喵喵？",
+            "theme": "主题与颜色",
+            "dark_mode": "深色模式",
+            "dark_mode_tip": "是五彩斑斓的黑色！",
+            "auto_dark": "自动深色模式",
+            "auto_dark_tip": "Biubiu ——，自动变黑！",
+            "theme_color": "主题色",
+            "theme_color_tip": "换个心情 🎵 ~"
+        }
+    }
+}

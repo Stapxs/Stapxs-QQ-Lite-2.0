@@ -35,6 +35,9 @@
     color: var(--color-font-r);
 }
 .message-body a:link {
+    text-decoration: underline;
+    display: inline-block;
+    padding: 0 5px;
     opacity: 0.8;
 }
 .message-body a:link:before {
@@ -42,6 +45,9 @@
     content: '🔗';
     color: transparent;
     text-shadow: 0 0 0 var(--color-font-1);
+}
+.message-body.me a:link::before {
+    text-shadow: 0 0 0 var(--color-font-1-r);
 }
 .message-body > a {
     color: var(--color-font-1);
@@ -51,9 +57,10 @@
 }
 .message-body > div {
     background: var(--color-card-1);
-    padding: 10px;
     border-radius: 7px;
     width: fit-content;
+    margin-top: 5px;
+    padding: 10px;
 }
 .message-body.me > div {
     background: var(--color-main);
@@ -90,6 +97,13 @@
 .msg-text {
     overflow-wrap: anywhere;
     white-space: pre-wrap;
+}
+
+.msg-unknown {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    font-style: italic;
+    opacity: 0.5;
 }
 
 .msg-img {
@@ -129,29 +143,45 @@
 }
 .msg-at > a {
     color: var(--color-main) !important;
-    text-decoration: underline;
+    /* text-decoration: underline; */
     cursor: pointer;
 }
-.msg-at.me > a{
+.msg-at.me > a {
     color: var(--color-font-r) !important;
+}
+.msg-at.atme > a {
+    color: var(--color-font-r) !important;
+    background: var(--color-main);
+    border-radius: 4px;
+    padding: 3px;
 }
 
 .msg-replay {
-    padding: 10px;
-    border-radius: 7px;
-    font-size: 0.9rem;
     background: #00000017;
+    border-radius: 7px;
+    overflow: hidden;
     cursor: pointer;
-    margin-bottom: 10px;
-    display: flex;
-    flex-direction: row;
-    height: 1rem;
-    overflow: hidden;
-    align-items: center;
+    height: 0.9rem;
+    padding: 10px;
 }
-.msg-replay span {
-    flex: 1;
-    overflow: hidden;
+.msg-replay a {
+    line-height: calc(0.9rem + 10px);
+    margin-left: calc(1rem + 10px);
+    word-break: break-all;
+    font-size: 0.9rem;
+    margin-top: -5px;
+    display: block;
+}
+.msg-replay svg {
+    margin-bottom: calc(-1rem - 5px);
+    fill: var(--color-font-1);
+    margin-right: 5px;
+    margin-top: 1px;
+    display: block;
+    height: 1rem;
+}
+.msg-replay.me svg {
+    fill: var(--color-font-1-r);
 }
 
 .note-base {

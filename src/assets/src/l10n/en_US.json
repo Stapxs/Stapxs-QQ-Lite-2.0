@@ -1,0 +1,39 @@
+{
+    "name": "Stapxs QQ Lite",
+    "author": "Stapx Steve [林槐]",
+    "description": "An unofficial web version QQ client compatible with oicq-http",
+    "l10n": {
+        "name": "English(US)",
+        "type": "en_US",
+        "author": "Stapxs QQ Lite",
+        "description": "Bi-, This is a Test Language for Dev."
+    },
+    "home": {
+        "title": "Home",
+        "card": {
+            "title": "Connect to OICQ HTTP",
+            "address": "Address",
+            "key": "Token",
+            "save_pwd": "Save Password",
+            "auto_con": "Auto Connect",
+            "tip": "Warning：{name} will save your password in clear text, please keep your device safe. Click again to turn it on.",
+            "connect": "CONNECT",
+            "how_to_connect": "How to use"
+        }
+    },
+    "option": {
+        "title": "Options",
+        "bar": {
+            "account": "Account",
+            "view": "View",
+            "function": "Function"
+        },
+        "info": {
+            "visit_github": "Github"
+        },
+        "view": {
+            "i10n": "Localization ",
+            "language": "Language"
+        }
+    }
+}

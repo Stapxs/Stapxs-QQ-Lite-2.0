@@ -12,14 +12,17 @@
   },
   "dependencies": {
     "date-format": "^4.0.13",
+    "detect-browser": "^5.3.0",
     "jquery": "^3.6.0",
     "layui": "^2.8.0-beta.2",
     "semver-compare": "^1.0.0",
-    "svg-sprite-loader": "^6.0.11",
     "uuidv4": "^6.2.13",
+    "v-viewer": "^1.6.4",
     "vue": "^2.5.2",
     "vue-cookies": "^1.8.1",
-    "vue-infinite-scroll": "^2.0.2"
+    "vue-i18n": "^8.27.2",
+    "vue-infinite-scroll": "^2.0.2",
+    "vue-xss": "^1.0.4"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

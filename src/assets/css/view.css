@@ -77,17 +77,16 @@ html, body {
     margin: 20px;
 }
 .login-pan-card label {
-    border: 1px solid var(--color-font);
-    background: var(--color-card);
-    width: calc(100% - 22px);
-    transition: border .3s;
-    border-radius: 7px;
+    background: var(--color-card-1);
+    width: calc(100% - 42px);
+    transition: all .3s;
+    border-radius: 50px;
     margin-top: 10px;
-    padding: 0 10px;
+    padding: 0 20px;
     display: flex;
 }
 .login-pan-card label:focus-within {
-    border: 1px solid var(--color-main);
+    background: var(--color-card-2);
 }
 .login-pan-card label:focus-within > svg {
     fill: var(--color-main);
@@ -107,6 +106,7 @@ html, body {
     width: 15px;
 }
 .login-pan-card label.default {
+    background: unset;
     border: none;
 }
 .login-pan-card label.default > input {
@@ -419,4 +419,90 @@ html, body {
     margin-top: 3px;
     height: 1rem;
     height: 1rem;
+}
+
+/* 图片预览器覆盖样式 */
+.viewer-button {
+    background-color: var(--color-card-2);
+    border-radius: 7px;
+    height: 40px;
+    width: 40px !important;
+    right: 0;
+    top: 0;
+    margin-top: 10px;
+    margin-right: 10px;
+}
+  
+.viewer-button:focus,
+.viewer-button:hover {
+    background-color: var(--color-card-2);
+}
+
+.viewer-button::before {
+    bottom: 10px;
+    left: 11px;
+    position: absolute;
+}
+
+.viewer-toolbar > ul > li {
+    background-color: var(--color-card-2);
+    border-radius: 7px;
+    float: left;
+    height: 35px;
+    width: 35px;
+    margin: 0 10px;
+}
+
+.viewer-toolbar > ul > li:focus,
+.viewer-toolbar > ul > li:hover {
+    background-color: var(--color-card-2);
+}
+
+.viewer-toolbar > ul > li:focus {
+    box-shadow: 0 0 3px transparent;
+}
+
+.viewer-toolbar > ul > li::before {
+    margin: 7px;
+}
+
+.viewer-list > .viewer-active {
+    border-bottom: 2px solid var(--color-main);
+}
+.viewer-list > li {
+    width: 50px;
+    border-radius: 7px 7px 0 0;
+    border-bottom: 2px solid transparent;
+}
+
+.viewer-tooltip {
+    display: none;
+}
+
+.viewer-canvas {
+    backdrop-filter: blur(10px);
+    background: transparent;
+}
+
+.viewer-navbar {
+    background-color: transparent;
+}
+
+.viewer-footer {
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+}
+.viewer-footer > div {
+    margin: 20px;
+}
+.viewer-footer > div:last-child {
+    align-items: flex-end;
+    display: flex;
+    flex: 1;
+}
+.viewer-footer ul {
+    pointer-events: all;
+    height: 55px;
 }

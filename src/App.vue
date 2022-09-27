@@ -10,7 +10,7 @@
     <div class="layui-tab layui-tab-brief main-body">
       <ul class="layui-tab-title">
         <li @click="changeChat" :class="login.status ? '' : 'layui-this'" :style="login.status ? 'margin-top: calc(-100% + 5px);' : ''">
-          <svg-icon icon-class="house-solid.svg"/>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z"/></svg>
         </li>
         <li @click="changeChat(false)" :class="!login.status ? '' : 'layui-this'">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -33,7 +33,7 @@
         </li>
       </ul>
       <div class="layui-tab-content">
-        <div :class="!login.status ? 'layui-tab-item layui-show' : 'layui-tab-item'" name="主页">
+        <div :class="!login.status ? 'layui-tab-item layui-show' : 'layui-tab-item'" :name="$t('home.title')">
           <div class="home-body">
             <div class="login-pan-card ss-card">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -41,7 +41,7 @@
                   d="M380.6 365.6C401.1 379.9 416 404.3 416 432C416 476.2 380.2 512 336 512C291.8 512 256 476.2 256 432C256 423.6 257.3 415.4 259.7 407.8L114.1 280.4C103.8 285.3 92.21 288 80 288C35.82 288 0 252.2 0 208C0 163.8 35.82 128 80 128C101.9 128 121.7 136.8 136.2 151.1L320 77.52C321.3 34.48 356.6 0 400 0C444.2 0 480 35.82 480 80C480 117.9 453.7 149.6 418.4 157.9L380.6 365.6zM156.3 232.2L301.9 359.6C306.9 357.3 312.1 355.4 317.6 354.1L355.4 146.4C351.2 143.6 347.4 140.4 343.8 136.9L159.1 210.5C159.7 218 158.5 225.3 156.3 232.2V232.2z">
                 </path>
               </svg>
-              <p>连接到 OICQ HTTP</p>
+              <p>{{ $t('home.card.title') }}</p>
               <form @submit.prevent @submit="connect">
                 <label>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
@@ -49,7 +49,7 @@
                       d="M172.5 131.1C228.1 75.51 320.5 75.51 376.1 131.1C426.1 181.1 433.5 260.8 392.4 318.3L391.3 319.9C381 334.2 361 337.6 346.7 327.3C332.3 317 328.9 297 339.2 282.7L340.3 281.1C363.2 249 359.6 205.1 331.7 177.2C300.3 145.8 249.2 145.8 217.7 177.2L105.5 289.5C73.99 320.1 73.99 372 105.5 403.5C133.3 431.4 177.3 435 209.3 412.1L210.9 410.1C225.3 400.7 245.3 404 255.5 418.4C265.8 432.8 262.5 452.8 248.1 463.1L246.5 464.2C188.1 505.3 110.2 498.7 60.21 448.8C3.741 392.3 3.741 300.7 60.21 244.3L172.5 131.1zM467.5 380C411 436.5 319.5 436.5 263 380C213 330 206.5 251.2 247.6 193.7L248.7 192.1C258.1 177.8 278.1 174.4 293.3 184.7C307.7 194.1 311.1 214.1 300.8 229.3L299.7 230.9C276.8 262.1 280.4 306.9 308.3 334.8C339.7 366.2 390.8 366.2 422.3 334.8L534.5 222.5C566 191 566 139.1 534.5 108.5C506.7 80.63 462.7 76.99 430.7 99.9L429.1 101C414.7 111.3 394.7 107.1 384.5 93.58C374.2 79.2 377.5 59.21 391.9 48.94L393.5 47.82C451 6.731 529.8 13.25 579.8 63.24C636.3 119.7 636.3 211.3 579.8 267.7L467.5 380z">
                     </path>
                   </svg>
-                  <input v-model="login.address" placeholder="连接地址" class="ss-input" id="sev_address" autocomplete="off">
+                  <input v-model="login.address" :placeholder="$t('home.card.address')" class="ss-input" id="sev_address" autocomplete="off">
                 </label>
                 <label>
                   <svg style="padding: 0 2px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
@@ -57,27 +57,27 @@
                       d="M80 192V144C80 64.47 144.5 0 224 0C303.5 0 368 64.47 368 144V192H384C419.3 192 448 220.7 448 256V448C448 483.3 419.3 512 384 512H64C28.65 512 0 483.3 0 448V256C0 220.7 28.65 192 64 192H80zM144 192H304V144C304 99.82 268.2 64 224 64C179.8 64 144 99.82 144 144V192z">
                     </path>
                   </svg>
-                  <input v-model="login.token" placeholder="许可令牌" class="ss-input" type="password" id="access_token"
+                  <input v-model="login.token" :placeholder="$t('home.card.key')" class="ss-input" type="password" id="access_token"
                     autocomplete="off">
                 </label>
                 <div style="display: flex;">
                   <label class="default">
                     <input type="checkbox" id="opt_save_password" onclick="changeSavePwd(this)">
-                    <a>记住密码</a>
+                    <a>{{ $t('home.card.save_pwd') }}</a>
                   </label>
                   <div style="flex: 1;"></div>
                   <label class="default" style="justify-content: flex-end;">
                     <input type="checkbox" id="opt_auto_connect" onclick="changeOpt(this)">
-                    <a>自动连接</a>
+                    <a>{{ $t('home.card.auto_con') }}</a>
                   </label>
                 </div>
                 <a id="save_pwd_note" class="opt-tip login-tip" style="display: none;">
-                  安全警告：Stapxs QQ Lite 将以明文保存您的密码，请确保您的设备安全。再次点击确认开启。
+                  {{ $t('home.card.tip', {name: $t('name')}) }}
                 </a>
-                <button id="connect_btn" class="ss-button" type="submit">连接</button>
+                <button id="connect_btn" class="ss-button" type="submit">{{ $t('home.card.connect') }}</button>
               </form>
               <a href="https://github.com/Stapxs/Stapxs-QQ-Lite/blob/main/README.md#%E4%BD%BF%E7%94%A8" target="_blank"
-                style="margin-bottom: -20px;">如何连接</a>
+                style="margin-bottom: -20px;">{{ $t('home.card.how_to_connect') }}</a>
               <div class="wave-pan" style="margin-left: -30px;">
                 <svg id="login-wave" class="waves-svg" xmlns="http://www.w3.org/2000/svg"
                   xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 24 170 70" preserveAspectRatio="none"
@@ -104,45 +104,60 @@
         <div class="layui-tab-item">
           <Friends :list="userList" @userClick="setChat" @addMessage="addIn" @loadHistory="loadHistory"></Friends>
         </div>
-        <div class="layui-tab-item">内容4</div>
+        <div class="layui-tab-item">
+          <Options></Options>
+        </div>
       </div>
     </div>
     <!-- 消息主框体 -->
     <Chat
-      :chat="onChat"
-      :list="messageList"
-      :mergeList="mergeMessageList"
-      :mumberInfo="nowMemberInfo"
+      ref="chat"
       v-if="login.status && onChat.id != ''"
       v-show="showChat"
-      ref="chat"
+      :mergeList="mergeMessageList"
+      :mumberInfo="nowMemberInfo"
+      :list="messageList"
+      :imgView="imgView"
+      :chat="onChat"
+      @hiddenUserInfo="hiddenUserInfo"
       @cleanMerge="cleanMerge"
       @message="showAppMsg"
-      @hiddenUserInfo="hiddenUserInfo"></Chat>
-      <!-- 提示信息显示区 -->
-      <TransitionGroup class="app-msg" name="appmsg" tag="div">
-        <div v-for="msg in appMessageList" :key="'appmsg-' + msg.id">
-          <div v-html="msg.svg"></div>
-          <a>{{ msg.text }}</a>
-          <div v-if="!msg.autoClose" @click="removeAppMsg(msg.id)">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>
-          </div>
+      @viewImg="viewImg"></Chat>
+    <!-- 提示信息显示区 -->
+    <TransitionGroup class="app-msg" name="appmsg" tag="div">
+      <div v-for="msg in appMessageList" :key="'appmsg-' + msg.id">
+        <div v-html="msg.svg"></div>
+        <a>{{ msg.text }}</a>
+        <div v-if="!msg.autoClose" @click="removeAppMsg(msg.id)">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>
         </div>
-      </TransitionGroup>
+      </div>
+    </TransitionGroup>
+    <!-- 图片预览器 -->
+    <Viewer
+      class="viewer" ref="viewer"
+      :options="imgView.options"
+      :images="imgView.srcList"
+      @inited="inited">
+      <template #default="scope">
+        <img v-for="src in scope.images" :src="src[2]" :key="src[1]">
+        {{scope.options}}
+      </template>
+    </Viewer>
   </div>
 </template>
 
 <script>
 import Vue from 'vue'
 
-import Main from './assets/js/main'
 import Util from './assets/js/util'
 
 import Friends from './pages/Friends.vue'
 import Chat from './pages/Chat.vue'
+import Options from './pages/Options.vue'
 import Messages from './pages/Messages.vue'
+import { component as Viewer } from 'v-viewer'
 
-import { waveAnimation } from './assets/js/ui.js'
 import config from '../package.json'
 
 // import { v4 as uuid } from 'uuid'
@@ -153,12 +168,13 @@ export default {
   components: {
     Friends,
     Chat,
-    Messages
+    Messages,
+    Viewer,
+    Options
   },
   // 应用全局参数
   data () {
     return {
-      version: '2.0.0',
       onChat: { type: '', id: '', name: '', avatar: '' },
       login: { address: '', token: '', status: '' },
       showChat: false,
@@ -167,7 +183,12 @@ export default {
       nowMemberInfo: {},
       messageList: [],
       userList: [],
-      inList: []
+      inList: [],
+      // 图片查看器相关参数
+      imgView: {
+        options: {inline: false, button: false, title: false, toolbar: {prev: true, rotateLeft: true, reset: true, rotateRight: true, next: true}},
+        srcList: []
+      }
     }
   },
   // 应用方法
@@ -176,26 +197,26 @@ export default {
     connect: function () {
       Vue.ws = new WebSocket('ws://' + this.login.address + '?access_token=' + this.login.token)
       Vue.ws.onopen = () => {
-        Vue.log(Vue.logMode.ws, '连接成功')
+        Vue.log(Vue.logMode.ws, this.$t('log.con_success'))
         this.login.status = true
         // 保存登录信息（一个月）
         this.$cookies.set('address', this.login.address, '1m')
         // 加载初始化数据
-        Main.loadBaseInfo()
+        Util.loadBaseInfo()
       }
       Vue.ws.onmessage = (e) => {
         Vue.log(Vue.logMode.debug, 'GET：' + e.data)
         this.parse(e.data)
       }
       Vue.ws.onclose = (e) => {
-        Vue.log(Vue.logMode.ws, '连接关闭')
+        Vue.log(Vue.logMode.ws, this.$t('log.con_closed'))
         this.login.status = false
         if (e.code !== 1000) {
-          Vue.log(Vue.logMode.err, '连接失败：' + e.code)
-          this.addAppMsg('连接失败', Vue.appMsgType.err, false)
+          Vue.log(Vue.logMode.err, this.$t('log.con_fail') + ': ' + e.code)
+          this.addAppMsg(this.$t('log.con_fail'), Vue.appMsgType.err, false)
         } else {
-          Vue.log(Vue.logMode.debug, '连接关闭：' + e.code)
-          this.addAppMsg('连接关闭', Vue.appMsgType.err)
+          Vue.log(Vue.logMode.debug, this.$t('log.con_closed') + ': ' + e.code)
+          this.addAppMsg(this.$t('log.con_closed'), Vue.appMsgType.err)
         }
         // 清空数据
         const loginAddress = this.login.address
@@ -283,6 +304,8 @@ export default {
       }
       // 清空合并转发缓存
       this.mergeMessageList = []
+      // 重置图片预览器状态
+      Object.assign(this.$data.imgView, this.$options.data().imgView)
     },
     changeChat: function (info) {
       if (!info) {
@@ -298,8 +321,9 @@ export default {
     },
     // 消息相关
     loadHistory: function (info) {
-      if (!Main.loadHistoryMessage(info.id, info.type)) {
-        // 加载历史消息失败（构建消息 ID 失败）
+      this.messageList = []
+      if (!Util.loadHistoryMessage(info.id, info.type)) {
+        this.addAppMsg('加载历史消息失败（构建消息 ID 失败）', Vue.appMsgType.err, true)
       }
     },
     newMsg: function (data) {
@@ -340,12 +364,40 @@ export default {
     },
     hiddenUserInfo: function () {
       this.nowMemberInfo = []
+    },
+    // 图片查看器相关
+    inited (viewer) {
+      this.$viewer = viewer
+    },
+    viewImg: function (msgId) {
+      // this.$viewer.destroy()
+      // this.$viewer.update()
+      // // 对列表进行排序
+      // this.imgView.srcList.sort(function (a, b) {
+      //   if (a[0] < b[0]) return -1
+      //   if (a[0] > b[0]) return 1
+      //   return 0
+      // })
+      const listGet = this.imgView.srcList
+      let show = null
+      listGet.forEach(function (item, index) {
+        if (item[1] === msgId) {
+          show = index
+        }
+      })
+      if (show !== null) {
+        console.log(show)
+        this.$viewer.view(show)
+        this.$viewer.show()
+      } else {
+        this.addAppMsg('定位图片失败', Vue.appMsgType.err, true)
+      }
     }
   },
   mounted: function () {
-    Vue.log(Vue.logMode.debug, '欢迎使用 Stapxs QQ Lite！当前运行在调试模式。')
+    Vue.log(Vue.logMode.debug, this.$t('log.welcome'))
     // 初始化波浪动画
-    waveAnimation(document.getElementById('login-wave'))
+    Util.waveAnimation(document.getElementById('login-wave'))
     // 加载 cookie 中的保存登陆信息
     if (this.$cookies.isKey('address')) {
       this.login.address = this.$cookies.get('address')
@@ -357,7 +409,7 @@ export default {
     if (!this.$cookies.isKey('version') || cmp(appVersion, cacheVersion) === 1) {
       // 更新 cookie 中的版本信息并抓取更新日志
       this.$cookies.set('version', appVersion, '1m')
-      Vue.log(Vue.logMode.ss, '版本已更新：' + cacheVersion + ' -> ' + appVersion)
+      Vue.log(Vue.logMode.ss, this.$t('version.updated') + ': ' + cacheVersion + ' -> ' + appVersion)
     }
   }
 }

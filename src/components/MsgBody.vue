@@ -12,7 +12,8 @@
       :data-raw="getMsgRawTxt(data.message)"
       :id="'chat-' + getSeq(data.message_id)"
       :data-sender="data.sender.user_id"
-      :data-time="data.time">
+      :data-time="data.time"
+      @mouseleave="hiddenUserInfo">
     <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id" v-if="!isMe || isMerge">
     <div class="message-space" v-if="isMe && !isMerge"></div>
     <div :class="isMe ? (isMerge ? 'message-body' : 'message-body me') : 'message-body'">
@@ -21,24 +22,28 @@
         <!-- 回复指示框 -->
         <div
             v-if="data.source"
-            class="msg-replay"
+            :class="isMe ? (isMerge ? 'msg-replay' : 'msg-replay me') : 'msg-replay'"
             @click="scrollToMsg(data.source.seq)">
-          <svg style="height: 1rem;display: inline-block;margin-right: 5px;fill: var(--color-font-2);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M8.31 189.9l176-151.1c15.41-13.3 39.69-2.509 39.69 18.16v80.05C384.6 137.9 512 170.1 512 322.3c0 61.44-39.59 122.3-83.34 154.1c-13.66 9.938-33.09-2.531-28.06-18.62c45.34-145-21.5-183.5-176.6-185.8v87.92c0 20.7-24.31 31.45-39.69 18.16l-176-151.1C-2.753 216.6-2.784 199.4 8.31 189.9z"></path></svg>
-          {{ data.source ? data.source.message : '' }}
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M8.31 189.9l176-151.1c15.41-13.3 39.69-2.509 39.69 18.16v80.05C384.6 137.9 512 170.1 512 322.3c0 61.44-39.59 122.3-83.34 154.1c-13.66 9.938-33.09-2.531-28.06-18.62c45.34-145-21.5-183.5-176.6-185.8v87.92c0 20.7-24.31 31.45-39.69 18.16l-176-151.1C-2.753 216.6-2.784 199.4 8.31 189.9z"></path></svg>
+          <a> {{ data.source ? data.source.message : '' }} </a>
         </div>
         <!-- 消息体 -->
         <div v-for="(item, index) in data.message" :class="isMsgInline(item.type) ? 'msg-inline' : ''" :key="data.message_id + '-m-' + index">
-          <span v-if="item.type === 'text' && item.text !== ''" class="msg-text" >{{ item.text }}</span>
-          <img v-if="item.type === 'image'" title="查看图片" alt="群图片" :class="imgStyle(data.message.length, index)" :src="item.url">
-          <img v-if="item.type === 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/src/qq-face/' + item.id + '.gif')" title="惊恐">
-          <span v-if="item.type === 'bface'" style="font-style: italic;opacity: 0.7;">[ 表情：{{ item.text }} ]</span>
-          <div v-if="item.type === 'at' && isAtShow(data.source, item.qq)" :class="isMe ? (isMerge ? 'msg-at' : 'msg-at me') : 'msg-at'">
-            <a @mouseover="showUserInfo" @mouseleave="hiddenUserInfo" :data-id="item.qq" :data-group="data.group_id">{{ item.text }}</a>
+          <span v-if="item.type === 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
+          <img v-else-if="item.type === 'image'" title="查看图片" alt="群图片" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
+          <img v-else-if="item.type === 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/src/qq-face/' + item.id + '.gif')" title="惊恐">
+          <span v-else-if="item.type === 'bface'" style="font-style: italic;opacity: 0.7;">[ 表情：{{ item.text }} ]</span>
+          <div v-else-if="item.type === 'at'" v-show="isAtShow(data.source, item.qq)" :class="getAtClass(item.qq)">
+            <a @mouseenter="showUserInfo" :data-id="item.qq" :data-group="data.group_id">{{ item.text }}</a>
           </div>
-          <div
-            v-if="item.type === 'xml'"
+          <div v-else-if="item.type === 'xml'"
             v-html="buildXML(item.data, item.id, data.message_id)"
             @click="xmlClick('xml-' + data.message_id)"></div>
+            <div v-else-if="item.type === 'json'"
+              v-html="buildJSON(item.data, data.message_id)"
+              @click="xmlClick('json-' + data.message_id)">
+            </div>
+            <span v-else class="msg-unknown">（不支持的消息）</span>
         </div>
         <!-- 链接预览框 -->
       </div>
@@ -49,6 +54,7 @@
 
 <script>
 import Vue from 'vue'
+import Xss from 'xss'
 import Util from '../assets/js/util.js'
 
 export default {
@@ -108,17 +114,6 @@ export default {
       }
     },
     /**
-     * 处理图片显示需要的样式
-     * @param { int } length 消息段数
-     * @param { int } at 图片在消息中的位置
-     */
-    imgStyle: function (length, at) {
-      if (length === 1) { return 'msg-img alone' }
-      if (at === 0) { return 'msg-img top' }
-      if (at === length - 1) { return 'msg-img button' }
-      return 'msg-img'
-    },
-    /**
      * 在有回复的情况下判断是否隐藏重复 at 消息
      * @param { object } message 消息体
      * @param { long } at at user_id
@@ -129,8 +124,33 @@ export default {
       }
       return true
     },
+    getAtClass: function (who) {
+      let back = 'msg-at'
+      if (this.isMe && !(this.isMerge)) {
+        back += ' me'
+      }
+      if (Vue.loginInfo.account.uin === who) {
+        back += ' atme'
+      }
+      return back
+    },
     scrollToMsg: function (id) {
       this.$emit('scrollToMsg', 'chat-' + id)
+    },
+    /**
+     * 处理图片显示需要的样式，顺便添加图片列表
+     * @param { int } length 消息段数
+     * @param { int } at 图片在消息中的位置
+     */
+    imgStyle: function (length, at) {
+      // 处理样式
+      if (length === 1) { return 'msg-img alone' }
+      if (at === 0) { return 'msg-img top' }
+      if (at === length - 1) { return 'msg-img button' }
+      return 'msg-img'
+    },
+    imgClick: function (msgId) {
+      this.$emit('viewImg', msgId)
     },
     getSeq: function (id) {
       return Util.parseMsgId(id).seqid
@@ -206,13 +226,9 @@ export default {
       }
       return div.outerHTML
     },
-    /**
-     * xml 消息的点击事件
-     */
     xmlClick: function (id) {
       const sender = document.getElementById(id)
       const type = sender.dataset.type
-      console.log(type)
       // 如果存在 url 项，优先打开 url
       if (sender.dataset.url !== undefined && sender.dataset.url !== 'undefined' && sender.dataset.url !== '') {
         window.open(sender.dataset.url, '_blank')
@@ -223,6 +239,52 @@ export default {
         // 解析合并转发消息
         Vue.sendWs(Vue.createAPI('getForwardMsg', { 'resid': sender.dataset.id }))
       }
+    },
+    /**
+     * 尝试渲染 JSON 消息
+     * @param { object } data json 消息内容
+     */
+    buildJSON: function (data, msgId) {
+      // 解析 JSON
+      let json = JSON.parse(data)
+      let body = json.meta[Object.keys(json.meta)[0]]
+      // App 信息
+      let name = body.tag === undefined ? body.title : body.tag
+      let icon = body.icon === undefined ? body.source_icon : body.icon
+
+      let title = body.title
+      let desc = body.desc
+
+      let preview = body.preview
+      if (preview !== undefined && preview.indexOf('http') === -1) preview = '//' + preview
+
+      let url = body.qqdocurl === undefined ? body.jumpUrl : body.qqdocurl
+      // 构建 HTML
+      let html = '<div class="msg-json" id="json-' + msgId + '" data-url="' + url + '">' +
+                 '<p>' + title + '</p>' +
+                 '<span>' + desc + '</span>' +
+                 '<img src="' + preview + '">' +
+                 '<div><img src="' + icon + '"><span>' + name + '</span></div>' +
+                 '</div>'
+      // 返回
+      return html
+    },
+    /**
+     * 处理纯文本消息（换行、链接等）
+     * @param { string } text 纯文本消息
+     */
+    parseText: function (text) {
+      // 把 r 转为 n
+      text = text.replaceAll('\r\n', '\n').replaceAll('\r', '\n')
+      // 防止意外渲染转义字符串
+      text = text.replaceAll('&', '&amp;')
+      // XSS 过滤
+      text = Xss(text)
+      // 链接判定
+      const reg = /(http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/gi //eslint-disable-line
+      text = text.replaceAll(reg, '<a href="$&" target="_blank">$&</a>')
+      // 返回
+      return text
     },
     showUserInfo: function (event) {
       const sender = event.currentTarget

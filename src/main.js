@@ -3,17 +3,23 @@ import App from './App'
 
 import 'layui/dist/css/layui.css'
 import 'layui/dist/layui.js'
+import 'viewerjs/dist/viewer.css'
 
 import '../src/assets/css/view.css'
 import '../src/assets/css/chat.css'
 import '../src/assets/css/msg.css'
-
-import '@/icons'
+import '../src/assets/css/options.css'
 
 import infScroll from 'vue-infinite-scroll'
 import VueCookies from 'vue-cookies'
+import VueViewer from 'v-viewer'
+import VueXss from 'vue-xss'
+import VueI18n from 'vue-i18n'
 Vue.use(infScroll)
 Vue.use(VueCookies)
+Vue.use(VueViewer)
+Vue.use(VueXss, {whiteList: {}, stripIgnoreTag: true})
+Vue.use(VueI18n)
 
 /* eslint-disable */
 Vue.config.productionTip = false
@@ -36,7 +42,21 @@ Vue.appMsgType = {
   err: ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 0C114.6 0 0 114.6 0 256s114.6 256 256 256s256-114.6 256-256S397.4 0 256 0zM232 152C232 138.8 242.8 128 256 128s24 10.75 24 24v128c0 13.25-10.75 24-24 24S232 293.3 232 280V152zM256 400c-17.36 0-31.44-14.08-31.44-31.44c0-17.36 14.07-31.44 31.44-31.44s31.44 14.08 31.44 31.44C287.4 385.9 273.4 400 256 400z"/></svg>']
 }
 
+// 载入 i10n
+import zhCN from '../src/assets/src/l10n/zh_CN.json'
+import enUS from '../src/assets/src/l10n/en_US.json'
+const messages = {
+  zhCN: zhCN,
+  enUS: enUS
+}
+const i18n = new VueI18n({
+  locale: 'zhCN',
+  fallbackLocale: 'zhCN',
+  messages
+})
+
 const app = new Vue({
+  i18n,
   el: '#app',
   components: { App },
   template: '<App/>'

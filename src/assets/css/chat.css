@@ -1,3 +1,7 @@
+textarea {
+    caret-color: var(--color-main);
+}
+
 .chat-pan {
     background-color: var(--color-card);
     color: var(--color-font);
