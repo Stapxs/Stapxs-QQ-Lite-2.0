@@ -2,9 +2,14 @@
     "name": "Stapxs QQ Lite",
     "author": "Stapx Steve [林槐]",
     "description": "一个兼容 oicq-http 的非官方网页版 QQ 客户端",
+    "base": {
+        "exit": "退出",
+        "search": "搜索 ……"
+    },
     "l10n": {
         "name": "中文（简体）",
         "type": "zh_CN",
+        "version": "2.0.0",
         "author": "Stapxs QQ Lite",
         "description": "你好世界！这是 Stapxs QQ Lite 的默认简体中文。"
     },
@@ -30,6 +35,36 @@
             "how_to_connect": "如何连接"
         }
     },
+    "friend": {
+        "title": "联系人"
+    },
+    "chat": {
+        "space": "选择联系人开始聊天",
+        "last_msg": "上次消息 - {time}",
+        "no_msg": "暂无消息",
+        "no_more_msg": "没有更多消息了",
+        "merge_msg": "合并消息",
+        "unsupported_msg": "（不支持的消息）",
+        "msg_not_load": "无法定位上下文",
+        "view_pic": "预览图片",
+        "group_pic": "群图片",
+        "join_time": "{time} 加入群聊",
+        "fun_menu": {
+            "pic": "图片",
+            "face": "表情"
+        },
+        "msg_menu": {
+            "reply": "回复",
+            "forward": "转发",
+            "multiple_choice": "多选",
+            "copy": "复制",
+            "withdraw": "撤回"
+        },
+        "member_type": {
+            "admin": "管理员",
+            "owner": "群主"
+        }
+    },
     "option": {
         "title": "设置",
         "bar": {
@@ -44,6 +79,7 @@
         "view": {
             "l10n": "本土化",
             "l10n_author": "作者",
+            "l10n_expired": "需要更新",
             "language": "语言（Language）",
             "choice_lang": "Choice ……",
             "language_tip": "喵喵喵喵？",
@@ -54,6 +90,19 @@
             "auto_dark_tip": "Biubiu ——，自动变黑！",
             "theme_color": "主题色",
             "theme_color_tip": "换个心情 🎵 ~"
+        },
+        "dev": {
+            "dev": "开发者选项",
+            "log_level": "日志等级",
+            "log_level_err": "错误",
+            "log_level_info": "基本",
+            "log_level_all": "全部",
+            "log_level_tip": "ReferenceError: moYu is not defined",
+            "msg_menu": "禁用自定义右击菜单",
+            "msg_menu_tip": "哼哼啊啊啊啊啊，让我选 ——"
+        },
+        "account": {
+            "config": "账号设置"
         }
     }
 }

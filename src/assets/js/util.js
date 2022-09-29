@@ -117,10 +117,7 @@ export function loadBaseInfo () {
   // 用户信息
   Vue.sendWs(Vue.createAPI('get_login_info', null, 'getLoginInfo'))
   // // 通用凭证
-  // Vue.sendWs(Vue.createAPI(
-  //   'get_csrf_token',
-  //   null, null
-  // ))
+  // Vue.sendWs(Vue.createAPI('getCsrfToken', null, null))
   // 好友列表
   Vue.sendWs(Vue.createAPI('getFriendList', null, null))
   // 群列表

@@ -1,0 +1,22 @@
+[
+    {
+        "value": "zh-CN",
+        "name": "中文（简体）",
+        "time": {
+            "date": {
+                "year": "numeric",
+                "month": "short",
+                "day": "numeric"
+            },
+            "time": {
+                "hour": "numeric",
+                "minute": "numeric",
+                "second": "numeric"
+            }
+        }
+    },
+    {
+        "value": "en-US",
+        "name": "English(US)"
+    }
+]

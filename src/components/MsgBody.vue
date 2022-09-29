@@ -30,9 +30,9 @@
         <!-- 消息体 -->
         <div v-for="(item, index) in data.message" :class="isMsgInline(item.type) ? 'msg-inline' : ''" :key="data.message_id + '-m-' + index">
           <span v-if="item.type === 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
-          <img v-else-if="item.type === 'image'" title="查看图片" alt="群图片" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
-          <img v-else-if="item.type === 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/src/qq-face/' + item.id + '.gif')" title="惊恐">
-          <span v-else-if="item.type === 'bface'" style="font-style: italic;opacity: 0.7;">[ 表情：{{ item.text }} ]</span>
+          <img v-else-if="item.type === 'image'" :title="$t('chat.view_pic')" :alt="$t('chat.group_pic')" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
+          <img v-else-if="item.type === 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/src/qq-face/' + item.id + '.gif')" :title="item.text">
+          <span v-else-if="item.type === 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('fun_menu.pic') }}：{{ item.text }} ]</span>
           <div v-else-if="item.type === 'at'" v-show="isAtShow(data.source, item.qq)" :class="getAtClass(item.qq)">
             <a @mouseenter="showUserInfo" :data-id="item.qq" :data-group="data.group_id">{{ item.text }}</a>
           </div>
@@ -43,7 +43,7 @@
               v-html="buildJSON(item.data, data.message_id)"
               @click="xmlClick('json-' + data.message_id)">
             </div>
-            <span v-else class="msg-unknown">（不支持的消息）</span>
+            <span v-else class="msg-unknown">{{ $t('chat.unsupported_msg') }}</span>
         </div>
         <!-- 链接预览框 -->
       </div>
@@ -170,7 +170,7 @@ export default {
       item = item.replaceAll('title', 'p') // title
       item = item.replaceAll('summary', 'a') // summary
       item = item.replaceAll('<a', '<a class="msg-xml-summary"')
-      item = item.replaceAll('<picture', '<img alt="XML 图片" class="msg-xml-img"') // picture
+      item = item.replaceAll('<picture', '<img class="msg-xml-img"') // picture
       // 将不正确的参数改为 dataset
       item = item.replaceAll('size=', 'data-size=')
       item = item.replaceAll('linespace=', 'data-linespace=')

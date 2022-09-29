@@ -1,7 +1,7 @@
 /*
  * @FileDescription: 设置页面
  * @Author: Stapxs
- * @Date: 2022/08/18
+ * @Date: 2022/09/26
  * @Version: 1.0
 */
 
@@ -32,10 +32,10 @@
           <a>2.0</a>
         </div>
         <span style="text-align: center;">{{ $t('description') }}</span>
-        <a>v{{ config.version }}</a>
+        <a>v{{ packageInfo.version }}</a>
         <a class="ss-button" href="">{{ $t('option.info.visit_github') }}</a>
         <div>
-          <span>1 - {{ config.version }}</span>
+          <span>1 - {{ packageInfo.version }}</span>
           <span>2 - {{ browser.name }}</span>
           <span>3 - {{ browser.version }}</span>
           <span>4 - {{ browser.os }}</span>
@@ -137,19 +137,23 @@
           <li>{{ $t('option.bar.dev')}}</li>
         </ul>
         <div class="opt-body layui-tab-content">
-          <div class="layui-tab-item layui-show">1</div>
+          <div class="layui-tab-item layui-show">
+            <OptAccount :config="config" :login="login"></OptAccount>
+          </div>
           <div class="layui-tab-item">
-            <OptView></OptView>
+            <OptView :config="config"></OptView>
           </div>
           <div class="layui-tab-item">3</div>
-          <div class="layui-tab-item">4</div>
+          <div class="layui-tab-item">
+            <OptDev :config="config"></OptDev>
+          </div>
         </div>
       </div>
       <div class="ss-card end-card">
         <div>
           <div>
             <span>Stapxs QQ Lite</span>
-            <a>{{ config.version }}</a>
+            <a>{{ packageInfo.version }}</a>
           </div>
           <span>Copyright © 2022 Stapx Steve [ 林槐 ]</span>
         </div>
@@ -160,16 +164,20 @@
 </template>
 
 <script>
-import config from '../../package.json'
+import packageInfo from '../../package.json'
 import Util from '../assets/js/util.js'
 import OptView from './options/OptView.vue'
+import OptDev from './options/OptDev.vue'
+import OptAccount from './options/OptAccount.vue'
 const { detect } = require('detect-browser')
 
 export default {
   name: 'Options',
+  props: ['config', 'login'],
+  components: { OptView, OptDev, OptAccount },
   data () {
     return {
-      config: config,
+      packageInfo: packageInfo,
       contributors: [],
       browser: detect(),
       util: Util
@@ -191,7 +199,6 @@ export default {
         }
       })
       .catch(console.error)
-  },
-  components: { OptView }
+  }
 }
 </script>

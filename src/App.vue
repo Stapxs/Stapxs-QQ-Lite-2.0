@@ -105,7 +105,7 @@
           <Friends :list="userList" @userClick="setChat" @addMessage="addIn" @loadHistory="loadHistory"></Friends>
         </div>
         <div class="layui-tab-item">
-          <Options></Options>
+          <Options :config="config" :login="login.status"></Options>
         </div>
       </div>
     </div>
@@ -151,6 +151,7 @@
 import Vue from 'vue'
 
 import Util from './assets/js/util'
+import Option from './assets/js/options'
 
 import Friends from './pages/Friends.vue'
 import Chat from './pages/Chat.vue'
@@ -184,6 +185,7 @@ export default {
       messageList: [],
       userList: [],
       inList: [],
+      config: {},
       // 图片查看器相关参数
       imgView: {
         options: {inline: false, button: false, title: false, toolbar: {prev: true, rotateLeft: true, reset: true, rotateRight: true, next: true}},
@@ -198,11 +200,11 @@ export default {
       Vue.ws = new WebSocket('ws://' + this.login.address + '?access_token=' + this.login.token)
       Vue.ws.onopen = () => {
         Vue.log(Vue.logMode.ws, this.$t('log.con_success'))
-        this.login.status = true
         // 保存登录信息（一个月）
         this.$cookies.set('address', this.login.address, '1m')
         // 加载初始化数据
         Util.loadBaseInfo()
+        // PS：标记登陆成功在获取用户信息的回调位置，防止无法获取到内容
       }
       Vue.ws.onmessage = (e) => {
         Vue.log(Vue.logMode.debug, 'GET：' + e.data)
@@ -228,9 +230,28 @@ export default {
       const msg = JSON.parse(str)
       if (msg.echo !== undefined) {
         switch (msg.echo) {
-          case 'getLoginInfo': Vue.loginInfo = msg.data; break // 获取基本信息
+          case 'getCsrfToken': console.log(msg); break
           case 'getGroupList': this.userList = Util.mergeList(this.userList, msg.data); break // 获取群列表
           case 'getFriendList': this.userList = Util.mergeList(this.userList, msg.data); break // 获取好友列表
+          case 'getLoginInfo': { // 获取基本信息
+            Vue.loginInfo = msg.data
+            this.login.status = true
+            setTimeout(() => {
+            // 获取更详细的信息
+            // let url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
+            // let info = 'bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${QQ号}&nf=0&of=0&ldw=${bkn}'
+            // Vue.sendWs(Vue.createAPI(
+            //   'http_proxy',
+            //   { 'url': 'https://cgi.find.qq.com/qqfind/buddy/search_v3?keyword=' + msg.data.account.uin },
+            //   'getMoreLoginInfo'
+            // ))
+            }, 1000)
+            break
+          }
+          case 'getMoreLoginInfo': {
+            console.log(msg)
+            break
+          }
           case 'getForwardMsg': { // 获取合并转发消息
             const list = msg.data
             // 格式化不规范消息格式
@@ -395,6 +416,8 @@ export default {
     }
   },
   mounted: function () {
+    Vue.configs = {}
+    Vue.$i18n = this.$i18n
     Vue.log(Vue.logMode.debug, this.$t('log.welcome'))
     // 初始化波浪动画
     Util.waveAnimation(document.getElementById('login-wave'))
@@ -410,6 +433,10 @@ export default {
       // 更新 cookie 中的版本信息并抓取更新日志
       this.$cookies.set('version', appVersion, '1m')
       Vue.log(Vue.logMode.ss, this.$t('version.updated') + ': ' + cacheVersion + ' -> ' + appVersion)
+    }
+    // 加载设置项（保证页面加载完成后）
+    window.onload = () => {
+      this.$data.config = Option.load()
     }
   }
 }
