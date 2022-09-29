@@ -17,6 +17,10 @@
     },
     {
         "value": "en-US",
-        "name": "English(US)"
+        "name": "English (United States)"
+    },
+	{
+        "value": "zh-TW",
+        "name": "中文（台灣繁體）"
     }
 ]
