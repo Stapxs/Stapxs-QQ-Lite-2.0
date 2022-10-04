@@ -48,20 +48,14 @@ const messages = {
   'zh-CN': zh
 }
 // 载入时间格式化设置
-import l10nCfg from '../src/assets/src/l10n/_l10nconfig.json'
-let dateTimeFormats = {}
-l10nCfg.forEach((item) => {
-  dateTimeFormats[item.value] = item.time
-})
-console.log('=========================')
-console.log(dateTimeFormats)
+// date: {year:'numeric',month:"short",day:"numeric"},
+// time: {hour:"numeric",minute:"numeric",second:"numeric"}
 // 初始化
 const i18n = new VueI18n({
   locale: 'zh-CN',
   fallbackLocale: 'zh-CN',
   silentFallbackWarn: true,
-  messages,
-  dateTimeFormats
+  messages
 })
 
 const app = new Vue({

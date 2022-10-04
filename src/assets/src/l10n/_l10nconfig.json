@@ -1,26 +1,17 @@
 [
     {
         "value": "zh-CN",
-        "name": "中文（简体）",
-        "time": {
-            "date": {
-                "year": "numeric",
-                "month": "short",
-                "day": "numeric"
-            },
-            "time": {
-                "hour": "numeric",
-                "minute": "numeric",
-                "second": "numeric"
-            }
-        }
+        "lang": "zh-CN",
+        "name": "中文（简体）"
     },
     {
         "value": "en-US",
+        "lang": "en-US",
         "name": "English (United States)"
     },
 	{
         "value": "zh-TW",
+        "lang": "zh-TW",
         "name": "中文（台灣繁體）"
     }
 ]

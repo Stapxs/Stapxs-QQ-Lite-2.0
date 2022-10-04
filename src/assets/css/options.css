@@ -212,6 +212,9 @@
 .opt-page > div {
     padding: 15px 20px;
 }
+.opt-page > div > header{
+    letter-spacing: 0;
+}
 .opt-page > div:not(:first-child) {
     margin-top: 20px;
 }
@@ -321,13 +324,22 @@
     display: flex;
     flex: 1;
 }
-.account-info > div span:first-child {
+.account-info > div > span {
+    color: var(--color-font-1-r);
+}
+.account-info > div > div {
+    align-items: flex-end;
+    display: flex;
+}
+.account-info > div > div > span:first-child {
     color: var(--color-font-r);
     font-size: 1.1rem;
     font-weight: bold;
 }
-.account-info > div span:last-child {
+.account-info > div > div > span:last-child {
     color: var(--color-font-1-r);
+    margin-bottom: 2px;
+    margin-left: 10px;
     opacity: 0.7;
 }
 .account-info > svg {

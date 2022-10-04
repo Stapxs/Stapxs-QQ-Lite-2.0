@@ -105,7 +105,7 @@
           <Friends :list="userList" @userClick="setChat" @addMessage="addIn" @loadHistory="loadHistory"></Friends>
         </div>
         <div class="layui-tab-item">
-          <Options :config="config" :login="login.status"></Options>
+          <Options :config="config" :login="login.status" :uinfo="login"></Options>
         </div>
       </div>
     </div>
@@ -158,6 +158,7 @@ import Chat from './pages/Chat.vue'
 import Options from './pages/Options.vue'
 import Messages from './pages/Messages.vue'
 import { component as Viewer } from 'v-viewer'
+import FileDownloader from 'js-file-downloader'
 
 import config from '../package.json'
 
@@ -176,8 +177,8 @@ export default {
   // 应用全局参数
   data () {
     return {
-      onChat: { type: '', id: '', name: '', avatar: '' },
-      login: { address: '', token: '', status: '' },
+      onChat: { type: '', id: '', name: '', avatar: '', info: {} },
+      login: { address: '', token: '', status: '', info: {} },
       showChat: false,
       mergeMessageList: [],
       appMessageList: [],
@@ -230,26 +231,62 @@ export default {
       const msg = JSON.parse(str)
       if (msg.echo !== undefined) {
         switch (msg.echo) {
-          case 'getCsrfToken': console.log(msg); break
           case 'getGroupList': this.userList = Util.mergeList(this.userList, msg.data); break // 获取群列表
           case 'getFriendList': this.userList = Util.mergeList(this.userList, msg.data); break // 获取好友列表
           case 'getLoginInfo': { // 获取基本信息
             Vue.loginInfo = msg.data
+            console.log(Vue.loginInfo)
             this.login.status = true
-            setTimeout(() => {
             // 获取更详细的信息
-            // let url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
-            // let info = 'bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${QQ号}&nf=0&of=0&ldw=${bkn}'
-            // Vue.sendWs(Vue.createAPI(
-            //   'http_proxy',
-            //   { 'url': 'https://cgi.find.qq.com/qqfind/buddy/search_v3?keyword=' + msg.data.account.uin },
-            //   'getMoreLoginInfo'
-            // ))
-            }, 1000)
+            let url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
+            let info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${msg.data.account.uin}&nf=0&of=0&ldw=${msg.data.oicq.bkn}`
+            Vue.sendWs(Vue.createAPI(
+              'http_proxy',
+              { 'url': url, 'method': 'post', 'data': info },
+              'getMoreLoginInfo'
+            ))
             break
           }
           case 'getMoreLoginInfo': {
-            console.log(msg)
+            this.login.info = msg.data.data.result.buddy.info_list[0]
+            break
+          }
+          case 'getMoreGroupInfo': {
+            if (this.onChat.info === undefined) {
+              this.onChat.info = {}
+            }
+            this.onChat.info.group = msg.data.data
+            break
+          }
+          case 'getMoreUserInfo': {
+            if (this.onChat.info === undefined) {
+              this.onChat.info = {}
+            }
+            this.onChat.info.user = msg.data.data.result.buddy.info_list[0]
+            break
+          }
+          case 'getGroupMemberList': {
+            if (this.onChat.info === undefined) {
+              this.onChat.info = {}
+            }
+            this.onChat.info.group_members = msg.data
+            break
+          }
+          case 'getGroupFiles': {
+            if (this.onChat.info === undefined) {
+              this.onChat.info = {}
+            }
+            this.onChat.info.group_files = msg.data.data
+            break
+          }
+          case 'getMoreGroupFiles': {
+            if (this.onChat.info !== undefined && this.onChat.info.group_files !== undefined) {
+              // 追加文件列表
+              this.onChat.info.group_files.file_list =
+                Util.mergeList(this.onChat.info.group_files.file_list, msg.data.data.file_list)
+              // 设置最大值位置
+              this.onChat.info.group_files.next_index = msg.data.data.next_index
+            }
             break
           }
           case 'getForwardMsg': { // 获取合并转发消息
@@ -306,6 +343,47 @@ export default {
               this.nowMemberInfo.x = pointInfo[1]
               this.nowMemberInfo.y = pointInfo[2]
             }
+            if (msg.echo.startsWith('downloadGroupFile')) {
+              const id = msg.echo.split('_')[1]
+              const json = JSON.parse(msg.data.data.substring(msg.data.data.indexOf('(') + 1, msg.data.data.lastIndexOf(')')))
+              console.log(id)
+              let fileName = 'new-file'
+              let fileIndex = -1
+              this.onChat.info.group_files.file_list.forEach((item, index) => {
+                if (item.id === id) {
+                  fileName = Util.htmlDecodeByRegExp(item.name)
+                  fileIndex = index
+                }
+              })
+              const that = this
+              const onProcess = function (event) {
+                if (!event.lengthComputable) return
+                var downloadingPercentage = Math.floor(event.loaded / event.total * 100)
+                if (fileIndex !== -1) {
+                  if (that.onChat.info.group_files.file_list[fileIndex].downloadingPercentage === undefined) {
+                    Vue.set(that.onChat.info.group_files.file_list[fileIndex], 'downloadingPercentage', 0)
+                  }
+                  that.onChat.info.group_files.file_list[fileIndex].downloadingPercentage = downloadingPercentage
+                }
+              }
+              // 下载文件
+              new FileDownloader({
+                url: json.data.url,
+                autoStart: true,
+                process: onProcess,
+                nameCallback: function () {
+                  return fileName
+                }
+              })
+                .then(function () {
+                  console.log('finished')
+                })
+                .catch(function (error) {
+                  if (error) {
+                    console.log(error)
+                  }
+                })
+            }
             break
           }
         }
@@ -321,7 +399,14 @@ export default {
         type: data.type,
         id: data.id,
         name: data.name,
-        avatar: data.avatar
+        avatar: data.avatar,
+        info: {
+          group: {},
+          group_members: {},
+          group_files: {},
+          group_sub_files: {},
+          user: {}
+        }
       }
       // 清空合并转发缓存
       this.mergeMessageList = []

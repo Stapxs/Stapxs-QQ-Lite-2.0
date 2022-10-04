@@ -138,7 +138,7 @@
         </ul>
         <div class="opt-body layui-tab-content">
           <div class="layui-tab-item layui-show">
-            <OptAccount :config="config" :login="login"></OptAccount>
+            <OptAccount :config="config" :login="login" :uinfo="uinfo"></OptAccount>
           </div>
           <div class="layui-tab-item">
             <OptView :config="config"></OptView>
@@ -173,7 +173,7 @@ const { detect } = require('detect-browser')
 
 export default {
   name: 'Options',
-  props: ['config', 'login'],
+  props: ['config', 'login', 'uinfo'],
   components: { OptView, OptDev, OptAccount },
   data () {
     return {

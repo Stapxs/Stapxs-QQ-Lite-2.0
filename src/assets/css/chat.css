@@ -47,6 +47,7 @@ textarea {
 .chat-pan > div:first-child > div:nth-child(4) {
     background: var(--color-card-2);
     border-radius: 50%;
+    cursor: pointer;
     height: 45px;
     width: 45px;
 }
@@ -314,4 +315,269 @@ textarea {
 }
 .mumber-info > div:first-child > div > div > div > span:first-child {
     margin-left: 0;
+}
+
+.chat-info-pan {
+    pointer-events: all;
+    position: absolute;
+    height: 100vh;
+    width: 100%;
+}
+.card-info-pan-bg {
+    background: var(--color-card-2);
+    height: 100%;
+    opacity: 0.7;
+    width: 100%;
+}
+.chat-info {
+    margin: calc(50vh - 20px) 0 0 50%;
+    transform: translate(-50%, -50%);
+    flex-direction: column;
+    position: absolute;
+    max-height: 80%;
+    display: flex;
+    width: 50%;
+    z-index: 1;
+}
+.chat-info header {
+    letter-spacing: 0;
+}
+.chat-info > header {
+    margin-bottom: 5px;
+    display: flex;
+}
+.chat-info > header > span {
+    white-space: nowrap;
+    font-size: 1rem;
+    flex: 1;
+}
+.chat-info > header > svg {
+    fill: var(--color-font);
+    cursor: pointer;
+    height: 1.5rem;
+}
+.chat-info-base {
+    background: var(--color-card-1);
+    border-radius: 7px;
+    margin: 0 10px;
+    padding: 20px;
+}
+.chat-info-base.user {
+    background: transparent;
+    margin: 0;
+}
+.chat-info-base > div:first-child {
+    background: var(--color-card-2);
+    border-radius: 7px 7px 0 0;
+    width: calc(100% + 20px);
+    align-items: center;
+    margin-left: -20px;
+    margin-top: -20px;
+    display: flex;
+    padding: 10px;
+}
+.chat-info-base.user > div:first-child {
+    background: var(--color-card-1);
+    border-radius: 7px;
+}
+.chat-info-base > div:first-child > img {
+    border: 2px solid var(--color-card-1);
+    outline: 2px solid var(--color-main);
+    border-radius: 7px;
+    height: 40px;
+    width: 40px;
+}
+.chat-info-base > div:first-child > div:nth-child(2){
+    flex-direction: column;
+    margin-left: 20px;
+    display: flex;
+    flex: 1;
+}
+.chat-info-base > div:first-child > div:nth-child(2) > a {
+    color: var(--color-font);
+    font-weight: bold;
+    font-size: 1rem;
+}
+.chat-info-base > div:first-child > div:nth-child(2) > span {
+    color: var(--color-font-1)
+}
+.chat-info-base > div:first-child > div:nth-child(3) {
+    background: var(--color-card-2);
+    border-radius: 100%;
+    padding: 15px;
+    height: 20px;
+    width: 20px;
+}
+.chat-info-base > div:first-child > div:nth-child(3) > svg {
+    fill: var(--color-font);
+}
+.chat-info-base > div:last-child {
+    padding: 0 10px;
+}
+.chat-info-base > div:last-child > header {
+    color: var(--color-main);
+    padding-bottom: 5px;
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+.chat-info-base > div:last-child > div.tags {
+    align-items: center;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    display: flex;
+}
+.chat-info-base > div:last-child > div.tags > div {
+    background: var(--color-main);
+    color: var(--color-font-r);
+    border-radius: 1rem;
+    padding: 2px 10px;
+    font-size: 0.8rem;
+    margin: 0 5px;
+}
+.chat-info-base > div:last-child > div.tags > div:first-child {
+    margin-left: 0;
+}
+.chat-info-base > div:last-child > div.admin {
+    align-items: center;
+    flex-wrap: wrap;
+    display: flex;
+}
+.chat-info-base > div:last-child > div.admin > img {
+    border: 2px solid var(--color-card-2);
+    border-radius: 100%;
+    margin: 0 3px 3px 0;
+    height: 35px;
+}
+.chat-info-base > div:last-child > div.outher > span {
+    display: block;
+}
+.chat-info-base > div:last-child > div.outher > span > span {
+    color: var(--color-font-1);
+}
+
+.chat-info-tab {
+    color: var(--color-font);
+    justify-content: center;
+    display: flex;
+    padding: 5px;
+    border: 0;
+}
+.chat-info-tab-member {
+    padding: 0 20px;
+}
+.chat-info-tab-member > div {
+    transition: background .3s;
+    align-items: center;
+    border-radius: 7px;
+    display: flex;
+    padding: 10px;
+}
+.chat-info-tab-member > div:hover {
+    background: var(--color-card-1);
+}
+.chat-info-tab-member > div > img {
+    border-radius: 100%;
+    margin-right: 10px;
+    height: 30px;
+    width: 30px;
+}
+.chat-info-tab-member > div > div {
+    align-items: center;
+    display: flex;
+    flex: 1;
+}
+.chat-info-tab-member > div > div > a {
+    color: var(--color-font);
+}
+.chat-info-tab-member > div > div > svg {
+    fill: var(--color-main);
+    margin-left: 5px;
+    height: 0.8rem;
+}
+.chat-info-tab-member > div > span {
+    color: var(--color-font-2);
+}
+
+.chat-info-tab-body {
+    flex-direction: column;
+    overflow: hidden;
+    display: flex;
+}
+.chat-info-tab-body > div {
+    overflow-y: scroll;
+}
+
+.group-files {
+    padding: 0 20px;
+}
+.group-files > div {
+    transition: background .3s;
+    align-items: center;
+    border-radius: 7px;
+    padding: 10px;
+    display: flex;
+    margin: 5px;
+}
+.group-files > div.folder {
+    cursor: pointer;
+}
+.group-files > div:hover {
+    background: var(--color-card-1);
+}
+.group-files > div > svg {
+    fill: var(--color-font);
+    margin: 0 15px 0 10px;
+    height: 1.2rem;
+}
+.group-files > div > div.main {
+    margin-right: 20px;
+    flex: 1;
+}
+.group-files > div > div.download {
+    background: var(--color-card-2);
+    border-radius: 100%;
+    cursor: pointer;
+    height: 1.9rem;
+    width: 1.9rem;
+}
+.group-files > div > div.download > svg {
+    fill: var(--color-font);
+    margin: 8px;
+}
+.group-files > div > div > div > span {
+    color: var(--color-font-1);
+    font-size: 0.8rem;
+}
+.group-files > div > div > div > span:first-child {
+    color: var(--color-main);
+}
+.group-files > div > div > div > span::after {
+    color: var(--color-font-1);
+    content: '\2022';
+    margin-left: 5px;
+}
+.group-files > div > div > div > span:last-child::after {
+    content: '';
+}
+.group-files > div:last-child {
+    background: transparent;
+    justify-content: center;
+}
+.group-files > div:last-child:hover {
+    background: transparent;
+}
+
+.download-bar {
+    --main-size: 25px;
+    height: var(--main-size) !important;
+    width: var(--main-size) !important;
+    transform: rotate(-90deg);
+    padding: calc(5px / 2);
+    margin: 0 !important;
+}
+.download-bar > circle:first-child {
+    stroke: var(--color-card-2);
+}
+.download-bar > circle:last-child {
+    stroke: var(--color-main);
 }

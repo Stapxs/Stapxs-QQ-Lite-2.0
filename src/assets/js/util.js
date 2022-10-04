@@ -6,8 +6,9 @@
 */
 
 import Vue from 'vue'
+import l10nConfig from '../src/l10n/_l10nconfig.json'
 
-function mergeList (a, b) {
+export function mergeList (a, b) {
   return a.concat(b)
 }
 
@@ -109,15 +110,8 @@ export function loadHistoryMessage (id, type) {
 
 // 初始化信息
 export function loadBaseInfo () {
-  // // Bot 信息
-  // Vue.sendWs(Vue.createAPI(
-  //   'get_version_info',
-  //   null, null
-  // ))
   // 用户信息
   Vue.sendWs(Vue.createAPI('get_login_info', null, 'getLoginInfo'))
-  // // 通用凭证
-  // Vue.sendWs(Vue.createAPI('getCsrfToken', null, null))
   // 好友列表
   Vue.sendWs(Vue.createAPI('getFriendList', null, null))
   // 群列表
@@ -128,11 +122,102 @@ export function openLink (url) {
   window.open(url)
 }
 
+export function getTrueLang () {
+  let back = 'zh-CN'
+  l10nConfig.forEach((item) => {
+    if (item.value === Vue.$i18n.locale) {
+      back = item.lang
+    }
+  })
+  return back
+}
+
+export function getSizeFromBytes (size) {
+  if (!size) {
+    return ''
+  }
+
+  var num = 1024.00
+
+  if (size < num) {
+    return size + 'B'
+  }
+  if (size < Math.pow(num, 2)) {
+    return (size / num).toFixed(2) + 'K'
+  }
+  if (size < Math.pow(num, 3)) {
+    return (size / Math.pow(num, 2)).toFixed(2) + 'M'
+  }
+  if (size < Math.pow(num, 4)) {
+    return (size / Math.pow(num, 3)).toFixed(2) + 'G'
+  }
+  return (size / Math.pow(num, 4)).toFixed(2) + 'T'
+}
+
+export function htmlDecodeByRegExp (str) {
+  var s = ''
+  if (str.length === 0) return ''
+  s = str.replace(/&amp;/g, '&')
+  s = s.replace(/&lt;/g, '<')
+  s = s.replace(/&gt;/g, '>')
+  s = s.replace(/&nbsp;/g, ' ')
+  s = s.replace(/&#39;/g, '\'')
+  s = s.replace(/&quot;/g, '"')
+  return s
+}
+
+export function getRandom (num, maxA, minlA, fqy) {
+  let arr = []
+  let arr1 = []
+  let arr2 = []
+  if (num) {
+    for (let m = 0; m <= 9; m++) {
+      arr.push(m)
+    }
+  }
+  if (maxA) {
+    for (let m = 65; m <= 90; m++) {
+      arr1.push(m)
+    }
+  }
+  if (minlA) {
+    for (let m = 97; m <= 122; m++) {
+      arr2.push(m)
+    }
+  }
+  if (!fqy) {
+    console.log('生成位数必传')
+  }
+  let mergeArr = arr.concat(arr1)
+  let mergeArr1 = mergeArr.concat(arr2)
+  let _length = mergeArr1.length
+  let text = ''
+  for (let m = 0; m < fqy; m++) {
+    let text1 = ''
+    var max = 0
+    var min = _length
+    if (_length > 0) {
+      max = _length
+      min = 0
+    }
+    let random = parseInt(Math.random() * (max - min)) + min
+    if ((mergeArr1[random]) <= 9) {
+      text1 = mergeArr1[random]
+    } else if ((mergeArr1[random]) > 9) {
+      text1 = String.fromCharCode(mergeArr1[random])
+    }
+    text += text1
+  }
+  return text
+}
+
 export default {
   mergeList,
   parseMsgId,
   waveAnimation,
   loadHistoryMessage,
   loadBaseInfo,
-  openLink
+  openLink,
+  getTrueLang,
+  htmlDecodeByRegExp
 }
