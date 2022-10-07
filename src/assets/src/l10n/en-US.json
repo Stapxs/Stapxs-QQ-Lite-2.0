@@ -60,6 +60,25 @@
             "copy": "Copy",
             "withdraw": "Revoke"
         },
+        "chat_info": {
+            "group": "Group Profile",
+            "user": "Friend",
+            "is_owner": "You are the owner",
+            "is_admin": "You are a admin",
+            "introduction": "Introduction",
+            "nointroduction": "No introduction available",
+            "lnick": "Bio",
+            "nolnick": "No bio available",
+            "outher": "Others",
+            "birthday": "DOB.",
+            "address": "Regeion",
+            "chinese_zodiac": "Rat|Ox|Tiger|Rabbit|Dragon|Snake|Horse|Goat|Monkey|Rooster|Dog|Pig",
+            "member": "Member",
+            "file": "Files",
+            "config": "Settings",
+            "dead_day": "day | days remaining",
+            "file_num": "{num} files in total"
+        },
         "member_type": {
             "admin": "Admin",
             "owner": "Owner"
