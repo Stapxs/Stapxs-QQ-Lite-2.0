@@ -64,7 +64,7 @@
             "group": "Group Profile",
             "user": "Friend",
             "is_owner": "You are the owner",
-            "is_admin": "You are a admin",
+            "is_admin": "You are an admin",
             "introduction": "Introduction",
             "nointroduction": "No introduction available",
             "lnick": "Bio",
@@ -76,8 +76,8 @@
             "member": "Member",
             "file": "Files",
             "config": "Settings",
-            "dead_day": "day | days remaining",
-            "file_num": "{num} files in total"
+            "dead_day": "d",
+            "file_num": "{num} file | files in total"
         },
         "member_type": {
             "admin": "Admin",
