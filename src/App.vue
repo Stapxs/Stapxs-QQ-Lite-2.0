@@ -272,14 +272,18 @@ export default {
             this.onChat.info.group_members = msg.data
             break
           }
-          case 'getGroupFiles': {
-            if (this.onChat.info === undefined) {
-              this.onChat.info = {}
+          case 'getGroupFiles': { // 获取群文件
+            if (msg.data.data.ec !== 0) {
+              this.addAppMsg(this.$t('chat.chat_info.load_file_err', {code: msg.data.data.ec}), Vue.appMsgType.err)
+            } else {
+              if (this.onChat.info === undefined) {
+                this.onChat.info = {}
+              }
+              this.onChat.info.group_files = msg.data.data
             }
-            this.onChat.info.group_files = msg.data.data
             break
           }
-          case 'getMoreGroupFiles': {
+          case 'getMoreGroupFiles': { // 获取群文件（分页加载）
             if (this.onChat.info !== undefined && this.onChat.info.group_files !== undefined) {
               // 追加文件列表
               this.onChat.info.group_files.file_list =
@@ -303,30 +307,43 @@ export default {
             break
           }
           case 'getChatHistoryFist': { // 首次获取消息记录
-            this.messageList = msg.data
-            setTimeout(() => {
-              this.$refs.chat.scrollBottom()
-            }, 500)
+            if (msg.error !== undefined) {
+              this.addAppMsg(this.$t('chat.load_msg_err', {code: msg.error}), Vue.appMsgType.err)
+              this.messageList = []
+            } else {
+              this.messageList = msg.data
+              setTimeout(() => {
+                this.$refs.chat.scrollBottom()
+              }, 500)
+            }
             break
           }
           case 'getChatHistory': { // 追加获取消息记录
-            const items = msg.data
-            items.pop() // 去除最后一条重复的消息
-            if (items.length < 1) {
-              this.$refs.chat.setNoMoreHistory()
-              return
+            if (msg.error !== undefined) {
+              this.addAppMsg(this.$t('chat.load_msg_err', {code: msg.error}), Vue.appMsgType.err)
+            } else {
+              const items = msg.data
+              items.pop() // 去除最后一条重复的消息，获取历史消息会返回当前消息 **以及** 之前的 N-1 条
+              if (items.length < 1) {
+                this.$refs.chat.setNoMoreHistory()
+                return
+              }
+              this.messageList = Util.mergeList(items, this.messageList)
             }
-            this.messageList = Util.mergeList(items, this.messageList)
             break
           }
           case 'sendMsgBack': { // 发送消息回调
-            if (msg.message_id !== undefined) {
-              // 请求消息内容
-              Vue.sendWs(Vue.createAPI(
-                'getMsg',
-                { 'message_id': msg.message_id },
-                'getSendMsg_' + msg.message_id + '_0'
-              ))
+            if (msg.error !== undefined) {
+              this.addAppMsg(this.$t('chat.send_msg_err', {code: msg.error}), Vue.appMsgType.err)
+            } else {
+              if (msg.message_id !== undefined) {
+                // 请求消息内容
+                Vue.sendWs(Vue.createAPI(
+                  'getMsg',
+                  { 'message_id': msg.message_id },
+                  'getSendMsg_' + msg.message_id + '_0'
+                ))
+              }
             }
             break
           }
@@ -344,26 +361,44 @@ export default {
               this.nowMemberInfo.y = pointInfo[2]
             }
             if (msg.echo.startsWith('downloadGroupFile')) {
-              const id = msg.echo.split('_')[1]
+              // 获取群文件下载链接（下载群文件）
+              const info = msg.echo.split('_')
+              const id = info[1]
               const json = JSON.parse(msg.data.data.substring(msg.data.data.indexOf('(') + 1, msg.data.data.lastIndexOf(')')))
-              console.log(id)
               let fileName = 'new-file'
               let fileIndex = -1
+              let subFileIndex = -1
               this.onChat.info.group_files.file_list.forEach((item, index) => {
                 if (item.id === id) {
                   fileName = Util.htmlDecodeByRegExp(item.name)
                   fileIndex = index
                 }
               })
+              // 这是个子文件
+              if (info[2] !== undefined) {
+                this.onChat.info.group_files.file_list[fileIndex].sub_list.forEach((item, index) => {
+                  if (item.id === info[2]) {
+                    fileName = Util.htmlDecodeByRegExp(item.name)
+                    subFileIndex = index
+                  }
+                })
+              }
               const that = this
               const onProcess = function (event) {
                 if (!event.lengthComputable) return
                 var downloadingPercentage = Math.floor(event.loaded / event.total * 100)
                 if (fileIndex !== -1) {
-                  if (that.onChat.info.group_files.file_list[fileIndex].downloadingPercentage === undefined) {
-                    Vue.set(that.onChat.info.group_files.file_list[fileIndex], 'downloadingPercentage', 0)
+                  if (subFileIndex === -1) {
+                    if (that.onChat.info.group_files.file_list[fileIndex].downloadingPercentage === undefined) {
+                      Vue.set(that.onChat.info.group_files.file_list[fileIndex], 'downloadingPercentage', 0)
+                    }
+                    that.onChat.info.group_files.file_list[fileIndex].downloadingPercentage = downloadingPercentage
+                  } else {
+                    if (that.onChat.info.group_files.file_list[fileIndex].sub_list[subFileIndex].downloadingPercentage === undefined) {
+                      Vue.set(that.onChat.info.group_files.file_list[fileIndex].sub_list[subFileIndex], 'downloadingPercentage', 0)
+                    }
+                    that.onChat.info.group_files.file_list[fileIndex].sub_list[subFileIndex].downloadingPercentage = downloadingPercentage
                   }
-                  that.onChat.info.group_files.file_list[fileIndex].downloadingPercentage = downloadingPercentage
                 }
               }
               // 下载文件
@@ -383,6 +418,18 @@ export default {
                     console.log(error)
                   }
                 })
+            }
+            if (msg.echo.startsWith('getGroupDirFiles')) {
+              // 获取群文件文件夹子文件
+              // TODO 这边不分页直接拿全
+              const id = msg.echo.split('_')[1]
+              let fileIndex = -1
+              this.onChat.info.group_files.file_list.forEach((item, index) => {
+                if (item.id === id) {
+                  fileIndex = index
+                }
+              })
+              Vue.set(this.onChat.info.group_files.file_list[fileIndex], 'sub_list', msg.data.data.file_list)
             }
             break
           }

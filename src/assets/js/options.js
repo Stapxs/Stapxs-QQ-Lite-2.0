@@ -135,9 +135,19 @@ export function runASWEvent (event) {
   runAS(name, value)
 }
 
+// 获取设置项
+export function get (name) {
+  Object.keys(Vue.configs).forEach((item) => {
+    if (item === name) {
+      return Vue.configs[item]
+    }
+  })
+}
+
 export default {
   load,
   save,
   run,
-  runAS
+  runAS,
+  get
 }

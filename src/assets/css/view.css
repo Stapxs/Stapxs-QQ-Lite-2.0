@@ -387,8 +387,9 @@ html, body {
     pointer-events: all;
     width: fit-content;
     border-radius: 7px;
-    padding: 7px 30px;
+    padding: 10px 20px;
     margin-top: 5px;
+    max-width: 20%;
     display: flex;
 }
 .app-msg > div svg {

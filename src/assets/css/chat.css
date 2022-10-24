@@ -162,7 +162,7 @@ textarea {
     height: 0;
 }
 .more-detail.show {
-    margin-top: 20px;
+    padding-top: 20px;
     display: flex;
     height: 50px;
     width: 100%;
@@ -510,62 +510,76 @@ textarea {
 .group-files {
     padding: 0 20px;
 }
-.group-files > div {
+.group-files > div > div {
     transition: background .3s;
     align-items: center;
     border-radius: 7px;
+    flex-wrap: wrap;
     padding: 10px;
     display: flex;
     margin: 5px;
 }
-.group-files > div.folder {
+.group-files > div > div.folder {
     cursor: pointer;
 }
-.group-files > div:hover {
+.group-files > div > div.folder.open {
     background: var(--color-card-1);
 }
-.group-files > div > svg {
+.group-files > div > div:hover {
+    background: var(--color-card-1);
+}
+.group-files > div > div > svg {
     fill: var(--color-font);
     margin: 0 15px 0 10px;
     height: 1.2rem;
 }
-.group-files > div > div.main {
+.group-files > div > div > div.main {
     margin-right: 20px;
     flex: 1;
 }
-.group-files > div > div.download {
+.group-files > div > div > div.download {
     background: var(--color-card-2);
     border-radius: 100%;
     cursor: pointer;
     height: 1.9rem;
     width: 1.9rem;
 }
-.group-files > div > div.download > svg {
+.group-files > div > div > div.download > svg {
     fill: var(--color-font);
     margin: 8px;
 }
-.group-files > div > div > div > span {
+.group-files > div > div > div > div > span {
     color: var(--color-font-1);
     font-size: 0.8rem;
 }
-.group-files > div > div > div > span:first-child {
+.group-files > div > div > div > div > span:first-child {
     color: var(--color-main);
 }
-.group-files > div > div > div > span::after {
+.group-files > div > div > div > div > span::after {
     color: var(--color-font-1);
     content: '\2022';
     margin-left: 5px;
 }
-.group-files > div > div > div > span:last-child::after {
+.group-files > div > div > div > div > span:last-child::after {
     content: '';
 }
-.group-files > div:last-child {
-    background: transparent;
+
+.group-files-loader {
     justify-content: center;
+    display: flex;
 }
-.group-files > div:last-child:hover {
-    background: transparent;
+.group-files-loader > svg {
+    fill: var(--color-font-1);
+    width: 1rem;
 }
+
+.sub_file {
+    margin-top: 10px;
+    width: 100%;
+}
+/* .sub_file > div > div:hover {
+    background: var(--color-card-2);
+} */
 
 .download-bar {
     --main-size: 25px;
@@ -580,4 +594,140 @@ textarea {
 }
 .download-bar > circle:last-child {
     stroke: var(--color-main);
+}
+
+.img-sender {
+    pointer-events: all;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    left: 0;
+    top: 0;
+}
+.img-sender > div.bg {
+    background: var(--color-card-2);
+    height: 100%;
+    opacity: 0.7;
+    width: 100%;
+}
+.img-sender > div.card {
+    margin: calc(50vh - 20px) 0 0 50%;
+    transform: translate(-50%, -50%);
+    flex-direction: column;
+    position: absolute;
+    display: flex;
+    width: 50%;
+    z-index: 1;
+}
+.img-sender > div.card > div.hander {
+    align-items: center;
+    display: flex;
+}
+.img-sender > div.card > div.hander > span {
+    font-weight: bold;
+    font-size: 1rem;
+    flex: 1;
+}
+.img-sender > div.card > div.hander > button {
+    width: 100px;
+}
+.img-sender > div.card > div.imgs {
+    overflow-y: scroll;
+    overflow-x: hidden;
+    margin-right: -7px;
+    height: 50vh;
+}
+.img-sender > div.card > div.imgs::-webkit-scrollbar {
+    display: none;
+}
+.img-sender > div.card > div.imgs > div {
+    /* background: var(--color-card-1); */
+    border-radius: 7px;
+    margin-right: 9px;
+    margin-top: 10px;
+}
+.img-sender > div.card > div.imgs > div > img {
+    transform: translateX(-50%);
+    margin-bottom: 4px;
+    border-radius: 7px;
+    max-height: 30vh;
+    margin-left: 50%;
+    max-width: 100%;
+}
+.img-sender > div.card > div.imgs > div > div {
+    margin-bottom: calc(-20px - 1rem);
+    background: var(--color-card-2);
+    backdrop-filter: blur(10px);
+    height: calc(1rem + 15px);
+    width: calc(1rem + 15px);
+    justify-content: center;
+    border-radius: 100%;
+    align-items: center;
+    position: relative;
+    margin-right: 10px;
+    margin-top: 9px;
+    cursor: pointer;
+    display: flex;
+    float: right;
+    z-index: 1;
+}
+.img-sender > div.card > div.imgs > div > div > svg {
+    fill: var(--color-font);
+    height: 1rem;
+}
+.img-sender > div.card > div.sender {
+
+}
+.img-sender > div.card > div.sender > input {
+    background: var(--color-card-1);
+    width: calc(100% - 20px);
+    border-radius: 7px;
+    padding: 0 10px;
+    height: 40px;
+    border: 0;
+}
+
+.face-pan {
+    background: var(--color-card-1);
+    transform: translateY(-100%);
+    position: absolute;
+    margin-left: 20px;
+    height: 250px;
+    width: 300px;
+    padding: 0;
+}
+.face-pan > div.layui-tab {
+    margin: 0;
+}
+.fase-pan-tab > li > svg {
+    fill: var(--color-font);
+    margin-top: 10px;
+    margin-left: 5px;
+    height: 1.1rem;
+    width: 1.1rem;
+}
+.fase-pan-tab > li.layui-this > svg {
+    fill: var(--color-main) !important;
+}
+
+.base-face {
+    height: calc(300px - 135px);
+    justify-content: center;
+    overflow-y: scroll;
+    padding: 0 20px;
+    flex-wrap: wrap;
+    display: flex;
+}
+.base-face > div {
+    background: var(--color-card-2);
+    border-radius: 100%;
+    cursor: pointer;
+    height: 40px;
+    width: 40px;
+    margin: 5px;
+}
+.base-face > div > img {
+    margin: 10px;
+    height: 20px;
+    width: 20px;
 }

@@ -41,13 +41,16 @@
     <div>
       <!-- 顶部附加区 -->
       <div>
+        <!-- 更多共附加区 -->
+        <div>
+          <!-- 表情面板 -->
+          <FacePan v-show="details[1].open" @addSpecialMsg="addSpecialMsg"></FacePan>
+        </div>
         <!-- 更多功能 -->
         <div :class="tags.showMoreDetail ? 'more-detail show' : 'more-detail'">
-          <div v-for="(item, index) in details"
-            :key="index"
-            :title="item.text"
-            :onclick="item.fun"
-            v-html="item.svg"></div>
+          <div :title="this.$t('chat.fun_menu.face')" @click="details[1].open = !details[1].open,tags.showMoreDetail = false">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 256C0 114.6 114.6 0 256 0C397.4 0 512 114.6 512 256C512 397.4 397.4 512 256 512C114.6 512 0 397.4 0 256zM256 432C332.1 432 396.2 382 415.2 314.1C419.1 300.4 407.8 288 393.6 288H118.4C104.2 288 92.92 300.4 96.76 314.1C115.8 382 179.9 432 256 432V432zM176.4 160C158.7 160 144.4 174.3 144.4 192C144.4 209.7 158.7 224 176.4 224C194 224 208.4 209.7 208.4 192C208.4 174.3 194 160 176.4 160zM336.4 224C354 224 368.4 209.7 368.4 192C368.4 174.3 354 160 336.4 160C318.7 160 304.4 174.3 304.4 192C304.4 209.7 318.7 224 336.4 224z"/></svg>
+          </div>
         </div>
       </div>
       <div>
@@ -56,10 +59,12 @@
         </div>
         <div>
           <textarea
+            id="main-input"
             type="text"
             v-model="msg"
             @paste="addImg"
-            @keyup="mainKeyUp"></textarea>
+            @keyup="mainKeyUp"
+            @click="selectSQ(),selectSQIn()"></textarea>
           <div @click="sendMsg">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512"><path d="M64 448c-8.188 0-16.38-3.125-22.62-9.375c-12.5-12.5-12.5-32.75 0-45.25L178.8 256L41.38 118.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0l160 160c12.5 12.5 12.5 32.75 0 45.25l-160 160C80.38 444.9 72.19 448 64 448z"/></svg>
           </div>
@@ -96,7 +101,7 @@
           <div>
             <a>{{  mumberInfo.card == '' ? mumberInfo.nickname : mumberInfo.card  }}</a>
             <div>
-              <span v-if="$t('chat.member_type.' + mumberInfo.role) !== ''">
+              <span v-if="mumberInfo.role !== 'member'">
                 {{  $t('chat.member_type.' + mumberInfo.role)  }}
               </span>
               <span>Lv {{  mumberInfo.level  }}</span>
@@ -117,127 +122,28 @@
       </div>
     </div>
     <!-- 群 / 好友信息弹窗 -->
-    <div v-if="tags.openChatInfo" class="chat-info-pan">
-      <div class="ss-card chat-info">
-        <header>
-          <span v-if="chat.type === 'group'">{{ $t('chat.chat_info.group') }}</span>
-          <span v-if="chat.type === 'user'">{{ $t('chat.chat_info.user') }}</span>
-          <svg @click="openChatInfoPan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>
-        </header>
-        <div :class="'chat-info-base ' + chat.type">
-          <div>
-            <img :src="chat.avatar">
-            <div>
-              <a>{{ chat.name }}</a>
-              <span>{{ chat.id }}</span>
+    <InfoBody :chat="chat" :tags="tags" @close="openChatInfoPan" @loadFile="fileLoad"></InfoBody>
+    <!-- 图片发送器 -->
+    <div class="img-sender" v-if="Vue.cacheImg != undefined && Vue.cacheImg.length > 0">
+      <div class="card ss-card">
+        <div class="hander">
+          <span>{{ $t('chat.send_pic.title') }}</span>
+          <button @click="sendMsg();Vue.cacheImg = undefined" class="ss-button">{{ $t('chat.send_pic.send') }}</button>
+        </div>
+        <div class="imgs">
+          <div v-for="(img64, index) in Vue.cacheImg"
+            :key="'sendImg-' + img64.substring(img64.length - 5, img64.length)">
+            <div @click="deleteImg(index)">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3 265.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256 310.6 150.6z"/></svg>
             </div>
-            <div v-if="chat.type === 'group'">
-              <svg :title="$t('chat.chat_info.is_owner')" v-if="chat.info.group.gOwner === Vue.loginInfo.account.uin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M309 106c11.4-7 19-19.7 19-34c0-22.1-17.9-40-40-40s-40 17.9-40 40c0 14.4 7.6 27 19 34L209.7 220.6c-9.1 18.2-32.7 23.4-48.6 10.7L72 160c5-6.7 8-15 8-24c0-22.1-17.9-40-40-40S0 113.9 0 136s17.9 40 40 40c.2 0 .5 0 .7 0L86.4 427.4c5.5 30.4 32 52.6 63 52.6H426.6c30.9 0 57.4-22.1 63-52.6L535.3 176c.2 0 .5 0 .7 0c22.1 0 40-17.9 40-40s-17.9-40-40-40s-40 17.9-40 40c0 9 3 17.3 8 24l-89.1 71.3c-15.9 12.7-39.5 7.5-48.6-10.7L309 106z"/></svg>
-              <svg :title="$t('chat.chat_info.is_admin')" v-if="chat.info.group.gAdmins != undefined && chat.info.group.gAdmins.indexOf(Vue.loginInfo.account.uin) >= 0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"/></svg>
-            </div>
-          </div>
-          <div v-if="chat.type === 'group'">
-            <header>
-              <span>{{ $t('chat.chat_info.introduction') }}</span>
-            </header>
-            <span v-html="(chat.info.group.gIntro === undefined || chat.info.group.gIntro === '') ?
-              $t('chat.chat_info.nointroduction') : chat.info.group.gIntro"></span>
-            <div class="tags">
-              <div v-for="item in chat.info.group.tags" :key="item.md">
-                {{ item.tag }}
-              </div>
-            </div>
-            <header v-if="chat.info.group.gAdmins !== undefined">
-              <span>{{ $t('chat.member_type.admin') }}</span>
-            </header>
-            <div class="admin" v-if="chat.info.group.gAdmins !== undefined">
-              <img v-for="(item, index) in chat.info.group.gAdmins"
-                :key="'chatinfoadmin-' + item"
-                :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item}`"
-                :title="chat.info.group.ns[index]">
-            </div>
-          </div>
-          <div v-else-if="chat.type === 'user'">
-            <header>
-              <span>{{ $t('chat.chat_info.lnick') }}</span>
-            </header>
-            <span v-html="(chat.info.user.lnick === undefined || chat.info.user.lnick === '') ?
-              $t('chat.chat_info.nolnick') : chat.info.user.lnick"></span>
-            <header>
-              <span>{{ $t('chat.chat_info.outher') }}</span>
-            </header>
-            <div class="outher">
-              <span>{{ $t('chat.chat_info.birthday') }}:
-                <span>
-                  {{ Intl.DateTimeFormat(trueLang, {year:'numeric',month:"short",day:"numeric"}).format(
-                    new Date(`${chat.info.user.birthday.year}-${chat.info.user.birthday.month}-${chat.info.user.birthday.day}`)
-                    ) + ` (${this.$t('chat.chat_info.chinese_zodiac').split('|')[chat.info.user.shengxiao - 1]})` }}
-                </span>
-              </span>
-              <span>{{ $t('chat.chat_info.address') }}:
-                <span>
-                  {{ `${chat.info.user.country}-${chat.info.user.province}-${chat.info.user.city}` }}
-                </span>
-              </span>
-            </div>
+            <img :src="img64">
           </div>
         </div>
-        <div v-if="chat.type === 'group'" class="layui-tab layui-tab-brief" style="overflow: hidden; display: flex;flex-direction: column;height: 100%;margin: 0;">
-        <ul class="layui-tab-title chat-info-tab">
-          <li class="layui-this">{{ $t('chat.chat_info.member') + `(${chat.info.group_members.length})` }}</li>
-          <li>{{ $t('chat.chat_info.file') + `(${chat.info.group_files.total_cnt})` }}</li>
-          <li>{{ $t('chat.chat_info.config') }}</li>
-        </ul>
-        <div class="chat-info-tab-body layui-tab-content">
-          <div class="layui-tab-item layui-show chat-info-tab-member">
-            <div v-for="item in chat.info.group_members" :key="'chatinfomlist-' + item.user_id">
-              <img loading="lazy" :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.user_id}`">
-              <div>
-                <a>{{ item.nickname }}</a>
-                <svg v-if="item.role === 'owner'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M309 106c11.4-7 19-19.7 19-34c0-22.1-17.9-40-40-40s-40 17.9-40 40c0 14.4 7.6 27 19 34L209.7 220.6c-9.1 18.2-32.7 23.4-48.6 10.7L72 160c5-6.7 8-15 8-24c0-22.1-17.9-40-40-40S0 113.9 0 136s17.9 40 40 40c.2 0 .5 0 .7 0L86.4 427.4c5.5 30.4 32 52.6 63 52.6H426.6c30.9 0 57.4-22.1 63-52.6L535.3 176c.2 0 .5 0 .7 0c22.1 0 40-17.9 40-40s-17.9-40-40-40s-40 17.9-40 40c0 9 3 17.3 8 24l-89.1 71.3c-15.9 12.7-39.5 7.5-48.6-10.7L309 106z"/></svg>
-                <svg v-if="item.role === 'admin'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"/></svg>
-              </div>
-              <span>{{ item.user_id }}</span>
-            </div>
-          </div>
-          <div :class="'layui-tab-item group-files'" @scroll="fileLoad">
-            <div v-for="item in chat.info.group_files.file_list" :key="'file-' + item.id" :class="item.type === 2 ? ' folder' : ''">
-              <svg v-if="item.type === 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M447.1 96h-172.1L226.7 50.75C214.7 38.74 198.5 32 181.5 32H63.1c-35.35 0-64 28.66-64 64v320c0 35.34 28.65 64 64 64h384c35.35 0 64-28.66 64-64V160C511.1 124.7 483.3 96 447.1 96zM463.1 416c0 8.824-7.178 16-16 16h-384c-8.822 0-16-7.176-16-16V96c0-8.824 7.178-16 16-16h117.5c4.273 0 8.293 1.664 11.31 4.688L255.1 144h192c8.822 0 16 7.176 16 16V416z"/></svg>
-              <svg v-if="item.type === 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M384 32H64.01C28.66 32 .0085 60.65 .0065 96L0 415.1C-.002 451.3 28.65 480 64 480h232.1c25.46 0 49.88-10.12 67.89-28.12l55.88-55.89C437.9 377.1 448 353.6 448 328.1V96C448 60.8 419.2 32 384 32zM52.69 427.3C50.94 425.6 48 421.8 48 416l.0195-319.1C48.02 87.18 55.2 80 64.02 80H384c8.674 0 16 7.328 16 16v192h-88C281.1 288 256 313.1 256 344v88H64C58.23 432 54.44 429.1 52.69 427.3zM330.1 417.9C322.9 425.1 313.8 429.6 304 431.2V344c0-4.406 3.594-8 8-8h87.23c-1.617 9.812-6.115 18.88-13.29 26.05L330.1 417.9z"/></svg>
-              <div class="main">
-                <span>{{ toHtml(item.name) }}</span>
-                <div>
-                  <span :data-id="item.owner_uin">{{ toHtml(item.owner_name) }}</span>
-                  <span>{{ item.create_time === 0 ? '-' : Intl.DateTimeFormat(trueLang, {year:'numeric',month:"short",day:"numeric"})
-                    .format(new Date(item.create_time * 1000)) }}</span>
-                  <span v-if="item.dead_time !== 0 && item.dead_time !== undefined">{{ (parseInt((item.dead_time - item.create_time) / 86400) - 1) + $t('chat.chat_info.dead_day') }}</span>
-                  <span v-if="item.type === 2">{{ $t('chat.chat_info.file_num', {num: item.size}) }}</span>
-                  <span v-if="item.type === 1">{{ getSize(item.size) }}</span>
-                </div>
-              </div>
-              <div v-if="item.type === 1 && item.downloadingPercentage === undefined" class="download" @click="getFile(item)">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Pro 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M344 240h-56L287.1 152c0-13.25-10.75-24-24-24h-16C234.7 128 223.1 138.8 223.1 152L224 240h-56c-9.531 0-18.16 5.656-22 14.38C142.2 263.1 143.9 273.3 150.4 280.3l88.75 96C243.7 381.2 250.1 384 256.8 384c7.781-.3125 13.25-2.875 17.75-7.844l87.25-96c6.406-7.031 8.031-17.19 4.188-25.88S353.5 240 344 240zM256 0C114.6 0 0 114.6 0 256s114.6 256 256 256s256-114.6 256-256S397.4 0 256 0zM256 464c-114.7 0-208-93.31-208-208S141.3 48 256 48s208 93.31 208 208S370.7 464 256 464z"/></svg>
-              </div>
-              <svg v-if="item.downloadingPercentage !== undefined" class="download-bar" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50%" cy="50%" r="40%" stroke-width="15%" fill="none" stroke-linecap="round"/>
-                <circle cx="50%" cy="50%" r="40%" stroke-width="15%" fill="none"
-                  :stroke-dasharray="item.downloadingPercentage === undefined ?
-                    '0,10000' : `${Math.floor(2 * Math.PI * 25) * item.downloadingPercentage / 100},10000`"/>
-              </svg>
-              <!-- <div v-if="item.type === 2 && chat.info.group_sub_files.id === item.id">
-              </div> -->
-            </div>
-            <div v-show="chat.info.group_files !== undefined &&
-              chat.info.group_files.next_index !== undefined &&
-              chat.info.group_files.next_index !== 0">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M120 256c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm160 0c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm104 56c-30.9 0-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56s-25.1 56-56 56z"/></svg>
-            </div>
-          </div>
-          <div class="layui-tab-item">3</div>
+        <div class="sender">
+          <input type="text" @paste="addImg" v-model="msg">
         </div>
       </div>
-      </div>
-      <div class="card-info-pan-bg"></div>
+      <div class="bg" @click="Vue.cacheImg = undefined"></div>
     </div>
   </div>
 </template>
@@ -246,18 +152,19 @@
 import MsgBody from '../components/MsgBody.vue'
 import Vue from 'vue'
 
-import { parseMsgId, getTrueLang, getSizeFromBytes, htmlDecodeByRegExp, getRandom } from '../assets/js/util.js'
+import { parseMsgId, getTrueLang } from '../assets/js/util.js'
+import SendUtil from '../assets/js/sender.js'
+import InfoBody from '../components/chat/InfoPan.vue'
+import FacePan from '../components/chat/FacePan.vue'
 
 export default {
   name: 'Chat',
   props: ['chat', 'list', 'mergeList', 'mumberInfo', 'imgView'],
-  components: { MsgBody },
+  components: { MsgBody, InfoBody, FacePan },
   data () {
     return {
       Vue: Vue,
       trueLang: getTrueLang(),
-      getSize: getSizeFromBytes,
-      toHtml: htmlDecodeByRegExp,
       tags: {
         canLoadHistory: true,
         nowGetHistroy: false,
@@ -267,53 +174,13 @@ export default {
         openedMenuMsg: null,
         openChatInfo: false
       },
-      details: [
-        {
-          svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M447.1 32h-384C28.64 32-.0091 60.65-.0091 96v320c0 35.35 28.65 64 63.1 64h384c35.35 0 64-28.65 64-64V96C511.1 60.65 483.3 32 447.1 32zM111.1 96c26.51 0 48 21.49 48 48S138.5 192 111.1 192s-48-21.49-48-48S85.48 96 111.1 96zM446.1 407.6C443.3 412.8 437.9 416 432 416H82.01c-6.021 0-11.53-3.379-14.26-8.75c-2.73-5.367-2.215-11.81 1.334-16.68l70-96C142.1 290.4 146.9 288 152 288s9.916 2.441 12.93 6.574l32.46 44.51l93.3-139.1C293.7 194.7 298.7 192 304 192s10.35 2.672 13.31 7.125l128 192C448.6 396 448.9 402.3 446.1 407.6z"/></svg>',
-          text: this.$t('chat.fun_menu.pic'),
-          fun: 'selectImg()'
-        },
-        {
-          svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 256C0 114.6 114.6 0 256 0C397.4 0 512 114.6 512 256C512 397.4 397.4 512 256 512C114.6 512 0 397.4 0 256zM256 432C332.1 432 396.2 382 415.2 314.1C419.1 300.4 407.8 288 393.6 288H118.4C104.2 288 92.92 300.4 96.76 314.1C115.8 382 179.9 432 256 432V432zM176.4 160C158.7 160 144.4 174.3 144.4 192C144.4 209.7 158.7 224 176.4 224C194 224 208.4 209.7 208.4 192C208.4 174.3 194 160 176.4 160zM336.4 224C354 224 368.4 209.7 368.4 192C368.4 174.3 354 160 336.4 160C318.7 160 304.4 174.3 304.4 192C304.4 209.7 318.7 224 336.4 224z"/></svg>',
-          text: this.$t('chat.fun_menu.face'),
-          fun: 'emojiPan()'
-        }
-      ],
-      msgMenus: [
-        {
-          svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M511.1 63.1v287.1c0 35.25-28.75 63.1-64 63.1h-144l-124.9 93.68c-7.875 5.75-19.12 .0497-19.12-9.7v-83.98h-96c-35.25 0-64-28.75-64-63.1V63.1c0-35.25 28.75-63.1 64-63.1h384C483.2 0 511.1 28.75 511.1 63.1z"/></svg>',
-          text: this.$t('chat.msg_menu.reply'),
-          fun: '',
-          display: true
-        },
-        {
-          svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M503.7 226.2l-176 151.1c-15.38 13.3-39.69 2.545-39.69-18.16V272.1C132.9 274.3 66.06 312.8 111.4 457.8c5.031 16.09-14.41 28.56-28.06 18.62C39.59 444.6 0 383.8 0 322.3c0-152.2 127.4-184.4 288-186.3V56.02c0-20.67 24.28-31.46 39.69-18.16l176 151.1C514.8 199.4 514.8 216.6 503.7 226.2z"/></svg>',
-          text: this.$t('chat.msg_menu.forward'),
-          fun: '',
-          display: true
-        },
-        {
-          svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M23.19 32C28.86 32 34.34 34.08 38.59 37.86L312.6 281.4C317.3 285.6 320 291.6 320 297.9C320 310.1 310.1 320 297.9 320H179.8L236.6 433.7C244.5 449.5 238.1 468.7 222.3 476.6C206.5 484.5 187.3 478.1 179.4 462.3L121.2 346L38.58 440.5C34.4 445.3 28.36 448 22.01 448C9.855 448 0 438.1 0 425.1V55.18C0 42.38 10.38 32 23.18 32H23.19z"/></svg>',
-          text: this.$t('chat.msg_menu.multiple_choice'),
-          fun: '',
-          display: true
-        },
-        {
-          svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M336 64h-53.88C268.9 26.8 233.7 0 192 0S115.1 26.8 101.9 64H48C21.5 64 0 85.48 0 112v352C0 490.5 21.5 512 48 512h288c26.5 0 48-21.48 48-48v-352C384 85.48 362.5 64 336 64zM192 64c17.67 0 32 14.33 32 32c0 17.67-14.33 32-32 32S160 113.7 160 96C160 78.33 174.3 64 192 64zM272 224h-160C103.2 224 96 216.8 96 208C96 199.2 103.2 192 112 192h160C280.8 192 288 199.2 288 208S280.8 224 272 224z"/></svg>',
-          text: this.$t('chat.msg_menu.copy'),
-          fun: '',
-          display: true
-        },
-        {
-          svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>',
-          text: this.$t('chat.msg_menu.withdraw'),
-          fun: '',
-          display: false
-        }
-      ],
+      details: [{ open: false }, { open: false }],
+      msgMenus: [],
       NewMsgNum: 0,
       listSize: 0,
-      msg: ''
+      msg: '',
+      msgCache: '',
+      sendCache: []
     }
   },
   methods: {
@@ -404,19 +271,76 @@ export default {
       return format.asString(like, time)
     },
     /**
-     * 添加图片
-     * @param { object } event 事件
-     */
-    addImg: function (event) {
-      Vue.addImg(event)
-    },
-    /**
-     * 发送框按键事件（仅用于判定发送）
+     * 发送框按键事件
      * @param { object } event 事件
      */
     mainKeyUp: function (event) {
+      // console.log(event.keyCode)
       if (!event.shiftKey && event.keyCode === 13) {
+        // enter 发送消息
+        this.msg = this.msgCache
         this.sendMsg()
+      } else if (event.keyCode === 8) {
+        // backspace 删除内容
+        this.selectSQ()
+      } else {
+        // cache 非回车发送的输入消息已用于在回车发送时去除按下的回车（复盖为回车前的内容）
+        this.msgCache = this.msg
+      }
+    },
+    /**
+     * 选中当前输入框光标位置前面的一个 SQCode
+     */
+    selectSQ: function () {
+      var input = document.getElementById('main-input')
+      // 如果文本框里本来就选中着什么东西就不触发了
+      if (input.selectionStart === input.selectionEnd) {
+        // PS：这儿用来对删除前方是否有 [SQ:n] 特殊结构进行判断以便自动选中
+        var cursurPosition = -1
+        if (typeof input.selectionStart === 'number') {
+          cursurPosition = input.selectionStart
+        }
+        // PS：只取光标前面的部分消息
+        const getSQCode = SendUtil.getSQList(this.msg.substring(0, cursurPosition))
+        if (getSQCode !== null) {
+          const selectionStart = (this.msg.substring(0, cursurPosition)).lastIndexOf(getSQCode[getSQCode.length - 1])
+          if (selectionStart !== -1 &&
+            selectionStart + getSQCode[getSQCode.length - 1].length === this.msg.substring(0, cursurPosition).length) {
+            this.$nextTick(() => {
+              input.selectionStart = selectionStart
+              input.selectionEnd = this.msg.substring(0, cursurPosition).length
+            })
+          }
+        }
+      }
+    },
+    /**
+     * 选中光标在其内部的那个 SQLCode
+     */
+    selectSQIn: function () {
+      var input = document.getElementById('main-input')
+      // 如果文本框里本来就选中着什么东西就不触发了
+      if (input.selectionStart === input.selectionEnd) {
+        var cursurPosition = -1
+        if (typeof input.selectionStart === 'number') {
+          cursurPosition = input.selectionStart
+        }
+        // 获取所有的 SQCode
+        const getSQCode = SendUtil.getSQList(this.msg)
+        console.log(getSQCode)
+        if (getSQCode != null) {
+          // 遍历寻找 SQCode 位置区间包括光标位置的 SQCode
+          getSQCode.forEach((item) => {
+            const start = this.msg.indexOf(item)
+            const end = start + item.length
+            if (start !== -1 && cursurPosition > start && cursurPosition < end) {
+              this.$nextTick(() => {
+                input.selectionStart = start
+                input.selectionEnd = end
+              })
+            }
+          })
+        }
       }
     },
     /**
@@ -527,35 +451,96 @@ export default {
       }
     },
     /**
-     * 下载文件（获取文件下载地址并下载）
+     * 根据 index 删除图片
+     * @param { number } index 图片编号
      */
-    getFile: function (item) {
-      const url = `https://pan.qun.qq.com/cgi-bin/group_share_get_downurl?uin=${Vue.loginInfo.account.uin}&groupid=${this.chat.id}&pa=%2F${item.bus_id}${item.id}&r=${getRandom(true, false, false, 16)}&charset=utf-8&g_tk=${Vue.loginInfo.oicq.bkn}`
-      Vue.sendWs(Vue.createAPI(
-        'http_proxy',
-        { 'url': url },
-        'downloadGroupFile_' + item.id
-      ))
+    deleteImg: function (index) {
+      console.log(index)
+      console.log(Vue.cacheImg)
+      Vue.cacheImg.splice(index, 1)
+      this.$forceUpdate()
+      console.log(Vue.cacheImg)
+    },
+    /**
+     * 添加特殊消息结构
+     * @param { object } obj obj
+     */
+    addSpecialMsg: function (data) {
+      // data 结构：
+      // const data = {
+      //   addText: false,    // 是否添加到输入框内
+      //   msgObj: {}         // 消息结构
+      // }
+      console.log(data)
+      if (data !== undefined) {
+        const index = this.sendCache.length
+        this.sendCache.push(data.msgObj)
+        if (data.addText === true) {
+          this.msg += '[SQ:' + index + ']'
+        }
+        return index
+      }
+      return -1
+    },
+    /**
+     * 添加图片缓存
+     * @param { object } e 事件
+     */
+    addImg: function (e) {
+      // 判断粘贴类型
+      if (!(e.clipboardData && e.clipboardData.items)) {
+        return
+      }
+      for (let i = 0, len = e.clipboardData.items.length; i < len; i++) {
+        let item = e.clipboardData.items[i]
+        if (item.kind === 'file') {
+          let blob = item.getAsFile()
+          if (blob.type.indexOf('image/') >= 0 && blob.size !== 0) {
+            this.$emit('message', {
+              text: this.$t('chat.image_processing'),
+              type: Vue.appMsgType.info,
+              autoClose: true
+            })
+            if (blob.size < 3145728) {
+              // 转换为 Base64
+              var reader = new FileReader()
+              reader.readAsDataURL(blob)
+              reader.onloadend = function () {
+                var base64data = reader.result
+                // 记录图片信息
+                if (Vue.cacheImg === undefined) {
+                  Vue.cacheImg = []
+                }
+                // 只要你内存够猛，随便 cache 图片，这边就不做限制了
+                Vue.cacheImg.push(base64data)
+              }
+            } else {
+              this.$emit('message', {
+                text: this.$t('chat.image_toooo_big'),
+                type: Vue.appMsgType.info,
+                autoClose: true
+              })
+            }
+            // 阻止默认行为
+            e.preventDefault()
+          }
+        }
+      }
     },
     /**
      * 发送消息
      */
     sendMsg: function () {
+      // 为了减少对于复杂图文排版页面显示上的工作量，对于非纯文本的消息依旧处理为纯文本，如：
+      // "这是一段话[SQ:0]，[SQ:1] 你要不要来试试 Stapxs QQ Lite？"
+      // 其中 [SQ:n] 结构代表着这是特殊消息以及这个消息具体内容在消息缓存中的 index，像是这样：
+      // const sendCache = [{type:"face",id:1},{type:"at",qq:1007028430}]
+      //                     ^^^^^^ 0 ^^^^^^    ^^^^^^^^^^ 1 ^^^^^^^^^^
+      // 在发送操作触发之后，将会解析此条字符串排列出最终需要发送的消息结构用于发送。
+      // // PS：你可以在前面添加反斜杠来忽略解析，就像是："[SQ:1] 你好，\[SQ:2]"
       let json = null
-      let msg = this.msg
-      // TODO 暂时不处理图片，等待 tim 修改后端
-      // 构建图片 CQ 码
-      // if (Vue.cacheImg !== undefined && Vue.cacheImg.length > 0) {
-      //   for (let i = 0; i < Vue.cacheImg.length; i++) {
-      //     // 构建图片 CQ 码
-      //     msg = '[CQ:image,file=base64://' + Vue.cacheImg[i].substring(Vue.cacheImg[i].indexOf('base64') + 7) + ']' + msg
-      //   }
-      // }
-      if (msg !== '') {
-        // 去除回车发送导致的结尾换行
-        if (msg.slice(-1) === '\n') {
-          msg = msg.substring(0, msg.length - 1)
-        }
+      let msg = SendUtil.parseMsg(this.msg, this.sendCache)
+      if (msg !== null && msg.length > 0) {
         switch (this.chat.type) {
           case 'group': json = Vue.createAPI('sendGroupMsg', {'group_id': this.chat.id, 'message': msg}, 'sendMsgBack'); break
           case 'user': json = Vue.createAPI('sendPrivateMsg', {'user_id': this.chat.id, 'message': msg}, 'sendMsgBack'); break
@@ -626,6 +611,7 @@ export default {
       // 重置部分状态数据
       this.tags = this.$options.data().tags
       this.msgMenus = this.$options.data().msgMenus
+      this.sendCache = []
     }
   }
 }

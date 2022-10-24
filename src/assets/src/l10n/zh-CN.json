@@ -43,6 +43,8 @@
         "last_msg": "上次消息 - {time}",
         "no_msg": "暂无消息",
         "no_more_msg": "没有更多消息了",
+        "load_msg_err": "加载消息失败（{code}）, 可能是没有消息（私聊一天内没有消息）或者对象无效（冻结、解散）",
+        "send_msg_err": "发送消息失败（{code}），可能是由于禁言或者对象无效（冻结、解散）",
         "merge_msg": "合并消息",
         "unsupported_msg": "（不支持的消息）",
         "msg_not_load": "无法定位上下文",
@@ -54,6 +56,7 @@
             "face": "表情"
         },
         "chat_info": {
+            "load_file_err": "加载群文件失败（{code}），可能是由于对象无效（冻结、解散）",
             "group": "群资料",
             "user": "好友",
             "is_owner": "你是群主",
@@ -82,7 +85,13 @@
         "member_type": {
             "admin": "管理员",
             "owner": "群主"
-        }
+        },
+        "send_pic": {
+            "title": "发送图片",
+            "send": "发送"
+        },
+        "image_processing": "正在处理图片 ……",
+        "image_toooo_big": "图片过大"
     },
     "option": {
         "title": "设置",
