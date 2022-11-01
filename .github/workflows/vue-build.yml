@@ -1,0 +1,31 @@
+# 在主分支上构建 Vue 页面
+name: build-vue
+on:
+  push: # push 触发
+    branches:
+      - main
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+
+    # 拉取代码
+    - name: checkout
+      uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+    # 更新依赖
+    - name: install
+      run: npm install
+    # 构建
+    - name: build
+      run: npm run build
+
+    # 部署
+    - name: push
+      uses: amesIves/github-pages-deploy-action@releases/v3
+      with:
+        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        BRANCH: gh-pages
+        FOLDER: dist
