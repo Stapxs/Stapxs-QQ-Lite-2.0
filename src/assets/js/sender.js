@@ -14,12 +14,6 @@ import Vue from 'vue'
 export function parseMsg (msg, cache) {
   let back = []
   // 判断某浏览器
-  // PS: 某浏览器全版本不支持前置断言
-  // 在不支持前置断言的情况下将直接进行简单匹配，这意味着转义功能将会失效
-  var isThatBrowser = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)
-  if (isThatBrowser) {
-    console.log('Safari，坏！')
-  }
   // 如果消息发送框功能是启用的，则先将 cache 的图片插入到返回列表的最前面
   // TODO 这边还没有判断设置项
   if (Vue.cacheImg != null) {
@@ -31,11 +25,7 @@ export function parseMsg (msg, cache) {
   if (specialList !== null) {
     specialList.forEach((item) => {
       const index = item.replace('[', '').replace(']', '').split(':')[1]
-      // 拆分非特殊符号部分的文本
-      let regCut = RegExp('^[^\\[]*(?<!\\\\)\\[SQ:' + index + '\\]', 'g')
-      if (isThatBrowser) {
-        regCut = RegExp('^[^\\[]*\\[SQ:' + index + '\\]', 'g')
-      }
+      regCut = RegExp('^[^\\[]*\\[SQ:' + index + '\\]', 'g')
       // 处理内容
       const cutList = msg.match(regCut)
       if (cutList !== null) {
@@ -60,12 +50,7 @@ export function parseMsg (msg, cache) {
 }
 
 export function getSQList (msg) {
-  var isThatBrowser = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)
-  // 使用正则表达式拆开字符串
-  let reg = /(?<!\\)\[SQ:\d+\]/gm
-  if (isThatBrowser) {
-    reg = /\[SQ:\d+\]/gm
-  }
+  reg = /\[SQ:\d+\]/gm
   return msg.match(reg)
 }
 
