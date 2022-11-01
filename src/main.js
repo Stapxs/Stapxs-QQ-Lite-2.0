@@ -86,7 +86,7 @@ Vue.createAPI = function(action, params, echo) {
 // 发送 WS 请求
 Vue.sendWs = function(str) {
     Vue.ws.send(str)
-    Vue.log(Vue.logMode.ws, 'PUT：' + str)
+    logger.add(logger.logMode.ws, 'PUT：' + str)
 }
 
 // 构建消息 ID

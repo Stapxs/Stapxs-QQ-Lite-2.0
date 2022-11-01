@@ -24,7 +24,7 @@
               d="M224 256c70.7 0 128-57.31 128-128s-57.3-128-128-128C153.3 0 96 57.31 96 128S153.3 256 224 256zM274.7 304H173.3C77.61 304 0 381.6 0 477.3c0 19.14 15.52 34.67 34.66 34.67h378.7C432.5 512 448 496.5 448 477.3C448 381.6 370.4 304 274.7 304z" />
           </svg>
         </li>
-        <div style="flex: 1;"></div>
+        <div style="flex: 1;" class="side-bar-space"></div>
         <li @click="changeChat">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
             <path
@@ -125,10 +125,10 @@
       @viewImg="viewImg"></Chat>
     <!-- 提示信息显示区 -->
     <TransitionGroup class="app-msg" name="appmsg" tag="div">
-      <div v-for="msg in appMessageList" :key="'appmsg-' + msg.id">
+      <div v-for="msg in appMsgs" :key="'appmsg-' + msg.id">
         <div v-html="msg.svg"></div>
         <a>{{ msg.text }}</a>
-        <div v-if="!msg.autoClose" @click="removeAppMsg(msg.id)">
+        <div v-if="!msg.autoClose" @click="popInfo.remove(msg.id)">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>
         </div>
       </div>
@@ -160,6 +160,9 @@ import Messages from './pages/Messages.vue'
 import { component as Viewer } from 'v-viewer'
 import FileDownloader from 'js-file-downloader'
 
+import { logger, popInfo, popList } from './assets/js/base'
+import { connect as connector } from './assets/js/connect'
+
 import config from '../package.json'
 
 // import { v4 as uuid } from 'uuid'
@@ -181,7 +184,6 @@ export default {
       login: { address: '', token: '', status: '', info: {} },
       showChat: false,
       mergeMessageList: [],
-      appMessageList: [],
       nowMemberInfo: {},
       messageList: [],
       userList: [],
@@ -191,41 +193,14 @@ export default {
       imgView: {
         options: {inline: false, button: false, title: false, toolbar: {prev: true, rotateLeft: true, reset: true, rotateRight: true, next: true}},
         srcList: []
-      }
+      },
+      popInfo: popInfo,
+      appMsgs: popList
     }
   },
-  // 应用方法
   methods: {
-    // 连接相关
     connect: function () {
-      Vue.ws = new WebSocket('ws://' + this.login.address + '?access_token=' + this.login.token)
-      Vue.ws.onopen = () => {
-        Vue.log(Vue.logMode.ws, this.$t('log.con_success'))
-        // 保存登录信息（一个月）
-        this.$cookies.set('address', this.login.address, '1m')
-        // 加载初始化数据
-        Util.loadBaseInfo()
-        // PS：标记登陆成功在获取用户信息的回调位置，防止无法获取到内容
-      }
-      Vue.ws.onmessage = (e) => {
-        Vue.log(Vue.logMode.debug, 'GET：' + e.data)
-        this.parse(e.data)
-      }
-      Vue.ws.onclose = (e) => {
-        Vue.log(Vue.logMode.ws, this.$t('log.con_closed'))
-        this.login.status = false
-        if (e.code !== 1000) {
-          Vue.log(Vue.logMode.err, this.$t('log.con_fail') + ': ' + e.code)
-          this.addAppMsg(this.$t('log.con_fail'), Vue.appMsgType.err, false)
-        } else {
-          Vue.log(Vue.logMode.debug, this.$t('log.con_closed') + ': ' + e.code)
-          this.addAppMsg(this.$t('log.con_closed'), Vue.appMsgType.err)
-        }
-        // 清空数据
-        const loginAddress = this.login.address
-        Object.assign(this.$data, this.$options.data())
-        this.login.address = loginAddress
-      }
+      connector.create(this.login.address, this.login.token)
     },
     parse: function (str) {
       const msg = JSON.parse(str)
@@ -274,7 +249,7 @@ export default {
           }
           case 'getGroupFiles': { // 获取群文件
             if (msg.data.data.ec !== 0) {
-              this.addAppMsg(this.$t('chat.chat_info.load_file_err', {code: msg.data.data.ec}), Vue.appMsgType.err)
+              popInfo.add(popInfo.appMsgType.err, this.$t('chat.chat_info.load_file_err', {code: msg.data.data.ec}))
             } else {
               if (this.onChat.info === undefined) {
                 this.onChat.info = {}
@@ -308,7 +283,7 @@ export default {
           }
           case 'getChatHistoryFist': { // 首次获取消息记录
             if (msg.error !== undefined) {
-              this.addAppMsg(this.$t('chat.load_msg_err', {code: msg.error}), Vue.appMsgType.err)
+              popInfo.add(popInfo.appMsgType.err, this.$t('chat.load_msg_err', {code: msg.error}))
               this.messageList = []
             } else {
               this.messageList = msg.data
@@ -320,7 +295,7 @@ export default {
           }
           case 'getChatHistory': { // 追加获取消息记录
             if (msg.error !== undefined) {
-              this.addAppMsg(this.$t('chat.load_msg_err', {code: msg.error}), Vue.appMsgType.err)
+              popInfo.add(popInfo.appMsgType.err, this.$t('chat.load_msg_err', {code: msg.error}))
             } else {
               const items = msg.data
               items.pop() // 去除最后一条重复的消息，获取历史消息会返回当前消息 **以及** 之前的 N-1 条
@@ -334,7 +309,7 @@ export default {
           }
           case 'sendMsgBack': { // 发送消息回调
             if (msg.error !== undefined) {
-              this.addAppMsg(this.$t('chat.send_msg_err', {code: msg.error}), Vue.appMsgType.err)
+              popInfo.add(popInfo.appMsgType.err, this.$t('chat.send_msg_err', {code: msg.error}))
             } else {
               if (msg.message_id !== undefined) {
                 // 请求消息内容
@@ -476,7 +451,7 @@ export default {
     loadHistory: function (info) {
       this.messageList = []
       if (!Util.loadHistoryMessage(info.id, info.type)) {
-        this.addAppMsg('加载历史消息失败（构建消息 ID 失败）', Vue.appMsgType.err, true)
+        popInfo.add(popInfo.appMsgType.err, '加载历史消息失败（构建消息 ID 失败）', false)
       }
     },
     newMsg: function (data) {
@@ -488,32 +463,6 @@ export default {
     },
     cleanMerge: function () {
       this.mergeMessageList = []
-    },
-    addAppMsg: function (msg, type, isAutoOpen) {
-      const data = {
-        id: this.appMessageList.length,
-        svg: type[0],
-        text: msg,
-        autoClose: isAutoOpen === undefined ? true : isAutoOpen
-      }
-      this.appMessageList.splice(this.appMessageList.length, 0, data)
-      // 创建定时器
-      if (data.autoClose) {
-        setTimeout(() => {
-          this.removeAppMsg(data.id)
-        }, 5000)
-      }
-    },
-    removeAppMsg: function (id) {
-      const index = this.appMessageList.findIndex((item) => {
-        return item.id === id
-      })
-      if (index !== -1) {
-        this.appMessageList.splice(index, 1)
-      }
-    },
-    showAppMsg: function (data) {
-      this.addAppMsg(data.text, data.type, data.autoClose)
     },
     hiddenUserInfo: function () {
       this.nowMemberInfo = []
@@ -543,14 +492,14 @@ export default {
         this.$viewer.view(show)
         this.$viewer.show()
       } else {
-        this.addAppMsg('定位图片失败', Vue.appMsgType.err, true)
+        popInfo.add(popInfo.appMsgType.err, '定位图片失败', false)
       }
     }
   },
   mounted: function () {
     Vue.configs = {}
     Vue.$i18n = this.$i18n
-    Vue.log(Vue.logMode.debug, this.$t('log.welcome'))
+    logger.debug(this.$t('log.welcome'))
     // 初始化波浪动画
     Util.waveAnimation(document.getElementById('login-wave'))
     // 加载 cookie 中的保存登陆信息
@@ -564,7 +513,7 @@ export default {
     if (!this.$cookies.isKey('version') || cmp(appVersion, cacheVersion) === 1) {
       // 更新 cookie 中的版本信息并抓取更新日志
       this.$cookies.set('version', appVersion, '1m')
-      Vue.log(Vue.logMode.ss, this.$t('version.updated') + ': ' + cacheVersion + ' -> ' + appVersion)
+      logger.debug(this.$t('version.updated') + ': ' + cacheVersion + ' -> ' + appVersion)
     }
     // 加载设置项（保证页面加载完成后）
     window.onload = () => {

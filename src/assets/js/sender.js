@@ -3,7 +3,7 @@
  * @Author: Stapxs
  * @Date: 2022/10/20
  * @Version: 1.0
- * @Description: 此文件包括消息发送机相关的功能。
+ * @Description: 此模块包括消息发送相关的功能
 */
 
 // 消息类型结构参考

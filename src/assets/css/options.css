@@ -3,8 +3,13 @@
     2022/09/23 - Stapx Steve [林槐]
 */
 
-.st0 {fill: var(--color-main);}
-.st1 {fill: var(--color-font-1-r);}
+.st0 {
+    fill: var(--color-main);
+}
+
+.st1 {
+    fill: var(--color-font-1-r);
+}
 
 .opt-main {
     height: calc(100vh - 40px);
@@ -12,17 +17,22 @@
     display: flex;
     padding: 20px;
 }
+
 .opt-main > div:first-child {
+    transition: all .3s;
     overflow-y: scroll;
     width: 350px;
 }
+
 .opt-main > div:first-child::-webkit-scrollbar {
     display: none;
 }
-.opt-main > div:first-child > div:not(:first-child) {
+
+.opt-main > div:first-child>div:not(:first-child) {
     padding: 10px 20px;
     margin-top: 20px;
 }
+
 .opt-main > div:last-child {
     flex-direction: column;
     margin-left: 20px;
@@ -37,23 +47,28 @@
     padding: 20px 30px;
     display: flex;
 }
-.logo-card > svg {
+
+.logo-card>svg {
     width: 25%;
 }
-.logo-card > a {
+
+.logo-card>a {
     color: var(--color-font-1);
     margin-top: 10px;
     display: block;
 }
-.logo-card > div {
+
+.logo-card>div {
     align-items: center;
     margin-top: 20px;
     display: flex;
 }
-.logo-card > div > span {
+
+.logo-card>div>span {
     font-size: 1.4rem;
 }
-.logo-card > div > a {
+
+.logo-card>div>a {
     background: var(--color-main);
     color: var(--color-font-r);
     border-radius: 2rem;
@@ -61,7 +76,8 @@
     display: block;
     padding: 0 5px;
 }
-.logo-card > a[class=ss-button] {
+
+.logo-card>a[class=ss-button] {
     color: var(--color-font-r);
     text-align: center;
     line-height: 35px;
@@ -69,7 +85,8 @@
     margin-top: 20px;
     width: 100%;
 }
-.logo-card > div:last-child {
+
+.logo-card>div:last-child {
     background: var(--color-card-1);
     color: var(--color-font-1);
     flex-direction: row;
@@ -79,16 +96,18 @@
     flex-wrap: wrap;
     display: flex;
 }
-.logo-card > div:last-child > span {
+
+.logo-card>div:last-child>span {
     font-size: unset;
     width: 50%;
 }
 
-.contributors-card > div {
+.contributors-card>div {
     flex-wrap: wrap;
     display: flex;
 }
-.contributors-card > div > div {
+
+.contributors-card>div>div {
     background-size: 100%;
     border-radius: 35px;
     margin-right: 10px;
@@ -98,7 +117,8 @@
     margin-bottom: 10px;
     cursor: pointer;
 }
-.contributors-card > div > div.me {
+
+.contributors-card>div>div.me {
     outline: 2px solid var(--color-main);
     border: 1px solid var(--color-card-1);
 }
@@ -112,7 +132,8 @@
     height: 50px;
     z-index: 1;
 }
-.opt-title > span {
+
+.opt-title>span {
     color: var(--color-font);
     margin-left: 20px;
     font-size: 1rem;
@@ -125,16 +146,20 @@
     padding: 5px;
     border: 0;
 }
-.opt-tab > li {
+
+.opt-tab>li {
     transition: all .3s;
 }
-.opt-tab > li::after {
+
+.opt-tab>li::after {
     transition: all .3s;
     transform: scaleX(0);
 }
+
 .layui-this {
     color: var(--color-main) !important;
 }
+
 .layui-this:after {
     border-bottom: 3px solid var(--color-main) !important;
     transform: scaleX(0.5) !important;
@@ -147,24 +172,29 @@
     cursor: pointer;
     flex: 1;
 }
-.bcd-about > div {
+
+.bcd-about>div {
     margin: 20px auto;
     width: 240px;
 }
-.bcd-about > div > div {
+
+.bcd-about>div>div {
     justify-content: flex-end;
     display: flex;
     height: 17px;
 }
+
 .bcd-about span {
     color: var(--color-main);
     font-size: 1rem;
     font-weight: 300;
 }
+
 .bcd-about a {
     color: var(--color-font-2);
     font-size: 0.8rem;
 }
+
 .bcd-body {
     background: var(--color-card-1);
 }
@@ -173,14 +203,17 @@
     margin-top: 20px;
     padding: 0;
 }
-.opt-body > div {
+
+.opt-body>div {
     height: calc(100vh - 200px);
     overflow-y: scroll;
     padding-right: 7px;
 }
+
 .opt-body header {
     font-size: 0.95rem;
 }
+
 .opt-body select {
     background: var(--color-card-1);
     color: var(--color-font);
@@ -191,6 +224,7 @@
     height: 30px;
     width: 150px;
 }
+
 .opt-body label[class=ss-switch] {
     --switch-dot-border: 5px;
     --switch-dot-margin: 8px;
@@ -198,24 +232,29 @@
     min-width: 45px;
     margin: 5px 0;
 }
-.opt-body label[class=ss-switch] > div > div {
+
+.opt-body label[class=ss-switch]>div>div {
     margin-top: 3px;
 }
-.ss-switch > div > div {
+
+.ss-switch>div>div {
     margin-left: calc(var(--switch-dot-margin) - 5px);
 }
-.ss-switch input:checked ~ div > div {
+
+.ss-switch input:checked~div>div {
     border: var(--switch-dot-border) solid #fff;
     margin-left: calc(100% - var(--switch-height) + var(--switch-dot-margin) - 5px);
 }
 
-.opt-page > div {
+.opt-page>div {
     padding: 15px 20px;
 }
-.opt-page > div > header{
+
+.opt-page>div>header {
     letter-spacing: 0;
 }
-.opt-page > div:not(:first-child) {
+
+.opt-page>div:not(:first-child) {
     margin-top: 20px;
 }
 
@@ -227,19 +266,23 @@
     display: flex;
     height: 45px;
 }
+
 .opt-item:hover {
     background: var(--color-card-2);
 }
-.opt-item > div {
+
+.opt-item>div {
     flex-direction: column;
     display: flex;
     flex: 1;
 }
-.opt-item > div > span:last-child {
+
+.opt-item>div>span:last-child {
     color: var(--color-font-1);
     font-size: 0.8rem;
 }
-.opt-item > svg {
+
+.opt-item>svg {
     fill: var(--color-font);
     margin-right: 20px;
     margin-top: 1px;
@@ -256,33 +299,40 @@
     display: flex;
     padding: 15px;
 }
-.l10n-info > svg {
+
+.l10n-info>svg {
     fill: var(--color-font);
     margin: 0 20px 0 10px;
     height: 2.5rem;
 }
+
 .l10n-info span {
     display: block;
 }
-.l10n-info > div {
+
+.l10n-info>div {
     flex: 1;
 }
-.l10n-info > div > span {
+
+.l10n-info>div>span {
     font-size: 1rem;
     font-weight: bold;
 }
-.l10n-info > div > span:first-child > a {
+
+.l10n-info>div>span:first-child>a {
     color: var(--color-font-2);
     font-weight: normal;
     font-size: 0.7rem;
     margin-left: 5px;
 }
-.l10n-info > div > span:last-child {
+
+.l10n-info>div>span:last-child {
     font-weight: unset;
     font-size: 0.8rem;
     margin-top: 5px;
 }
-.l10n-info > span {
+
+.l10n-info>span {
     color: var(--color-font-1);
     margin-right: 10px;
     margin-left: 40px;
@@ -293,15 +343,17 @@
     display: flex !important;
     margin-top: -10px;
 }
-.theme-color-col > label {
+
+.theme-color-col>label {
     --radio-size: 16px;
     margin-left: -7px;
 }
 
-.ss-radio:hover > div:nth-child(2) {
+.ss-radio:hover>div:nth-child(2) {
     padding: calc((var(--radio-size) / 4) + 2px);
 }
-.ss-radio input:checked ~ div:nth-child(2) {
+
+.ss-radio input:checked~div:nth-child(2) {
     padding: calc(var(--radio-size) - 2px);
     height: 0;
     width: 0;
@@ -312,37 +364,44 @@
     align-items: center;
     display: flex;
 }
-.account-info > img {
+
+.account-info>img {
     border: 2px solid var(--color-main);
     outline: 3px solid var(--color-card-2);
     border-radius: 100%;
     height: 40px;
 }
-.account-info > div {
+
+.account-info>div {
     flex-direction: column;
     margin-left: 20px;
     display: flex;
     flex: 1;
 }
-.account-info > div > span {
+
+.account-info>div>span {
     color: var(--color-font-1-r);
 }
-.account-info > div > div {
+
+.account-info>div>div {
     align-items: flex-end;
     display: flex;
 }
-.account-info > div > div > span:first-child {
+
+.account-info>div>div>span:first-child {
     color: var(--color-font-r);
     font-size: 1.1rem;
     font-weight: bold;
 }
-.account-info > div > div > span:last-child {
+
+.account-info>div>div>span:last-child {
     color: var(--color-font-1-r);
     margin-bottom: 2px;
     margin-left: 10px;
     opacity: 0.7;
 }
-.account-info > svg {
+
+.account-info>svg {
     background: var(--color-card-2);
     fill: var(--color-main);
     border-radius: 100%;
@@ -355,24 +414,48 @@
     margin-top: 20px;
     display: flex;
 }
-.end-card > div {
+
+.end-card>div {
     flex: 1;
 }
-.end-card > div > span {
+
+.end-card>div>span {
     margin-left: 20px;
     font-size: 0.6rem;
 }
-.end-card > div > div {
+
+.end-card>div>div {
     margin-bottom: 10px;
 }
-.end-card > div > div > span {
+
+.end-card>div>div>span {
     letter-spacing: 0.1rem;
     font-size: 1rem;
     font-weight: 300;
     text-indent: 0;
 }
-.end-card > div > div > a {
+
+.end-card>div>div>a {
     color: var(--color-font-1);
     font-size: 0.6rem;
     margin-left: 10px;
+}
+
+@media (max-width: 700px) {
+    .opt-title {
+        display: none;
+    }
+    .opt-tab {
+        justify-content: center;
+    }
+    .opt-main > div:first-child {
+        margin-left: -20px;
+        width: 0;
+    }
+    .opt-main > div:last-child {
+        margin-top: 100px;
+    }
+    .opt-main > div:last-child > div:first-child {
+        height: calc(100% - 100px) !important;
+    }
 }

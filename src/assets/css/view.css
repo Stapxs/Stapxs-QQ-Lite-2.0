@@ -21,6 +21,8 @@ html, body {
     flex-direction: column;
     display: flex;
     height: 100%;
+    border: none;
+    width: 75px;
 }
 .main-body > ul > li {
     padding: 0 3px;
@@ -46,6 +48,7 @@ html, body {
 .main-body > div {
     width: 100%;
     padding: 0;
+    flex: 1;
 }
 .main-body > div > div {
     height: 100%;
@@ -506,4 +509,24 @@ html, body {
 .viewer-footer ul {
     pointer-events: all;
     height: 55px;
+}
+
+@media (max-width: 700px) {
+    /* 侧栏及主布局自适应 */
+    .main-body {
+        flex-direction: column-reverse;
+    }
+    .main-body > ul {
+        justify-content: center;
+        align-items: center;
+        flex-direction: row;
+        height: 75px;
+        width: 100%;
+    }
+    .main-body > ul > li {
+        padding-top: 15px !important;
+    }
+    .side-bar-space {
+        display: none;
+    }
 }
