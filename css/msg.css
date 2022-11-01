@@ -1,0 +1,311 @@
+/*
+    msg.css - 消息的样式
+    2022/04/03 - Stapx Steve [林槐]
+*/
+
+.message {
+    display: flex;
+    padding: 5px 10px;
+    width: 100%;
+    border-radius: 7px;
+    margin: 5px 0;
+}
+.message > img {
+    width: 35px;
+    height: 35px;
+    border-radius: 100%;
+    margin: 5px 15px 0 15px;
+}
+.message-body {
+    color: var(--color-font);
+    max-width: 60%;
+}
+.message-body a {
+    color: var(--color-font);
+}
+.message-body a:link {
+    opacity: 0.8;
+}
+.message-body a:link:before {
+    text-align: center;
+    content: '🔗';
+    color: transparent;
+    text-shadow: 0 0 0 var(--color-font-1);
+}
+.message-body > a {
+    color: var(--color-font-1);
+    font-size: 0.9rem;
+    display: inline-block;
+    margin: 0 5px;
+}
+.message-body > div {
+    background: var(--color-card-1);
+    padding: 10px;
+    border-radius: 7px;
+    max-width: max-content;
+}
+.message-space {
+    flex: 1;
+}
+
+.message-mine {
+    background: var(--color-main) !important;
+    color: var(--color-font-r) !important;
+}
+.message-mine a {
+    color: var(--color-font-r) !important;
+}
+.message-mine a:link {
+    opacity: 0.8;
+}
+
+.message-mine a:link:before {
+    text-align: center;
+    content: '🔗';
+    color: transparent;
+    text-shadow: 0 0 0 var(--color-font-1-r);
+}
+.message-mine svg {
+    fill: var(--color-font-r) !important;
+}
+
+.msg-img {
+    border-radius: 7px;
+    max-height: 35vh;
+    cursor: pointer;
+    display: block;
+    max-width: 100%;
+}
+
+.msg-face {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: -5px 2px 0 2px;
+    image-rendering: pixelated;
+}
+
+.msg-unknow {
+    color: var(--color-font-2) !important;
+    font-style: italic;
+}
+
+.msg-at {
+    color: var(--color-main) !important;
+    cursor: pointer;
+}
+
+.msg-replay {
+    padding: 10px;
+    border-radius: 7px;
+    font-size: 0.9rem;
+    background: #00000017;
+    cursor: pointer;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: row;
+    height: calc(1rem + 20px);
+    overflow: hidden;
+}
+.msg-replay span {
+    flex: 1;
+    line-height: 1rem;
+    overflow: hidden;
+    margin-top: -2px;
+}
+
+.note-base {
+    text-align: center;
+    margin: 40px 0 10px 0;
+}
+
+.note-time {
+    width: 100%;
+    background: var(--color-card-1);
+    padding: 5px 20px;
+    border-radius: 100vh;
+    font-size: 0.8rem;
+    color: var(--color-font-2) !important;
+}
+
+.msg-xml {
+    padding: 5px 15px;
+}
+.msg-xml p {
+    margin-bottom: 2px;
+}
+.msg-xml hr {
+    display: none;
+}
+.msg-xml-summary {
+    display: block;
+    font-size: 0.9rem;
+    background: #00000017;
+    margin: 0 -25px -15px -25px;
+    padding: 5px 5px 5px 10px;
+    border-radius: 0 0 7px 7px;
+}
+.msg-xml-img {
+    width: 3rem;
+    float: right;
+    margin-left: 15px;
+}
+
+.msg-record {
+    display: flex;
+    margin: 0 5px;
+}
+.msg-record > i {
+    display: inline-block;
+    font-size: 2rem;
+}
+.msg-record > div {
+    margin-left: 10px;
+}
+.msg-record > div a {
+    line-height: 2rem;
+}
+
+.msg-video {
+    margin: -10px;
+    border-radius: 7px;
+    overflow: hidden;
+}
+.msg-video video {
+    width: 100%;
+    max-height: 50vh;
+    margin-bottom: -7px;
+}
+
+.msg-file {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.msg-file > svg {
+    fill: var(--color-font-1);
+    height: calc(2rem + 10px);
+    margin-right: 20px;
+    margin-left: 10px;
+}
+.msg-file svg {
+    fill: var(--color-font-1);
+}
+.msg-file > div:nth-child(2) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+.msg-file > div:nth-child(2) i {
+    font-size: 0.9rem;
+    font-style: normal;
+    overflow-wrap: anywhere;
+}
+.msg-file > div:nth-child(2) a {
+    font-size: 0.8rem;
+}
+.msg-file > div:nth-child(2) p {
+    display: inline-block;
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+.msg-file > div:nth-child(3) {
+    width: 50px;
+    height: 50px;
+    background: #0000002e;
+    border-radius: 100%;
+    padding: 15px;
+    margin-left: 20px;
+    cursor: pointer;
+}
+.msg-file > div:nth-child(3) svg {
+    width: 20px;
+    height: 20px;
+    margin-top: -7px;
+}
+
+.msg-link-view {
+    display: flex;
+    flex-direction: row;
+    background: #00000017;
+    border-radius: 7px;
+    margin-top: 7px;
+    padding: 10px;
+}
+.msg-link-view div:nth-child(1) {
+    width: 5px;
+    min-width: 5px;
+    background: #00000030;
+    border-radius: 5px;
+    margin-right: 7px;
+}
+.msg-link-view img {
+    max-width: 50%;
+    min-height: 5rem;
+    max-height: 7rem;
+    border-radius: 7px;
+    margin-right: 7px;
+    cursor: pointer;
+}
+.msg-link-view div:nth-child(3) {
+    display: flex;
+    flex-direction: column;
+    max-height: 7rem;
+    overflow: hidden;
+}
+.msg-link-view div:nth-child(3) p {
+    font-weight: bold;
+    margin-bottom: 0;
+}
+.msg-link-view div:nth-child(3) span {
+    font-size: 0.9rem;
+}
+.msg-link-view div:nth-child(3) span:nth-child(3) {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.msg-json {
+    cursor: pointer;
+}
+.msg-json > p {
+    font-weight: bold;
+    margin-bottom: 0;
+}
+.msg-json > span {
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+.msg-json > img {
+    max-width: 100%;
+    height: 25vh;
+    border-radius: 7px;
+    margin-top: 7px;
+    display: block;
+    margin-left: 50%;
+    transform: translate(-50%);
+}
+.msg-json>div:nth-child(4) {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background: #00000017;
+    margin: 10px -10px -10px -10px;
+    border-radius: 0 0 7px 7px;
+    padding: 5px;
+}
+.msg-json>div:nth-child(4) > img {
+    height: 1.1rem;
+    border-radius: 5px;
+    margin-left: 7px;
+}
+.msg-json>div:nth-child(4) > span {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-left: 7px;
+}
+
+@media (max-width: 992px) {
+    .message-body {
+        max-width: 100%;
+    }
+}

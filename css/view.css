@@ -1,0 +1,427 @@
+/*
+    view.css - 主框架外的全部样式以及通用样式
+    2022/04/05 - Stapx Steve [林槐]
+*/
+
+.friend-body {
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    color: var(--color-font);
+    margin: 10px;
+    padding: 10px 10px 10px 0;
+    border-radius: 7px;
+    transform: translate(0, 0);
+    transition: background .2s, color .2s, transform .2s;
+}
+.friend-body.active {
+    background: var(--color-main);
+    color: var(--color-font-r);
+}
+.friend-body:hover {
+    background: var(--color-card-2) !important;
+}
+.friend-body.active:hover {
+    background: var(--color-main) !important;
+}
+.friend-body img {
+    width: 50px;
+    height: 50px;
+    border-radius: 100%;
+}
+.friend-body > div {
+    flex: 1;
+    margin-left: 10px;
+    overflow: hidden;
+}
+.friend-body > div:nth-child(1) {
+    flex: unset;
+    width: 4px;
+    background: var(--color-main);
+    border-radius: 4px;
+    margin-right: 10px;
+    transform: scaleY(0);
+    margin-left: 3px;
+    transition: transform .3s;
+}
+.friend-body > div p {
+    font-weight: bold;
+    margin-bottom: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+.friend-body > div > div {
+    display: flex;
+    align-items: flex-start;
+}
+.friend-body > div > div a {
+    font-size: 0.9rem;
+    color: var(--color-font-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+.friend-body.active > div > div a {
+    color: var(--color-font-1-r);
+}
+.friend-body > div > div a.time {
+    flex: unset;
+    margin-left: 15px;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    overflow: unset;
+}
+.friend-body > div > div svg {
+    width: 0.7rem;
+    fill: var(--color-font);
+    opacity: 0.7;
+}
+.friend-body.active > div > div svg {
+    fill: var(--color-font-r);
+}
+.friend-body > a {
+    font-size: 0.9rem;
+    color: var(--color-font-2);
+}
+.friend-body.active > a {
+    color: var(--color-font-1-r);
+}
+
+.msg-hander {
+    display: flex;
+    flex-direction: row;
+    background: var(--color-main);
+    height: 50px;
+    border-radius: 7px;
+    color: var(--color-font-r);
+    padding: 0 20px;
+}
+.msg-hander > svg {
+    width: 25px;
+    fill: var(--color-font-r);
+    margin-top: 5px;
+    margin-right: 15px;
+}
+.msg-hander > a {
+    line-height: 50px;
+    font-size: 1.2rem;
+    display: inline-block;
+    flex: 1;
+}
+.msg-hander > div {
+    width: 30px;
+    background: #0000002e;
+    border-radius: 100vh;
+    margin: 10px 0;
+    margin-left: 10px;
+}
+.msg-hander > div svg {
+    width: 4px;
+    margin-left: 13px;
+    margin-top: 2px;
+    fill: var(--color-font-r);
+}
+
+.sender {
+    justify-content: flex-start;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.msg-box {
+    flex: 1;
+    padding: 0;
+    background: var(--color-card-1);
+}
+.msg-box input {
+    width: 100%;
+    height: 100%;
+    padding: 10px 20px;
+    outline: 0;
+    border: 2px solid transparent;
+    border-radius: 7px;
+    transition: border .3s;
+    background: transparent;
+}
+.msg-box input:focus {
+    border: 2px solid var(--color-main);
+}
+
+.replyer {
+    display: flex;
+    overflow: hidden;
+    background: var(--color-card-1);
+    margin-bottom: 0;
+    border-radius: 7px;
+    height: 0;
+    transition: height .3s, margin-bottom .6s;
+}
+.replyer > svg {
+    fill: var(--color-font-1);
+    height: 15px;
+    margin: 15px;
+}
+.replyer div {
+    height: 45px;
+    width: 45px;
+    padding: 16px;
+    cursor: pointer;
+}
+.replyer div svg {
+    width: 100%;
+    margin-top: -12px;
+    fill: var(--color-font-2);
+}
+.replyer a {
+    display: inline-block;
+    flex: 1;
+    line-height: 45px;
+    margin-left: 10px;
+}
+
+.resender {
+    height: 90px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    background: var(--color-card-1);
+    margin-bottom: 0;
+    border-radius: 7px;
+    overflow: hidden;
+    transition: height .2s, margin-bottom .4s;
+}
+.resender > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0 10%;
+}
+.resender > div div {
+    height: 40px;
+    width: 40px;
+    background: var(--color-card-2);
+    border-radius: 100%;
+    padding: 10px;
+}
+.resender > div svg {
+    fill: var(--color-font-2);
+    margin-top: -8px;
+}
+.resender > div a {
+    display: inline-block;
+    margin-top: 5px;
+    font-size: 0.7rem;
+    width: 100%;
+    text-align: center;
+    color: var(--color-font-2);
+}
+
+.sender-view-box {
+    margin-bottom: 0;
+    max-height: 30vh;
+    height: 0;
+    background: var(--color-card-1);
+    border-radius: 7px;
+    transition: margin-bottom .6s;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+.sender-view-box:hover {
+    outline: none;
+    border: 0;
+}
+.sender-view-box::-webkit-scrollbar {
+    width: 0;
+}
+
+.at-mb-body {
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    cursor: pointer;
+    margin: 2px 0;
+    border-radius: 7px;
+    transition: background .3s;
+}
+.at-mb-body:hover {
+    background: var(--color-main);
+    color: var(--color-font-1-r);
+}
+.at-mb-body:hover a {
+    color: var(--color-font-1-r);
+}
+.at-mb-body img {
+    height: 2rem;
+    width: 2rem;
+    border-radius: 100%;
+    margin-right: 20px;
+    margin-left: 10px;
+}
+.at-mb-body i {
+    flex: 1;
+    line-height: 2rem;
+    font-style: normal;
+}
+.at-mb-body a {
+    line-height: 2rem;
+    color: var(--color-font-2);
+    font-size: 0.9rem;
+    margin-right: 10px;
+}
+
+.imgadd-pan-card {
+    position: absolute;
+    width: calc(100% - 40px);
+    max-width: 310px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+.imgadd-pan-card > form > p {
+    color: var(--color-main);
+}
+.imgadd-pan-card > form > input {
+    width: calc(100% - 20px);
+    height: 40px;
+    outline: none;
+    border: 2px solid var(--color-card-2);
+    border-radius: 7px;
+    transition: border .3s;
+    background: transparent;
+    margin: 20px 10px 0 10px;
+    padding: 0 10px;
+}
+.imgadd-pan-card > form > input:focus {
+    border: 2px solid var(--color-main);
+}
+.imgadd-pan-card > form > div:last-child {
+    margin-top: 15px;
+}
+.imgadd-pan-card > form > div:last-child > button {
+    margin: 5px;
+    width: calc(50% - 20px);
+}
+.imgadd-pan-card > form > div:last-child > button:first-child {
+    background: var(--color-card-1);
+    color: var(--color-font);
+}
+.imgadd-pan-card > form > div:not(:last-child) {
+    border: 2px solid var(--color-card-2);
+    height: 200px;
+    border-radius: 7px;
+    width: calc(100% - 20px);
+    margin: 0 10px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    overflow-x: hidden;
+}
+
+.imgadd-pan-card > form > div:not(:last-child) > div {
+    border: 2px solid var(--color-card-2);
+    background: var(--color-card-1);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100%, auto;
+    cursor: pointer;
+}
+.img-show-item-1 {
+    width: 100%;
+    height: 100%;
+}
+.img-show-item-2 {
+    width: 50%;
+    height: 100%;
+}
+.img-show-item-3,
+.img-show-item-4,
+.img-show-item-5 {
+    width: 50%;
+    height: 50%;
+}
+.img-show-item-add {
+    background-color: var(--color-card-1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.img-show-item-add > svg {
+    width: 30%;
+    fill: var(--color-font-2);
+    opacity: 0.3;
+}
+
+.more-box {
+    display: flex;
+    flex-direction: row;
+    height: 0;
+    transition: height .2s;
+    overflow: hidden;
+}
+.more-box > div {
+    width: 60PX;
+    height: 60px;
+    background: var(--color-card-1);
+    border-radius: 7px;
+    margin: 0 10px;
+}
+.more-box > div:first-child {
+    margin-left: 0;
+}
+.more-box > div:last-child {
+    margin-right: 0;
+}
+.more-box > div > div,
+.more-box > div > label {
+    padding: 19px;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+.more-box > div > label {
+    margin: 0 !important;
+}
+.more-box > div > div > svg,
+.more-box > div > label > svg {
+    fill: var(--color-font-2);
+}
+
+.face-show-pan {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-height: 30vh;
+    overflow-y: scroll;
+    background: var(--color-card-1);
+    padding: 5px;
+    margin: 0 0 20px 0 !important;
+    width: 100% !important;
+}
+
+.face-show-pan > div {
+    background: var(--color-card-2);
+    border-radius: 50%;
+    padding: 10px;
+    margin: 5px;
+    width: 40px;
+    height: 40px;
+}
+.face-show-pan > div > img {
+    width: 20px;
+    height: 20px;
+    margin-top: -9px;
+}
+
+/* 双屏设备兼容 */
+@media (horizontal-viewport-segments: 2) {
+    .imgadd-pan-card {
+        left: unset;
+        right: 0;
+    }
+}
