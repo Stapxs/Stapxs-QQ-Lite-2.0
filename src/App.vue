@@ -9,23 +9,23 @@
   <div id="app">
     <div class="layui-tab layui-tab-brief main-body">
       <ul class="layui-tab-title">
-        <li @click="changeChat" :class="login.status ? '' : 'layui-this'" :style="login.status ? 'margin-top: calc(-100% + 5px);' : ''">
+        <li @click="changeTab" :class="login.status ? 'hiden-home' : 'layui-this'">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z"/></svg>
         </li>
-        <li @click="changeChat(false)" :class="!login.status ? '' : 'layui-this'">
+        <li @click="changeTab(false)" :class="!login.status ? '' : 'layui-this'">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
             <path
               d="M464 64C490.5 64 512 85.49 512 112C512 127.1 504.9 141.3 492.8 150.4L275.2 313.6C263.8 322.1 248.2 322.1 236.8 313.6L19.2 150.4C7.113 141.3 0 127.1 0 112C0 85.49 21.49 64 48 64H464zM217.6 339.2C240.4 356.3 271.6 356.3 294.4 339.2L512 176V384C512 419.3 483.3 448 448 448H64C28.65 448 0 419.3 0 384V176L217.6 339.2z" />
           </svg>
         </li>
-        <li @click="changeChat(false)">
+        <li @click="changeTab(false)">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
             <path
               d="M224 256c70.7 0 128-57.31 128-128s-57.3-128-128-128C153.3 0 96 57.31 96 128S153.3 256 224 256zM274.7 304H173.3C77.61 304 0 381.6 0 477.3c0 19.14 15.52 34.67 34.66 34.67h378.7C432.5 512 448 496.5 448 477.3C448 381.6 370.4 304 274.7 304z" />
           </svg>
         </li>
         <div style="flex: 1;" class="side-bar-space"></div>
-        <li @click="changeChat">
+        <li @click="changeTab">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
             <path
               d="M495.9 166.6C499.2 175.2 496.4 184.9 489.6 191.2L446.3 230.6C447.4 238.9 448 247.4 448 256C448 264.6 447.4 273.1 446.3 281.4L489.6 320.8C496.4 327.1 499.2 336.8 495.9 345.4C491.5 357.3 486.2 368.8 480.2 379.7L475.5 387.8C468.9 398.8 461.5 409.2 453.4 419.1C447.4 426.2 437.7 428.7 428.9 425.9L373.2 408.1C359.8 418.4 344.1 427 329.2 433.6L316.7 490.7C314.7 499.7 307.7 506.1 298.5 508.5C284.7 510.8 270.5 512 255.1 512C241.5 512 227.3 510.8 213.5 508.5C204.3 506.1 197.3 499.7 195.3 490.7L182.8 433.6C167 427 152.2 418.4 138.8 408.1L83.14 425.9C74.3 428.7 64.55 426.2 58.63 419.1C50.52 409.2 43.12 398.8 36.52 387.8L31.84 379.7C25.77 368.8 20.49 357.3 16.06 345.4C12.82 336.8 15.55 327.1 22.41 320.8L65.67 281.4C64.57 273.1 64 264.6 64 256C64 247.4 64.57 238.9 65.67 230.6L22.41 191.2C15.55 184.9 12.82 175.3 16.06 166.6C20.49 154.7 25.78 143.2 31.84 132.3L36.51 124.2C43.12 113.2 50.52 102.8 58.63 92.95C64.55 85.8 74.3 83.32 83.14 86.14L138.8 103.9C152.2 93.56 167 84.96 182.8 78.43L195.3 21.33C197.3 12.25 204.3 5.04 213.5 3.51C227.3 1.201 241.5 0 256 0C270.5 0 284.7 1.201 298.5 3.51C307.7 5.04 314.7 12.25 316.7 21.33L329.2 78.43C344.1 84.96 359.8 93.56 373.2 103.9L428.9 86.14C437.7 83.32 447.4 85.8 453.4 92.95C461.5 102.8 468.9 113.2 475.5 124.2L480.2 132.3C486.2 143.2 491.5 154.7 495.9 166.6V166.6zM256 336C300.2 336 336 300.2 336 255.1C336 211.8 300.2 175.1 256 175.1C211.8 175.1 176 211.8 176 255.1C176 300.2 211.8 336 256 336z" />
@@ -99,10 +99,15 @@
           </div>
         </div>
         <div id="messageTab" :class="login.status ? 'layui-tab-item layui-show' : 'layui-tab-item'">
-          <Messages :list="inList" @userClick="setChat" ref="inMessage"></Messages>
+          <Messages :list="inList" @userClick="changeChat" ref="inMessage"></Messages>
         </div>
         <div class="layui-tab-item">
-          <Friends :list="userList" @userClick="setChat" @addMessage="addIn" @loadHistory="loadHistory"></Friends>
+          <Friends
+            :list="runtimeData.userList === undefined ? [] : runtimeData.userList"
+            @userClick="changeChat"
+            @addMessage="addIn"
+            @loadHistory="loadHistory">
+          </Friends>
         </div>
         <div class="layui-tab-item">
           <Options :config="config" :login="login.status" :uinfo="login"></Options>
@@ -112,16 +117,15 @@
     <!-- 消息主框体 -->
     <Chat
       ref="chat"
-      v-if="login.status && onChat.id != ''"
-      v-show="showChat"
+      v-if="login.status && runtimeData.onChat !== undefined && runtimeData.onChat.id !== ''"
+      v-show="tags.showChat"
       :mergeList="mergeMessageList"
       :mumberInfo="nowMemberInfo"
-      :list="messageList"
+      :list="runtimeData.messageList"
       :imgView="imgView"
-      :chat="onChat"
+      :chat="runtimeData.onChat === undefined ? {} : runtimeData.onChat"
       @hiddenUserInfo="hiddenUserInfo"
       @cleanMerge="cleanMerge"
-      @message="showAppMsg"
       @viewImg="viewImg"></Chat>
     <!-- 提示信息显示区 -->
     <TransitionGroup class="app-msg" name="appmsg" tag="div">
@@ -158,12 +162,12 @@ import Chat from './pages/Chat.vue'
 import Options from './pages/Options.vue'
 import Messages from './pages/Messages.vue'
 import { component as Viewer } from 'v-viewer'
-import FileDownloader from 'js-file-downloader'
 
 import { logger, popInfo, popList } from './assets/js/base'
-import { connect as connector } from './assets/js/connect'
+import { connect as connector, login } from './assets/js/connect'
 
 import config from '../package.json'
+import { runtimeData } from './assets/js/msg'
 
 // import { v4 as uuid } from 'uuid'
 
@@ -180,244 +184,40 @@ export default {
   // 应用全局参数
   data () {
     return {
-      onChat: { type: '', id: '', name: '', avatar: '', info: {} },
-      login: { address: '', token: '', status: '', info: {} },
-      showChat: false,
       mergeMessageList: [],
       nowMemberInfo: {},
-      messageList: [],
-      userList: [],
       inList: [],
-      config: {},
       // 图片查看器相关参数
       imgView: {
         options: {inline: false, button: false, title: false, toolbar: {prev: true, rotateLeft: true, reset: true, rotateRight: true, next: true}},
         srcList: []
       },
+      // 下面的整理好了
+      login: login,
       popInfo: popInfo,
-      appMsgs: popList
+      appMsgs: popList,
+      runtimeData: runtimeData,
+      tags: {
+        showChat: false
+      },
+      config: {}
     }
   },
   methods: {
+
+    /**
+     * 发起连接
+     */
     connect: function () {
       connector.create(this.login.address, this.login.token)
     },
-    parse: function (str) {
-      const msg = JSON.parse(str)
-      if (msg.echo !== undefined) {
-        switch (msg.echo) {
-          case 'getGroupList': this.userList = Util.mergeList(this.userList, msg.data); break // 获取群列表
-          case 'getFriendList': this.userList = Util.mergeList(this.userList, msg.data); break // 获取好友列表
-          case 'getLoginInfo': { // 获取基本信息
-            Vue.loginInfo = msg.data
-            console.log(Vue.loginInfo)
-            this.login.status = true
-            // 获取更详细的信息
-            let url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
-            let info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${msg.data.account.uin}&nf=0&of=0&ldw=${msg.data.oicq.bkn}`
-            Vue.sendWs(Vue.createAPI(
-              'http_proxy',
-              { 'url': url, 'method': 'post', 'data': info },
-              'getMoreLoginInfo'
-            ))
-            break
-          }
-          case 'getMoreLoginInfo': {
-            this.login.info = msg.data.data.result.buddy.info_list[0]
-            break
-          }
-          case 'getMoreGroupInfo': {
-            if (this.onChat.info === undefined) {
-              this.onChat.info = {}
-            }
-            this.onChat.info.group = msg.data.data
-            break
-          }
-          case 'getMoreUserInfo': {
-            if (this.onChat.info === undefined) {
-              this.onChat.info = {}
-            }
-            this.onChat.info.user = msg.data.data.result.buddy.info_list[0]
-            break
-          }
-          case 'getGroupMemberList': {
-            if (this.onChat.info === undefined) {
-              this.onChat.info = {}
-            }
-            this.onChat.info.group_members = msg.data
-            break
-          }
-          case 'getGroupFiles': { // 获取群文件
-            if (msg.data.data.ec !== 0) {
-              popInfo.add(popInfo.appMsgType.err, this.$t('chat.chat_info.load_file_err', {code: msg.data.data.ec}))
-            } else {
-              if (this.onChat.info === undefined) {
-                this.onChat.info = {}
-              }
-              this.onChat.info.group_files = msg.data.data
-            }
-            break
-          }
-          case 'getMoreGroupFiles': { // 获取群文件（分页加载）
-            if (this.onChat.info !== undefined && this.onChat.info.group_files !== undefined) {
-              // 追加文件列表
-              this.onChat.info.group_files.file_list =
-                Util.mergeList(this.onChat.info.group_files.file_list, msg.data.data.file_list)
-              // 设置最大值位置
-              this.onChat.info.group_files.next_index = msg.data.data.next_index
-            }
-            break
-          }
-          case 'getForwardMsg': { // 获取合并转发消息
-            const list = msg.data
-            // 格式化不规范消息格式
-            for (let i = 0; i < list.length; i++) {
-              list[i].sender = {
-                user_id: list[i].user_id,
-                nickname: list[i].nickname,
-                card: ''
-              }
-            }
-            this.mergeMessageList = list
-            break
-          }
-          case 'getChatHistoryFist': { // 首次获取消息记录
-            if (msg.error !== undefined) {
-              popInfo.add(popInfo.appMsgType.err, this.$t('chat.load_msg_err', {code: msg.error}))
-              this.messageList = []
-            } else {
-              this.messageList = msg.data
-              setTimeout(() => {
-                this.$refs.chat.scrollBottom()
-              }, 500)
-            }
-            break
-          }
-          case 'getChatHistory': { // 追加获取消息记录
-            if (msg.error !== undefined) {
-              popInfo.add(popInfo.appMsgType.err, this.$t('chat.load_msg_err', {code: msg.error}))
-            } else {
-              const items = msg.data
-              items.pop() // 去除最后一条重复的消息，获取历史消息会返回当前消息 **以及** 之前的 N-1 条
-              if (items.length < 1) {
-                this.$refs.chat.setNoMoreHistory()
-                return
-              }
-              this.messageList = Util.mergeList(items, this.messageList)
-            }
-            break
-          }
-          case 'sendMsgBack': { // 发送消息回调
-            if (msg.error !== undefined) {
-              popInfo.add(popInfo.appMsgType.err, this.$t('chat.send_msg_err', {code: msg.error}))
-            } else {
-              if (msg.message_id !== undefined) {
-                // 请求消息内容
-                Vue.sendWs(Vue.createAPI(
-                  'getMsg',
-                  { 'message_id': msg.message_id },
-                  'getSendMsg_' + msg.message_id + '_0'
-                ))
-              }
-            }
-            break
-          }
-          default: { // 其他情况
-            if (msg.echo.startsWith('getSendMsg')) {
-              // 发送消息回调
-              // TODO 这里暂时没有考虑消息获取失败的情况（因为没有例子）
-              this.messageList.push(msg)
-            }
-            if (msg.echo.startsWith('getGroupMemberInfo')) {
-              // 获取群成员信息
-              this.nowMemberInfo = msg
-              const pointInfo = msg.echo.split('_')
-              this.nowMemberInfo.x = pointInfo[1]
-              this.nowMemberInfo.y = pointInfo[2]
-            }
-            if (msg.echo.startsWith('downloadGroupFile')) {
-              // 获取群文件下载链接（下载群文件）
-              const info = msg.echo.split('_')
-              const id = info[1]
-              const json = JSON.parse(msg.data.data.substring(msg.data.data.indexOf('(') + 1, msg.data.data.lastIndexOf(')')))
-              let fileName = 'new-file'
-              let fileIndex = -1
-              let subFileIndex = -1
-              this.onChat.info.group_files.file_list.forEach((item, index) => {
-                if (item.id === id) {
-                  fileName = Util.htmlDecodeByRegExp(item.name)
-                  fileIndex = index
-                }
-              })
-              // 这是个子文件
-              if (info[2] !== undefined) {
-                this.onChat.info.group_files.file_list[fileIndex].sub_list.forEach((item, index) => {
-                  if (item.id === info[2]) {
-                    fileName = Util.htmlDecodeByRegExp(item.name)
-                    subFileIndex = index
-                  }
-                })
-              }
-              const that = this
-              const onProcess = function (event) {
-                if (!event.lengthComputable) return
-                var downloadingPercentage = Math.floor(event.loaded / event.total * 100)
-                if (fileIndex !== -1) {
-                  if (subFileIndex === -1) {
-                    if (that.onChat.info.group_files.file_list[fileIndex].downloadingPercentage === undefined) {
-                      Vue.set(that.onChat.info.group_files.file_list[fileIndex], 'downloadingPercentage', 0)
-                    }
-                    that.onChat.info.group_files.file_list[fileIndex].downloadingPercentage = downloadingPercentage
-                  } else {
-                    if (that.onChat.info.group_files.file_list[fileIndex].sub_list[subFileIndex].downloadingPercentage === undefined) {
-                      Vue.set(that.onChat.info.group_files.file_list[fileIndex].sub_list[subFileIndex], 'downloadingPercentage', 0)
-                    }
-                    that.onChat.info.group_files.file_list[fileIndex].sub_list[subFileIndex].downloadingPercentage = downloadingPercentage
-                  }
-                }
-              }
-              // 下载文件
-              new FileDownloader({
-                url: json.data.url,
-                autoStart: true,
-                process: onProcess,
-                nameCallback: function () {
-                  return fileName
-                }
-              })
-                .then(function () {
-                  console.log('finished')
-                })
-                .catch(function (error) {
-                  if (error) {
-                    console.log(error)
-                  }
-                })
-            }
-            if (msg.echo.startsWith('getGroupDirFiles')) {
-              // 获取群文件文件夹子文件
-              // TODO 这边不分页直接拿全
-              const id = msg.echo.split('_')[1]
-              let fileIndex = -1
-              this.onChat.info.group_files.file_list.forEach((item, index) => {
-                if (item.id === id) {
-                  fileIndex = index
-                }
-              })
-              Vue.set(this.onChat.info.group_files.file_list[fileIndex], 'sub_list', msg.data.data.file_list)
-            }
-            break
-          }
-        }
-      } else {
-        switch (msg.post_type) {
-          case 'message': this.newMsg(msg); break // 接收到消息
-        }
-      }
-    },
-    // 标签卡相关
-    setChat: function (data) {
-      this.onChat = {
+
+    /**
+     * 切换聊天
+     * @param { object } data 对象信息
+     */
+    changeChat: function (data) {
+      this.runtimeData.onChat = {
         type: data.type,
         id: data.id,
         name: data.name,
@@ -435,18 +235,25 @@ export default {
       // 重置图片预览器状态
       Object.assign(this.$data.imgView, this.$options.data().imgView)
     },
-    changeChat: function (info) {
+
+    /**
+     * 切换主标签卡
+     * @param { boolean } info 是否显示聊天页面
+     */
+    changeTab: function (info) {
       if (!info) {
-        this.showChat = true
+        this.tags.showChat = true
       } else {
-        this.showChat = false
+        this.tags.showChat = false
       }
     },
+
     // 用户列表交互相关
     addIn: function (data) {
       document.getElementById('messageTab').click()
       this.$refs.inMessage.addMesage(data)
     },
+
     // 消息相关
     loadHistory: function (info) {
       this.messageList = []
@@ -454,6 +261,7 @@ export default {
         popInfo.add(popInfo.appMsgType.err, '加载历史消息失败（构建消息 ID 失败）', false)
       }
     },
+
     newMsg: function (data) {
       const id = data.from_id ? data.from_id : data.group_id
       if (id === this.onChat.id) {

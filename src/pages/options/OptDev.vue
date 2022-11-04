@@ -37,20 +37,63 @@
           </label>
         </div>
     </div>
+    <div class="ss-card">
+        <header>{{ $t('option.dev.ws') }}</header>
+        <div class="opt-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M320 192H128C118.5 192 109.8 197.7 105.1 206.4C102.2 215.1 103.9 225.3 110.4 232.3l96 104C210.9 341.2 217.3 344 224 344s13.09-2.812 17.62-7.719l96-104c6.469-7 8.188-17.19 4.375-25.91C338.2 197.7 329.5 192 320 192zM384 32H64C28.65 32 0 60.66 0 96v320c0 35.34 28.65 64 64 64h320c35.35 0 64-28.66 64-64V96C448 60.66 419.3 32 384 32zM400 416c0 8.82-7.178 16-16 16H64c-8.822 0-16-7.18-16-16V96c0-8.82 7.178-16 16-16h320c8.822 0 16 7.18 16 16V416z"/></svg>
+          <div>
+            <span>{{ $t('option.dev.ws_send') }}</span>
+            <span>{{ $t('option.dev.ws_send_tip') }}</span>
+          </div>
+          <input class="ss-input" type="text" @keyup="sendTestWs" v-model="ws_text">
+        </div>
+    </div>
+    <div class="ss-card">
+        <header>{{ $t('option.dev.outher') }}</header>
+        <div class="opt-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M320 192H128C118.5 192 109.8 197.7 105.1 206.4C102.2 215.1 103.9 225.3 110.4 232.3l96 104C210.9 341.2 217.3 344 224 344s13.09-2.812 17.62-7.719l96-104c6.469-7 8.188-17.19 4.375-25.91C338.2 197.7 329.5 192 320 192zM384 32H64C28.65 32 0 60.66 0 96v320c0 35.34 28.65 64 64 64h320c35.35 0 64-28.66 64-64V96C448 60.66 419.3 32 384 32zM400 416c0 8.82-7.178 16-16 16H64c-8.822 0-16-7.18-16-16V96c0-8.82 7.178-16 16-16h320c8.822 0 16 7.18 16 16V416z"/></svg>
+          <div>
+            <span>{{ $t('option.dev.appmsg') }}</span>
+            <span>{{ $t('option.dev.appmsg_tip') }}</span>
+          </div>
+          <input class="ss-input" type="text" @keyup="sendTestAppmsg" v-model="appmsg_text">
+        </div>
+    </div>
   </div>
 </template>
 
 <script>
 import { runASWEvent as save } from '../../assets/js/options'
+import { websocket as ws } from '../../assets/js/connect'
+import { popInfo } from '../../assets/js/base'
 
 export default {
   name: 'OptDev',
   props: ['config'],
   data () {
     return {
-      save: save
+      save: save,
+      ws_text: '',
+      appmsg_text: ''
     }
   },
-  methods: {}
+  methods: {
+    sendTestWs: function (event) {
+      // 发送测试 WS 消息
+      if (event.keyCode === 13 && this.ws_text !== '') {
+        const info = JSON.parse(this.ws_text)
+        this.ws_text = ''
+        // 修改 echo 防止被消息处理机处理
+        info.echo = 'websocketTest'
+        ws.send(JSON.stringify(info))
+      }
+    },
+    sendTestAppmsg: function (event) {
+      if (event.keyCode === 13 && this.appmsg_text !== '') {
+        popInfo.add(popInfo.appMsgType.info, this.appmsg_text, false)
+        this.appmsg_text = ''
+      }
+    }
+  }
 }
 </script>

@@ -7,8 +7,12 @@
 
 import Vue from 'vue'
 import l10nConfig from '../src/l10n/_l10nconfig.json'
+import { connect as connector } from './connect'
 
 export function mergeList (a, b) {
+  if (a === undefined) {
+    return b
+  }
   return a.concat(b)
 }
 
@@ -95,27 +99,15 @@ export function loadHistoryMessage (id, type) {
   }
   if (msgid != null) {
     // 发送请求
-    Vue.sendWs(
-      Vue.createAPI(
-        'getChatHistory',
-        { 'message_id': msgid },
-        'getChatHistoryFist'
-      )
+    connector.send(
+      'get_chat_history',
+      { 'message_id': msgid },
+      'getChatHistoryFist'
     )
     return true
   } else {
     return false
   }
-}
-
-// 初始化信息
-export function loadBaseInfo () {
-  // 用户信息
-  Vue.sendWs(Vue.createAPI('get_login_info', null, 'getLoginInfo'))
-  // 好友列表
-  Vue.sendWs(Vue.createAPI('getFriendList', null, null))
-  // 群列表
-  Vue.sendWs(Vue.createAPI('getGroupList', null, null))
 }
 
 export function openLink (url) {
@@ -211,13 +203,18 @@ export function getRandom (num, maxA, minlA, fqy) {
   return text
 }
 
+export function $t (args) {
+  /* eslint-disable */
+  return Vue.i18n.tc.call(Vue.i18n, args)
+}
+
 export default {
   mergeList,
   parseMsgId,
   waveAnimation,
   loadHistoryMessage,
-  loadBaseInfo,
   openLink,
   getTrueLang,
-  htmlDecodeByRegExp
+  htmlDecodeByRegExp,
+  $t
 }

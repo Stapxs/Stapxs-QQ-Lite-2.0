@@ -731,3 +731,19 @@ textarea {
     height: 20px;
     width: 20px;
 }
+
+@media (max-width: 700px) {
+    /* 消息面板 */
+    .chat-pan {
+        height: calc(100% - 75px);
+        left: 80px;
+    }
+    /* 群信息面板 */
+    .chat-info {
+        width: calc(100% - 80px);
+        transform: unset;
+        margin: 20px;
+        bottom: 75px;
+        /* 还缺个 max-height */
+    }
+}

@@ -14,10 +14,10 @@
       :data-sender="data.sender.user_id"
       :data-time="data.time"
       @mouseleave="hiddenUserInfo">
-    <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id" v-if="!isMe || isMerge">
+    <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id" v-show="!isMe || isMerge">
     <div class="message-space" v-if="isMe && !isMerge"></div>
     <div :class="isMe ? (isMerge ? 'message-body' : 'message-body me') : 'message-body'">
-      <a v-if="!isMe || isMerge">{{ data.sender.card ? data.sender.card : data.sender.nickname }}</a>
+      <a v-show="!isMe || isMerge">{{ data.sender.card ? data.sender.card : data.sender.nickname }}</a>
       <div>
         <!-- 回复指示框 -->
         <div
