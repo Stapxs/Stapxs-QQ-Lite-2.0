@@ -746,4 +746,8 @@ textarea {
         bottom: 75px;
         /* 还缺个 max-height */
     }
+    /* AT 信息悬浮面板 */
+    .mumber-info > div:first-child {
+        max-width: 55%;
+    }
 }

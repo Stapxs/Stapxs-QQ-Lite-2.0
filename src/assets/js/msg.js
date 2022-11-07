@@ -7,7 +7,7 @@
 */
 
 import Vue from 'vue'
-// import FileDownloader from 'js-file-downloader'
+import FileDownloader from 'js-file-downloader'
 import Util from './util'
 
 import { popInfo } from './base'
@@ -23,10 +23,11 @@ export function parse (str) {
       case 'getGroupList'       : saveUser(msg.data); break
       case 'getFriendList'      : saveUser(msg.data); break
       case 'getLoginInfo'       : saveLoginInfo(msg.data); break
+      case 'getVersionInfo'     : break
       case 'getMoreLoginInfo'   : saveInfo(login, 'info', msg.data.data.result.buddy.info_list[0]); break
       case 'getMoreGroupInfo'   : saveInfo(runtimeData.onChat.info, 'group', msg.data.data); break
-      case 'getMoreUserInfo'    : saveInfo(this.onChat.info, 'user', msg.data.data.result.buddy.info_list[0]); break
-      case 'getGroupMemberList' : saveInfo(this.onChat.info, 'group_members', msg.data); break
+      case 'getMoreUserInfo'    : saveInfo(runtimeData.onChat.info, 'user', msg.data.data.result.buddy.info_list[0]); break
+      case 'getGroupMemberList' : saveInfo(runtimeData.onChat.info, 'group_members', msg.data); break
       case 'getGroupFiles'      : saveFileList(msg.data.data); break
       case 'getMoreGroupFiles'  : saveMoreFileList(msg.data.data); break
       case 'getForwardMsg'      : saveForwardMsg(msg.data); break
@@ -40,7 +41,10 @@ export function parse (str) {
           // 复杂消息头
           // PS：复杂消息头由“消息头_参数1_参数N”组成
           switch (head) {
-            case 'getSendMsg'   : saveSendedMsg(msg); break
+            case 'getSendMsg'         : saveSendedMsg(msg); break
+            case 'getGroupMemberInfo' : saveMemberInfo(msg); break
+            case 'getGroupDirFiles'   : saveDirFile(msg); break
+            case 'downloadGroupFile'  : downloadGroupFile(msg); break
           }
         }
       }
@@ -85,7 +89,7 @@ function saveFileList (data) {
       Util.$t('chat.chat_info.load_file_err', {code: data.ec})
     )
   } else {
-    saveInfo(this.onChat.info, 'group_files', data)
+    saveInfo(runtimeData.onChat.info, 'group_files', data)
   }
 }
 function saveMoreFileList (data) {
@@ -109,6 +113,7 @@ function saveForwardMsg (data) {
   saveInfo(runtimeData, 'mergeMessageList', data)
 }
 function backTestInfo (data) {
+  runtimeData.wsTestBack = data
   console.log('=========================')
   console.log(data)
   console.log('=========================')
@@ -154,6 +159,80 @@ function showSendedMsg (msg) {
 function saveSendedMsg (msg) {
   // TODO 这里暂时没有考虑消息获取失败的情况（因为没有例子）
   Vue.set(runtimeData, 'messageList', Util.mergeList(runtimeData.messageList, [msg]))
+}
+function saveMemberInfo (msg) {
+  const pointInfo = msg.echo.split('_')
+  msg.x = pointInfo[1]
+  msg.y = pointInfo[2]
+  Vue.set(runtimeData, 'nowMemberInfo', msg)
+}
+function saveDirFile (msg) {
+  // TODO 这边不分页直接拿全
+  const id = msg.echo.split('_')[1]
+  let fileIndex = -1
+  runtimeData.onChat.info.group_files.file_list.forEach((item, index) => {
+    if (item.id === id) {
+      fileIndex = index
+    }
+  })
+  Vue.set(runtimeData.onChat.info.group_files.file_list[fileIndex], 'sub_list', msg.data.data.file_list)
+}
+function downloadGroupFile (msg) {
+  const info = msg.echo.split('_')
+  const id = info[1]
+  const json = JSON.parse(msg.data.data.substring(msg.data.data.indexOf('(') + 1, msg.data.data.lastIndexOf(')')))
+  let fileName = 'new-file'
+  let fileIndex = -1
+  let subFileIndex = -1
+  runtimeData.onChat.info.group_files.file_list.forEach((item, index) => {
+    if (item.id === id) {
+      fileName = Util.htmlDecodeByRegExp(item.name)
+      fileIndex = index
+    }
+  })
+  // 这是个子文件
+  if (info[2] !== undefined) {
+    runtimeData.onChat.info.group_files.file_list[fileIndex].sub_list.forEach((item, index) => {
+      if (item.id === info[2]) {
+        fileName = Util.htmlDecodeByRegExp(item.name)
+        subFileIndex = index
+      }
+    })
+  }
+  const onProcess = function (event) {
+    if (!event.lengthComputable) return
+    var downloadingPercentage = Math.floor(event.loaded / event.total * 100)
+    if (fileIndex !== -1) {
+      if (subFileIndex === -1) {
+        if (runtimeData.onChat.info.group_files.file_list[fileIndex].downloadingPercentage === undefined) {
+          Vue.set(runtimeData.onChat.info.group_files.file_list[fileIndex], 'downloadingPercentage', 0)
+        }
+        Vue.set(runtimeData.onChat.info.group_files.file_list[fileIndex], 'downloadingPercentage', downloadingPercentage)
+      } else {
+        if (runtimeData.onChat.info.group_files.file_list[fileIndex].sub_list[subFileIndex].downloadingPercentage === undefined) {
+          Vue.set(runtimeData.onChat.info.group_files.file_list[fileIndex].sub_list[subFileIndex], 'downloadingPercentage', 0)
+        }
+        Vue.set(runtimeData.onChat.info.group_files.file_list[fileIndex].sub_list[subFileIndex], 'downloadingPercentage', downloadingPercentage)
+      }
+    }
+  }
+  // 下载文件
+  new FileDownloader({
+    url: json.data.url,
+    autoStart: true,
+    process: onProcess,
+    nameCallback: function () {
+      return fileName
+    }
+  })
+    .then(function () {
+      console.log('finished')
+    })
+    .catch(function (error) {
+      if (error) {
+        console.log(error)
+      }
+    })
 }
 
 // 运行时数据，用于在全程序内共享使用

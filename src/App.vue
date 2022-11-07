@@ -120,7 +120,7 @@
       v-if="login.status && runtimeData.onChat !== undefined && runtimeData.onChat.id !== ''"
       v-show="tags.showChat"
       :mergeList="mergeMessageList"
-      :mumberInfo="nowMemberInfo"
+      :mumberInfo="runtimeData.nowMemberInfo === undefined ? {} : runtimeData.nowMemberInfo"
       :list="runtimeData.messageList"
       :imgView="imgView"
       :chat="runtimeData.onChat === undefined ? {} : runtimeData.onChat"
@@ -185,7 +185,6 @@ export default {
   data () {
     return {
       mergeMessageList: [],
-      nowMemberInfo: {},
       inList: [],
       // 图片查看器相关参数
       imgView: {
@@ -273,7 +272,7 @@ export default {
       this.mergeMessageList = []
     },
     hiddenUserInfo: function () {
-      this.nowMemberInfo = []
+      Vue.set(runtimeData, 'nowMemberInfo', {})
     },
     // 图片查看器相关
     inited (viewer) {

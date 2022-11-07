@@ -3,6 +3,7 @@
  * @Author: Stapxs
  * @Date: 2022/08/02
  * @Version: 1.0
+ * @Description： 一个平平无奇的工具类
 */
 
 import Vue from 'vue'
@@ -204,6 +205,7 @@ export function getRandom (num, maxA, minlA, fqy) {
 }
 
 export function $t (args) {
+  // 别 BB（全恼
   /* eslint-disable */
   return Vue.i18n.tc.call(Vue.i18n, args)
 }

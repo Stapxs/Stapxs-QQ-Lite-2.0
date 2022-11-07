@@ -7,8 +7,9 @@
 */
 
 import Vue from 'vue'
-import { logger, popInfo } from './base'
 import Util from './util'
+
+import { logger, popInfo } from './base'
 import { parse } from './msg'
 
 export class connect {
@@ -19,7 +20,7 @@ export class connect {
       // 保存登录信息（一个月）
       Vue.$cookies.set('address', address, '1m')
       // 加载初始化数据
-      loadBaseInfo()
+      getBaseInfo()
       // PS：标记登陆成功在获取用户信息的回调位置，防止无法获取到内容
     }
     websocket.onmessage = (e) => {
@@ -36,9 +37,9 @@ export class connect {
         popInfo.add(popInfo.appMsgType.info, Util.$t('log.con_closed'))
       }
       // 清空数据
-      // const loginAddress = this.login.address
-      // Object.assign(this.$data, this.$options.data())
-      // this.login.address = loginAddress
+      const loginAddress = login.address
+      login = {}
+      login.address = loginAddress
     }
   }
 
@@ -55,7 +56,9 @@ export class connect {
   }
 }
 
-function loadBaseInfo () {
+function getBaseInfo () {
+  // bot 信息
+  connect.send('get_version_info', null, 'getVersionInfo')
   // 用户信息
   connect.send('get_login_info', null, 'getLoginInfo')
   // 好友列表

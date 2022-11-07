@@ -78,7 +78,7 @@
       <div v-if="chat.type === 'group'" class="layui-tab layui-tab-brief"
         style="overflow: hidden; display: flex;flex-direction: column;height: 100%;margin: 0;">
         <ul class="layui-tab-title chat-info-tab">
-          <li class="layui-this">{{ $t('chat.chat_info.member') + `(${chat.info.group_members.length})` }}</li>
+          <li class="layui-this">{{ $t('chat.chat_info.member') + `(${chat.info.group_members.length == undefined ? 0 : chat.info.group_members.length})` }}</li>
           <li>{{ $t('chat.chat_info.file') + `(${chat.info.group_files.total_cnt === undefined ? 0 :
           chat.info.group_files.total_cnt})` }}</li>
           <li>{{ $t('chat.chat_info.config') }}</li>

@@ -57,6 +57,8 @@ import Vue from 'vue'
 import Xss from 'xss'
 import Util from '../assets/js/util.js'
 
+import { connect as connecter } from '../assets/js/connect'
+
 export default {
   name: 'MsgBody',
   props: ['data', 'isMerge'],
@@ -237,7 +239,7 @@ export default {
       // 接下来按类型处理
       if (type === 'forward') {
         // 解析合并转发消息
-        Vue.sendWs(Vue.createAPI('getForwardMsg', { 'resid': sender.dataset.id }))
+        connecter.send('getForwardMsg', { 'resid': sender.dataset.id })
       }
     },
     /**
@@ -296,8 +298,8 @@ export default {
       const pointY = pointEvent.clientY
       // 出界判定不做了怪麻烦的
       // 请求用户信息
-      Vue.sendWs(Vue.createAPI('getGroupMemberInfo', {group_id: group, user_id: id},
-        'getGroupMemberInfo_' + pointX + '_' + pointY))
+      connecter.send('getGroupMemberInfo', {group_id: group, user_id: id},
+        'getGroupMemberInfo_' + pointX + '_' + pointY)
     },
     hiddenUserInfo: function () {
       this.$parent.hiddenUserInfo()

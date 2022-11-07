@@ -99,7 +99,7 @@
       "account": "账号",
       "view": "界面",
       "function": "功能",
-      "dev": "开发者"
+      "dev": "高级"
     },
     "info": {
       "visit_github": "访问仓库"
@@ -128,12 +128,14 @@
       "log_level_tip": "ReferenceError: moYu is not defined",
       "msg_menu": "禁用自定义右击菜单",
       "msg_menu_tip": "哼哼啊啊啊啊啊，让我选 ——",
-      "ws": "Websocket 测试工具",
-      "ws_send": "发送原始消息",
-      "ws_send_tip": "咻 —— 您的消息！",
       "outher": "杂项",
       "appmsg": "应用消息测试",
-      "appmsg_tip": "冒个泡泡 ——"
+      "appmsg_tip": "#$&*#$@ ……",
+      "connect": "连接器选项",
+      "connect_beat": "响应心跳包",
+      "connect_beat_tip": "没救了，拖出去吧",
+      "ws_send": "发送原始消息",
+      "ws_send_tip": "咻 ——"
     },
     "account": {
       "config": "账号设置"
