@@ -51,7 +51,7 @@ html, body {
     flex: 1;
 }
 .main-body > div > div {
-    height: 100%;
+    height: 100vh;
 }
 
 .home-body {
@@ -386,6 +386,7 @@ html, body {
 .app-msg > div {
     box-shadow: 0 0 5px var(--color-shader);
     background: var(--color-main);
+    overflow-wrap: anywhere;
     align-items: center;
     pointer-events: all;
     width: fit-content;
@@ -511,10 +512,17 @@ html, body {
     height: 55px;
 }
 
+.hiden-home {
+    margin-top: calc(-100% + 5px);
+}
+
 @media (max-width: 700px) {
     /* 侧栏及主布局自适应 */
     .main-body {
         flex-direction: column-reverse;
+    }
+    .main-body > div > div {
+        height: calc(100vh - 75px);
     }
     .main-body > ul {
         justify-content: center;
@@ -528,5 +536,47 @@ html, body {
     }
     .side-bar-space {
         display: none;
+    }
+    .hiden-home {
+        margin-top: calc(100% + 5px);
+        margin-left: -70px;
+    }
+    /* 二级侧栏 */
+    .friend-list {
+        /* transform: translateY(145px);
+        height: calc(100% - 145px); */
+        width: 80px;
+    }
+    .friend-list > div:first-child {
+        margin: 0 0 10px 0;
+    }
+    .friend-list > div:first-child > div {
+        justify-content: center;
+    }
+    .friend-list > div:first-child > div > span {
+        display: none;
+    }
+    .friend-list > div:first-child > div > div {
+        display: none;
+    }
+    .friend-body {
+        justify-content: center;
+        padding: 10px 0;
+        margin: 0;
+    }
+    .friend-body > div {
+        display: none;
+    }
+    .friend-body img {
+        height: 45px;
+        width: 45px;
+    }
+    /* 应用消息 */
+    .app-msg {
+        height: calc(100% - 20px - 70px);
+        padding-left: 20px;
+    }
+    .app-msg > div {
+        max-width: calc(100% - 80px);
     }
 }

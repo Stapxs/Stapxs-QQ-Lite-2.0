@@ -25,7 +25,7 @@ export function parseMsg (msg, cache) {
   if (specialList !== null) {
     specialList.forEach((item) => {
       const index = item.replace('[', '').replace(']', '').split(':')[1]
-      regCut = RegExp('^[^\\[]*\\[SQ:' + index + '\\]', 'g')
+      const regCut = RegExp('^[^\\[]*\\[SQ:' + index + '\\]', 'g')
       // 处理内容
       const cutList = msg.match(regCut)
       if (cutList !== null) {
@@ -50,7 +50,7 @@ export function parseMsg (msg, cache) {
 }
 
 export function getSQList (msg) {
-  reg = /\[SQ:\d+\]/gm
+  const reg = /\[SQ:\d+\]/gm
   return msg.match(reg)
 }
 

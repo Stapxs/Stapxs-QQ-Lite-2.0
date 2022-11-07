@@ -386,7 +386,18 @@
 }
 
 @media (max-width: 992px) {
+    /* 消息体 */
+    .message > img {
+        display: unset !important;
+    }
+    .message-space {
+        display: none;
+    }
     .message-body {
         max-width: 100%;
+    }
+    .message-body > a:first-child {
+        color: var(--color-font-1) !important;
+        display: unset !important;
     }
 }

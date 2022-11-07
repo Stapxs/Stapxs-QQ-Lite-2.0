@@ -153,6 +153,9 @@ import MsgBody from '../components/MsgBody.vue'
 import Vue from 'vue'
 
 import { parseMsgId, getTrueLang } from '../assets/js/util.js'
+import { popInfo } from '../assets/js/base'
+import { connect as connecter } from '../assets/js/connect'
+
 import SendUtil from '../assets/js/sender.js'
 import InfoBody from '../components/chat/InfoPan.vue'
 import FacePan from '../components/chat/FacePan.vue'
@@ -215,12 +218,10 @@ export default {
         // 锁定加载防止反复触发
         this.tags.nowGetHistroy = true
         // 发起获取历史消息请求
-        Vue.sendWs(
-          Vue.createAPI(
-            'getChatHistory',
-            { 'message_id': firstMsgId },
-            'getChatHistory'
-          )
+        connecter.send(
+          'get_chat_history',
+          { 'message_id': firstMsgId },
+          'getChatHistory'
         )
       }
     },
@@ -248,12 +249,7 @@ export default {
       if (msg) {
         this.scrollTo(msg.offsetTop - msg.offsetHeight + 10)
       } else {
-        const data = {
-          text: this.$t('chat.msg_not_load'),
-          type: Vue.appMsgType.err,
-          autoClose: true
-        }
-        this.$emit('message', data)
+        popInfo.add(popInfo.appMsgType.err, this.$t('chat.msg_not_load'))
       }
     },
     viewImg: function (msgId) {
@@ -401,37 +397,37 @@ export default {
         // 加载基础信息
         if (this.chat.type === 'group' && this.chat.info.group.gc !== this.chat.id) {
           const url = `https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_info_all?gc=${this.chat.id}&bkn=${Vue.loginInfo.oicq.bkn}`
-          Vue.sendWs(Vue.createAPI(
+          connecter.send(
             'http_proxy',
             {'url': url},
             'getMoreGroupInfo'
-          ))
+          )
         } else if (this.chat.type === 'user' && this.chat.info.user.uin !== this.chat.id) {
           const url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
           const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${this.chat.id}&nf=0&of=0&ldw=${Vue.loginInfo.oicq.bkn}`
-          Vue.sendWs(Vue.createAPI(
+          connecter.send(
             'http_proxy',
             { 'url': url, 'method': 'post', 'data': info },
             'getMoreUserInfo'
-          ))
+          )
         }
         // 加载群成员列表
         if (this.chat.type === 'group' &&
         (Object.keys(this.chat.info.group_members).length === 0 || this.chat.info.group_members.length <= 0 || this.chat.info.group_members[0].group_id !== this.chat.id)) {
-          Vue.sendWs(Vue.createAPI(
+          connecter.send(
             'get_group_member_list',
             {'group_id': this.chat.id},
             'getGroupMemberList'
-          ))
+          )
         }
         // 加载群文件列表
         if (this.chat.type === 'group' && Object.keys(this.chat.info.group_files).length === 0) {
           const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${Vue.loginInfo.oicq.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
-          Vue.sendWs(Vue.createAPI(
+          connecter.send(
             'http_proxy',
             { 'url': url },
             'getGroupFiles'
-          ))
+          )
         }
       }
     },
@@ -443,11 +439,11 @@ export default {
       if (sender.scrollTop + sender.clientHeight >= sender.scrollHeight && this.chat.info.group_files.next_index !== 0 &&
         this.chat.info.group_files.next_index !== this.chat.info.group_files.total_cnt) {
         const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${Vue.loginInfo.oicq.bkn}&start_index=${this.chat.info.group_files.next_index}&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
-        Vue.sendWs(Vue.createAPI(
+        connecter.send(
           'http_proxy',
           { 'url': url },
           'getMoreGroupFiles'
-        ))
+        )
       }
     },
     /**
@@ -496,11 +492,7 @@ export default {
         if (item.kind === 'file') {
           let blob = item.getAsFile()
           if (blob.type.indexOf('image/') >= 0 && blob.size !== 0) {
-            this.$emit('message', {
-              text: this.$t('chat.image_processing'),
-              type: Vue.appMsgType.info,
-              autoClose: true
-            })
+            popInfo.add(popInfo.appMsgType.info, this.$t('chat.image_processing'))
             if (blob.size < 3145728) {
               // 转换为 Base64
               var reader = new FileReader()
@@ -515,11 +507,7 @@ export default {
                 Vue.cacheImg.push(base64data)
               }
             } else {
-              this.$emit('message', {
-                text: this.$t('chat.image_toooo_big'),
-                type: Vue.appMsgType.info,
-                autoClose: true
-              })
+              popInfo.add(popInfo.appMsgType.info, this.$t('chat.image_toooo_big'))
             }
             // 阻止默认行为
             e.preventDefault()
@@ -538,16 +526,11 @@ export default {
       //                     ^^^^^^ 0 ^^^^^^    ^^^^^^^^^^ 1 ^^^^^^^^^^
       // 在发送操作触发之后，将会解析此条字符串排列出最终需要发送的消息结构用于发送。
       // // PS：你可以在前面添加反斜杠来忽略解析，就像是："[SQ:1] 你好，\[SQ:2]"
-      let json = null
       let msg = SendUtil.parseMsg(this.msg, this.sendCache)
       if (msg !== null && msg.length > 0) {
         switch (this.chat.type) {
-          case 'group': json = Vue.createAPI('sendGroupMsg', {'group_id': this.chat.id, 'message': msg}, 'sendMsgBack'); break
-          case 'user': json = Vue.createAPI('sendPrivateMsg', {'user_id': this.chat.id, 'message': msg}, 'sendMsgBack'); break
-        }
-        if (json != null) {
-          Vue.sendWs(json)
-          // PS: 渲染本条消息的功能由消息本请求的返回系统处理
+          case 'group': connecter.send('send_group_msg', {'group_id': this.chat.id, 'message': msg}, 'sendMsgBack'); break
+          case 'user': connecter.send('send_private_msg', {'user_id': this.chat.id, 'message': msg}, 'sendMsgBack'); break
         }
       }
       // 发送后事务

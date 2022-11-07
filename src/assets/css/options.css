@@ -441,6 +441,13 @@
     margin-left: 10px;
 }
 
+.ws-test-out {
+    min-height: 90px;
+    resize: vertical;
+    margin-top: 10px;
+    width: 100%;
+}
+
 @media (max-width: 700px) {
     .opt-title {
         display: none;
@@ -452,10 +459,7 @@
         margin-left: -20px;
         width: 0;
     }
-    .opt-main > div:last-child {
-        margin-top: 100px;
-    }
-    .opt-main > div:last-child > div:first-child {
-        height: calc(100% - 100px) !important;
-    }
+    /* .opt-main > div:last-child > div:first-child {
+        height: calc(100% - 180px) !important;
+    } */
 }

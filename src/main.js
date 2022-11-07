@@ -58,6 +58,7 @@ const i18n = new VueI18n({
   silentFallbackWarn: true,
   messages
 })
+Vue.i18n = i18n
 
 const app = new Vue({
   i18n,

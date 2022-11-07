@@ -5,6 +5,8 @@
       :data-nickname="data.user_id ? data.nickname : ''"
       :data-type="data.user_id ? 'friend' : 'group'">
     <img loading="lazy"
+    :title="data.group_name ? data.group_name :
+         data.remark === data.nickname ? data.nickname : data.remark + '（' + data.nickname + '）'"
      :src="data.user_id ?
       'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id :
       'https://p.qlogo.cn/gh/' + data.group_id +'/' + data.group_id + '/0'">

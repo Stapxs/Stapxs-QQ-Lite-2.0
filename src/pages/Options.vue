@@ -186,7 +186,7 @@ export default {
   methods: {},
   mounted: function () {
     // 加载贡献者信息
-    fetch('https://api.github.com/repos/stapxs/stapxs-qq-lite/contributors')
+    fetch('https://api.github.com/repos/stapxs/stapxs-qq-lite-2.0/contributors')
       .then(response => response.json())
       .then(data => {
         for (let i = 0; i < data.length; i++) {
