@@ -9,6 +9,7 @@
 import Vue from 'vue'
 import FileDownloader from 'js-file-downloader'
 import Util from './util'
+import Option from './options'
 
 import { popInfo } from './base'
 import { connect as connecter, login } from './connect'
@@ -52,7 +53,7 @@ export function parse (str) {
     /* eslint-enable */
   } else {
     switch (msg.post_type) {
-      // case 'message': this.newMsg(msg); break // 接收到消息
+      case 'message': newMsg(msg); break
     }
   }
 }
@@ -110,7 +111,7 @@ function saveForwardMsg (data) {
       card: ''
     }
   }
-  saveInfo(runtimeData, 'mergeMessageList', data)
+  Vue.set(runtimeData, 'mergeMessageList', data)
 }
 function backTestInfo (data) {
   runtimeData.wsTestBack = data
@@ -234,6 +235,78 @@ function downloadGroupFile (msg) {
       }
     })
 }
+function newMsg (data) {
+  const id = data.from_id ? data.from_id : data.group_id
+  if (id === runtimeData.onChat.id) {
+    const list = runtimeData.messageList
+    Vue.set(runtimeData, 'messageList', Util.mergeList(list, [data]))
+  }
+  // 新消息提示处理
+  // (发送者没有被打开 || 窗口被最小化) && (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息)
+  if (id !== runtimeData.onChat.id || document.hidden) {
+    if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
+      // 检查通知权限，老旧浏览器不支持这个功能
+      if (Notification.permission === 'default') {
+        Notification.requestPermission(function (status) {
+          if (Notification.permission !== status) {
+            Notification.permission = status
+          }
+          sendNotice(data)
+        })
+      } else if (Notification.permission !== 'denied' &&
+      Notification.permission !== 'default') {
+        sendNotice(data)
+      }
+    }
+  }
+}
+function sendNotice (msg) {
+  if (Option.get('close_notice') !== true) {
+    let raw = Util.getMsgRawTxt(msg.message)
+    raw = raw === '' ? msg.raw_message : raw
+    // 构建通知
+    let notificationTile = ''
+    let notificationBody = {}
+    if (msg.message_type === 'group') {
+      notificationTile = msg.group_name
+      notificationBody.body = msg.sender.nickname + ':' + raw
+      notificationBody.tag = `${msg.group_id}/${msg.message_id}`
+      notificationBody.icon = `https://p.qlogo.cn/gh/${msg.group_id}/${msg.group_id}/0`
+    } else {
+      notificationTile = msg.sender.nickname
+      notificationBody.body = raw
+      notificationBody.tag = `${msg.user_id}/${msg.message_id}`
+      notificationBody.icon = `https://q1.qlogo.cn/g?b=qq&s=0&nk=${msg.user_id}`
+    }
+    // 如果消息有图片，追加图片
+    msg.message.forEach((item) => {
+      if (item.type === 'image' && notificationBody.image === undefined) {
+        notificationBody.image = item.url
+      }
+    })
+    // 发起通知
+    let notification = new Notification(notificationTile, notificationBody)
+    notificationList[msg.message_id] = notification
+    notification.onclick = function () {
+      window.focus()
+      const userId = event.target.tag.split('/')[0]
+      document.getElementById('user-' + userId).click()
+
+      const msgId = event.target.tag.split('/')[1]
+      if (notificationList[msgId] !== undefined) {
+        delete notificationList[msgId]
+      }
+    }
+    notification.onclose = function () {
+      const msgId = event.target.tag.split('/')[1]
+      if (notificationList[msgId] !== undefined) {
+        delete notificationList[msgId]
+      }
+    }
+  }
+}
+
+let notificationList = {}
 
 // 运行时数据，用于在全程序内共享使用
 export let runtimeData = {

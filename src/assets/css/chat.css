@@ -750,4 +750,12 @@ textarea {
     .mumber-info > div:first-child {
         max-width: 55%;
     }
+    /* 合并转发消息面板 */
+    .merge-pan.show > div:last-child {
+        width: 90%;
+    }
+    /* 发送图片面板 */
+    .img-sender > div.card {
+        width: calc(100% - 80px);
+    }
 }

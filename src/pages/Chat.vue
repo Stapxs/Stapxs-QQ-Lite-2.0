@@ -12,7 +12,7 @@
       <div>
         <p>{{ chat.name }}</p>
         <span>
-          {{ list[list.length - 1] ? $t('chat.last_msg', {time: Intl.DateTimeFormat(trueLang, {hour:"numeric",minute:"numeric",second:"numeric"}).format(new Date(list[list.length - 1].time)) }) : $t('chat.no_msg')}}
+          {{ list[list.length - 1] ? $t('chat.last_msg', {time: Intl.DateTimeFormat(trueLang, {hour:"numeric",minute:"numeric",second:"numeric"}).format(new Date(list[list.length - 1].time * 1000)) }) : $t('chat.no_msg')}}
           </span>
       </div>
       <div></div>
@@ -467,7 +467,6 @@ export default {
       //   addText: false,    // 是否添加到输入框内
       //   msgObj: {}         // 消息结构
       // }
-      console.log(data)
       if (data !== undefined) {
         const index = this.sendCache.length
         this.sendCache.push(data.msgObj)

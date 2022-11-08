@@ -210,7 +210,32 @@ export function $t (args) {
   return Vue.i18n.tc.call(Vue.i18n, args)
 }
 
+export function getMsgRawTxt(message) {
+  let back = ''
+  for (let i = 0; i < message.length; i++) {
+    switch (message[i].type) {
+      case 'at':
+      case 'text': back += message[i].text.replaceAll('\n', ' ').replaceAll('\r', ' '); break
+      case 'face':
+      case 'bface': back += '[表情]'; break
+      case 'image': back += '[图片]'; break
+      case 'record': back += '[语音]'; break
+      case 'video': back += '[视频]'; break
+      case 'file': back += '[文件]'; break
+      case 'json': back += JSON.parse(message[i].data).prompt; break
+      case 'xml': {
+        let name = message[i].data.substring(message[i].data.indexOf('<source name="') + 14)
+        name = name.substring(0, name.indexOf('"'))
+        back += '[' + name + ']'
+        break
+      }
+    }
+  }
+  return back
+}
+
 export default {
+  getMsgRawTxt,
   mergeList,
   parseMsgId,
   waveAnimation,

@@ -135,10 +135,23 @@
       "connect_beat": "响应心跳包",
       "connect_beat_tip": "没救了，拖出去吧",
       "ws_send": "发送原始消息",
-      "ws_send_tip": "咻 ——"
+      "ws_send_tip": "咻 ——",
+      "notice_close": "禁用通知",
+      "notice_close_tip": "好嘛 …… 不烦你 ……",
+      "notice_all": "通知所有新消息",
+      "notice_all_tip": "让暴风雨来得更猛烈些吧！",
+      "debug_msg": "禁用消息渲染",
+      "debug_msg_tip": "点击进行 CAPTCHA 验证",
+      "chat_nd": "消息防撤回",
+      "chat_nd_tip": "说出去的话就像泼出去的水 ……",
+      "chat_nd_tip_1": "说了不做这功能就是不做"
     },
     "account": {
       "config": "账号设置"
+    },
+    "fun": {
+      "notice": "通知选项",
+      "chat": "聊天选项"
     }
   }
 }

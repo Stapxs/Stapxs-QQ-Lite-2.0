@@ -29,7 +29,8 @@
         </div>
         <!-- 消息体 -->
         <div v-for="(item, index) in data.message" :class="isMsgInline(item.type) ? 'msg-inline' : ''" :key="data.message_id + '-m-' + index">
-          <span v-if="item.type === 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
+          <span v-if="isDebugMsg" class="msg-text">{{item}}</span>
+          <span v-else-if="item.type === 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
           <img v-else-if="item.type === 'image'" :title="$t('chat.view_pic')" :alt="$t('chat.group_pic')" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
           <img v-else-if="item.type === 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/src/qq-face/' + item.id + '.gif')" :title="item.text">
           <span v-else-if="item.type === 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat.fun_menu.pic') }}：{{ item.text }} ]</span>
@@ -56,6 +57,7 @@
 import Vue from 'vue'
 import Xss from 'xss'
 import Util from '../assets/js/util.js'
+import Option from '../assets/js/options.js'
 
 import { connect as connecter } from '../assets/js/connect'
 
@@ -65,7 +67,8 @@ export default {
   data () {
     return {
       loginId: Vue.loginInfo.account.uin,
-      isMe: false
+      isMe: false,
+      isDebugMsg: Option.get('debug_msg')
     }
   },
   methods: {
@@ -75,27 +78,7 @@ export default {
      * @param { object } message 消息对象
      */
     getMsgRawTxt: function (message) {
-      let back = ''
-      for (let i = 0; i < message.length; i++) {
-        switch (message[i].type) {
-          case 'at':
-          case 'text': back += message[i].text.replaceAll('\n', ' ').replaceAll('\r', ' '); break
-          case 'face':
-          case 'bface': back += '[表情]'; break
-          case 'image': back += '[图片]'; break
-          case 'record': back += '[语音]'; break
-          case 'video': back += '[视频]'; break
-          case 'file': back += '[文件]'; break
-          case 'json': back += JSON.parse(message[i].data).prompt; break
-          case 'xml': {
-            let name = message[i].data.substring(message[i].data.indexOf('<source name="') + 14)
-            name = name.substring(0, name.indexOf('"'))
-            back += '[' + name + ']'
-            break
-          }
-        }
-      }
-      return back
+      return Util.getMsgRawTxt(message)
     },
     /**
      * 判断消息块是否要行内显示
@@ -239,7 +222,7 @@ export default {
       // 接下来按类型处理
       if (type === 'forward') {
         // 解析合并转发消息
-        connecter.send('getForwardMsg', { 'resid': sender.dataset.id })
+        connecter.send('get_forward_msg', { 'resid': sender.dataset.id }, 'getForwardMsg')
       }
     },
     /**

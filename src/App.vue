@@ -119,7 +119,7 @@
       ref="chat"
       v-if="login.status && runtimeData.onChat !== undefined && runtimeData.onChat.id !== ''"
       v-show="tags.showChat"
-      :mergeList="mergeMessageList"
+      :mergeList="runtimeData.mergeMessageList == undefined ? [] : runtimeData.mergeMessageList"
       :mumberInfo="runtimeData.nowMemberInfo === undefined ? {} : runtimeData.nowMemberInfo"
       :list="runtimeData.messageList"
       :imgView="imgView"
@@ -184,7 +184,6 @@ export default {
   // 应用全局参数
   data () {
     return {
-      mergeMessageList: [],
       inList: [],
       // 图片查看器相关参数
       imgView: {
@@ -230,7 +229,7 @@ export default {
         }
       }
       // 清空合并转发缓存
-      this.mergeMessageList = []
+      Vue.set(runtimeData, 'mergeMessageList', [])
       // 重置图片预览器状态
       Object.assign(this.$data.imgView, this.$options.data().imgView)
     },
@@ -260,16 +259,8 @@ export default {
         popInfo.add(popInfo.appMsgType.err, '加载历史消息失败（构建消息 ID 失败）', false)
       }
     },
-
-    newMsg: function (data) {
-      const id = data.from_id ? data.from_id : data.group_id
-      if (id === this.onChat.id) {
-        // 当前聊天窗口
-        this.messageList.push(data)
-      }
-    },
     cleanMerge: function () {
-      this.mergeMessageList = []
+      Vue.set(runtimeData, 'mergeMessageList', [])
     },
     hiddenUserInfo: function () {
       Vue.set(runtimeData, 'nowMemberInfo', {})
@@ -306,6 +297,7 @@ export default {
   mounted: function () {
     Vue.configs = {}
     Vue.$i18n = this.$i18n
+    Vue.loginInfo = {}
     logger.debug(this.$t('log.welcome'))
     // 初始化波浪动画
     Util.waveAnimation(document.getElementById('login-wave'))
