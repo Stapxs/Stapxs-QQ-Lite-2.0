@@ -254,6 +254,13 @@
     letter-spacing: 0;
 }
 
+.opt-page>div>div.tip {
+    background: var(--color-card-1);
+    color: var(--color-font-2);
+    border-radius: 7px;
+    padding: 10px;
+}
+
 .opt-page>div:not(:first-child) {
     margin-top: 20px;
 }

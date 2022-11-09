@@ -6,13 +6,13 @@
 */
 
 <template>
-  <div class="chat-pan">
+  <div class="chat-pan" id="chat-pan">
     <div>
       <img :src="chat.avatar">
       <div>
         <p>{{ chat.name }}</p>
         <span>
-          {{ list[list.length - 1] ? $t('chat.last_msg', {time: Intl.DateTimeFormat(trueLang, {hour:"numeric",minute:"numeric",second:"numeric"}).format(new Date(list[list.length - 1].time)) }) : $t('chat.no_msg')}}
+          {{ list[list.length - 1] ? $t('chat.last_msg', {time: Intl.DateTimeFormat(trueLang, {hour:"numeric",minute:"numeric",second:"numeric"}).format(new Date(list[list.length - 1].time * 1000)) }) : $t('chat.no_msg')}}
           </span>
       </div>
       <div></div>
@@ -152,9 +152,10 @@
 import MsgBody from '../components/MsgBody.vue'
 import Vue from 'vue'
 
-import { parseMsgId, getTrueLang } from '../assets/js/util.js'
+import { parseMsgId, getTrueLang } from '../assets/js/util'
 import { popInfo } from '../assets/js/base'
 import { connect as connecter } from '../assets/js/connect'
+import Option from '../assets/js/options'
 
 import SendUtil from '../assets/js/sender.js'
 import InfoBody from '../components/chat/InfoPan.vue'
@@ -248,6 +249,14 @@ export default {
       const msg = document.getElementById(seq)
       if (msg) {
         this.scrollTo(msg.offsetTop - msg.offsetHeight + 10)
+        msg.style.transition = 'background 1s'
+        msg.style.background = 'rgba(0, 0, 0, 0.06)'
+        setTimeout(() => {
+          msg.style.background = 'unset'
+          setTimeout(() => {
+            msg.style.transition = 'background .3s'
+          }, 1100)
+        }, 3000)
       } else {
         popInfo.add(popInfo.appMsgType.err, this.$t('chat.msg_not_load'))
       }
@@ -323,7 +332,6 @@ export default {
         }
         // 获取所有的 SQCode
         const getSQCode = SendUtil.getSQList(this.msg)
-        console.log(getSQCode)
         if (getSQCode != null) {
           // 遍历寻找 SQCode 位置区间包括光标位置的 SQCode
           getSQCode.forEach((item) => {
@@ -396,7 +404,7 @@ export default {
       if (this.tags.openChatInfo) {
         // 加载基础信息
         if (this.chat.type === 'group' && this.chat.info.group.gc !== this.chat.id) {
-          const url = `https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_info_all?gc=${this.chat.id}&bkn=${Vue.loginInfo.oicq.bkn}`
+          const url = `https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_info_all?gc=${this.chat.id}&bkn=${Vue.loginInfo.bkn}`
           connecter.send(
             'http_proxy',
             {'url': url},
@@ -404,7 +412,7 @@ export default {
           )
         } else if (this.chat.type === 'user' && this.chat.info.user.uin !== this.chat.id) {
           const url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
-          const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${this.chat.id}&nf=0&of=0&ldw=${Vue.loginInfo.oicq.bkn}`
+          const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${this.chat.id}&nf=0&of=0&ldw=${Vue.loginInfo.bkn}`
           connecter.send(
             'http_proxy',
             { 'url': url, 'method': 'post', 'data': info },
@@ -422,7 +430,7 @@ export default {
         }
         // 加载群文件列表
         if (this.chat.type === 'group' && Object.keys(this.chat.info.group_files).length === 0) {
-          const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${Vue.loginInfo.oicq.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
+          const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${Vue.loginInfo.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
           connecter.send(
             'http_proxy',
             { 'url': url },
@@ -438,7 +446,7 @@ export default {
       const sender = event.srcElement
       if (sender.scrollTop + sender.clientHeight >= sender.scrollHeight && this.chat.info.group_files.next_index !== 0 &&
         this.chat.info.group_files.next_index !== this.chat.info.group_files.total_cnt) {
-        const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${Vue.loginInfo.oicq.bkn}&start_index=${this.chat.info.group_files.next_index}&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
+        const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${Vue.loginInfo.bkn}&start_index=${this.chat.info.group_files.next_index}&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
         connecter.send(
           'http_proxy',
           { 'url': url },
@@ -467,7 +475,6 @@ export default {
       //   addText: false,    // 是否添加到输入框内
       //   msgObj: {}         // 消息结构
       // }
-      console.log(data)
       if (data !== undefined) {
         const index = this.sendCache.length
         this.sendCache.push(data.msgObj)
@@ -483,6 +490,7 @@ export default {
      * @param { object } e 事件
      */
     addImg: function (e) {
+      const that = this
       // 判断粘贴类型
       if (!(e.clipboardData && e.clipboardData.items)) {
         return
@@ -499,13 +507,26 @@ export default {
               reader.readAsDataURL(blob)
               reader.onloadend = function () {
                 var base64data = reader.result
-                // 记录图片信息
-                if (Vue.cacheImg === undefined) {
-                  Vue.cacheImg = []
+                if (Option.get('close_chat_pic_pan') === true) {
+                  // 在关闭图片插入面板的模式下将直接以 SQCode 插入输入框
+                  const data = {
+                    addText: true,
+                    msgObj: {
+                      type: 'image',
+                      file: 'base64://' + base64data.substring(base64data.indexOf('base64,') + 7, base64data.length)
+                    }
+                  }
+                  that.addSpecialMsg(data)
+                } else {
+                  // 记录图片信息
+                  if (Vue.cacheImg === undefined) {
+                    Vue.cacheImg = []
+                  }
+                  // 只要你内存够猛，随便 cache 图片，这边就不做限制了
+                  Vue.cacheImg.push(base64data)
                 }
-                // 只要你内存够猛，随便 cache 图片，这边就不做限制了
-                Vue.cacheImg.push(base64data)
               }
+              popInfo.add(popInfo.appMsgType.info, this.$t('chat.image_ok'))
             } else {
               popInfo.add(popInfo.appMsgType.info, this.$t('chat.image_toooo_big'))
             }
@@ -525,7 +546,6 @@ export default {
       // const sendCache = [{type:"face",id:1},{type:"at",qq:1007028430}]
       //                     ^^^^^^ 0 ^^^^^^    ^^^^^^^^^^ 1 ^^^^^^^^^^
       // 在发送操作触发之后，将会解析此条字符串排列出最终需要发送的消息结构用于发送。
-      // // PS：你可以在前面添加反斜杠来忽略解析，就像是："[SQ:1] 你好，\[SQ:2]"
       let msg = SendUtil.parseMsg(this.msg, this.sendCache)
       if (msg !== null && msg.length > 0) {
         switch (this.chat.type) {
@@ -535,6 +555,7 @@ export default {
       }
       // 发送后事务
       this.msg = ''
+      this.sendCache = []
       this.scrollBottom()
     }
   },

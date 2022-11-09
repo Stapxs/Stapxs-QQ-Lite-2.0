@@ -138,11 +138,13 @@ export function runASWEvent (event) {
 
 // 获取设置项
 export function get (name) {
-  Object.keys(Vue.configs).forEach((item) => {
-    if (item === name) {
-      return Vue.configs[item]
+  const names = Object.keys(Vue.configs)
+  for (var i = 0; i < names.length; i++) {
+    if (names[i] === name) {
+      return Vue.configs[names[i]]
     }
-  })
+  }
+  return null
 }
 
 export default {

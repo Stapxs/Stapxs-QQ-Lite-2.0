@@ -4,6 +4,7 @@ textarea {
 
 .chat-pan {
     background-color: var(--color-card);
+    transition: transform .3s;
     color: var(--color-font);
     flex-direction: column;
     pointer-events: none;
@@ -64,7 +65,9 @@ textarea {
     pointer-events: all;
     overflow-y: scroll;
     overflow-x: hidden;
+    margin-left: 20px;
     flex: 1;
+    
 }
 
 .chat-pan > div:nth-child(3) {
@@ -429,13 +432,10 @@ textarea {
 .chat-info-base > div:last-child > div.tags > div {
     background: var(--color-main);
     color: var(--color-font-r);
+    margin: 5px 5px 0 5px;
     border-radius: 1rem;
     padding: 2px 10px;
     font-size: 0.8rem;
-    margin: 0 5px;
-}
-.chat-info-base > div:last-child > div.tags > div:first-child {
-    margin-left: 0;
 }
 .chat-info-base > div:last-child > div.admin {
     align-items: center;
@@ -738,6 +738,9 @@ textarea {
         height: calc(100% - 75px);
         left: 80px;
     }
+    .chat-pan.open {
+        transform: translateX(220px);
+    }
     /* 群信息面板 */
     .chat-info {
         width: calc(100% - 80px);
@@ -749,5 +752,13 @@ textarea {
     /* AT 信息悬浮面板 */
     .mumber-info > div:first-child {
         max-width: 55%;
+    }
+    /* 合并转发消息面板 */
+    .merge-pan.show > div:last-child {
+        width: 90%;
+    }
+    /* 发送图片面板 */
+    .img-sender > div.card {
+        width: calc(100% - 80px);
     }
 }

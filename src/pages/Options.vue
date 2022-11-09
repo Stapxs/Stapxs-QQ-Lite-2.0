@@ -143,7 +143,9 @@
           <div class="layui-tab-item">
             <OptView :config="config"></OptView>
           </div>
-          <div class="layui-tab-item">3</div>
+          <div class="layui-tab-item">
+            <OptFunction :config="config"></OptFunction>
+          </div>
           <div class="layui-tab-item">
             <OptDev :config="config"></OptDev>
           </div>
@@ -169,12 +171,13 @@ import Util from '../assets/js/util.js'
 import OptView from './options/OptView.vue'
 import OptDev from './options/OptDev.vue'
 import OptAccount from './options/OptAccount.vue'
+import OptFunction from './options/OptFunction.vue'
 const { detect } = require('detect-browser')
 
 export default {
   name: 'Options',
   props: ['config', 'login', 'uinfo'],
-  components: { OptView, OptDev, OptAccount },
+  components: { OptView, OptDev, OptAccount, OptFunction },
   data () {
     return {
       packageInfo: packageInfo,

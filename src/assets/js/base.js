@@ -6,6 +6,8 @@
  * @Description: 此模块主要为程序相关的基础功能
 */
 
+import Option from './options'
+
 // 日志
 class Logger {
   constructor () {
@@ -13,13 +15,33 @@ class Logger {
       ws: ['7abb7e', 'fff', 'WS'],
       ui: ['b573f7', 'fff', 'UI'],
       err: ['ff5370', 'fff', 'ERR'],
-      ss: ['99b3db', 'fff', 'SS'],
+      info: ['99b3db', 'fff', 'INFO'],
       debug: ['677480', 'fff', 'DEBUG']
     }
   }
 
   add (mode, args) {
-    console.log(`%c${mode[2]}%c ${args}`, `background:#${mode[0]};color:#${mode[1]};border-radius:7px 0 0 7px;display:inline-block;padding:2px 4px 2px 7px;`, '')
+    const logLevel = Option.get('log_level')
+    // PS：info 级别是指除了 ws、ui 和 debug 类型以外的其他日志
+    /* eslint-disable */
+    switch(logLevel) {
+      case 'all': {
+        if (mode === this.logMode.ws || mode === this.logMode.ui || mode === this.logMode.debug) {
+          console.log(`%c${mode[2]}%c ${args}`, `background:#${mode[0]};color:#${mode[1]};border-radius:7px 0 0 7px;display:inline-block;padding:2px 4px 2px 7px;`, '')
+        }
+      }
+      case 'info': {
+        if (mode === this.logMode.info) {
+          console.log(`%c${mode[2]}%c ${args}`, `background:#${mode[0]};color:#${mode[1]};border-radius:7px 0 0 7px;display:inline-block;padding:2px 4px 2px 7px;`, '')
+        }
+      }
+      case 'err': {
+        if (mode === this.logMode.err) {
+          console.log(`%c${mode[2]}%c ${args}`, `background:#${mode[0]};color:#${mode[1]};border-radius:7px 0 0 7px;display:inline-block;padding:2px 4px 2px 7px;`, '')
+        }
+      }
+    }
+    /* eslint-enable */
   }
 
   error (args) {
