@@ -191,7 +191,7 @@ html, body {
 .friend-list > div:first-child {
     margin: 15px;
 }
-.friend-list > div:first-child > div {
+.friend-list > div:first-child > div.base {
     background: var(--color-main);
     border-radius: 7px 7px 0 0;
     color: var(--color-font-r);
@@ -199,6 +199,9 @@ html, body {
     font-size: 1rem;
     padding: 10px;
     display: flex;
+}
+.friend-list > div:first-child > div.small {
+    display: none;
 }
 .friend-list > div:first-child > div > svg {
     fill: var(--color-font-r);
@@ -543,21 +546,64 @@ html, body {
     }
     /* 二级侧栏 */
     .friend-list {
-        /* transform: translateY(145px);
-        height: calc(100% - 145px); */
+        transition: transform .3s;
         width: 80px;
     }
-    .friend-list > div:first-child {
-        margin: 0 0 10px 0;
+    .friend-list.open {
+        width: 300px !important;
     }
-    .friend-list > div:first-child > div {
+    .friend-list > div:first-child > div.base {
+        display: none;
+    }
+    .friend-list > div:first-child > div.small {
+        align-items: center;
+        display: flex;
+        height: 50px;
+        width: 100%;
+    }
+    .friend-list > div:first-child > div.small > div.reload {
+        display: none;
+    }
+    .friend-list.open > div:first-child > div.small > div.reload {
+        background: var(--color-card-2);
+        display: flex !important;
+        margin-right: 10px;
+    }
+    .friend-list.open > div:first-child > div.small > div.reload > svg {
+        fill: var(--color-font);
+    }
+    .friend-list > div:first-child > div.small > div {
+        background: var(--color-main);
         justify-content: center;
+        align-items: center;
+        border-radius: 7px;
+        cursor: pointer;
+        display: flex;
+        height: 100%;
+        width: 50px;
     }
-    .friend-list > div:first-child > div > span {
+    .friend-list > div:first-child > div.small > label {
+        margin-right: 10px;
+        height: 50px;
+        flex: 1;
+    }
+    .friend-list.open > div:first-child > div.small > label {
+        display: flex !important;
+    }
+    .friend-list > div:first-child > div.small > div > svg {
+        fill: var(--color-font-r);
+        height: 17px;
+        opacity: 1;
+    }
+    .friend-list > div:first-child label {
         display: none;
     }
-    .friend-list > div:first-child > div > div {
-        display: none;
+    .friend-list > div:last-child.open > div {
+        padding: 10px !important;
+        margin: 10px !important;
+    }
+    .friend-list > div:last-child.open > div > div {
+        display: block !important;
     }
     .friend-body {
         justify-content: center;

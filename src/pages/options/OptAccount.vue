@@ -8,11 +8,11 @@
 <template>
   <div class="opt-page">
     <div v-if="info != null" class="ss-card account-info">
-      <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + info.account.uin">
+      <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + info.uin">
       <div>
         <div>
-          <span>{{ info.account.nickname }}</span>
-          <span>{{ info.account.uin }}</span>
+          <span>{{ info.nickname }}</span>
+          <span>{{ info.uin }}</span>
         </div>
         <span>{{ uinfo.info.lnick }}</span>
       </div>

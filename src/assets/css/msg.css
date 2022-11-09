@@ -4,6 +4,7 @@
 */
 
 .message {
+    transition: background .3s;
     display: flex;
     padding: 5px 10px;
     width: calc(100% - 30px);
@@ -15,7 +16,7 @@
     width: 35px;
     height: 35px;
     border-radius: 100%;
-    margin: 5px 15px 0 15px;
+    margin: 5px 15px 0 0;
 }
 
 .message-body {

@@ -66,7 +66,7 @@ export default {
   props: ['data', 'isMerge'],
   data () {
     return {
-      loginId: Vue.loginInfo.account.uin,
+      loginId: Vue.loginInfo.uin,
       isMe: false,
       isDebugMsg: Option.get('debug_msg')
     }
@@ -114,7 +114,7 @@ export default {
       if (this.isMe && !(this.isMerge)) {
         back += ' me'
       }
-      if (Vue.loginInfo.account.uin === who) {
+      if (Vue.loginInfo.uin === who) {
         back += ' atme'
       }
       return back

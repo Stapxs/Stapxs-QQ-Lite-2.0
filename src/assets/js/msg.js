@@ -76,7 +76,7 @@ function saveLoginInfo (data) {
   Vue.set(login, 'status', true)
   // 获取更详细的信息
   let url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
-  let info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${data.account.uin}&nf=0&of=0&ldw=${data.oicq.bkn}`
+  let info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${data.uin}&nf=0&of=0&ldw=${data.bkn}`
   connecter.send(
     'http_proxy',
     { 'url': url, 'method': 'post', 'data': info },
@@ -278,7 +278,7 @@ function sendNotice (msg) {
       notificationBody.tag = `${msg.user_id}/${msg.message_id}`
       notificationBody.icon = `https://q1.qlogo.cn/g?b=qq&s=0&nk=${msg.user_id}`
     }
-    // 如果消息有图片，追加图片
+    // 如果消息有图片，追加第一张图片
     msg.message.forEach((item) => {
       if (item.type === 'image' && notificationBody.image === undefined) {
         notificationBody.image = item.url
@@ -288,13 +288,31 @@ function sendNotice (msg) {
     let notification = new Notification(notificationTile, notificationBody)
     notificationList[msg.message_id] = notification
     notification.onclick = function () {
-      window.focus()
-      const userId = event.target.tag.split('/')[0]
-      document.getElementById('user-' + userId).click()
-
       const msgId = event.target.tag.split('/')[1]
       if (notificationList[msgId] !== undefined) {
         delete notificationList[msgId]
+      }
+
+      // 跳转到这条消息的发送者页面
+      window.focus()
+      const userId = event.target.tag.split('/')[0]
+      let body = document.getElementById('user-' + userId)
+      if (body === null) {
+        // 从缓存列表里寻找这个 ID
+        for (var i = 0; i < runtimeData.userList.length; i++) {
+          const item = runtimeData.userList[i]
+          if (String(item.user_id) === userId) {
+            // 把它插入到显示列表的第一个
+            Vue.set(runtimeData, 'showData', Util.mergeList([item], runtimeData.showData))
+            Vue.nextTick(() => {
+              // 然后点一下它触发聊天框切换
+              document.getElementById('user-' + userId).click()
+            })
+            break
+          }
+        }
+      } else {
+        document.getElementById('user-' + userId).click()
       }
     }
     notification.onclose = function () {
