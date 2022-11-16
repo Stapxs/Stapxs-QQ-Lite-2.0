@@ -115,10 +115,11 @@
       </div>
     </div>
     <!-- 消息主框体 -->
-    <Chat
+    <component
       ref="chat"
       v-if="login.status && runtimeData.onChat !== undefined && runtimeData.onChat.id !== ''"
       v-show="tags.showChat"
+      :is="runtimeData.pageView.chatView"
       :mergeList="runtimeData.mergeMessageList == undefined ? [] : runtimeData.mergeMessageList"
       :mumberInfo="runtimeData.nowMemberInfo === undefined ? {} : runtimeData.nowMemberInfo"
       :list="runtimeData.messageList"
@@ -126,7 +127,7 @@
       :chat="runtimeData.onChat === undefined ? {} : runtimeData.onChat"
       @hiddenUserInfo="hiddenUserInfo"
       @cleanMerge="cleanMerge"
-      @viewImg="viewImg"></Chat>
+      @viewImg="viewImg"></component>
     <!-- 提示信息显示区 -->
     <TransitionGroup class="app-msg" name="appmsg" tag="div">
       <div v-for="msg in appMsgs" :key="'appmsg-' + msg.id">
@@ -158,7 +159,6 @@ import Util from './assets/js/util'
 import Option from './assets/js/options'
 
 import Friends from './pages/Friends.vue'
-import Chat from './pages/Chat.vue'
 import Options from './pages/Options.vue'
 import Messages from './pages/Messages.vue'
 import { component as Viewer } from 'v-viewer'
@@ -176,7 +176,6 @@ export default {
   // 应用组件
   components: {
     Friends,
-    Chat,
     Messages,
     Viewer,
     Options
@@ -220,6 +219,7 @@ export default {
         id: data.id,
         name: data.name,
         avatar: data.avatar,
+        jump: data.jump,
         info: {
           group: {},
           group_members: {},
@@ -314,8 +314,9 @@ export default {
       this.$cookies.set('version', appVersion, '1m')
       logger.debug(this.$t('version.updated') + ': ' + cacheVersion + ' -> ' + appVersion)
     }
-    // 加载设置项（保证页面加载完成后）
+    // 页面加载完成后
     window.onload = () => {
+      // 加载设置项
       this.$data.config = Option.load()
     }
   }

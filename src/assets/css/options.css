@@ -257,6 +257,7 @@
 .opt-page>div>div.tip {
     background: var(--color-card-1);
     color: var(--color-font-2);
+    margin-bottom: 5px;
     border-radius: 7px;
     padding: 10px;
 }
@@ -388,6 +389,7 @@
 
 .account-info>div>span {
     color: var(--color-font-1-r);
+    margin-right: 20px;
 }
 
 .account-info>div>div {
@@ -452,6 +454,28 @@
     min-height: 90px;
     resize: vertical;
     margin-top: 10px;
+    width: 100%;
+}
+
+.bot-info {
+
+}
+.bot-info > div {
+
+}
+.bot-info > div > span {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
+.bot-info > div > span > span {
+    color: var(--color-font);
+    width: 50%;
+}
+.bot-info > div > span > span:first-child {
+    color: var(--color-main);
+    font-weight: bold;
+    font-size: 1rem;
     width: 100%;
 }
 

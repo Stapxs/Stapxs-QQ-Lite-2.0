@@ -129,6 +129,7 @@ import FileBody from './FileBody.vue'
 export default {
   name: 'InfoBody',
   props: ['tags', 'chat'],
+  components: { FileBody },
   data () {
     return {
       Vue: Vue
@@ -141,7 +142,6 @@ export default {
     fileLoad: function (event) {
       this.$emit('loadFile', event)
     }
-  },
-  components: { FileBody }
+  }
 }
 </script>

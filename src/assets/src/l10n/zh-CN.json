@@ -17,7 +17,9 @@
     "welcome": "欢迎使用 Stapxs QQ Lite！",
     "con_success": "连接成功",
     "con_closed": "连接关闭",
-    "con_fail": "连接失败"
+    "con_fail": "连接失败",
+    "ws_log_debug": "当前处于 debug 日志模式。连接器将仅输出发出的消息 ……",
+    "we_log_all": "当前处于 all 日志模式。连接器将输出全部收发消息 ……"
   },
   "version": {
     "updated": "版本已更新"
@@ -151,14 +153,41 @@
       "connect_type": "指定连接器",
       "connect_type_tip": "会不会发生 NTR 情节呢（无端",
       "connect_tip": "连接器是用于和 bot 连接的部件，它同时也包括适配此 bot 的消息渲染器和消息处理器 —— 你可以简单的把他当成 bot 适配选项。",
-      "test": "调试"
+      "test": "调试",
+      "log_level_debug": "调试",
+      "chatview": "渲染器选项",
+      "chatview_tip": "渲染器是整个程序的消息面板，渲染器选项将允许修改消息面板相关的强大设置。",
+      "chatview_name": "指定渲染器",
+      "chatview_name_tip": "Game Center!"
     },
     "account": {
-      "config": "账号设置"
+      "config": "账号设置",
+      "bot_tip": "这是你连接的 QQ Bot 的相关信息",
+      "bot": "后端信息"
     },
     "fun": {
       "notice": "通知选项",
       "chat": "聊天选项"
     }
+  },
+  "botinfo": {
+    "http_api": "HTTP API 版本",
+    "stat": "状态信息",
+    "start_time": "启动时间",
+    "lost_times": "掉线次数",
+    "recv_pkt_cnt": "接收包总数",
+    "sent_pkt_cnt": "发送包数量",
+    "lost_pkt_cnt": "丢失包数量",
+    "recv_msg_cnt": "接收消息数量",
+    "sent_msg_cnt": "发送消息数量",
+    "msg_cnt_per_min": "每分钟消息",
+    "remote_ip": "QQ 服务器地址",
+    "remote_port": "QQ 服务器端口",
+    "app_full_name": "后端全称",
+    "coolq_directory": "运行目录",
+    "coolq_edition": "版本",
+    "go-cqhttp": "go-cqhttp",
+    "plugin_build_configuration": "构建版本",
+    "plugin_build_number": "构建版本号"
   }
 }

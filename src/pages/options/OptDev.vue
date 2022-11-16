@@ -8,33 +8,6 @@
 <template>
   <div class="opt-page">
     <div class="ss-card">
-        <header>{{ $t('option.dev.connect') }}</header>
-        <div class="tip">
-          {{ $t('option.dev.connect_tip') }}
-        </div>
-        <div class="opt-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zM200 344V280H136c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H248v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/></svg>
-          <div>
-            <span>{{ $t('option.dev.connect_beat') }}</span>
-            <span>{{ $t('option.dev.connect_beat_tip') }}</span>
-          </div>
-          <label class="ss-switch">
-            <input type="checkbox" @change="save" name="connect_beat" v-model="config.connect_beat">
-            <div>
-              <div></div>
-            </div>
-          </label>
-        </div>
-        <div class="opt-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M96 0C78.3 0 64 14.3 64 32v96h64V32c0-17.7-14.3-32-32-32zM288 0c-17.7 0-32 14.3-32 32v96h64V32c0-17.7-14.3-32-32-32zM32 160c-17.7 0-32 14.3-32 32s14.3 32 32 32v32c0 77.4 55 142 128 156.8V480c0 17.7 14.3 32 32 32s32-14.3 32-32V412.8C297 398 352 333.4 352 256V224c17.7 0 32-14.3 32-32s-14.3-32-32-32H32z"/></svg>
-          <div>
-            <span>{{ $t('option.dev.connect_type') }}</span>
-            <span>{{ $t('option.dev.connect_type_tip') }}</span>
-          </div>
-          <input class="ss-input" style="width:150px" type="text">
-        </div>
-    </div>
-    <div class="ss-card">
         <header>{{ $t('option.dev.dev') }}</header>
         <div class="opt-item">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M96 0C43 0 0 43 0 96V416c0 53 43 96 96 96H384h32c17.7 0 32-14.3 32-32s-14.3-32-32-32V384c17.7 0 32-14.3 32-32V32c0-17.7-14.3-32-32-32H384 96zm0 384H352v64H96c-17.7 0-32-14.3-32-32s14.3-32 32-32zm32-240c0-8.8 7.2-16 16-16H336c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16zm16 48H336c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/></svg>
@@ -45,6 +18,7 @@
           <label>
             <select @change="save" name="log_level" v-model="config.log_level">
               <option value="err">{{ $t('option.dev.log_level_err') }}</option>
+              <option value="debug">{{ $t('option.dev.log_level_debug') }}</option>
               <option value="info">{{ $t('option.dev.log_level_info') }}</option>
               <option value="all">{{ $t('option.dev.log_level_all') }}</option>
             </select>
@@ -96,11 +70,52 @@
           <input class="ss-input" style="width:150px" type="text" @keyup="sendTestAppmsg" v-model="appmsg_text">
         </div>
     </div>
+    <div class="ss-card">
+        <header>{{ $t('option.dev.connect') }}</header>
+        <div class="tip">
+          {{ $t('option.dev.connect_tip') }}
+        </div>
+        <div class="opt-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zM200 344V280H136c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H248v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/></svg>
+          <div>
+            <span>{{ $t('option.dev.connect_beat') }}</span>
+            <span>{{ $t('option.dev.connect_beat_tip') }}</span>
+          </div>
+          <label class="ss-switch">
+            <input type="checkbox" @change="save" name="connect_beat" v-model="config.connect_beat">
+            <div>
+              <div></div>
+            </div>
+          </label>
+        </div>
+        <div class="opt-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M96 0C78.3 0 64 14.3 64 32v96h64V32c0-17.7-14.3-32-32-32zM288 0c-17.7 0-32 14.3-32 32v96h64V32c0-17.7-14.3-32-32-32zM32 160c-17.7 0-32 14.3-32 32s14.3 32 32 32v32c0 77.4 55 142 128 156.8V480c0 17.7 14.3 32 32 32s32-14.3 32-32V412.8C297 398 352 333.4 352 256V224c17.7 0 32-14.3 32-32s-14.3-32-32-32H32z"/></svg>
+          <div>
+            <span>{{ $t('option.dev.connect_type') }}</span>
+            <span>{{ $t('option.dev.connect_type_tip') }}</span>
+          </div>
+          <input class="ss-input" style="width:150px" type="text">
+        </div>
+    </div>
+    <div class="ss-card">
+        <header>{{ $t('option.dev.chatview') }}</header>
+        <div class="tip">
+          {{ $t('option.dev.chatview_tip') }}
+        </div>
+        <div class="opt-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 128C0 92.7 28.7 64 64 64H448c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128zm64 32v64c0 17.7 14.3 32 32 32H416c17.7 0 32-14.3 32-32V160c0-17.7-14.3-32-32-32H96c-17.7 0-32 14.3-32 32zM80 320c-13.3 0-24 10.7-24 24s10.7 24 24 24h56c13.3 0 24-10.7 24-24s-10.7-24-24-24H80zm136 0c-13.3 0-24 10.7-24 24s10.7 24 24 24h48c13.3 0 24-10.7 24-24s-10.7-24-24-24H216z"/></svg>
+          <div>
+            <span>{{ $t('option.dev.chatview_name') }}</span>
+            <span>{{ $t('option.dev.chatview_name_tip') }}</span>
+          </div>
+          <input class="ss-input" style="width:150px" type="text" v-model="config.chatview_name" @keyup="saveWName($event, 'chatview_name')">
+        </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { runASWEvent as save } from '../../assets/js/options'
+import { runASWEvent as save, runAS as saveBase } from '../../assets/js/options'
 import { websocket as ws } from '../../assets/js/connect'
 import { popInfo } from '../../assets/js/base'
 
@@ -115,6 +130,11 @@ export default {
     }
   },
   methods: {
+    saveWName: function (event, name) {
+      if (event.keyCode === 13) {
+        saveBase(name, this.config[name])
+      }
+    },
     sendTestWs: function (event) {
       // 发送测试 WS 消息
       if (event.keyCode === 13 && this.ws_text !== '') {

@@ -149,17 +149,17 @@
 </template>
 
 <script>
-import MsgBody from '../components/MsgBody.vue'
 import Vue from 'vue'
-
-import { parseMsgId, getTrueLang } from '../assets/js/util'
-import { popInfo } from '../assets/js/base'
-import { connect as connecter } from '../assets/js/connect'
-import Option from '../assets/js/options'
-
+import MsgBody from '../components/MsgBody.vue'
 import SendUtil from '../assets/js/sender.js'
 import InfoBody from '../components/chat/InfoPan.vue'
 import FacePan from '../components/chat/FacePan.vue'
+import Option from '../assets/js/options'
+
+import { parseMsgId, getTrueLang } from '../assets/js/util'
+import { logger, popInfo } from '../assets/js/base'
+import { connect as connecter } from '../assets/js/connect'
+import { runtimeData } from '../assets/js/msg'
 
 export default {
   name: 'Chat',
@@ -354,6 +354,12 @@ export default {
     showMsgMeun: function (event) {
       const menu = document.getElementById('msgMenu')
       const msg = event.currentTarget
+      // const sender = event.srcElement
+      // if (sender.className === 'msg-text') {
+      //   // 如果是文本，不打开菜单方便使用原生复制功能
+      //   event.returnValue = true
+      //   return
+      // }
       // 鼠标位置
       const pointEvent = event || window.event
       const pointX = pointEvent.layerX
@@ -404,7 +410,7 @@ export default {
       if (this.tags.openChatInfo) {
         // 加载基础信息
         if (this.chat.type === 'group' && this.chat.info.group.gc !== this.chat.id) {
-          const url = `https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_info_all?gc=${this.chat.id}&bkn=${Vue.loginInfo.bkn}`
+          const url = `https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_info_all?gc=${this.chat.id}&bkn=${runtimeData.loginInfo.bkn}`
           connecter.send(
             'http_proxy',
             {'url': url},
@@ -412,7 +418,7 @@ export default {
           )
         } else if (this.chat.type === 'user' && this.chat.info.user.uin !== this.chat.id) {
           const url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
-          const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${this.chat.id}&nf=0&of=0&ldw=${Vue.loginInfo.bkn}`
+          const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${this.chat.id}&nf=0&of=0&ldw=${runtimeData.loginInfo.bkn}`
           connecter.send(
             'http_proxy',
             { 'url': url, 'method': 'post', 'data': info },
@@ -430,7 +436,7 @@ export default {
         }
         // 加载群文件列表
         if (this.chat.type === 'group' && Object.keys(this.chat.info.group_files).length === 0) {
-          const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${Vue.loginInfo.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
+          const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${runtimeData.loginInfo.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
           connecter.send(
             'http_proxy',
             { 'url': url },
@@ -446,7 +452,7 @@ export default {
       const sender = event.srcElement
       if (sender.scrollTop + sender.clientHeight >= sender.scrollHeight && this.chat.info.group_files.next_index !== 0 &&
         this.chat.info.group_files.next_index !== this.chat.info.group_files.total_cnt) {
-        const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${Vue.loginInfo.bkn}&start_index=${this.chat.info.group_files.next_index}&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
+        const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${runtimeData.loginInfo.bkn}&start_index=${this.chat.info.group_files.next_index}&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
         connecter.send(
           'http_proxy',
           { 'url': url },
@@ -609,6 +615,14 @@ export default {
           })
         })
         this.imgView.srcList = getImgList
+        // 处理跳入跳转预设
+        // 如果 onChat 的 jump 参数不是 undef
+        // 则意味着这次加载历史记录的同时需要跳转到指定的消息
+        if (runtimeData.onChat.jump !== undefined) {
+          logger.debug('进入跳转至消息：' + runtimeData.onChat.jump)
+          this.scrollToMsg('chat-' + parseMsgId(runtimeData.onChat.jump).seqid)
+          Vue.set(runtimeData.onChat, 'jump', undefined)
+        }
       })
     },
     chat: function () {

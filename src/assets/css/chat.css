@@ -60,7 +60,7 @@ textarea {
 }
 
 .chat-pan > div:nth-child(2) {
-    max-width: calc(100% - 20px);
+    max-width: calc(100% - 40px);
     width: calc(100% - 20px);
     pointer-events: all;
     overflow-y: scroll;

@@ -8,12 +8,16 @@
 
 import Vue from 'vue'
 import Util from './util'
+import Option from './options'
 
 import { logger, popInfo } from './base'
 import { parse } from './msg'
 
 export class connect {
   static create (address, token) {
+    logger.debug(Util.$t('log.ws_log_debug'))
+    logger.add(logger.logMode.ws, Util.$t('log.we_log_all'))
+
     websocket = new WebSocket(`ws://${address}?access_token=${token}`)
     websocket.onopen = () => {
       logger.add(logger.logMode.ws, Util.$t('log.con_success'))
@@ -24,11 +28,11 @@ export class connect {
       // PS：标记登陆成功在获取用户信息的回调位置，防止无法获取到内容
     }
     websocket.onmessage = (e) => {
-      logger.debug('GET：' + e.data)
+      logger.add(logger.logMode.ws, 'GET：' + e.data)
       parse(e.data)
     }
     websocket.onclose = (e) => {
-      this.login.status = false
+      Vue.set(login, 'status', false)
       if (e.code !== 1000) {
         logger.error(Util.$t('log.con_fail') + ': ' + e.code)
         popInfo.add(popInfo.appMsgType.err, Util.$t('log.con_fail'), false)
@@ -52,7 +56,11 @@ export class connect {
     const json = JSON.stringify(obj)
     // 发送
     websocket.send(json)
-    logger.add(logger.logMode.ws, 'PUT：' + json)
+    if (Option.get('log_level') === 'debug') {
+      logger.debug('PUT：' + json)
+    } else {
+      logger.add(logger.logMode.ws, 'PUT：' + json)
+    }
   }
 }
 
