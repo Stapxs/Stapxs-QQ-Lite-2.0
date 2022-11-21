@@ -108,7 +108,10 @@ function runAS (name, value) {
 // 通过触发事件保存并触发配置
 export function runASWEvent (event) {
   console.log(event)
-  const sender = event.path[0]
+  let sender = event.srcElement
+  if (event.path !== undefined) {
+    sender = event.path[0]
+  }
   const type = sender.nodeName
   const name = sender.name
   let value = null
