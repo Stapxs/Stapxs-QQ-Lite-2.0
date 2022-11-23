@@ -9,23 +9,23 @@
   <div id="app">
     <div class="layui-tab layui-tab-brief main-body">
       <ul class="layui-tab-title">
-        <li @click="changeTab" :class="login.status ? 'hiden-home' : 'layui-this'">
+        <li @click="changeTab('主页', 'Home', true)" :class="login.status ? 'hiden-home' : 'layui-this'">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z"/></svg>
         </li>
-        <li @click="changeTab(false)" :class="!login.status ? '' : 'layui-this'">
+        <li @click="changeTab('信息', 'Messages', false)" :class="!login.status ? '' : 'layui-this'">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
             <path
               d="M464 64C490.5 64 512 85.49 512 112C512 127.1 504.9 141.3 492.8 150.4L275.2 313.6C263.8 322.1 248.2 322.1 236.8 313.6L19.2 150.4C7.113 141.3 0 127.1 0 112C0 85.49 21.49 64 48 64H464zM217.6 339.2C240.4 356.3 271.6 356.3 294.4 339.2L512 176V384C512 419.3 483.3 448 448 448H64C28.65 448 0 419.3 0 384V176L217.6 339.2z" />
           </svg>
         </li>
-        <li @click="changeTab(false)">
+        <li @click="changeTab('列表', 'Friends', false)">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
             <path
               d="M224 256c70.7 0 128-57.31 128-128s-57.3-128-128-128C153.3 0 96 57.31 96 128S153.3 256 224 256zM274.7 304H173.3C77.61 304 0 381.6 0 477.3c0 19.14 15.52 34.67 34.66 34.67h378.7C432.5 512 448 496.5 448 477.3C448 381.6 370.4 304 274.7 304z" />
           </svg>
         </li>
         <div style="flex: 1;" class="side-bar-space"></div>
-        <li @click="changeTab">
+        <li @click="changeTab('设置', 'Options', true)">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
             <path
               d="M495.9 166.6C499.2 175.2 496.4 184.9 489.6 191.2L446.3 230.6C447.4 238.9 448 247.4 448 256C448 264.6 447.4 273.1 446.3 281.4L489.6 320.8C496.4 327.1 499.2 336.8 495.9 345.4C491.5 357.3 486.2 368.8 480.2 379.7L475.5 387.8C468.9 398.8 461.5 409.2 453.4 419.1C447.4 426.2 437.7 428.7 428.9 425.9L373.2 408.1C359.8 418.4 344.1 427 329.2 433.6L316.7 490.7C314.7 499.7 307.7 506.1 298.5 508.5C284.7 510.8 270.5 512 255.1 512C241.5 512 227.3 510.8 213.5 508.5C204.3 506.1 197.3 499.7 195.3 490.7L182.8 433.6C167 427 152.2 418.4 138.8 408.1L83.14 425.9C74.3 428.7 64.55 426.2 58.63 419.1C50.52 409.2 43.12 398.8 36.52 387.8L31.84 379.7C25.77 368.8 20.49 357.3 16.06 345.4C12.82 336.8 15.55 327.1 22.41 320.8L65.67 281.4C64.57 273.1 64 264.6 64 256C64 247.4 64.57 238.9 65.67 230.6L22.41 191.2C15.55 184.9 12.82 175.3 16.06 166.6C20.49 154.7 25.78 143.2 31.84 132.3L36.51 124.2C43.12 113.2 50.52 102.8 58.63 92.95C64.55 85.8 74.3 83.32 83.14 86.14L138.8 103.9C152.2 93.56 167 84.96 182.8 78.43L195.3 21.33C197.3 12.25 204.3 5.04 213.5 3.51C227.3 1.201 241.5 0 256 0C270.5 0 284.7 1.201 298.5 3.51C307.7 5.04 314.7 12.25 316.7 21.33L329.2 78.43C344.1 84.96 359.8 93.56 373.2 103.9L428.9 86.14C437.7 83.32 447.4 85.8 453.4 92.95C461.5 102.8 468.9 113.2 475.5 124.2L480.2 132.3C486.2 143.2 491.5 154.7 495.9 166.6V166.6zM256 336C300.2 336 336 300.2 336 255.1C336 211.8 300.2 175.1 256 175.1C211.8 175.1 176 211.8 176 255.1C176 300.2 211.8 336 256 336z" />
@@ -162,6 +162,7 @@ import Friends from './pages/Friends.vue'
 import Options from './pages/Options.vue'
 import Messages from './pages/Messages.vue'
 import { component as Viewer } from 'v-viewer'
+import { bootstrap } from 'vue-gtag'
 
 import { logger, popInfo, popList } from './assets/js/base'
 import { connect as connector, login } from './assets/js/connect'
@@ -243,9 +244,16 @@ export default {
 
     /**
      * 切换主标签卡
+     * @param { string } name 页面名称（用于提交谷歌统计）
+     * @param { string } view view 名称（用于提交谷歌统计）
      * @param { boolean } info 是否显示聊天页面
      */
-    changeTab: function (info) {
+    changeTab: function (name, view, info) {
+      // GA：发送页面路由统计
+      this.$gtag.pageview({
+        page_path: '/' + view,
+        page_title: name
+      })
       if (!info) {
         this.tags.showChat = true
       } else {
@@ -325,6 +333,14 @@ export default {
     window.onload = () => {
       // 加载设置项
       this.$data.config = Option.load()
+      // 加载谷歌统计功能
+      if (Option.get('close_ga') !== true) {
+        bootstrap().then(() => {
+          logger.debug('加载谷歌统计组件完成')
+        })
+      }
+      // GA：发送主页页面路由统计（首次打开）
+      this.$gtag.pageview({page_path: '/Home', page_title: '主页'})
     }
   }
 }

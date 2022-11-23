@@ -16,12 +16,15 @@ import VueViewer from 'v-viewer'
 import VueXss from 'vue-xss'
 import VueI18n from 'vue-i18n'
 import VueClipboard from 'vue-clipboard2'
+import VueGtag from 'vue-gtag'
+
 Vue.use(infScroll)
 Vue.use(VueCookies)
 Vue.use(VueViewer)
 Vue.use(VueXss, {whiteList: {}, stripIgnoreTag: true})
 Vue.use(VueI18n)
 Vue.use(VueClipboard)
+Vue.use(VueGtag, {config: { id: 'G-35G5JQ4T9Q' }, bootstrap: false})
 
 /* eslint-disable */
 Vue.config.productionTip = false

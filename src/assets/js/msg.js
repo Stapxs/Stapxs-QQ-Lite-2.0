@@ -90,6 +90,14 @@ function saveLoginInfo (data) {
     { 'url': url, 'method': 'post', 'data': info },
     'getMoreLoginInfo'
   )
+  // GA：将 QQ 号 MD5 编码后用于用户识别码
+  if (Option.get('open_ga_user') === true) {
+    const md5 = require('js-md5')
+    const userId = md5(data.uin)
+    Vue.$gtag.config({
+      user_id: userId
+    })
+  }
 }
 function saveFileList (data) {
   if (data.ec !== 0) {
@@ -343,6 +351,14 @@ function sendNotice (msg) {
 }
 function saveBotInfo (data) {
   Vue.set(runtimeData, 'botInfo', data)
+  // GA：提交统计信息，主要在意的是 bot 类型
+  if (Option.get('open_ga_bot') !== false) {
+    if (data.app_name !== undefined) {
+      Vue.$gtag.event('login', {method: data.app_name})
+    } else {
+      Vue.$gtag.event('login')
+    }
+  }
 }
 function saveGroupMember (data) {
   // 筛选列表

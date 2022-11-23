@@ -257,8 +257,8 @@
 .opt-page>div>div.tip {
     background: var(--color-card-1);
     color: var(--color-font-2);
-    margin-bottom: 5px;
     border-radius: 7px;
+    margin: 5px 0;
     padding: 10px;
 }
 

@@ -20,7 +20,8 @@ const configFunction = {
 
 const selectDefault = {
   language: 'zh-CN',
-  log_level: 'err'
+  log_level: 'err',
+  open_ga_bot: true
 }
 
 // ======================= 设置项功能 ============================
@@ -78,7 +79,7 @@ function load () {
       }
     }
   }
-  // 初始化不存在的下拉框值
+  // 初始化不存在的需要进行初始化的值
   Object.keys(selectDefault).forEach((key) => {
     if (options[key] === undefined) {
       options[key] = selectDefault[key]

@@ -78,6 +78,51 @@
           </label>
         </div>
     </div>
+    <div class="ss-card">
+        <header>{{ $t('option.fun.ga') }}</header>
+        <div class="opt-item" style="background: var(--color-card-1);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M0 336c0 79.5 64.5 144 144 144H512c70.7 0 128-57.3 128-128c0-61.9-44-113.6-102.4-125.4c4.1-10.7 6.4-22.4 6.4-34.6c0-53-43-96-96-96c-19.7 0-38.1 6-53.3 16.2C367 64.2 315.3 32 256 32C167.6 32 96 103.6 96 192c0 2.7 .1 5.4 .2 8.1C40.2 219.8 0 273.2 0 336z"/></svg>
+          <div>
+            <span>{{ $t('option.fun.ga_turn') }}</span>
+            <span>{{ $t('option.fun.ga_turn_tip') }}</span>
+          </div>
+          <label class="ss-switch">
+            <input type="checkbox" @change="save" name="close_ga" v-model="config.close_ga">
+            <div>
+              <div></div>
+            </div>
+          </label>
+        </div>
+        <div class="tip" v-if="config.close_ga !== true">
+          {{ $t('option.fun.ga_tip') }}
+        </div>
+        <div class="opt-item" v-if="config.close_ga !== true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M429.6 92.1c4.9-11.9 2.1-25.6-7-34.7s-22.8-11.9-34.7-7l-352 144c-14.2 5.8-22.2 20.8-19.3 35.8s16.1 25.8 31.4 25.8H224V432c0 15.3 10.8 28.4 25.8 31.4s30-5.1 35.8-19.3l144-352z"/></svg>
+          <div>
+            <span>{{ $t('option.fun.ga_user') }}</span>
+            <span>{{ $t('option.fun.ga_user_tip') }}</span>
+          </div>
+          <label class="ss-switch">
+            <input type="checkbox" @change="save" name="open_ga_user" v-model="config.open_ga_user">
+            <div>
+              <div></div>
+            </div>
+          </label>
+        </div>
+        <div class="opt-item" v-if="config.close_ga !== true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M252.3 11.7c-15.6-15.6-40.9-15.6-56.6 0l-184 184c-15.6 15.6-15.6 40.9 0 56.6l184 184c15.6 15.6 40.9 15.6 56.6 0l184-184c15.6-15.6 15.6-40.9 0-56.6l-184-184zM248 224c0 13.3-10.7 24-24 24s-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24zM96 248c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24zm128 80c13.3 0 24 10.7 24 24s-10.7 24-24 24s-24-10.7-24-24s10.7-24 24-24zm128-80c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24zM224 72c13.3 0 24 10.7 24 24s-10.7 24-24 24s-24-10.7-24-24s10.7-24 24-24zm96 392c0 26.5 21.5 48 48 48H592c26.5 0 48-21.5 48-48V240c0-26.5-21.5-48-48-48H472.5c13.4 26.9 8.8 60.5-13.6 82.9L320 413.8V464zm160-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg>
+          <div>
+            <span>{{ $t('option.fun.ga_bot') }}</span>
+            <span>{{ $t('option.fun.ga_bot_tip') }}</span>
+          </div>
+          <label class="ss-switch">
+            <input type="checkbox" @change="save" name="open_ga_bot" v-model="config.open_ga_bot">
+            <div>
+              <div></div>
+            </div>
+          </label>
+        </div>
+    </div>
   </div>
 </template>
 
