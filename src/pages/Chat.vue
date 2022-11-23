@@ -30,7 +30,7 @@
         :data="msg"
         @scrollToMsg="scrollToMsg"
         @viewImg="viewImg"
-        @contextmenu.native.prevent="showMsgMeun"></MsgBody>
+        @contextmenu.native.prevent="showMsgMeun($event, msg)"></MsgBody>
     </div>
     <div v-show="tags.showBottomButton" @click="scrollBottom(true)">
       <div class="ss-card">
@@ -45,6 +45,12 @@
         <div>
           <!-- 表情面板 -->
           <FacePan v-show="details[1].open" @addSpecialMsg="addSpecialMsg"></FacePan>
+        </div>
+        <!-- 回复指示器 -->
+        <div :class="tags.isReply ? 'replay-tag show' : 'replay-tag'">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M8.31 189.9l176-151.1c15.41-13.3 39.69-2.509 39.69 18.16v80.05C384.6 137.9 512 170.1 512 322.3c0 61.44-39.59 122.3-83.34 154.1c-13.66 9.938-33.09-2.531-28.06-18.62c45.34-145-21.5-183.5-176.6-185.8v87.92c0 20.7-24.31 31.45-39.69 18.16l-176-151.1C-2.753 216.6-2.784 199.4 8.31 189.9z"></path></svg>
+          <span>{{ selectedMsg === null ? '' : (selectedMsg.sender.nickname + ': ' + selectedMsg.raw_message) }}</span>
+          <div @click="cancelReply"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path></svg></div>
         </div>
         <!-- 更多功能 -->
         <div :class="tags.showMoreDetail ? 'more-detail show' : 'more-detail'">
@@ -115,9 +121,29 @@
     <div class="msg-menu">
       <div v-show="tags.showMsgMenu" class="msg-menu-bg" @click="closeMsgMenu"></div>
       <div :class="tags.showMsgMenu ? 'ss-card menu show' : 'ss-card menu'" id="msgMenu">
-        <div v-for="(item, index) in msgMenus" v-show="item.display" :key="'msgM-' + index">
-           <div v-html="item.svg"></div>
-           <a>{{ item.text }}</a>
+        <div @click="replyMsg" v-show="tags.menuDisplay.relpy">
+           <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M511.1 63.1v287.1c0 35.25-28.75 63.1-64 63.1h-144l-124.9 93.68c-7.875 5.75-19.12 .0497-19.12-9.7v-83.98h-96c-35.25 0-64-28.75-64-63.1V63.1c0-35.25 28.75-63.1 64-63.1h384C483.2 0 511.1 28.75 511.1 63.1z"/></svg></div>
+           <a>{{ $t('chat.msg_menu.reply') }}</a>
+        </div>
+        <!-- <div v-show="tags.menuDisplay.forward">
+           <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M503.7 226.2l-176 151.1c-15.38 13.3-39.69 2.545-39.69-18.16V272.1C132.9 274.3 66.06 312.8 111.4 457.8c5.031 16.09-14.41 28.56-28.06 18.62C39.59 444.6 0 383.8 0 322.3c0-152.2 127.4-184.4 288-186.3V56.02c0-20.67 24.28-31.46 39.69-18.16l176 151.1C514.8 199.4 514.8 216.6 503.7 226.2z"/></svg></div>
+           <a>{{ $t('chat.msg_menu.forward') }}</a>
+        </div> -->
+        <!-- <div v-show="tags.menuDisplay.select">
+           <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M23.19 32C28.86 32 34.34 34.08 38.59 37.86L312.6 281.4C317.3 285.6 320 291.6 320 297.9C320 310.1 310.1 320 297.9 320H179.8L236.6 433.7C244.5 449.5 238.1 468.7 222.3 476.6C206.5 484.5 187.3 478.1 179.4 462.3L121.2 346L38.58 440.5C34.4 445.3 28.36 448 22.01 448C9.855 448 0 438.1 0 425.1V55.18C0 42.38 10.38 32 23.18 32H23.19z"/></svg></div>
+           <a>{{ $t('chat.msg_menu.multiple_choice') }}</a>
+        </div> -->
+        <div @click="copyMsg" v-show="tags.menuDisplay.copy">
+           <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M336 64h-53.88C268.9 26.8 233.7 0 192 0S115.1 26.8 101.9 64H48C21.5 64 0 85.48 0 112v352C0 490.5 21.5 512 48 512h288c26.5 0 48-21.48 48-48v-352C384 85.48 362.5 64 336 64zM192 64c17.67 0 32 14.33 32 32c0 17.67-14.33 32-32 32S160 113.7 160 96C160 78.33 174.3 64 192 64zM272 224h-160C103.2 224 96 216.8 96 208C96 199.2 103.2 192 112 192h160C280.8 192 288 199.2 288 208S280.8 224 272 224z"/></svg></div>
+           <a>{{ $t('chat.msg_menu.copy') }}</a>
+        </div>
+        <!-- <div @click="copyMsg" v-show="tags.menuDisplay.copySelect">
+           <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M336 64h-53.88C268.9 26.8 233.7 0 192 0S115.1 26.8 101.9 64H48C21.5 64 0 85.48 0 112v352C0 490.5 21.5 512 48 512h288c26.5 0 48-21.48 48-48v-352C384 85.48 362.5 64 336 64zM192 64c17.67 0 32 14.33 32 32c0 17.67-14.33 32-32 32S160 113.7 160 96C160 78.33 174.3 64 192 64zM272 224h-160C103.2 224 96 216.8 96 208C96 199.2 103.2 192 112 192h160C280.8 192 288 199.2 288 208S280.8 224 272 224z"/></svg></div>
+           <a>{{ $t('chat.msg_menu.copy_select') }}</a>
+        </div> -->
+        <div @click="revokeMsg" v-show="tags.menuDisplay.revoke">
+           <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg></div>
+           <a>{{ $t('chat.msg_menu.withdraw') }}</a>
         </div>
       </div>
     </div>
@@ -149,17 +175,17 @@
 </template>
 
 <script>
-import MsgBody from '../components/MsgBody.vue'
 import Vue from 'vue'
-
-import { parseMsgId, getTrueLang } from '../assets/js/util'
-import { popInfo } from '../assets/js/base'
-import { connect as connecter } from '../assets/js/connect'
-import Option from '../assets/js/options'
-
+import MsgBody from '../components/MsgBody.vue'
 import SendUtil from '../assets/js/sender.js'
 import InfoBody from '../components/chat/InfoPan.vue'
 import FacePan from '../components/chat/FacePan.vue'
+import Option from '../assets/js/options'
+
+import { parseMsgId, getTrueLang } from '../assets/js/util'
+import { logger, popInfo } from '../assets/js/base'
+import { connect as connecter } from '../assets/js/connect'
+import { runtimeData } from '../assets/js/msg'
 
 export default {
   name: 'Chat',
@@ -176,7 +202,9 @@ export default {
         showMoreDetail: false,
         showMsgMenu: false,
         openedMenuMsg: null,
-        openChatInfo: false
+        openChatInfo: false,
+        isReply: false,
+        menuDisplay: {}
       },
       details: [{ open: false }, { open: false }],
       msgMenus: [],
@@ -184,7 +212,9 @@ export default {
       listSize: 0,
       msg: '',
       msgCache: '',
-      sendCache: []
+      sendCache: [],
+      selectedMsg: null,
+      replyMsgInfo: null
     }
   },
   methods: {
@@ -351,9 +381,26 @@ export default {
      * 显示右击菜单
      * @param { object } event 事件
      */
-    showMsgMeun: function (event) {
+    showMsgMeun: function (event, data) {
+      this.selectedMsg = data
+      if (Option.get('log_level') === 'debug') {
+        console.log(data)
+      }
       const menu = document.getElementById('msgMenu')
       const msg = event.currentTarget
+      // const sender = event.srcElement
+      // if (sender.className === 'msg-text') {
+      //   // 如果是文本，不打开菜单方便使用原生复制功能
+      //   event.returnValue = true
+      //   return
+      // }
+      // 检查消息，确认菜单显示状态
+      if (data.sender.user_id === runtimeData.loginInfo.uin ||
+        runtimeData.onChat.info.me.role === 'admin' ||
+        runtimeData.onChat.info.me.role === 'owner') {
+        // 自己的消息、管理员和群主会显示撤回
+        this.tags.menuDisplay.revoke = true
+      }
       // 鼠标位置
       const pointEvent = event || window.event
       const pointX = pointEvent.layerX
@@ -378,6 +425,58 @@ export default {
       this.tags.openedMenuMsg = msg
       msg.style.background = '#00000008'
     },
+    initMenuDisplay: function () {
+      this.tags.menuDisplay = {
+        relpy: true,
+        forward: true,
+        select: false,
+        copy: true,
+        copySelect: false,
+        revoke: false
+      }
+    },
+    replyMsg: function () {
+      const msg = this.selectedMsg
+      if (this.selectedMsg !== null) {
+        const msgId = msg.message_id
+        // 添加回复内容
+        // PS：这儿还是用就的回复方式 …… 因为新的调用不友好。回复消息不会被加入文本行，在消息发送器内有特殊判定。
+        this.addSpecialMsg({msgObj: {type: 'reply', id: msgId}, addText: false, addTop: true})
+        // 显示回复指示器
+        this.tags.isReply = true
+        // 关闭消息菜单
+        this.closeMsgMenu()
+      }
+    },
+    cancelReply: function () {
+      // 去除回复消息缓存
+      this.sendCache = this.sendCache.filter((item) => {
+        return item.type !== 'reply'
+      })
+      this.tags.isReply = false
+    },
+    copyMsg: function () {
+      const that = this
+      const msg = this.selectedMsg
+      if (this.selectedMsg !== null) {
+        this.$copyText(msg.raw_message).then(function (e) {
+          popInfo.add(popInfo.appMsgType.info, that.$t('chat.msg_menu.copy_success'), true)
+          that.closeMsgMenu()
+        }, function (e) {
+          logger.error('复制消息失败：' + e)
+          popInfo.add(popInfo.appMsgType.err, that.$t('chat.msg_menu.copy_err'), true)
+        })
+      }
+    },
+    revokeMsg: function () {
+      const msg = this.selectedMsg
+      if (this.selectedMsg !== null) {
+        const msgId = msg.message_id
+        connecter.send('delete_msg', {'message_id': msgId})
+        // 关闭消息菜单
+        this.closeMsgMenu()
+      }
+    },
     getPopPost: function () {
       const x = this.mumberInfo.x === undefined ? '0' : this.mumberInfo.x
       const y = this.mumberInfo.y === undefined ? '0' : this.mumberInfo.y
@@ -391,6 +490,8 @@ export default {
       this.tags.showMsgMenu = false
       // 清理消息背景
       this.tags.openedMenuMsg.style.background = 'unset'
+      // 重置菜单显示状态
+      this.initMenuDisplay()
     },
     closeMergeMsg: function () {
       this.$emit('cleanMerge', null)
@@ -404,7 +505,7 @@ export default {
       if (this.tags.openChatInfo) {
         // 加载基础信息
         if (this.chat.type === 'group' && this.chat.info.group.gc !== this.chat.id) {
-          const url = `https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_info_all?gc=${this.chat.id}&bkn=${Vue.loginInfo.bkn}`
+          const url = `https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_info_all?gc=${this.chat.id}&bkn=${runtimeData.loginInfo.bkn}`
           connecter.send(
             'http_proxy',
             {'url': url},
@@ -412,7 +513,7 @@ export default {
           )
         } else if (this.chat.type === 'user' && this.chat.info.user.uin !== this.chat.id) {
           const url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
-          const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${this.chat.id}&nf=0&of=0&ldw=${Vue.loginInfo.bkn}`
+          const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${this.chat.id}&nf=0&of=0&ldw=${runtimeData.loginInfo.bkn}`
           connecter.send(
             'http_proxy',
             { 'url': url, 'method': 'post', 'data': info },
@@ -430,7 +531,7 @@ export default {
         }
         // 加载群文件列表
         if (this.chat.type === 'group' && Object.keys(this.chat.info.group_files).length === 0) {
-          const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${Vue.loginInfo.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
+          const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${runtimeData.loginInfo.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
           connecter.send(
             'http_proxy',
             { 'url': url },
@@ -446,7 +547,7 @@ export default {
       const sender = event.srcElement
       if (sender.scrollTop + sender.clientHeight >= sender.scrollHeight && this.chat.info.group_files.next_index !== 0 &&
         this.chat.info.group_files.next_index !== this.chat.info.group_files.total_cnt) {
-        const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${Vue.loginInfo.bkn}&start_index=${this.chat.info.group_files.next_index}&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
+        const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${runtimeData.loginInfo.bkn}&start_index=${this.chat.info.group_files.next_index}&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
         connecter.send(
           'http_proxy',
           { 'url': url },
@@ -473,13 +574,18 @@ export default {
       // data 结构：
       // const data = {
       //   addText: false,    // 是否添加到输入框内
+      //   addTop: false,     // 添加到头部
       //   msgObj: {}         // 消息结构
       // }
       if (data !== undefined) {
         const index = this.sendCache.length
         this.sendCache.push(data.msgObj)
         if (data.addText === true) {
-          this.msg += '[SQ:' + index + ']'
+          if (data.addTop === true) {
+            this.msg = '[SQ:' + index + ']' + this.msg
+          } else {
+            this.msg += '[SQ:' + index + ']'
+          }
         }
         return index
       }
@@ -557,6 +663,7 @@ export default {
       this.msg = ''
       this.sendCache = []
       this.scrollBottom()
+      this.cancelReply()
     }
   },
   watch: {
@@ -609,6 +716,14 @@ export default {
           })
         })
         this.imgView.srcList = getImgList
+        // 处理跳入跳转预设
+        // 如果 onChat 的 jump 参数不是 undef
+        // 则意味着这次加载历史记录的同时需要跳转到指定的消息
+        if (runtimeData.onChat.jump !== undefined) {
+          logger.debug('进入跳转至消息：' + runtimeData.onChat.jump)
+          this.scrollToMsg('chat-' + parseMsgId(runtimeData.onChat.jump).seqid)
+          Vue.set(runtimeData.onChat, 'jump', undefined)
+        }
       })
     },
     chat: function () {
@@ -616,7 +731,12 @@ export default {
       this.tags = this.$options.data().tags
       this.msgMenus = this.$options.data().msgMenus
       this.sendCache = []
+      this.initMenuDisplay()
     }
+  },
+  mounted () {
+    // 初始化菜单显示标志
+    this.initMenuDisplay()
   }
 }
 </script>

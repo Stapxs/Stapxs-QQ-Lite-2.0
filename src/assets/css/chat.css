@@ -60,7 +60,7 @@ textarea {
 }
 
 .chat-pan > div:nth-child(2) {
-    max-width: calc(100% - 20px);
+    max-width: calc(100% - 40px);
     width: calc(100% - 20px);
     pointer-events: all;
     overflow-y: scroll;
@@ -730,6 +730,83 @@ textarea {
     margin: 10px;
     height: 20px;
     width: 20px;
+}
+.face-stickers {
+    height: calc(300px - 135px);
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    overflow-y: scroll;
+    flex-wrap: wrap;
+    display: flex;
+}
+.face-stickers > img {
+    border: 2px var(--color-card-2) solid;
+    background: var(--color-card-2);
+    border-radius: 7px;
+    height: 50px;
+    width: 50px;
+    margin: 5px;
+}
+.face-stickers > div {
+    background: var(--color-card-2);
+    padding: 20px !important;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    display: flex;
+    height: 60px;
+    width: 80px;
+}
+.face-stickers > div > span {
+    color: var(--color-font);
+    margin-top: 10px;
+}
+.face-stickers > div > svg {
+    fill: var(--color-main);
+    width: 25px;
+}
+
+.replay-tag {
+    background: var(--color-card-1);
+    margin: 0 20px -10px 20px;
+    transition: all .3s;
+    align-items: center;
+    flex-direction: row;
+    border-radius: 7px;
+    overflow: hidden;
+    display: flex;
+    height: 0;
+}
+.replay-tag.show {
+    margin: 0 20px -10px 20px;
+    margin-top: 20px;
+    padding: 10px;
+    height: auto;
+}
+.replay-tag svg {
+    fill: var(--color-font-2);
+    margin-right: 10px;
+    height: 1rem;
+}
+.replay-tag > span {
+    max-width: calc(100% - 2rem);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    flex: 1;
+}
+.replay-tag > div {
+    height: calc(1rem + 40px);
+    justify-content: center;
+    align-items: center;
+    margin: -20px 0;
+    display: flex;
+    width: 2rem;
+}
+.replay-tag > div > svg {
+    margin-right: 0 !important;
+    fill: var(--color-font-1);
 }
 
 @media (max-width: 700px) {

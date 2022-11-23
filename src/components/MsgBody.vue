@@ -8,7 +8,7 @@
 
  <template>
   <div
-      :class="isMerge ? 'message merge' : 'message'"
+      :class="'message' + (isMerge ? ' merge' : '')"
       :data-raw="getMsgRawTxt(data.message)"
       :id="'chat-' + getSeq(data.message_id)"
       :data-sender="data.sender.user_id"
@@ -44,7 +44,7 @@
               v-html="buildJSON(item.data, data.message_id)"
               @click="xmlClick('json-' + data.message_id)">
             </div>
-            <span v-else class="msg-unknown">{{ $t('chat.unsupported_msg') }}</span>
+            <span v-else class="msg-unknown">{{ $t('chat.unsupported_msg') + ': ' + item.type }}</span>
         </div>
         <!-- 链接预览框 -->
       </div>
@@ -60,13 +60,13 @@ import Util from '../assets/js/util.js'
 import Option from '../assets/js/options.js'
 
 import { connect as connecter } from '../assets/js/connect'
+import { runtimeData } from '../assets/js/msg'
 
 export default {
   name: 'MsgBody',
   props: ['data', 'isMerge'],
   data () {
     return {
-      loginId: Vue.loginInfo.uin,
       isMe: false,
       isDebugMsg: Option.get('debug_msg')
     }
@@ -289,7 +289,7 @@ export default {
     }
   },
   mounted: function () {
-    this.isMe = this.loginId.toString() === this.data.sender.user_id.toString()
+    this.isMe = runtimeData.loginInfo.uin.toString() === this.data.sender.user_id.toString()
   }
 }
 </script>

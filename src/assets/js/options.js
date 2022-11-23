@@ -8,11 +8,14 @@
 
 import Vue from 'vue'
 
+import { runtimeData } from './msg'
+
 const configFunction = {
   language: setLanguage,
   opt_dark: setDarkMode,
   opt_auto_dark: setAutoDark,
-  theme_color: changeTheme
+  theme_color: changeTheme,
+  chatview_name: changeChatView
 }
 
 const selectDefault = {
@@ -21,6 +24,15 @@ const selectDefault = {
 }
 
 // ======================= 设置项功能 ============================
+
+function changeChatView (name) {
+  // TODO 这儿需要在首次使用的时候弹一个免责声明提示框
+  if (name !== '') {
+    Vue.set(runtimeData.pageView, 'chatView', () => import(`../../pages/chat-view/${name}.vue`))
+  } else {
+    Vue.set(runtimeData.pageView, 'chatView', () => import('../../pages/Chat.vue'))
+  }
+}
 
 function setLanguage (name) {
   import(`../src/l10n/${name}.json`).then(lang => {
@@ -100,7 +112,7 @@ function run (name, value) {
   }
 }
 // 保存并触发配置
-function runAS (name, value) {
+export function runAS (name, value) {
   save(name, value)
   run(name, value)
 }

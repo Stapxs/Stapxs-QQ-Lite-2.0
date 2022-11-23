@@ -46,6 +46,7 @@ import Vue from 'vue'
 
 import { getTrueLang, getSizeFromBytes, htmlDecodeByRegExp, getRandom } from '../../assets/js/util.js'
 import { connect as connecter } from '../../assets/js/connect'
+import { runtimeData } from '../../assets/js/msg'
 
 export default {
   name: 'FileBody',
@@ -62,7 +63,7 @@ export default {
      * 下载文件（获取文件下载地址并下载）
      */
     getFile: function (item) {
-      const url = `https://pan.qun.qq.com/cgi-bin/group_share_get_downurl?uin=${Vue.loginInfo.uin}&groupid=${this.chat.id}&pa=/${item.bus_id}${item.id}&r=${getRandom(true, false, false, 16)}&charset=utf-8&g_tk=${Vue.loginInfo.bkn}`
+      const url = `https://pan.qun.qq.com/cgi-bin/group_share_get_downurl?uin=${Vue.loginInfo.uin}&groupid=${this.chat.id}&pa=/${item.bus_id}${item.id}&r=${getRandom(true, false, false, 16)}&charset=utf-8&g_tk=${runtimeData.loginInfo.bkn}`
       if (this.parent === undefined) {
         connecter.send('http_proxy', { 'url': url }, 'downloadGroupFile_' + item.id)
       } else {
@@ -76,7 +77,7 @@ export default {
     loadFileDir: function (id, type) {
       if (type === 2 && this.item.sub_list === undefined) {
         // 加载群文件列表
-        const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${Vue.loginInfo.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=${id}&show_onlinedoc_folder=0`
+        const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${runtimeData.loginInfo.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=${id}&show_onlinedoc_folder=0`
         connecter.send('http_proxy', { 'url': url }, 'getGroupDirFiles_' + id)
       }
     }

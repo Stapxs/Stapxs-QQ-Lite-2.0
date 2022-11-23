@@ -26,7 +26,12 @@ class Logger {
     /* eslint-disable */
     switch(logLevel) {
       case 'all': {
-        if (mode === this.logMode.ws || mode === this.logMode.ui || mode === this.logMode.debug) {
+        if (mode === this.logMode.ws || mode === this.logMode.ui) {
+          console.log(`%c${mode[2]}%c ${args}`, `background:#${mode[0]};color:#${mode[1]};border-radius:7px 0 0 7px;display:inline-block;padding:2px 4px 2px 7px;`, '')
+        }
+      }
+      case 'debug': {
+        if (mode === this.logMode.debug) {
           console.log(`%c${mode[2]}%c ${args}`, `background:#${mode[0]};color:#${mode[1]};border-radius:7px 0 0 7px;display:inline-block;padding:2px 4px 2px 7px;`, '')
         }
       }

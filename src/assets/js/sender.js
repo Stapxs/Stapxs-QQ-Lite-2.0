@@ -21,6 +21,7 @@ export function parseMsg (msg, cache) {
       back.push({type: 'image', file: 'base64://' + item.substring(item.indexOf('base64,') + 7, item.length)})
     })
   }
+  // 处理消息文本
   const specialList = getSQList(msg)
   if (specialList !== null) {
     specialList.forEach((item) => {
@@ -46,6 +47,12 @@ export function parseMsg (msg, cache) {
   if (msg !== '') {
     back.push({ type: 'text', text: msg })
   }
+  // 在缓存堆中寻找其他需要特殊处理的消息
+  cache.forEach((item) => {
+    switch (item.type) {
+      case 'reply': back.unshift(item); break
+    }
+  })
   return back
 }
 

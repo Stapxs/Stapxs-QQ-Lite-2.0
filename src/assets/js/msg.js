@@ -11,7 +11,7 @@ import FileDownloader from 'js-file-downloader'
 import Util from './util'
 import Option from './options'
 
-import { popInfo } from './base'
+import { logger, popInfo } from './base'
 import { connect as connecter, login } from './connect'
 
 // 处理消息
@@ -24,17 +24,19 @@ export function parse (str) {
       case 'getGroupList'       : saveUser(msg.data); break
       case 'getFriendList'      : saveUser(msg.data); break
       case 'getLoginInfo'       : saveLoginInfo(msg.data); break
-      case 'getVersionInfo'     : break
-      case 'getMoreLoginInfo'   : saveInfo(login, 'info', msg.data.data.result.buddy.info_list[0]); break
+      case 'getVersionInfo'     : saveBotInfo(msg.data); break
+      case 'getMoreLoginInfo'   : Vue.set(login, 'info', msg.data.data.result.buddy.info_list[0]); break
       case 'getMoreGroupInfo'   : saveInfo(runtimeData.onChat.info, 'group', msg.data.data); break
       case 'getMoreUserInfo'    : saveInfo(runtimeData.onChat.info, 'user', msg.data.data.result.buddy.info_list[0]); break
-      case 'getGroupMemberList' : saveInfo(runtimeData.onChat.info, 'group_members', msg.data); break
+      case 'getGroupMemberList' : saveGroupMember(msg.data); break
       case 'getGroupFiles'      : saveFileList(msg.data.data); break
       case 'getMoreGroupFiles'  : saveMoreFileList(msg.data.data); break
       case 'getForwardMsg'      : saveForwardMsg(msg.data); break
       case 'getChatHistoryFist' : saveMsgFist(msg); break
       case 'getChatHistory'     : saveMsg(msg); break
       case 'sendMsgBack'        : showSendedMsg(msg); break
+      case 'getRoamingStamp'    : Vue.set(runtimeData, 'stickers', msg.data.reverse()); break
+      case 'getUserInfoInGroup' : Vue.set(runtimeData.onChat.info, 'me', msg); break
       default                   : {
         const echoList = msg.echo.split('_')
         const head = echoList[0]
@@ -54,6 +56,12 @@ export function parse (str) {
   } else {
     switch (msg.post_type) {
       case 'message': newMsg(msg); break
+      case 'notice' : {
+        switch (msg.sub_type) {
+          case 'recall' : revokeMsg(msg); break
+        }
+        break
+      }
     }
   }
 }
@@ -72,7 +80,7 @@ function saveUser (list) {
   Vue.set(runtimeData, 'userList', back)
 }
 function saveLoginInfo (data) {
-  Vue.loginInfo = data
+  Vue.set(runtimeData, 'loginInfo', data)
   Vue.set(login, 'status', true)
   // 获取更详细的信息
   let url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
@@ -147,7 +155,7 @@ function showSendedMsg (msg) {
   if (msg.error !== undefined) {
     popInfo.add(popInfo.appMsgType.err, Util.$t('chat.send_msg_err', {code: msg.error}))
   } else {
-    if (msg.message_id !== undefined) {
+    if (msg.message_id !== undefined && Option.get('send_reget') !== true) {
       // 请求消息内容
       connecter.send(
         'get_msg',
@@ -237,6 +245,13 @@ function downloadGroupFile (msg) {
 }
 function newMsg (data) {
   const id = data.from_id ? data.from_id : data.group_id
+  const sender = data.sender.user_id
+  // 消息回调检查
+  // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复
+  if (Option.get('send_reget') !== true && sender === runtimeData.loginInfo.uin) {
+    Option.save('send_reget', true)
+  }
+  // 显示消息
   if (id === runtimeData.onChat.id) {
     const list = runtimeData.messageList
     Vue.set(runtimeData, 'messageList', Util.mergeList(list, [data]))
@@ -288,23 +303,26 @@ function sendNotice (msg) {
     let notification = new Notification(notificationTile, notificationBody)
     notificationList[msg.message_id] = notification
     notification.onclick = function () {
-      const msgId = event.target.tag.split('/')[1]
+      const userId = event.target.tag.split('/')[0]
+      const msgId = event.target.tag.substring(userId.length + 1, event.target.tag.length)
       if (notificationList[msgId] !== undefined) {
         delete notificationList[msgId]
       }
 
       // 跳转到这条消息的发送者页面
       window.focus()
-      const userId = event.target.tag.split('/')[0]
       let body = document.getElementById('user-' + userId)
       if (body === null) {
         // 从缓存列表里寻找这个 ID
         for (var i = 0; i < runtimeData.userList.length; i++) {
           const item = runtimeData.userList[i]
-          if (String(item.user_id) === userId) {
+          const id = item.user_id !== undefined ? item.user_id : item.group_id
+          if (String(id) === userId) {
             // 把它插入到显示列表的第一个
             Vue.set(runtimeData, 'showData', Util.mergeList([item], runtimeData.showData))
             Vue.nextTick(() => {
+              // 添加一个消息跳转标记
+              document.getElementById('user-' + userId).dataset.jump = msgId
               // 然后点一下它触发聊天框切换
               document.getElementById('user-' + userId).click()
             })
@@ -323,11 +341,78 @@ function sendNotice (msg) {
     }
   }
 }
+function saveBotInfo (data) {
+  Vue.set(runtimeData, 'botInfo', data)
+}
+function saveGroupMember (data) {
+  // 筛选列表
+  const adminList = data.filter((item) => {
+    return item.role === 'admin'
+  })
+  const createrList = data.filter((item) => {
+    return item.role === 'owner'
+  })
+  const memberList = data.filter((item) => {
+    return item.role !== 'admin' && item.role !== 'owner'
+  })
+  // 拼接列表
+  const back = Util.mergeList(createrList, Util.mergeList(adminList, memberList))
+  saveInfo(runtimeData.onChat.info, 'group_members', back)
+}
+function revokeMsg (msg) {
+  const chatId = msg.notice_type === 'group' ? msg.group_id : msg.user_id
+  const whoRevoke = msg.operator_id
+  // const msgId = msg.message_id
+  const msgSeq = msg.seq
+  // 当前窗口
+  if (Number(chatId) === Number(runtimeData.onChat.id)) {
+    // 寻找消息
+    // let msgGet = null
+    // let msgIndex = -1
+    // runtimeData.messageList.forEach((item, index) => {
+    //   if (item.message_id === msgId) {
+    //     msgGet = item
+    //     msgIndex = index
+    //   }
+    // })
+    // if (msgGet !== null && msgIndex !== -1) {
+    //   msgGet.revoke = true
+    //   Vue.set(runtimeData.messageList, msgIndex, msgGet)
+    // } else {
+    //   logger.error(Util.$t('log.revoke_miss'))
+    // }
+    // 寻找 DOM
+    // PS：这儿本来打算通过更新数据的方式更新消息 ……
+    // 但是 vue 并没有更新，暂时不知道为什么，改成寻找 dom（
+    let dom = document.getElementById('chat-' + msgSeq)
+    if (dom !== undefined) {
+      dom = dom.getElementsByClassName('message-body')[0]
+      dom = dom.lastChild
+      if (Number(whoRevoke) === Number(runtimeData.loginInfo.uin)) {
+        dom.style.opacity = '0.4'
+      } else {
+        // 隐藏消息
+        document.getElementById('chat-' + msgSeq).style.display = 'none'
+      }
+    } else {
+      logger.error(Util.$t('log.revoke_miss'))
+    }
+  }
+  // // 尝试撤回通知
+  // if(window.notices != undefined && window.notices[msg.message_id] != undefined) {
+  //     window.notices[msg.message_id].close()
+  // }
+}
 
 let notificationList = {}
 
 // 运行时数据，用于在全程序内共享使用
 export let runtimeData = {
   onChat: { type: '', id: '', name: '', avatar: '', info: {} },
-  messageList: []
+  messageList: [],
+  botInfo: {},
+  loginInfo: {},
+  pageView: {
+    chatView: () => import('../../pages/Chat.vue')
+  }
 }

@@ -32,7 +32,7 @@
           v-for="item in runtimeData.showData"
           :key="'fb-' + (item.user_id ? item.user_id : item.group_id)"
           :data="item"
-          @click.native="userClick(item)"></FriendBody>
+          @click.native="userClick(item, $event)"></FriendBody>
       </div>
     </div>
     <div>
@@ -71,7 +71,8 @@ export default {
      * 点击联系人事件
      * @param { object } item 联系人数据
      */
-    userClick (data) {
+    userClick (data, event) {
+      const sender = event.currentTarget
       if (this.isLeftBarOpen) {
         this.openLeftBar()
       }
@@ -83,7 +84,8 @@ export default {
         type: data.user_id ? 'user' : 'group',
         id: data.user_id ? data.user_id : data.group_id,
         name: data.group_name ? data.group_name : data.remark === data.nickname ? data.nickname : data.remark + '（' + data.nickname + '）',
-        avatar: data.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id : 'https://p.qlogo.cn/gh/' + data.group_id + '/' + data.group_id + '/0'
+        avatar: data.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id : 'https://p.qlogo.cn/gh/' + data.group_id + '/' + data.group_id + '/0',
+        jump: sender.dataset.jump
       }
       // 更新聊天框
       this.$emit('userClick', back)

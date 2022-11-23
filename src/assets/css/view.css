@@ -361,6 +361,7 @@ html, body {
     margin-right: 10px;
     margin-top: 7px;
     height: 1rem;
+    width: 1rem;
 }
 .menu > div:hover > div > svg {
     fill: var(--color-font-r);
