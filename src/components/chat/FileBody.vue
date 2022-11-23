@@ -16,8 +16,8 @@
         {year:'numeric',month:"short",day:"numeric"})
         .format(new Date(item.create_time * 1000)) }}</span>
         <span v-if="item.dead_time !== 0 && item.dead_time !== undefined">{{ (parseInt((item.dead_time -
-        item.create_time) / 86400) - 1) + $t('chat.chat_info.dead_day') }}</span>
-        <span v-if="item.type === 2">{{ $t('chat.chat_info.file_num', {num: item.size}) }}</span>
+        item.create_time) / 86400) - 1) + $t('chat_chat_info_dead_day') }}</span>
+        <span v-if="item.type === 2">{{ $t('chat_chat_info_file_num', {num: item.size}) }}</span>
         <span v-if="item.type === 1">{{ getSize(item.size) }}</span>
       </div>
     </div>

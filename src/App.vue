@@ -33,7 +33,7 @@
         </li>
       </ul>
       <div class="layui-tab-content">
-        <div :class="!login.status ? 'layui-tab-item layui-show' : 'layui-tab-item'" :name="$t('home.title')">
+        <div :class="!login.status ? 'layui-tab-item layui-show' : 'layui-tab-item'" :name="$t('home_title')">
           <div class="home-body">
             <div class="login-pan-card ss-card">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -41,7 +41,7 @@
                   d="M380.6 365.6C401.1 379.9 416 404.3 416 432C416 476.2 380.2 512 336 512C291.8 512 256 476.2 256 432C256 423.6 257.3 415.4 259.7 407.8L114.1 280.4C103.8 285.3 92.21 288 80 288C35.82 288 0 252.2 0 208C0 163.8 35.82 128 80 128C101.9 128 121.7 136.8 136.2 151.1L320 77.52C321.3 34.48 356.6 0 400 0C444.2 0 480 35.82 480 80C480 117.9 453.7 149.6 418.4 157.9L380.6 365.6zM156.3 232.2L301.9 359.6C306.9 357.3 312.1 355.4 317.6 354.1L355.4 146.4C351.2 143.6 347.4 140.4 343.8 136.9L159.1 210.5C159.7 218 158.5 225.3 156.3 232.2V232.2z">
                 </path>
               </svg>
-              <p>{{ $t('home.card.title') }}</p>
+              <p>{{ $t('home_card_title') }}</p>
               <form @submit.prevent @submit="connect">
                 <label>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
@@ -49,7 +49,7 @@
                       d="M172.5 131.1C228.1 75.51 320.5 75.51 376.1 131.1C426.1 181.1 433.5 260.8 392.4 318.3L391.3 319.9C381 334.2 361 337.6 346.7 327.3C332.3 317 328.9 297 339.2 282.7L340.3 281.1C363.2 249 359.6 205.1 331.7 177.2C300.3 145.8 249.2 145.8 217.7 177.2L105.5 289.5C73.99 320.1 73.99 372 105.5 403.5C133.3 431.4 177.3 435 209.3 412.1L210.9 410.1C225.3 400.7 245.3 404 255.5 418.4C265.8 432.8 262.5 452.8 248.1 463.1L246.5 464.2C188.1 505.3 110.2 498.7 60.21 448.8C3.741 392.3 3.741 300.7 60.21 244.3L172.5 131.1zM467.5 380C411 436.5 319.5 436.5 263 380C213 330 206.5 251.2 247.6 193.7L248.7 192.1C258.1 177.8 278.1 174.4 293.3 184.7C307.7 194.1 311.1 214.1 300.8 229.3L299.7 230.9C276.8 262.1 280.4 306.9 308.3 334.8C339.7 366.2 390.8 366.2 422.3 334.8L534.5 222.5C566 191 566 139.1 534.5 108.5C506.7 80.63 462.7 76.99 430.7 99.9L429.1 101C414.7 111.3 394.7 107.1 384.5 93.58C374.2 79.2 377.5 59.21 391.9 48.94L393.5 47.82C451 6.731 529.8 13.25 579.8 63.24C636.3 119.7 636.3 211.3 579.8 267.7L467.5 380z">
                     </path>
                   </svg>
-                  <input v-model="login.address" :placeholder="$t('home.card.address')" class="ss-input" id="sev_address" autocomplete="off">
+                  <input v-model="login.address" :placeholder="$t('home_card_address')" class="ss-input" id="sev_address" autocomplete="off">
                 </label>
                 <label>
                   <svg style="padding: 0 2px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
@@ -57,27 +57,27 @@
                       d="M80 192V144C80 64.47 144.5 0 224 0C303.5 0 368 64.47 368 144V192H384C419.3 192 448 220.7 448 256V448C448 483.3 419.3 512 384 512H64C28.65 512 0 483.3 0 448V256C0 220.7 28.65 192 64 192H80zM144 192H304V144C304 99.82 268.2 64 224 64C179.8 64 144 99.82 144 144V192z">
                     </path>
                   </svg>
-                  <input v-model="login.token" :placeholder="$t('home.card.key')" class="ss-input" type="password" id="access_token"
+                  <input v-model="login.token" :placeholder="$t('home_card_key')" class="ss-input" type="password" id="access_token"
                     autocomplete="off">
                 </label>
                 <div style="display: flex;">
                   <label class="default">
                     <input type="checkbox" id="opt_save_password" onclick="changeSavePwd(this)">
-                    <a>{{ $t('home.card.save_pwd') }}</a>
+                    <a>{{ $t('home_card_save_pwd') }}</a>
                   </label>
                   <div style="flex: 1;"></div>
                   <label class="default" style="justify-content: flex-end;">
                     <input type="checkbox" id="opt_auto_connect" onclick="changeOpt(this)">
-                    <a>{{ $t('home.card.auto_con') }}</a>
+                    <a>{{ $t('home_card_auto_con') }}</a>
                   </label>
                 </div>
                 <a id="save_pwd_note" class="opt-tip login-tip" style="display: none;">
-                  {{ $t('home.card.tip', {name: $t('name')}) }}
+                  {{ $t('home_card_tip', {name: $t('name')}) }}
                 </a>
-                <button id="connect_btn" class="ss-button" type="submit">{{ $t('home.card.connect') }}</button>
+                <button id="connect_btn" class="ss-button" type="submit">{{ $t('home_card_connect') }}</button>
               </form>
               <a href="https://github.com/Stapxs/Stapxs-QQ-Lite/blob/main/README.md#%E4%BD%BF%E7%94%A8" target="_blank"
-                style="margin-bottom: -20px;">{{ $t('home.card.how_to_connect') }}</a>
+                style="margin-bottom: -20px;">{{ $t('home_card_how_to_connect') }}</a>
               <div class="wave-pan" style="margin-left: -30px;">
                 <svg id="login-wave" class="waves-svg" xmlns="http://www.w3.org/2000/svg"
                   xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 24 170 70" preserveAspectRatio="none"
@@ -313,7 +313,7 @@ export default {
     Vue.configs = {}
     Vue.$i18n = this.$i18n
     Vue.loginInfo = {}
-    logger.debug(this.$t('log.welcome'))
+    logger.debug(this.$t('log_welcome'))
     // 初始化波浪动画
     Util.waveAnimation(document.getElementById('login-wave'))
     // 加载 cookie 中的保存登陆信息
@@ -327,7 +327,7 @@ export default {
     if (!this.$cookies.isKey('version') || cmp(appVersion, cacheVersion) === 1) {
       // 更新 cookie 中的版本信息并抓取更新日志
       this.$cookies.set('version', appVersion, '1m')
-      logger.debug(this.$t('version.updated') + ': ' + cacheVersion + ' -> ' + appVersion)
+      logger.debug(this.$t('version_updated') + ': ' + cacheVersion + ' -> ' + appVersion)
     }
     // 页面加载完成后
     window.onload = () => {

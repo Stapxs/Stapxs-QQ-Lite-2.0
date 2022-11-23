@@ -15,12 +15,12 @@ import { parse } from './msg'
 
 export class connect {
   static create (address, token) {
-    logger.debug(Util.$t('log.ws_log_debug'))
-    logger.add(logger.logMode.ws, Util.$t('log.we_log_all'))
+    logger.debug(Util.$t('log_ws_log_debug'))
+    logger.add(logger.logMode.ws, Util.$t('log_we_log_all'))
 
     websocket = new WebSocket(`ws://${address}?access_token=${token}`)
     websocket.onopen = () => {
-      logger.add(logger.logMode.ws, Util.$t('log.con_success'))
+      logger.add(logger.logMode.ws, Util.$t('log_con_success'))
       // 保存登录信息（一个月）
       Vue.$cookies.set('address', address, '1m')
       // 加载初始化数据
@@ -34,11 +34,11 @@ export class connect {
     websocket.onclose = (e) => {
       Vue.set(login, 'status', false)
       if (e.code !== 1000) {
-        logger.error(Util.$t('log.con_fail') + ': ' + e.code)
-        popInfo.add(popInfo.appMsgType.err, Util.$t('log.con_fail'), false)
+        logger.error(Util.$t('log_con_fail') + ': ' + e.code)
+        popInfo.add(popInfo.appMsgType.err, Util.$t('log_con_fail'), false)
       } else {
-        logger.debug(Util.$t('log.con_closed') + ': ' + e.code)
-        popInfo.add(popInfo.appMsgType.info, Util.$t('log.con_closed'))
+        logger.debug(Util.$t('log_con_closed') + ': ' + e.code)
+        popInfo.add(popInfo.appMsgType.info, Util.$t('log_con_closed'))
       }
       // 清空数据
       const loginAddress = login.address

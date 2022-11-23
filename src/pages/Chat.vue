@@ -12,7 +12,7 @@
       <div>
         <p>{{ chat.name }}</p>
         <span>
-          {{ list[list.length - 1] ? $t('chat.last_msg', {time: Intl.DateTimeFormat(trueLang, {hour:"numeric",minute:"numeric",second:"numeric"}).format(new Date(list[list.length - 1].time * 1000)) }) : $t('chat.no_msg')}}
+          {{ list[list.length - 1] ? $t('chat_last_msg', {time: Intl.DateTimeFormat(trueLang, {hour:"numeric",minute:"numeric",second:"numeric"}).format(new Date(list[list.length - 1].time * 1000)) }) : $t('chat_no_msg')}}
           </span>
       </div>
       <div></div>
@@ -22,7 +22,7 @@
     </div>
     <div @scroll="chatScroll" id="msgPan" style="scroll-behavior: smooth;">
       <div class="note-base" v-if="!tags.canLoadHistory">
-        <span class="note-nomsg">{{ $t('chat.no_more_msg') }}</span>
+        <span class="note-nomsg">{{ $t('chat_no_more_msg') }}</span>
       </div>
       <MsgBody
         v-for="msg in list"
@@ -54,7 +54,7 @@
         </div>
         <!-- 更多功能 -->
         <div :class="tags.showMoreDetail ? 'more-detail show' : 'more-detail'">
-          <div :title="this.$t('chat.fun_menu.face')" @click="details[1].open = !details[1].open,tags.showMoreDetail = false">
+          <div :title="this.$t('chat_fun_menu_face')" @click="details[1].open = !details[1].open,tags.showMoreDetail = false">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 256C0 114.6 114.6 0 256 0C397.4 0 512 114.6 512 256C512 397.4 397.4 512 256 512C114.6 512 0 397.4 0 256zM256 432C332.1 432 396.2 382 415.2 314.1C419.1 300.4 407.8 288 393.6 288H118.4C104.2 288 92.92 300.4 96.76 314.1C115.8 382 179.9 432 256 432V432zM176.4 160C158.7 160 144.4 174.3 144.4 192C144.4 209.7 158.7 224 176.4 224C194 224 208.4 209.7 208.4 192C208.4 174.3 194 160 176.4 160zM336.4 224C354 224 368.4 209.7 368.4 192C368.4 174.3 354 160 336.4 160C318.7 160 304.4 174.3 304.4 192C304.4 209.7 318.7 224 336.4 224z"/></svg>
           </div>
         </div>
@@ -85,7 +85,7 @@
       <div class="ss-card">
         <div>
           <svg style="margin-top: 5px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M511.1 63.1v287.1c0 35.25-28.75 63.1-64 63.1h-144l-124.9 93.68c-7.875 5.75-19.12 .0497-19.12-9.7v-83.98h-96c-35.25 0-64-28.75-64-63.1V63.1c0-35.25 28.75-63.1 64-63.1h384C483.2 0 511.1 28.75 511.1 63.1z"/></svg>
-          <span>{{ $t('chat.merge_msg') }}</span>
+          <span>{{ $t('chat_merge_msg') }}</span>
           <svg @click="closeMergeMsg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>
         </div>
         <div>
@@ -108,12 +108,12 @@
             <a>{{  mumberInfo.card == '' ? mumberInfo.nickname : mumberInfo.card  }}</a>
             <div>
               <span v-if="mumberInfo.role !== 'member'">
-                {{  $t('chat.member_type.' + mumberInfo.role)  }}
+                {{  $t('chat_member_type_' + mumberInfo.role)  }}
               </span>
               <span>Lv {{  mumberInfo.level  }}</span>
             </div>
           </div>
-          <span> {{ $t('chat.join_time', {time: Intl.DateTimeFormat(trueLang, {year:'numeric',month:"short",day:"numeric"}).format(new Date(mumberInfo.join_time * 1000))})  }} </span>
+          <span> {{ $t('chat_join_time', {time: Intl.DateTimeFormat(trueLang, {year:'numeric',month:"short",day:"numeric"}).format(new Date(mumberInfo.join_time * 1000))})  }} </span>
         </div>
       </div>
     </div>
@@ -123,27 +123,27 @@
       <div :class="tags.showMsgMenu ? 'ss-card menu show' : 'ss-card menu'" id="msgMenu">
         <div @click="replyMsg" v-show="tags.menuDisplay.relpy">
            <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M511.1 63.1v287.1c0 35.25-28.75 63.1-64 63.1h-144l-124.9 93.68c-7.875 5.75-19.12 .0497-19.12-9.7v-83.98h-96c-35.25 0-64-28.75-64-63.1V63.1c0-35.25 28.75-63.1 64-63.1h384C483.2 0 511.1 28.75 511.1 63.1z"/></svg></div>
-           <a>{{ $t('chat.msg_menu.reply') }}</a>
+           <a>{{ $t('chat_msg_menu_reply') }}</a>
         </div>
         <!-- <div v-show="tags.menuDisplay.forward">
            <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M503.7 226.2l-176 151.1c-15.38 13.3-39.69 2.545-39.69-18.16V272.1C132.9 274.3 66.06 312.8 111.4 457.8c5.031 16.09-14.41 28.56-28.06 18.62C39.59 444.6 0 383.8 0 322.3c0-152.2 127.4-184.4 288-186.3V56.02c0-20.67 24.28-31.46 39.69-18.16l176 151.1C514.8 199.4 514.8 216.6 503.7 226.2z"/></svg></div>
-           <a>{{ $t('chat.msg_menu.forward') }}</a>
+           <a>{{ $t('chat_msg_menu_forward') }}</a>
         </div> -->
         <!-- <div v-show="tags.menuDisplay.select">
            <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M23.19 32C28.86 32 34.34 34.08 38.59 37.86L312.6 281.4C317.3 285.6 320 291.6 320 297.9C320 310.1 310.1 320 297.9 320H179.8L236.6 433.7C244.5 449.5 238.1 468.7 222.3 476.6C206.5 484.5 187.3 478.1 179.4 462.3L121.2 346L38.58 440.5C34.4 445.3 28.36 448 22.01 448C9.855 448 0 438.1 0 425.1V55.18C0 42.38 10.38 32 23.18 32H23.19z"/></svg></div>
-           <a>{{ $t('chat.msg_menu.multiple_choice') }}</a>
+           <a>{{ $t('chat_msg_menu_multiple_choice') }}</a>
         </div> -->
         <div @click="copyMsg" v-show="tags.menuDisplay.copy">
            <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M336 64h-53.88C268.9 26.8 233.7 0 192 0S115.1 26.8 101.9 64H48C21.5 64 0 85.48 0 112v352C0 490.5 21.5 512 48 512h288c26.5 0 48-21.48 48-48v-352C384 85.48 362.5 64 336 64zM192 64c17.67 0 32 14.33 32 32c0 17.67-14.33 32-32 32S160 113.7 160 96C160 78.33 174.3 64 192 64zM272 224h-160C103.2 224 96 216.8 96 208C96 199.2 103.2 192 112 192h160C280.8 192 288 199.2 288 208S280.8 224 272 224z"/></svg></div>
-           <a>{{ $t('chat.msg_menu.copy') }}</a>
+           <a>{{ $t('chat_msg_menu_copy') }}</a>
         </div>
         <!-- <div @click="copyMsg" v-show="tags.menuDisplay.copySelect">
            <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M336 64h-53.88C268.9 26.8 233.7 0 192 0S115.1 26.8 101.9 64H48C21.5 64 0 85.48 0 112v352C0 490.5 21.5 512 48 512h288c26.5 0 48-21.48 48-48v-352C384 85.48 362.5 64 336 64zM192 64c17.67 0 32 14.33 32 32c0 17.67-14.33 32-32 32S160 113.7 160 96C160 78.33 174.3 64 192 64zM272 224h-160C103.2 224 96 216.8 96 208C96 199.2 103.2 192 112 192h160C280.8 192 288 199.2 288 208S280.8 224 272 224z"/></svg></div>
-           <a>{{ $t('chat.msg_menu.copy_select') }}</a>
+           <a>{{ $t('chat_msg_menu_copy_select') }}</a>
         </div> -->
         <div @click="revokeMsg" v-show="tags.menuDisplay.revoke">
            <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg></div>
-           <a>{{ $t('chat.msg_menu.withdraw') }}</a>
+           <a>{{ $t('chat_msg_menu_withdraw') }}</a>
         </div>
       </div>
     </div>
@@ -153,8 +153,8 @@
     <div class="img-sender" v-if="Vue.cacheImg != undefined && Vue.cacheImg.length > 0">
       <div class="card ss-card">
         <div class="hander">
-          <span>{{ $t('chat.send_pic.title') }}</span>
-          <button @click="sendMsg();Vue.cacheImg = undefined" class="ss-button">{{ $t('chat.send_pic.send') }}</button>
+          <span>{{ $t('chat_send_pic_title') }}</span>
+          <button @click="sendMsg();Vue.cacheImg = undefined" class="ss-button">{{ $t('chat_send_pic_send') }}</button>
         </div>
         <div class="imgs">
           <div v-for="(img64, index) in Vue.cacheImg"
@@ -288,7 +288,7 @@ export default {
           }, 1100)
         }, 3000)
       } else {
-        popInfo.add(popInfo.appMsgType.err, this.$t('chat.msg_not_load'))
+        popInfo.add(popInfo.appMsgType.err, this.$t('chat_msg_not_load'))
       }
     },
     viewImg: function (msgId) {
@@ -460,11 +460,11 @@ export default {
       const msg = this.selectedMsg
       if (this.selectedMsg !== null) {
         this.$copyText(msg.raw_message).then(function (e) {
-          popInfo.add(popInfo.appMsgType.info, that.$t('chat.msg_menu.copy_success'), true)
+          popInfo.add(popInfo.appMsgType.info, that.$t('chat_msg_menu_copy_success'), true)
           that.closeMsgMenu()
         }, function (e) {
           logger.error('复制消息失败：' + e)
-          popInfo.add(popInfo.appMsgType.err, that.$t('chat.msg_menu.copy_err'), true)
+          popInfo.add(popInfo.appMsgType.err, that.$t('chat_msg_menu_copy_err'), true)
         })
       }
     },
@@ -606,7 +606,7 @@ export default {
         if (item.kind === 'file') {
           let blob = item.getAsFile()
           if (blob.type.indexOf('image/') >= 0 && blob.size !== 0) {
-            popInfo.add(popInfo.appMsgType.info, this.$t('chat.image_processing'))
+            popInfo.add(popInfo.appMsgType.info, this.$t('chat_image_processing'))
             if (blob.size < 3145728) {
               // 转换为 Base64
               var reader = new FileReader()
@@ -632,9 +632,9 @@ export default {
                   Vue.cacheImg.push(base64data)
                 }
               }
-              popInfo.add(popInfo.appMsgType.info, this.$t('chat.image_ok'))
+              popInfo.add(popInfo.appMsgType.info, this.$t('chat_image_ok'))
             } else {
-              popInfo.add(popInfo.appMsgType.info, this.$t('chat.image_toooo_big'))
+              popInfo.add(popInfo.appMsgType.info, this.$t('chat_image_toooo_big'))
             }
             // 阻止默认行为
             e.preventDefault()

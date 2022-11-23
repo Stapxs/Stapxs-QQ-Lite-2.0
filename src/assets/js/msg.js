@@ -103,7 +103,7 @@ function saveFileList (data) {
   if (data.ec !== 0) {
     popInfo.add(
       popInfo.appMsgType.err,
-      Util.$t('chat.chat_info.load_file_err', {code: data.ec})
+      Util.$t('chat_chat_info_load_file_err', {code: data.ec})
     )
   } else {
     saveInfo(runtimeData.onChat.info, 'group_files', data)
@@ -137,7 +137,7 @@ function backTestInfo (data) {
 }
 function saveMsgFist (msg) {
   if (msg.error !== undefined) {
-    popInfo.add(popInfo.appMsgType.err, Util.$t('chat.load_msg_err', {code: msg.error}))
+    popInfo.add(popInfo.appMsgType.err, Util.$t('chat_load_msg_err', {code: msg.error}))
     Vue.set(runtimeData, 'messageList', [])
   } else {
     Vue.set(runtimeData, 'messageList', msg.data)
@@ -148,7 +148,7 @@ function saveMsgFist (msg) {
 }
 function saveMsg (msg) {
   if (msg.error !== undefined) {
-    popInfo.add(popInfo.appMsgType.err, this.$t('chat.load_msg_err', {code: msg.error}))
+    popInfo.add(popInfo.appMsgType.err, this.$t('chat_load_msg_err', {code: msg.error}))
   } else {
     const items = msg.data
     items.pop() // 去除最后一条重复的消息，获取历史消息会返回当前消息 **以及** 之前的 N-1 条
@@ -161,7 +161,7 @@ function saveMsg (msg) {
 }
 function showSendedMsg (msg) {
   if (msg.error !== undefined) {
-    popInfo.add(popInfo.appMsgType.err, Util.$t('chat.send_msg_err', {code: msg.error}))
+    popInfo.add(popInfo.appMsgType.err, Util.$t('chat_send_msg_err', {code: msg.error}))
   } else {
     if (msg.message_id !== undefined && Option.get('send_reget') !== true) {
       // 请求消息内容
@@ -395,7 +395,7 @@ function revokeMsg (msg) {
     //   msgGet.revoke = true
     //   Vue.set(runtimeData.messageList, msgIndex, msgGet)
     // } else {
-    //   logger.error(Util.$t('log.revoke_miss'))
+    //   logger.error(Util.$t('log_revoke_miss'))
     // }
     // 寻找 DOM
     // PS：这儿本来打算通过更新数据的方式更新消息 ……
@@ -411,7 +411,7 @@ function revokeMsg (msg) {
         document.getElementById('chat-' + msgSeq).style.display = 'none'
       }
     } else {
-      logger.error(Util.$t('log.revoke_miss'))
+      logger.error(Util.$t('log_revoke_miss'))
     }
   }
   // // 尝试撤回通知

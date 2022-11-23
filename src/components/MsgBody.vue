@@ -31,9 +31,9 @@
         <div v-for="(item, index) in data.message" :class="isMsgInline(item.type) ? 'msg-inline' : ''" :key="data.message_id + '-m-' + index">
           <span v-if="isDebugMsg" class="msg-text">{{item}}</span>
           <span v-else-if="item.type === 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
-          <img v-else-if="item.type === 'image'" :title="$t('chat.view_pic')" :alt="$t('chat.group_pic')" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
+          <img v-else-if="item.type === 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
           <img v-else-if="item.type === 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/src/qq-face/' + item.id + '.gif')" :title="item.text">
-          <span v-else-if="item.type === 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat.fun_menu.pic') }}：{{ item.text }} ]</span>
+          <span v-else-if="item.type === 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat_fun_menu_pic') }}：{{ item.text }} ]</span>
           <div v-else-if="item.type === 'at'" v-show="isAtShow(data.source, item.qq)" :class="getAtClass(item.qq)">
             <a @mouseenter="showUserInfo" :data-id="item.qq" :data-group="data.group_id">{{ item.text }}</a>
           </div>
@@ -44,7 +44,7 @@
               v-html="buildJSON(item.data, data.message_id)"
               @click="xmlClick('json-' + data.message_id)">
             </div>
-            <span v-else class="msg-unknown">{{ $t('chat.unsupported_msg') + ': ' + item.type }}</span>
+            <span v-else class="msg-unknown">{{ $t('chat_unsupported_msg') + ': ' + item.type }}</span>
         </div>
         <!-- 链接预览框 -->
       </div>
