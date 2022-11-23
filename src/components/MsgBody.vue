@@ -8,7 +8,7 @@
 
  <template>
   <div
-      :class="isMerge ? 'message merge' : 'message'"
+      :class="'message' + (isMerge ? ' merge' : '')"
       :data-raw="getMsgRawTxt(data.message)"
       :id="'chat-' + getSeq(data.message_id)"
       :data-sender="data.sender.user_id"

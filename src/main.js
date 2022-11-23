@@ -15,11 +15,13 @@ import VueCookies from 'vue-cookies'
 import VueViewer from 'v-viewer'
 import VueXss from 'vue-xss'
 import VueI18n from 'vue-i18n'
+import VueClipboard from 'vue-clipboard2'
 Vue.use(infScroll)
 Vue.use(VueCookies)
 Vue.use(VueViewer)
 Vue.use(VueXss, {whiteList: {}, stripIgnoreTag: true})
 Vue.use(VueI18n)
+Vue.use(VueClipboard)
 
 /* eslint-disable */
 Vue.config.productionTip = false

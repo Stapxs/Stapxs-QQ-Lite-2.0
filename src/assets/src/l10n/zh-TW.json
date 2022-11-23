@@ -82,7 +82,8 @@
     "member_type": {
       "admin": "管理員",
       "owner": "群主"
-    }
+    },
+    "face_pan": {}
   },
   "option": {
     "title": "設定",

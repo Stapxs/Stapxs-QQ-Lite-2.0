@@ -214,6 +214,7 @@ export default {
      * @param { object } data 对象信息
      */
     changeChat: function (data) {
+      // 设置聊天信息
       this.runtimeData.onChat = {
         type: data.type,
         id: data.id,
@@ -225,13 +226,19 @@ export default {
           group_members: {},
           group_files: {},
           group_sub_files: {},
-          user: {}
+          user: {},
+          me: {}
         }
       }
       // 清空合并转发缓存
       Vue.set(runtimeData, 'mergeMessageList', [])
       // 重置图片预览器状态
       Object.assign(this.$data.imgView, this.$options.data().imgView)
+      // 获取自己在群内的资料
+      if (data.type === 'group') {
+        connector.send('getGroupMemberInfo', {group_id: data.id, user_id: this.runtimeData.loginInfo.uin},
+          'getUserInfoInGroup')
+      }
     },
 
     /**

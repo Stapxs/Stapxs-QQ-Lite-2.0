@@ -51,8 +51,8 @@ export class connect {
     // 构建 JSON
     let obj = {}
     obj.action = name
-    obj.params = value === null ? {} : value
-    obj.echo = echo === null ? name : echo
+    obj.params = (value === null || value === undefined) ? {} : value
+    obj.echo = (echo === null || echo === undefined) ? name : echo
     const json = JSON.stringify(obj)
     // 发送
     websocket.send(json)
