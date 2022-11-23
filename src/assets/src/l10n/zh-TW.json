@@ -43,6 +43,8 @@
     "last_msg": "最新訊息 - {time}",
     "no_msg": "沒有訊息",
     "no_more_msg": "沒有更多的訊息了",
+    "load_msg_err": "訊息載入失敗（{code}），可能是因為沒有訊息（私訊一天內沒有訊息）或者群組失效（群組遭凍結或解散）",
+    "send_msg_err": "訊息傳送失敗（{code}），可能是因為禁言或者群組失效（遭凍結或解散）",
     "merge_msg": "合併訊息",
     "unsupported_msg": "（不支援的訊息）",
     "msg_not_load": "無法定位上下文",
@@ -54,6 +56,7 @@
       "face": "表情"
     },
     "chat_info": {
+      "load_file_err": "群組檔案載入失敗（{code}），可能是因為群組失效（群組遭凍結或解散）",
       "group": "群組資料",
       "user": "好友",
       "is_owner": "你是群主",
@@ -83,7 +86,13 @@
       "admin": "管理員",
       "owner": "群主"
     },
-    "face_pan": {}
+    "send_pic": {
+      "title": "傳送圖片",
+      "send": "傳送"
+    },
+    "image_processing": "正在處理圖片 ……",
+    "image_toooo_big": "圖片過大",
+    "image_ok": "圖片處理完成"
   },
   "option": {
     "title": "設定",
@@ -91,7 +100,7 @@
       "account": "賬號",
       "view": "介面",
       "function": "功能",
-      "dev": "開發人員"
+      "dev": "進階"
     },
     "info": {
       "visit_github": "訪問 GitHub 專案庫"
@@ -102,7 +111,7 @@
       "l10n_expired": "需要更新",
       "language": "語言（Language）",
       "choice_lang": "Choose ……",
-      "language_tip": "喵喵喵喵？",
+      "language_tip": "我當然知影這毋是正港欸！",
       "theme": "主題與顏色",
       "dark_mode": "深色模式",
       "dark_mode_tip": "是五彩斑斕的黑色！",
@@ -118,12 +127,38 @@
       "log_level_info": "基本",
       "log_level_all": "全部",
       "log_level_tip": "ReferenceError: moYu is not defined",
-      "msg_menu": "禁用自訂滑鼠右鍵選單",
-      "msg_menu_tip": "哼哼啊啊啊啊啊，讓我選 ——"
+      "msg_menu": "停用自訂滑鼠右鍵選單",
+      "msg_menu_tip": "哼哼啊啊啊啊啊，讓我選 ——",
+      "appmsg": "應用訊息測試",
+      "appmsg_tip": "#$&*#$@ ……",
+      "connect": "連線工具選項",
+      "connect_beat": "傳送心跳",
+      "connect_beat_tip": "依我這麼高的醫學理解，只能說他真的沒救了",
+      "ws_send": "傳送原始訊息",
+      "ws_send_tip": "咻 ——",
+      "notice_close": "停用通知",
+      "notice_close_tip": "好嘛 …… 不煩你 ……",
+      "notice_all": "通知所有新訊息",
+      "notice_all_tip": "讓暴風雨來得更猛烈些吧！",
+      "debug_msg": "停用訊息彩現",
+      "debug_msg_tip": "點選以進行 CAPTCHA 驗證",
+      "debug_msg_tip_1": "你不是人（逃",
+      "chat_nd": "阻擋訊息收回",
+      "chat_nd_tip": "側翼網軍這下還能興風作浪？",
+      "chat_nd_tip_1": "算了你還是螢幕錄影吧",
+      "chat_pic_pan": "停用圖片傳送視窗",
+      "chat_pic_pan_tip": "你也嚮往自由嗎？",
+      "connect_type": "指定連線工具",
+      "connect_type_tip": "會不會發生 NTR 情節呢（？",
+      "connect_tip": "連線工具是用於和 bot 連線的部件，它同時也包括此 bot 相匹配的訊息彩現工具和訊息處理器 —— 你可以簡單的將它當成 bot 配接選項。（譯者：哩西勒供三小）",
+      "test": "偵錯"
     },
     "account": {
       "config": "賬號設定"
     },
-    "fun": {}
+    "fun": {
+      "notice": "通知設定",
+      "chat": "聊天設定"
+	}
   }
 }
