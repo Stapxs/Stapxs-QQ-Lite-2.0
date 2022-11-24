@@ -152,10 +152,10 @@ function saveMsg (msg) {
   } else {
     const items = msg.data
     items.pop() // 去除最后一条重复的消息，获取历史消息会返回当前消息 **以及** 之前的 N-1 条
-    // if (items.length < 1) {
-    //   this.$refs.chat.setNoMoreHistory()
-    //   return
-    // }
+    if (items.length < 1) {
+      Vue.set(runtimeData.tags, 'canLoadHistory', false)
+      return
+    }
     Vue.set(runtimeData, 'messageList', Util.mergeList(items, runtimeData.messageList))
   }
 }
@@ -174,7 +174,7 @@ function showSendedMsg (msg) {
   }
 }
 function saveSendedMsg (msg) {
-  // TODO 这里暂时没有考虑消息获取失败的情况（因为没有例子）
+  // TODO: 这里暂时没有考虑消息获取失败的情况（因为没有例子）
   Vue.set(runtimeData, 'messageList', Util.mergeList(runtimeData.messageList, [msg]))
 }
 function saveMemberInfo (msg) {
@@ -184,7 +184,7 @@ function saveMemberInfo (msg) {
   Vue.set(runtimeData, 'nowMemberInfo', msg)
 }
 function saveDirFile (msg) {
-  // TODO 这边不分页直接拿全
+  // TODO: 这边不分页直接拿全
   const id = msg.echo.split('_')[1]
   let fileIndex = -1
   runtimeData.onChat.info.group_files.file_list.forEach((item, index) => {
@@ -410,6 +410,9 @@ function revokeMsg (msg) {
         // 隐藏消息
         document.getElementById('chat-' + msgSeq).style.display = 'none'
       }
+      // 显示撤回提示
+      const list = runtimeData.messageList
+      Vue.set(runtimeData, 'messageList', Util.mergeList(list, [msg]))
     } else {
       logger.error(Util.$t('log_revoke_miss'))
     }
@@ -430,5 +433,6 @@ export let runtimeData = {
   loginInfo: {},
   pageView: {
     chatView: () => import('../../pages/Chat.vue')
-  }
+  },
+  tags: {}
 }

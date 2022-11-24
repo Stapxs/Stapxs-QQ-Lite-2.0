@@ -328,7 +328,7 @@ html, body {
     color: var(--color-font-1-r);
 }
 
-/* TODO BCUI - 这段 css 将在将来迁移到 Border Card UI 中合并 */
+/* TODO: BCUI - 这段 css 将在将来迁移到 Border Card UI 中合并 */
 .menu {
     box-shadow: 0 0 5px var(--color-shader);
     background: var(--color-bg);
@@ -337,6 +337,8 @@ html, body {
     transform: scaleY(0);
     pointer-events: all;
     min-height: unset;
+    min-width: 100px;
+    max-width: 150px;
     padding: 10px;
     width: 20%;
 }
@@ -348,7 +350,7 @@ html, body {
     background: transparent;
     align-items: center;
     border-radius: 7px;
-    padding: 5px 15px;
+    padding: 3px 15px;
     cursor: pointer;
     display: flex;
 }
@@ -626,4 +628,16 @@ html, body {
     .app-msg > div {
         max-width: calc(100% - 80px);
     }
+    /* 右击菜单 */
+    .menu {
+        width: 30%;
+    }
+    .menu > div {
+        padding: 5px 15px;
+    }
+}
+
+/* 其他覆盖样式 */
+.layui-tab-bar {
+    display: none;
 }

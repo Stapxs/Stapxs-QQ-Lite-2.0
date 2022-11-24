@@ -744,6 +744,7 @@ textarea {
     border: 2px var(--color-card-2) solid;
     background: var(--color-card-2);
     border-radius: 7px;
+    cursor: pointer;
     height: 50px;
     width: 50px;
     margin: 5px;

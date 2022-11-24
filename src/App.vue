@@ -224,7 +224,7 @@ export default {
         jump: data.jump,
         info: {
           group: {},
-          group_members: {},
+          group_members: [],
           group_files: {},
           group_sub_files: {},
           user: {},

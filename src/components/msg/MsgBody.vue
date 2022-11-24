@@ -6,7 +6,7 @@
  * @Note: 此组件也负责子组件的渲染
  -->
 
- <template>
+<template>
   <div
       :class="'message' + (isMerge ? ' merge' : '')"
       :data-raw="getMsgRawTxt(data.message)"
@@ -32,7 +32,7 @@
           <span v-if="isDebugMsg" class="msg-text">{{item}}</span>
           <span v-else-if="item.type === 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
           <img v-else-if="item.type === 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
-          <img v-else-if="item.type === 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/src/qq-face/' + item.id + '.gif')" :title="item.text">
+          <img v-else-if="item.type === 'face'" :alt="item.text" class="msg-face" :src="require('./../../assets/src/qq-face/' + item.id + '.gif')" :title="item.text">
           <span v-else-if="item.type === 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat_fun_menu_pic') }}：{{ item.text }} ]</span>
           <div v-else-if="item.type === 'at'" v-show="isAtShow(data.source, item.qq)" :class="getAtClass(item.qq)">
             <a @mouseenter="showUserInfo" :data-id="item.qq" :data-group="data.group_id">{{ item.text }}</a>
@@ -44,9 +44,20 @@
               v-html="buildJSON(item.data, data.message_id)"
               @click="xmlClick('json-' + data.message_id)">
             </div>
-            <span v-else class="msg-unknown">{{ $t('chat_unsupported_msg') + ': ' + item.type }}</span>
+            <span v-else class="msg-unknown">{{ '( ' + $t('chat_unsupported_msg') + ': ' + item.type + ' )' }}</span>
         </div>
         <!-- 链接预览框 -->
+        <div :class="'msg-link-view ' + linkViewStyle" v-if="data.page_info !== undefined && Object.keys(data.page_info).length > 0">
+          <div :class="'bar' + (isMe ? ' me' : '')"></div>
+          <div>
+            <img :id="data.message_id + '-linkview-img'" @load="linkViewPicFin" alt="预览图片" title="查看图片" :src="data.page_info.img" v-if="data.page_info.img !== undefined">
+            <div class="body">
+              <p>{{ data.page_info.site }}</p>
+              <span :href="data.page_info.url">{{ data.page_info.title }}</span>
+              <span>{{ data.page_info.desc }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <code style="display: none;">{{ data.raw_message }}</code>
@@ -56,11 +67,12 @@
 <script>
 import Vue from 'vue'
 import Xss from 'xss'
-import Util from '../assets/js/util.js'
-import Option from '../assets/js/options.js'
+import Util from '../../assets/js/util.js'
+import Option from '../../assets/js/options.js'
 
-import { connect as connecter } from '../assets/js/connect'
-import { runtimeData } from '../assets/js/msg'
+import { connect as connecter } from '../../assets/js/connect'
+import { runtimeData } from '../../assets/js/msg'
+import { logger, popInfo } from '../../assets/js/base'
 
 export default {
   name: 'MsgBody',
@@ -68,7 +80,8 @@ export default {
   data () {
     return {
       isMe: false,
-      isDebugMsg: Option.get('debug_msg')
+      isDebugMsg: Option.get('debug_msg'),
+      linkViewStyle: ''
     }
   },
   methods: {
@@ -201,7 +214,7 @@ export default {
         }
         case '群投票': {
           // 群投票
-          return '<a class="msg-unknow">（不支持显示的 XML：' + source + '）</a>'
+          return '<a class="msg-unknow">（' + this.$t('chat_xml_unsupport') + '：' + source + '）</a>'
         }
       }
       // 附带链接的 xml 消息处理
@@ -222,7 +235,11 @@ export default {
       // 接下来按类型处理
       if (type === 'forward') {
         // 解析合并转发消息
-        connecter.send('get_forward_msg', { 'resid': sender.dataset.id }, 'getForwardMsg')
+        if (sender.dataset.id !== 'undefined') {
+          connecter.send('get_forward_msg', { 'resid': sender.dataset.id }, 'getForwardMsg')
+        } else {
+          popInfo.add(popInfo.appMsgType.err, this.$t('chat_forward_toooomany'))
+        }
       }
     },
     /**
@@ -268,8 +285,52 @@ export default {
       // 链接判定
       const reg = /(http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/gi //eslint-disable-line
       text = text.replaceAll(reg, '<a href="$&" target="_blank">$&</a>')
+      let fistLink = text.match(reg)
+      if (fistLink !== null && this.data.page_info === undefined) {
+        this.$set(this.data, 'page_info', {})
+        fistLink = fistLink[0]
+        // GA：上传使用链接预览功能的事件用于统计
+        const reg1 = /\/\/(.*?)\//g
+        const getDom = fistLink.match(reg1)
+        if (getDom !== null) {
+          Vue.$gtag.event('link_view', {domain: RegExp.$1})
+        } else {
+          Vue.$gtag.event('link_view')
+        }
+        // 获取链接预览
+        fetch('https://api.stapxs.cn/Page-Info?address=' + fistLink)
+          .then(res => res.json())
+          .then(res => {
+            if (res.status === undefined && Object.keys(res).length > 0) {
+              logger.debug(this.$t('chat_link_view_success') + ': ' + res['og:title'])
+              const pageData = {
+                site: res['og:site_name'] === undefined ? '' : res['og:site_name'],
+                title: res['og:title'] === undefined ? '' : res['og:title'],
+                desc: res['og:description'] === undefined ? '' : res['og:description'],
+                img: res['og:image'],
+                link: res['og:url']
+              }
+              this.$set(this.data, 'page_info', pageData)
+            }
+          })
+          .catch(error => {
+            if (error) {
+              logger.error(this.$t('chat_link_view_fail'))
+            }
+          })
+      }
       // 返回
       return text
+    },
+    linkViewPicFin: function () {
+      const img = document.getElementById(this.data.message_id + '-linkview-img')
+      if (img !== null) {
+        const w = img.naturalWidth
+        const h = img.naturalHeight
+        if (w > h) {
+          this.linkViewStyle = 'large'
+        }
+      }
     },
     showUserInfo: function (event) {
       const sender = event.currentTarget
@@ -279,7 +340,7 @@ export default {
       const pointEvent = event || window.event
       const pointX = pointEvent.layerX
       const pointY = pointEvent.clientY
-      // 出界判定不做了怪麻烦的
+      // TODO: 出界判定不做了怪麻烦的
       // 请求用户信息
       connecter.send('getGroupMemberInfo', {group_id: group, user_id: id},
         'getGroupMemberInfo_' + pointX + '_' + pointY)

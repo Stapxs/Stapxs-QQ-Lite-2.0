@@ -21,16 +21,22 @@
       </div>
     </div>
     <div @scroll="chatScroll" id="msgPan" style="scroll-behavior: smooth;">
-      <div class="note-base" v-if="!tags.canLoadHistory">
+      <div class="note top" v-if="!runtimeData.tags.canLoadHistory">
         <span class="note-nomsg">{{ $t('chat_no_more_msg') }}</span>
       </div>
-      <MsgBody
-        v-for="msg in list"
-        :key="msg.message_id"
-        :data="msg"
-        @scrollToMsg="scrollToMsg"
-        @viewImg="viewImg"
-        @contextmenu.native.prevent="showMsgMeun($event, msg)"></MsgBody>
+      <template v-for="(msg, index) in list">
+        <MsgBody
+          v-if="msg.post_type === 'message'"
+          :key="msg.message_id"
+          :data="msg"
+          @scrollToMsg="scrollToMsg"
+          @viewImg="viewImg"
+          @contextmenu.native.prevent="showMsgMeun($event, msg)"></MsgBody>
+        <NoticeBody
+          v-if="msg.post_type === 'notice'"
+          :key="'notice-' + index"
+          :data="msg"></NoticeBody>
+      </template>
     </div>
     <div v-show="tags.showBottomButton" @click="scrollBottom(true)">
       <div class="ss-card">
@@ -176,10 +182,12 @@
 
 <script>
 import Vue from 'vue'
-import MsgBody from '../components/MsgBody.vue'
+import MsgBody from '../components/msg/MsgBody.vue'
 import SendUtil from '../assets/js/sender.js'
 import InfoBody from '../components/chat/InfoPan.vue'
 import FacePan from '../components/chat/FacePan.vue'
+import NoticeBody from '../components/msg/NoticeBody.vue'
+
 import Option from '../assets/js/options'
 
 import { parseMsgId, getTrueLang } from '../assets/js/util'
@@ -190,13 +198,13 @@ import { runtimeData } from '../assets/js/msg'
 export default {
   name: 'Chat',
   props: ['chat', 'list', 'mergeList', 'mumberInfo', 'imgView'],
-  components: { MsgBody, InfoBody, FacePan },
+  components: { MsgBody, InfoBody, FacePan, NoticeBody },
   data () {
     return {
       Vue: Vue,
+      runtimeData: runtimeData,
       trueLang: getTrueLang(),
       tags: {
-        canLoadHistory: true,
         nowGetHistroy: false,
         showBottomButton: true,
         showMoreDetail: false,
@@ -243,7 +251,7 @@ export default {
      * 加载更多历史消息
      */
     loadMoreHistory: function () {
-      if (!this.tags.nowGetHistroy && this.tags.canLoadHistory) {
+      if (!this.tags.nowGetHistroy && runtimeData.tags.canLoadHistory !== false) {
         // 获取列表第一条消息 ID
         const firstMsgId = this.list[0].message_id
         // 锁定加载防止反复触发
@@ -293,9 +301,6 @@ export default {
     },
     viewImg: function (msgId) {
       this.$emit('viewImg', msgId)
-    },
-    setNoMoreHistory: function () {
-      this.tags.canLoadHistory = false
     },
     /**
      * 格式化时间
@@ -444,6 +449,8 @@ export default {
         this.addSpecialMsg({msgObj: {type: 'reply', id: msgId}, addText: false, addTop: true})
         // 显示回复指示器
         this.tags.isReply = true
+        // 聚焦输入框
+        document.getElementById('main-input').focus()
         // 关闭消息菜单
         this.closeMsgMenu()
       }
@@ -707,13 +714,15 @@ export default {
         // 刷新图片列表
         let getImgList = []
         this.list.forEach((item) => {
-          item.message.forEach((msg) => {
-            if (msg.type === 'image' && !msg.asface) {
-              const index = (parseMsgId(item.message_id)).seqid
-              const info = [index, item.message_id, msg.url]
-              getImgList.push(info)
-            }
-          })
+          if (item.message !== undefined) {
+            item.message.forEach((msg) => {
+              if (msg.type === 'image' && !msg.asface) {
+                const index = (parseMsgId(item.message_id)).seqid
+                const info = [index, item.message_id, msg.url]
+                getImgList.push(info)
+              }
+            })
+          }
         })
         this.imgView.srcList = getImgList
         // 处理跳入跳转预设
@@ -737,6 +746,15 @@ export default {
   mounted () {
     // 初始化菜单显示标志
     this.initMenuDisplay()
+    if (this.chat.type === 'group') {
+      // 获取群成员列表
+      // PS：因为在撤回消息里没有昵称信息，只能提前获取群成员列表进行筛选了
+      connecter.send(
+        'get_group_member_list',
+        {'group_id': this.chat.id},
+        'getGroupMemberList'
+      )
+    }
   }
 }
 </script>

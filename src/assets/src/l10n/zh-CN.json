@@ -66,7 +66,7 @@
   "chat_send_pic_send": "发送",
   "chat_send_pic_title": "发送图片",
   "chat_space": "选择联系人开始聊天",
-  "chat_unsupported_msg": "（不支持的消息）",
+  "chat_unsupported_msg": "不支持的消息",
   "chat_view_pic": "预览图片",
   "description": "一个兼容 oicq-http 的非官方网页版 QQ 客户端",
   "friend_title": "联系人",
@@ -159,5 +159,13 @@
   "option_view_theme": "主题与颜色",
   "option_view_theme_color": "主题色",
   "option_view_theme_color_tip": "换个心情 🎵 ~",
-  "version_updated": "版本已更新"
+  "version_updated": "版本已更新",
+  "option_dev_runtime": "输出运行时",
+  "option_dev_runtime_tip": "全都吐出来！",
+  "option_dev_runtime_run": "执行",
+  "chat_notice_recall": "撤回了一条消息",
+  "chat_forward_toooomany": "合并消息层级过多。解析失败。",
+  "chat_xml_unsupport": "不支持显示的 XML 消息",
+  "chat_link_view_success": "获取链接预览成功",
+  "chat_link_view_fail": "获取链接预览失败"
 }

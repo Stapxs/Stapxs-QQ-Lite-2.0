@@ -27,7 +27,7 @@ const selectDefault = {
 // ======================= 设置项功能 ============================
 
 function changeChatView (name) {
-  // TODO 这儿需要在首次使用的时候弹一个免责声明提示框
+  // TODO: 这儿需要在首次使用的时候弹一个免责声明提示框
   if (name !== '') {
     Vue.set(runtimeData.pageView, 'chatView', () => import(`../../pages/chat-view/${name}.vue`))
   } else {
