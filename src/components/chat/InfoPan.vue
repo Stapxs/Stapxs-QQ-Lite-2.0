@@ -61,7 +61,7 @@
           <div class="outher">
             <span>{{ $t('chat_chat_info_birthday') }}:
               <span>
-                {{ Intl.DateTimeFormat(trueLang, {year:'numeric',month:"short",day:"numeric"}).format(
+                {{ chat.info.user === undefined ? '' : Intl.DateTimeFormat(trueLang, {year:'numeric',month:"short",day:"numeric"}).format(
                 new
                 Date(`${chat.info.user.birthday.year}-${chat.info.user.birthday.month}-${chat.info.user.birthday.day}`)
                 ) + ` (${this.$t('chat_chat_info_chinese_zodiac').split('|')[chat.info.user.shengxiao - 1]})` }}
@@ -79,6 +79,7 @@
         style="overflow: hidden; display: flex;flex-direction: column;height: 100%;margin: 0;">
         <ul class="layui-tab-title chat-info-tab">
           <li class="layui-this">{{ $t('chat_chat_info_member') + `(${chat.info.group_members.length == undefined ? 0 : chat.info.group_members.length})` }}</li>
+          <Li>{{ $t('chat_chat_info_notice') }}</Li>
           <li>{{ $t('chat_chat_info_file') + `(${chat.info.group_files.total_cnt === undefined ? 0 :
           chat.info.group_files.total_cnt})` }}</li>
           <li>{{ $t('chat_chat_info_config') }}</li>
@@ -100,6 +101,12 @@
               </div>
               <span>{{ item.user_id }}</span>
             </div>
+          </div>
+          <div class="layui-tab-item bulletins">
+            <BulletinBody
+              v-for="(item, index) in chat.info.group_notices === undefined ? [] : chat.info.group_notices.feeds"
+              :data="item"
+              :key="'bulletins-' + index"></BulletinBody>
           </div>
           <div class="layui-tab-item group-files" @scroll="fileLoad">
             <div v-for="item in chat.info.group_files.file_list" :key="'file-' + item.id">
@@ -124,15 +131,19 @@
 
 <script>
 import Vue from 'vue'
+import BulletinBody from './BulletinBody.vue'
 import FileBody from './FileBody.vue'
+
+import { getTrueLang } from '../../assets/js/util'
 
 export default {
   name: 'InfoBody',
   props: ['tags', 'chat'],
-  components: { FileBody },
+  components: { FileBody, BulletinBody },
   data () {
     return {
-      Vue: Vue
+      Vue: Vue,
+      trueLang: getTrueLang()
     }
   },
   methods: {

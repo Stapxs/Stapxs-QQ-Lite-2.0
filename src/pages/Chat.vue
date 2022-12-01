@@ -536,6 +536,15 @@ export default {
             'getGroupMemberList'
           )
         }
+        // 加载群公告列表
+        if (this.chat.type === 'group') {
+          const url = `https://web.qun.qq.com/cgi-bin/announce/get_t_list?bkn=${runtimeData.loginInfo.bkn}&qid=${this.chat.id}&ft=23&s=-1&n=20`
+          connecter.send(
+            'http_proxy',
+            { 'url': url },
+            'getGroupNotices'
+          )
+        }
         // 加载群文件列表
         if (this.chat.type === 'group' && Object.keys(this.chat.info.group_files).length === 0) {
           const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${runtimeData.loginInfo.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`

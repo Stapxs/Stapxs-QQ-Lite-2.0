@@ -1,11 +1,23 @@
 <template>
   <div class="friend-view">
-    <div class="friend-list">
+    <div class="friend-list" id="message-list">
       <div>
-        <div><span style="border-radius: 7px;">消息</span></div>
+        <div class="base only">
+          <span>消息</span>
+        </div>
+        <div class="small">
+          <span v-show="isLeftBarOpen">消息</span>
+          <div @click="openLeftBar">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg>
+          </div>
+        </div>
       </div>
-      <div id="list">
-        <FriendBody v-for="item in list" :key="'in' + item.user_id ? item.user_id : item.group_id" :data="item"
+      <div id="message-list-body">
+        <FriendBody
+          v-for="item in runtimeData.onMsg"
+          :key="'in' + item.user_id ? item.user_id : item.group_id"
+          :select="item.user_id ? item.user_id === chat.id : item.group_id === chat.id"
+          :data="item"
           @click.native="userClick(item)"></FriendBody>
       </div>
     </div>
@@ -22,25 +34,59 @@
 </template>
 
 <script>
+import Vue from 'vue'
+
 import FriendBody from '../components/FriendBody.vue'
+import { runtimeData } from '../assets/js/msg'
 
 export default {
   name: 'Messages',
-  props: ['list'],
+  props: ['chat'],
   components: { FriendBody },
+  data () {
+    return {
+      isLeftBarOpen: false,
+      runtimeData: runtimeData
+    }
+  },
   methods: {
     userClick (data) {
+      if (this.isLeftBarOpen) {
+        this.openLeftBar()
+      }
+      const index = runtimeData.onMsg.indexOf(data)
+      console.log(index)
       const back = {
         type: data.user_id ? 'user' : 'group',
         id: data.user_id ? data.user_id : data.group_id,
         name: data.group_name ? data.group_name : data.remark === data.nickname ? data.nickname : data.remark + '（' + data.nickname + '）',
         avatar: data.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id : 'https://p.qlogo.cn/gh/' + data.group_id + '/' + data.group_id + '/0'
       }
-      // 更新聊天框
-      this.$emit('userClick', back)
+      if (Number(this.chat.id) !== Number(back.id)) {
+        // 更新聊天框
+        this.$emit('userClick', back)
+        // 获取历史消息
+        this.$emit('loadHistory', back)
+      }
+      // 清除新消息标记
+      Vue.set(runtimeData.onMsg[index], 'new_msg', false)
     },
-    addMesage: function (data) {
-      this.list.unshift(data)
+    openLeftBar: function () {
+      const list = [
+        document.getElementById('message-list'),
+        document.getElementById('message-list-body'),
+        document.getElementById('chat-pan')
+      ]
+      list.forEach((item) => {
+        if (item !== null) {
+          if (!this.isLeftBarOpen) {
+            item.classList.add('open')
+          } else {
+            item.classList.remove('open')
+          }
+        }
+      })
+      this.isLeftBarOpen = !this.isLeftBarOpen
     }
   }
 }

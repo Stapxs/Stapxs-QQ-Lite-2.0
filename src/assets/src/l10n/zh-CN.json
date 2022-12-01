@@ -167,5 +167,9 @@
   "chat_forward_toooomany": "合并消息层级过多。解析失败。",
   "chat_xml_unsupport": "不支持显示的 XML 消息",
   "chat_link_view_success": "获取链接预览成功",
-  "chat_link_view_fail": "获取链接预览失败"
+  "chat_link_view_fail": "获取链接预览失败",
+  "chat_chat_info_bulletin_readed": "已读",
+  "chat_chat_info_bulletin_noread": "未读",
+  "chat_chat_info_bulletin_read": "{readNum} 人已读 | {isRead}",
+  "chat_chat_info_notice": "公告"
 }

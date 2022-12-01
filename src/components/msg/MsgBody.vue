@@ -28,7 +28,7 @@
           <a> {{ data.source ? data.source.message : '' }} </a>
         </div>
         <!-- 消息体 -->
-        <div v-for="(item, index) in data.message" :class="isMsgInline(item.type) ? 'msg-inline' : ''" :key="data.message_id + '-m-' + index">
+        <div v-for="(item, index) in data.message" :class="View.isMsgInline(item.type) ? 'msg-inline' : ''" :key="data.message_id + '-m-' + index">
           <span v-if="isDebugMsg" class="msg-text">{{item}}</span>
           <span v-else-if="item.type === 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
           <img v-else-if="item.type === 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
@@ -38,11 +38,11 @@
             <a @mouseenter="showUserInfo" :data-id="item.qq" :data-group="data.group_id">{{ item.text }}</a>
           </div>
           <div v-else-if="item.type === 'xml'"
-            v-html="buildXML(item.data, item.id, data.message_id)"
-            @click="xmlClick('xml-' + data.message_id)"></div>
+            v-html="View.buildXML(item.data, item.id, data.message_id)"
+            @click="View.xmlClick('xml-' + data.message_id)"></div>
             <div v-else-if="item.type === 'json'"
-              v-html="buildJSON(item.data, data.message_id)"
-              @click="xmlClick('json-' + data.message_id)">
+              v-html="View.buildJSON(item.data, data.message_id)"
+              @click="View.xmlClick('json-' + data.message_id)">
             </div>
             <span v-else class="msg-unknown">{{ '( ' + $t('chat_unsupported_msg') + ': ' + item.type + ' )' }}</span>
         </div>
@@ -66,13 +66,13 @@
 
 <script>
 import Vue from 'vue'
-import Xss from 'xss'
-import Util from '../../assets/js/util.js'
-import Option from '../../assets/js/options.js'
+import Util from '../../assets/js/util'
+import Option from '../../assets/js/options'
+import { MsgBodyFuns as ViewFuns } from '../../assets/js/msg-body'
 
 import { connect as connecter } from '../../assets/js/connect'
 import { runtimeData } from '../../assets/js/msg'
-import { logger, popInfo } from '../../assets/js/base'
+import { logger } from '../../assets/js/base'
 
 export default {
   name: 'MsgBody',
@@ -81,7 +81,8 @@ export default {
     return {
       isMe: false,
       isDebugMsg: Option.get('debug_msg'),
-      linkViewStyle: ''
+      linkViewStyle: '',
+      View: ViewFuns
     }
   },
   methods: {
@@ -92,24 +93,6 @@ export default {
      */
     getMsgRawTxt: function (message) {
       return Util.getMsgRawTxt(message)
-    },
-    /**
-     * 判断消息块是否要行内显示
-     * @param { String } type 消息类型
-     */
-    isMsgInline: function (type) {
-      switch (type) {
-        case 'at':
-        case 'text':
-        case 'face': return true
-        case 'bface':
-        case 'image':
-        case 'record':
-        case 'video':
-        case 'file':
-        case 'json':
-        case 'xml': return false
-      }
     },
     /**
      * 在有回复的情况下判断是否隐藏重复 at 消息
@@ -154,134 +137,11 @@ export default {
       return Util.parseMsgId(id).seqid
     },
     /**
-     * 尝试渲染 xml 消息
-     * @param { String } xml xml 消息内容
-     * @param { String } id xml 消息 ID（不知道有啥用）
-     */
-    buildXML: function printXML (xml, id, msgid) {
-      // <msg> 标签内的为本体
-      let item = xml.substring(xml.indexOf('<item'), xml.indexOf('</msg>'))
-      // 尝试转换标签为 html
-      // item = item.replaceAll('/>', '>')
-      item = item.replaceAll('item', 'div') // item
-      item = item.replaceAll('<div', '<div class="msg-xml"')
-      item = item.replaceAll('title', 'p') // title
-      item = item.replaceAll('summary', 'a') // summary
-      item = item.replaceAll('<a', '<a class="msg-xml-summary"')
-      item = item.replaceAll('<picture', '<img class="msg-xml-img"') // picture
-      // 将不正确的参数改为 dataset
-      item = item.replaceAll('size=', 'data-size=')
-      item = item.replaceAll('linespace=', 'data-linespace=')
-      item = item.replaceAll('cover=', 'src=')
-      // 处理出处标签
-      item = item.replace('source name=', 'source data-name=')
-      // 处理错误的 style 位置
-      const div = document.createElement('div')
-      div.id = 'xml-' + msgid
-      div.dataset.id = id
-      div.innerHTML = item
-      for (let i = 0; i < div.children[0].children.length; i++) {
-        switch (div.children[0].children[i].nodeName) {
-          case 'P': {
-            div.children[0].children[i].style.fontSize = Number(div.children[0].children[i].dataset.size) / 30 + 'rem'
-            div.children[0].children[i].style.marginBottom = Number(div.children[0].children[i].dataset.size) / 5 + 'px'
-            break
-          }
-        }
-      }
-      // 解析 msg 消息体
-      let msgHeader = xml.substring(xml.indexOf('<msg'), xml.indexOf('<item')) + '</msg>'
-      msgHeader = msgHeader.replace('msg', 'div')
-      msgHeader = msgHeader.replace('m_resid=', 'data-resid=')
-      msgHeader = msgHeader.replace('url=', 'data-url=')
-      let header = document.createElement('div')
-      header.innerHTML = msgHeader
-      // 处理特殊的出处
-      let sourceBody = ''
-      for (let i = 0; i < div.children.length; i++) {
-        if (div.children[i].nodeName === 'SOURCE') {
-          sourceBody = div.children[i]
-        }
-      }
-      const source = sourceBody.dataset.name
-      switch (source) {
-        case '聊天记录': {
-          // 合并转发消息
-          div.dataset.type = 'forward'
-          div.dataset.id = header.children[0].dataset.resid
-          div.style.cursor = 'pointer'
-          break
-        }
-        case '群投票': {
-          // 群投票
-          return '<a class="msg-unknow">（' + this.$t('chat_xml_unsupport') + '：' + source + '）</a>'
-        }
-      }
-      // 附带链接的 xml 消息处理
-      if (header.children[0].dataset.url !== undefined) {
-        div.dataset.url = header.children[0].dataset.url
-        div.style.cursor = 'pointer'
-      }
-      return div.outerHTML
-    },
-    xmlClick: function (id) {
-      const sender = document.getElementById(id)
-      const type = sender.dataset.type
-      // 如果存在 url 项，优先打开 url
-      if (sender.dataset.url !== undefined && sender.dataset.url !== 'undefined' && sender.dataset.url !== '') {
-        window.open(sender.dataset.url, '_blank')
-        return
-      }
-      // 接下来按类型处理
-      if (type === 'forward') {
-        // 解析合并转发消息
-        if (sender.dataset.id !== 'undefined') {
-          connecter.send('get_forward_msg', { 'resid': sender.dataset.id }, 'getForwardMsg')
-        } else {
-          popInfo.add(popInfo.appMsgType.err, this.$t('chat_forward_toooomany'))
-        }
-      }
-    },
-    /**
-     * 尝试渲染 JSON 消息
-     * @param { object } data json 消息内容
-     */
-    buildJSON: function (data, msgId) {
-      // 解析 JSON
-      let json = JSON.parse(data)
-      let body = json.meta[Object.keys(json.meta)[0]]
-      // App 信息
-      let name = body.tag === undefined ? body.title : body.tag
-      let icon = body.icon === undefined ? body.source_icon : body.icon
-
-      let title = body.title
-      let desc = body.desc
-
-      let preview = body.preview
-      if (preview !== undefined && preview.indexOf('http') === -1) preview = '//' + preview
-
-      let url = body.qqdocurl === undefined ? body.jumpUrl : body.qqdocurl
-      // 构建 HTML
-      let html = '<div class="msg-json" id="json-' + msgId + '" data-url="' + url + '">' +
-                 '<p>' + title + '</p>' +
-                 '<span>' + desc + '</span>' +
-                 '<img src="' + preview + '">' +
-                 '<div><img src="' + icon + '"><span>' + name + '</span></div>' +
-                 '</div>'
-      // 返回
-      return html
-    },
-    /**
-     * 处理纯文本消息（换行、链接等）
+     * 处理纯文本消息和链接预览
      * @param { string } text 纯文本消息
      */
     parseText: function (text) {
-      // 把 r 转为 n
-      text = text.replaceAll('\r\n', '\n').replaceAll('\r', '\n')
-      // 防止意外渲染转义字符串
-      text = text.replaceAll('&', '&amp;')
-      // XSS 过滤
-      text = Xss(text)
+      text = ViewFuns.parseText(text)
       // 链接判定
       const reg = /(http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/gi //eslint-disable-line
       text = text.replaceAll(reg, '<a href="$&" target="_blank">$&</a>')
@@ -315,13 +175,16 @@ export default {
           })
           .catch(error => {
             if (error) {
-              logger.error(this.$t('chat_link_view_fail'))
+              logger.error(this.$t('chat_link_view_fail') + ': ' + fistLink)
             }
           })
       }
       // 返回
       return text
     },
+    /**
+     * 对链接预览的图片长宽进行判定以确定显示样式
+     */
     linkViewPicFin: function () {
       const img = document.getElementById(this.data.message_id + '-linkview-img')
       if (img !== null) {
@@ -332,6 +195,10 @@ export default {
         }
       }
     },
+    /**
+     * 当鼠标悬停在 at 消息上时显示被 at 人的消息悬浮窗
+     * @param { object } event 消息事件
+     */
     showUserInfo: function (event) {
       const sender = event.currentTarget
       const id = sender.dataset.id
@@ -350,6 +217,7 @@ export default {
     }
   },
   mounted: function () {
+    // 初始化 isMe 参数
     this.isMe = runtimeData.loginInfo.uin.toString() === this.data.sender.user_id.toString()
   }
 }

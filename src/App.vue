@@ -12,7 +12,7 @@
         <li @click="changeTab('主页', 'Home', true)" :class="login.status ? 'hiden-home' : 'layui-this'">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z"/></svg>
         </li>
-        <li @click="changeTab('信息', 'Messages', false)" :class="!login.status ? '' : 'layui-this'">
+        <li id="bar-msg" @click="changeTab('信息', 'Messages', false)" :class="!login.status ? '' : 'layui-this'">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
             <path
               d="M464 64C490.5 64 512 85.49 512 112C512 127.1 504.9 141.3 492.8 150.4L275.2 313.6C263.8 322.1 248.2 322.1 236.8 313.6L19.2 150.4C7.113 141.3 0 127.1 0 112C0 85.49 21.49 64 48 64H464zM217.6 339.2C240.4 356.3 271.6 356.3 294.4 339.2L512 176V384C512 419.3 483.3 448 448 448H64C28.65 448 0 419.3 0 384V176L217.6 339.2z" />
@@ -99,7 +99,11 @@
           </div>
         </div>
         <div id="messageTab" :class="login.status ? 'layui-tab-item layui-show' : 'layui-tab-item'">
-          <Messages :list="inList" @userClick="changeChat" ref="inMessage"></Messages>
+          <Messages
+            :chat="runtimeData.onChat"
+            @userClick="changeChat"
+            @loadHistory="loadHistory">
+          </Messages>
         </div>
         <div class="layui-tab-item">
           <Friends

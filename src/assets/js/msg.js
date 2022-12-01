@@ -31,6 +31,7 @@ export function parse (str) {
       case 'getGroupMemberList' : saveGroupMember(msg.data); break
       case 'getGroupFiles'      : saveFileList(msg.data.data); break
       case 'getMoreGroupFiles'  : saveMoreFileList(msg.data.data); break
+      case 'getGroupNotices'    : Vue.set(runtimeData.onChat.info, 'group_notices', msg.data.data); break
       case 'getForwardMsg'      : saveForwardMsg(msg.data); break
       case 'getChatHistoryFist' : saveMsgFist(msg); break
       case 'getChatHistory'     : saveMsg(msg); break
@@ -264,10 +265,10 @@ function newMsg (data) {
     const list = runtimeData.messageList
     Vue.set(runtimeData, 'messageList', Util.mergeList(list, [data]))
   }
-  // 新消息提示处理
-  // (发送者没有被打开 || 窗口被最小化) && (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息)
-  if (id !== runtimeData.onChat.id || document.hidden) {
-    if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
+  // (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息) 这些情况需要进行新消息处理
+  if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
+    // (发送者没有被打开 || 窗口被最小化) 这些情况需要进行消息通知
+    if (id !== runtimeData.onChat.id || document.hidden) {
       // 检查通知权限，老旧浏览器不支持这个功能
       if (Notification.permission === 'default') {
         Notification.requestPermission(function (status) {
@@ -280,6 +281,34 @@ function newMsg (data) {
       Notification.permission !== 'default') {
         sendNotice(data)
       }
+    }
+    // (发送者在消息列表内) 需要对消息列表进行一些处理
+    const get = runtimeData.onMsg.filter((item) => {
+      return Number(id) === Number(item.user_id) || Number(id) === Number(item.group_id)
+    })
+    if (get.length === 1) {
+      const item = get[0]
+      // (发送者没有被打开）显示新消息标记
+      if (id !== runtimeData.onChat.id) {
+        Vue.set(item, 'new_msg', true)
+      }
+      // 刷新消息预览和时间
+      Vue.set(item, 'raw_msg', data.raw_message)
+      Vue.set(item, 'time', Number(data.time) * 1000)
+      // 重新排序列表
+      let newList = []
+      let topNum = 1
+      runtimeData.onMsg.filter((item) => {
+        if (item.always_top === true) {
+          newList.unshift(item)
+        } else if (item.new_msg === true) {
+          newList.splice(topNum - 1, 0, item)
+        } else {
+          newList.push(item)
+        }
+      })
+      console.log(newList)
+      Vue.set(runtimeData, 'onMsg', newList)
     }
   }
 }
@@ -428,6 +457,7 @@ let notificationList = {}
 // 运行时数据，用于在全程序内共享使用
 export let runtimeData = {
   onChat: { type: '', id: '', name: '', avatar: '', info: {} },
+  onMsg: [],
   messageList: [],
   botInfo: {},
   loginInfo: {},

@@ -200,8 +200,23 @@ html, body {
     padding: 10px;
     display: flex;
 }
+.friend-list > div:first-child > div.base.only {
+    border-radius: 7px;
+}
 .friend-list > div:first-child > div.small {
     display: none;
+}
+.friend-list > div:first-child > div.small > span {
+    background: var(--color-main);
+    color: var(--color-font-r);
+    align-items: center;
+    margin-right: 10px;
+    border-radius: 7px;
+    padding: 0 20px;
+    font-size: 1rem;
+    display: flex;
+    height: 50px;
+    flex: 1;
 }
 .friend-list > div:first-child > div > svg {
     fill: var(--color-font-r);
@@ -239,6 +254,10 @@ html, body {
     font-size: 1rem;
     height: 100%;
     flex: 1;
+}
+.friend-list > div:last-child.open > div.active {
+    background: var(--color-main) !important;
+    color: var(--color-font-r) !important;
 }
 
 .friend-body {
@@ -282,6 +301,13 @@ html, body {
     transform: scaleY(0);
     margin-left: 3px;
     transition: transform .3s;
+    display: unset !important;
+}
+.friend-body.active > div:nth-child(1) {
+    background: var(--color-font);
+}
+.friend-body > div:nth-child(1).new {
+    transform: scaleY(0.5);
 }
 .friend-body > div p {
     font-weight: bold;
@@ -291,15 +317,15 @@ html, body {
     overflow: hidden;
 }
 .friend-body > div > div {
+    align-items: center;
     display: flex;
-    align-items: flex-start;
 }
 .friend-body > div > div a {
-    font-size: 0.9rem;
     color: var(--color-font-1);
+    text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 0.9rem;
     flex: 1;
 }
 .friend-body.active > div > div a {
@@ -536,6 +562,7 @@ html, body {
         flex-direction: row;
         height: 75px;
         width: 100%;
+        z-index: 10;
     }
     .main-body > ul > li {
         padding-top: 15px !important;
@@ -609,6 +636,7 @@ html, body {
         display: block !important;
     }
     .friend-body {
+        background: transparent !important;
         justify-content: center;
         padding: 10px 0;
         margin: 0;
@@ -619,6 +647,23 @@ html, body {
     .friend-body img {
         height: 45px;
         width: 45px;
+    }
+    .friend-body.active:hover {
+        background: var(--color-card-2) !important;
+    }
+    .friend-body.active img {
+        border: 2px solid var(--color-main);
+    }
+    .friend-body > div:nth-child(1) {
+        transform: scaleY(1) !important;
+        position: absolute;
+    }
+    .friend-body > div:nth-child(1).new {
+        border-radius: 100%;
+        height: 15px;
+        width: 15px;
+        right: -3px;
+        top: 4px;
     }
     /* 应用消息 */
     .app-msg {

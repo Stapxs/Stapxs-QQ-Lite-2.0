@@ -90,9 +90,19 @@ export default {
       // 更新聊天框
       this.$emit('userClick', back)
       // 追加到正在进行的消息列表内
-      // this.$emit('addMessage', data)
+      // let newList = []
+      // runtimeData.userList.forEach((item) => {
+      //   if (Number(item.user_id) === Number(back.id) || Number(item.group_id) === Number(back.id)) {
+      //     item.showInMsg = true
+      //   }
+      //   newList.push(item)
+      // })
+      // Vue.set(runtimeData, 'userList', newList)
+      runtimeData.onMsg.push(data)
       // 获取历史消息
       this.$emit('loadHistory', back)
+      // 切换标签卡
+      document.getElementById('bar-msg').click()
     },
     /**
      * 分段加载回调
@@ -112,7 +122,7 @@ export default {
       if (event.target.value !== '') {
         this.isSearch = true
         Vue.set(runtimeData, 'showData', this.list.filter(item => {
-          const name = (item.user_id ? item.nickname : item.group_name).toLowerCase()
+          const name = (item.user_id ? (item.nickname + item.remark) : item.group_name).toLowerCase()
           const id = item.user_id ? item.user_id : item.group_id
           return name.indexOf((event.target.value).toLowerCase()) !== -1 || id.toString() === event.target.value
         }))
