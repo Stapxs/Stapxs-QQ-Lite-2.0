@@ -48,11 +48,14 @@
 import { connect as connecter } from '../../assets/js/connect'
 import { runtimeData } from '../../assets/js/msg'
 
+import Option from '../../assets/js/options'
+
 export default {
   name: 'FacePan',
   props: ['display'],
   data () {
     return {
+      Option: Option,
       runtimeData: runtimeData,
       baseFaceMax: 323,
       baseFacePass: [17, 40, 44, 45, 47, 48, 50, 51, 52, 58, 65, 68, 70, 71, 73, 80, 81, 82, 83, 84, 87, 88, 92, 93, 94, 95, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 275, 276]

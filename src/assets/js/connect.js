@@ -35,10 +35,10 @@ export class connect {
       Vue.set(login, 'status', false)
       if (e.code !== 1000) {
         logger.error(Util.$t('log_con_fail') + ': ' + e.code)
-        popInfo.add(popInfo.appMsgType.err, Util.$t('log_con_fail'), false)
+        popInfo.add(popInfo.appMsgType.err, Util.$t('pop_log_con_fail'), false)
       } else {
         logger.debug(Util.$t('log_con_closed') + ': ' + e.code)
-        popInfo.add(popInfo.appMsgType.info, Util.$t('log_con_closed'))
+        popInfo.add(popInfo.appMsgType.info, Util.$t('pop_log_con_closed'))
       }
       // 清空数据
       const loginAddress = login.address

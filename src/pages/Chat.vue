@@ -296,7 +296,7 @@ export default {
           }, 1100)
         }, 3000)
       } else {
-        popInfo.add(popInfo.appMsgType.err, this.$t('chat_msg_not_load'))
+        popInfo.add(popInfo.appMsgType.err, this.$t('pop_chat_msg_not_load'))
       }
     },
     viewImg: function (msgId) {
@@ -467,11 +467,11 @@ export default {
       const msg = this.selectedMsg
       if (this.selectedMsg !== null) {
         this.$copyText(msg.raw_message).then(function (e) {
-          popInfo.add(popInfo.appMsgType.info, that.$t('chat_msg_menu_copy_success'), true)
+          popInfo.add(popInfo.appMsgType.info, that.$t('pop_chat_msg_menu_copy_success'), true)
           that.closeMsgMenu()
         }, function (e) {
           logger.error('复制消息失败：' + e)
-          popInfo.add(popInfo.appMsgType.err, that.$t('chat_msg_menu_copy_err'), true)
+          popInfo.add(popInfo.appMsgType.err, that.$t('pop_chat_msg_menu_copy_err'), true)
         })
       }
     },
@@ -622,7 +622,7 @@ export default {
         if (item.kind === 'file') {
           let blob = item.getAsFile()
           if (blob.type.indexOf('image/') >= 0 && blob.size !== 0) {
-            popInfo.add(popInfo.appMsgType.info, this.$t('chat_image_processing'))
+            popInfo.add(popInfo.appMsgType.info, this.$t('pop_chat_image_processing'))
             if (blob.size < 3145728) {
               // 转换为 Base64
               var reader = new FileReader()
@@ -648,9 +648,9 @@ export default {
                   Vue.cacheImg.push(base64data)
                 }
               }
-              popInfo.add(popInfo.appMsgType.info, this.$t('chat_image_ok'))
+              popInfo.add(popInfo.appMsgType.info, this.$t('pop_chat_image_ok'))
             } else {
-              popInfo.add(popInfo.appMsgType.info, this.$t('chat_image_toooo_big'))
+              popInfo.add(popInfo.appMsgType.info, this.$t('pop_chat_image_toooo_big'))
             }
             // 阻止默认行为
             e.preventDefault()
@@ -735,7 +735,7 @@ export default {
         })
         this.imgView.srcList = getImgList
         // 处理跳入跳转预设
-        // 如果 onChat 的 jump 参数不是 undef
+        // 如果 onChat 的 jump 参数不是 undefined
         // 则意味着这次加载历史记录的同时需要跳转到指定的消息
         if (runtimeData.onChat.jump !== undefined) {
           logger.debug('进入跳转至消息：' + runtimeData.onChat.jump)
@@ -754,16 +754,9 @@ export default {
   },
   mounted () {
     // 初始化菜单显示标志
+    // PS：这儿我只是因为嫌菜单显示标志太长了写在 data 里 return 丑得一批所以单独出来了
+    // (来自 2022/12/1 看到代码迷惑的 SS)
     this.initMenuDisplay()
-    if (this.chat.type === 'group') {
-      // 获取群成员列表
-      // PS：因为在撤回消息里没有昵称信息，只能提前获取群成员列表进行筛选了
-      connecter.send(
-        'get_group_member_list',
-        {'group_id': this.chat.id},
-        'getGroupMemberList'
-      )
-    }
   }
 }
 </script>

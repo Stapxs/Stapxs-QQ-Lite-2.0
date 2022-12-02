@@ -539,10 +539,10 @@ textarea {
 .bulletins > div.base > div.body {
     text-overflow: ellipsis;
     overflow: hidden;
-    height: 6rem;
+    max-height: 6rem;
 }
 .bulletins > div.base > div.body.all {
-    height: unset;
+    max-height: unset;
 }
 .bulletins > div.base > div.body > span {
     white-space: pre-line;

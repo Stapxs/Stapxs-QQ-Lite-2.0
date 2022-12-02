@@ -401,6 +401,7 @@
 }
 .note-recall > a {
     color: var(--color-main);
+    font-weight: bold;
 }
 
 @media (max-width: 992px) {

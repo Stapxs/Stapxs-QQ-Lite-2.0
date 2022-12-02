@@ -164,7 +164,7 @@ export class MsgBodyFuns {
       if (sender.dataset.id !== 'undefined') {
         connecter.send('get_forward_msg', { 'resid': sender.dataset.id }, 'getForwardMsg')
       } else {
-        popInfo.add(popInfo.appMsgType.err, this.$t('chat_forward_toooomany'))
+        popInfo.add(popInfo.appMsgType.err, this.$t('pop_chat_forward_toooomany'))
       }
     }
   }

@@ -9,13 +9,15 @@
 import Vue from 'vue'
 
 import { runtimeData } from './msg'
+import { initUITest } from './util'
 
 const configFunction = {
   language: setLanguage,
   opt_dark: setDarkMode,
   opt_auto_dark: setAutoDark,
   theme_color: changeTheme,
-  chatview_name: changeChatView
+  chatview_name: changeChatView,
+  ui_test: changeUiTest
 }
 
 const selectDefault = {
@@ -25,6 +27,13 @@ const selectDefault = {
 }
 
 // ======================= 设置项功能 ============================
+
+function changeUiTest (value) {
+  if (value === true || value === 'true') {
+    // 初始化一些测试数据来显示某些 UI
+    initUITest()
+  }
+}
 
 function changeChatView (name) {
   // TODO: 这儿需要在首次使用的时候弹一个免责声明提示框
@@ -163,10 +172,16 @@ export function get (name) {
   return null
 }
 
+// 为了方便剔除 v-if 用的方法，短一点
+export function ui () {
+  return get('ui_test') === 'true'
+}
+
 export default {
   load,
   save,
   run,
   runAS,
-  get
+  get,
+  ui
 }

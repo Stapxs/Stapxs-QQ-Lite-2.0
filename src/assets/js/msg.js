@@ -45,7 +45,7 @@ export function parse (str) {
           // 复杂消息头
           // PS：复杂消息头由“消息头_参数1_参数N”组成
           switch (head) {
-            case 'getSendMsg'         : saveSendedMsg(msg); break
+            case 'getSendMsg'         : saveSendedMsg(echoList, msg); break
             case 'getGroupMemberInfo' : saveMemberInfo(msg); break
             case 'getGroupDirFiles'   : saveDirFile(msg); break
             case 'downloadGroupFile'  : downloadGroupFile(msg); break
@@ -104,7 +104,7 @@ function saveFileList (data) {
   if (data.ec !== 0) {
     popInfo.add(
       popInfo.appMsgType.err,
-      Util.$t('chat_chat_info_load_file_err', {code: data.ec})
+      Util.$t('pop_chat_chat_info_load_file_err', {code: data.ec})
     )
   } else {
     saveInfo(runtimeData.onChat.info, 'group_files', data)
@@ -138,7 +138,7 @@ function backTestInfo (data) {
 }
 function saveMsgFist (msg) {
   if (msg.error !== undefined) {
-    popInfo.add(popInfo.appMsgType.err, Util.$t('chat_load_msg_err', {code: msg.error}))
+    popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_load_msg_err', {code: msg.error}))
     Vue.set(runtimeData, 'messageList', [])
   } else {
     Vue.set(runtimeData, 'messageList', msg.data)
@@ -149,7 +149,7 @@ function saveMsgFist (msg) {
 }
 function saveMsg (msg) {
   if (msg.error !== undefined) {
-    popInfo.add(popInfo.appMsgType.err, this.$t('chat_load_msg_err', {code: msg.error}))
+    popInfo.add(popInfo.appMsgType.err, this.$t('pop_chat_load_msg_err', {code: msg.error}))
   } else {
     const items = msg.data
     items.pop() // 去除最后一条重复的消息，获取历史消息会返回当前消息 **以及** 之前的 N-1 条
@@ -162,7 +162,7 @@ function saveMsg (msg) {
 }
 function showSendedMsg (msg) {
   if (msg.error !== undefined) {
-    popInfo.add(popInfo.appMsgType.err, Util.$t('chat_send_msg_err', {code: msg.error}))
+    popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_send_msg_err', {code: msg.error}))
   } else {
     if (msg.message_id !== undefined && Option.get('send_reget') !== true) {
       // 请求消息内容
@@ -174,9 +174,25 @@ function showSendedMsg (msg) {
     }
   }
 }
-function saveSendedMsg (msg) {
+function saveSendedMsg (echoList, msg) {
   // TODO: 这里暂时没有考虑消息获取失败的情况（因为没有例子）
-  Vue.set(runtimeData, 'messageList', Util.mergeList(runtimeData.messageList, [msg]))
+  if (Number(echoList[2]) <= 5) {
+    if (echoList[1] !== msg.message_id) {
+      // 返回的不是这条消息，重新请求
+      popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_get_msg_err') + '(' + echoList[2] + ')')
+      setTimeout(() => {
+        connecter.send(
+          'get_msg',
+          { 'message_id': echoList[1] },
+          'getSendMsg_' + echoList[1] + '_' + (Number(echoList[2]) + 1)
+        )
+      }, 5000)
+    } else {
+      Vue.set(runtimeData, 'messageList', Util.mergeList(runtimeData.messageList, [msg]))
+    }
+  } else {
+    popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_get_msg_err_fin'))
+  }
 }
 function saveMemberInfo (msg) {
   const pointInfo = msg.echo.split('_')
@@ -265,6 +281,16 @@ function newMsg (data) {
     const list = runtimeData.messageList
     Vue.set(runtimeData, 'messageList', Util.mergeList(list, [data]))
   }
+  // 刷新消息列表
+  const get = runtimeData.onMsg.filter((item) => {
+    return Number(id) === Number(item.user_id) || Number(id) === Number(item.group_id)
+  })
+  // PS：在消息列表内的永远会刷新，不需要被提及
+  if (get.length === 1) {
+    const item = get[0]
+    Vue.set(item, 'raw_msg', data.raw_message)
+    Vue.set(item, 'time', Number(data.time) * 1000)
+  }
   // (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息) 这些情况需要进行新消息处理
   if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
     // (发送者没有被打开 || 窗口被最小化) 这些情况需要进行消息通知
@@ -282,34 +308,39 @@ function newMsg (data) {
         sendNotice(data)
       }
     }
-    // (发送者在消息列表内) 需要对消息列表进行一些处理
-    const get = runtimeData.onMsg.filter((item) => {
-      return Number(id) === Number(item.user_id) || Number(id) === Number(item.group_id)
-    })
+    // 对消息列表进行一些处理
+    let listItem = null
+    // 如果发送者已经在消息列表里了，直接获取
+    // 否则将它添加到消息列表里
     if (get.length === 1) {
-      const item = get[0]
-      // (发送者没有被打开）显示新消息标记
-      if (id !== runtimeData.onChat.id) {
-        Vue.set(item, 'new_msg', true)
+      listItem = get[0]
+    } else {
+      const getList = runtimeData.userList.filter((item) => { return item.user_id === id || item.group_id === id })
+      if (getList.length === 1) {
+        runtimeData.onMsg.push(getList[0])
+        listItem = getList[0]
       }
-      // 刷新消息预览和时间
-      Vue.set(item, 'raw_msg', data.raw_message)
-      Vue.set(item, 'time', Number(data.time) * 1000)
-      // 重新排序列表
-      let newList = []
-      let topNum = 1
-      runtimeData.onMsg.filter((item) => {
-        if (item.always_top === true) {
-          newList.unshift(item)
-        } else if (item.new_msg === true) {
-          newList.splice(topNum - 1, 0, item)
-        } else {
-          newList.push(item)
-        }
-      })
-      console.log(newList)
-      Vue.set(runtimeData, 'onMsg', newList)
     }
+    if (listItem !== null) {
+      Vue.set(listItem, 'raw_msg', data.raw_message)
+      Vue.set(listItem, 'time', Number(data.time) * 1000)
+      if (id !== runtimeData.onChat.id) {
+        Vue.set(listItem, 'new_msg', true)
+      }
+    }
+    // 重新排序列表
+    let newList = []
+    let topNum = 1
+    runtimeData.onMsg.filter((item) => {
+      if (item.always_top === true) {
+        newList.unshift(item)
+      } else if (item.new_msg === true) {
+        newList.splice(topNum - 1, 0, item)
+      } else {
+        newList.push(item)
+      }
+    })
+    Vue.set(runtimeData, 'onMsg', newList)
   }
 }
 function sendNotice (msg) {
