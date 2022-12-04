@@ -137,7 +137,7 @@ function backTestInfo (data) {
   console.log('=========================')
 }
 function saveMsgFist (msg) {
-  if (msg.error !== undefined) {
+  if (msg.error !== undefined || msg.status === 'failed') {
     popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_load_msg_err', {code: msg.error}))
     Vue.set(runtimeData, 'messageList', [])
   } else {
@@ -419,6 +419,8 @@ function saveBotInfo (data) {
       Vue.$gtag.event('login')
     }
   }
+  // 加载切换兼容页面
+  Util.loadPage(data.app_name)
 }
 function saveGroupMember (data) {
   // 筛选列表
@@ -438,19 +440,19 @@ function saveGroupMember (data) {
 function revokeMsg (msg) {
   const chatId = msg.notice_type === 'group' ? msg.group_id : msg.user_id
   const whoRevoke = msg.operator_id
-  // const msgId = msg.message_id
+  const msgId = msg.message_id
   const msgSeq = msg.seq
   // 当前窗口
   if (Number(chatId) === Number(runtimeData.onChat.id)) {
     // 寻找消息
     // let msgGet = null
-    // let msgIndex = -1
-    // runtimeData.messageList.forEach((item, index) => {
-    //   if (item.message_id === msgId) {
-    //     msgGet = item
-    //     msgIndex = index
-    //   }
-    // })
+    let msgIndex = -1
+    runtimeData.messageList.forEach((item, index) => {
+      if (item.message_id === msgId) {
+        // msgGet = item
+        msgIndex = index
+      }
+    })
     // if (msgGet !== null && msgIndex !== -1) {
     //   msgGet.revoke = true
     //   Vue.set(runtimeData.messageList, msgIndex, msgGet)
@@ -472,7 +474,12 @@ function revokeMsg (msg) {
       }
       // 显示撤回提示
       const list = runtimeData.messageList
-      Vue.set(runtimeData, 'messageList', Util.mergeList(list, [msg]))
+      if (msgIndex !== -1) {
+        list.splice((msgIndex + 1), 0, msg)
+        Vue.set(runtimeData, 'messageList', list)
+      } else {
+        Vue.set(runtimeData, 'messageList', Util.mergeList(list, [msg]))
+      }
     } else {
       logger.error(Util.$t('log_revoke_miss'))
     }
@@ -493,7 +500,8 @@ export let runtimeData = {
   botInfo: {},
   loginInfo: {},
   pageView: {
-    chatView: () => import('../../pages/Chat.vue')
+    chatView: () => import('../../pages/Chat.vue'),
+    msgView: () => import('../../components/msg/MsgBody.vue')
   },
   tags: {}
 }

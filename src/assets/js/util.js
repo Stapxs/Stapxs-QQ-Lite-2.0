@@ -8,7 +8,7 @@
 
 import Vue from 'vue'
 import l10nConfig from '../src/l10n/_l10nconfig.json'
-import { popInfo } from './base'
+import { logger, popInfo } from './base'
 
 import { connect as connector, login } from './connect'
 import { runtimeData } from './msg'
@@ -267,6 +267,46 @@ export function initUITest () {
   }, 5000)
 }
 
+export function loadPage (botName) {
+  switch(botName) {
+    // go-cqhttp 兼容，渲染 CQCode -> JSON，消息发送 JSON -> CQCode
+    case 'go-cqhttp': {
+      Vue.set(runtimeData.pageView, 'msgView', () => import(`../../components/msg/body/GOCQHttp.vue`))
+      Vue.set(runtimeData.tags, 'sendType', 'CQCode')
+    }
+  }
+}
+
+export function parseCQ (msg) {
+  // 将纯文本也处理为 CQCode 格式
+  // PS：这儿不用担心方括号本身，go-cqhttp 会把它转义掉
+  let reg = /^[^\]]+?\[|\].+\[|\][^\[]+$|^[^\[\]]+$/g
+  msg.match(reg).forEach((item) => {
+    // PS：顺便把被转义的方括号转回来
+    const trueText = item.replace('[', '').replace(']', '')
+                         .replace('&#91;', '[').replace('&#93;', ']')
+    msg = msg.replace(trueText, `[CQ:text,text=${trueText}]`)
+  })
+  // 拆分 CQCode
+  reg = /\[.+?\]/g
+  const list = msg.match(reg)
+  // 处理为 object
+  let back = []
+  reg = /\[CQ:([^,]+),(.*)\]/g
+  list.forEach((item) => {
+    if(item.match(reg) !== null) {
+      let info = {type: RegExp.$1}
+      RegExp.$2.split(',').forEach((key) => {
+        const kv = key.split('=')
+        info[kv[0]] = kv[1]
+      })
+      back.push(info)
+    }
+  })
+  logger.debug($t('log_cq_msg_parsred') + ': ' + JSON.stringify(back))
+  return back
+}
+
 export default {
   getMsgRawTxt,
   mergeList,
@@ -276,5 +316,7 @@ export default {
   openLink,
   getTrueLang,
   htmlDecodeByRegExp,
+  loadPage,
+  parseCQ,
   $t
 }

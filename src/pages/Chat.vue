@@ -25,13 +25,14 @@
         <span class="note-nomsg">{{ $t('chat_no_more_msg') }}</span>
       </div>
       <template v-for="(msg, index) in list">
-        <MsgBody
+        <component
+          :is="runtimeData.pageView.msgView"
           v-if="msg.post_type === 'message'"
           :key="msg.message_id"
           :data="msg"
           @scrollToMsg="scrollToMsg"
           @viewImg="viewImg"
-          @contextmenu.native.prevent="showMsgMeun($event, msg)"></MsgBody>
+          @contextmenu.native.prevent="showMsgMeun($event, msg)"></component>
         <NoticeBody
           v-if="msg.post_type === 'notice'"
           :key="'notice-' + index"
@@ -445,7 +446,7 @@ export default {
       if (this.selectedMsg !== null) {
         const msgId = msg.message_id
         // 添加回复内容
-        // PS：这儿还是用就的回复方式 …… 因为新的调用不友好。回复消息不会被加入文本行，在消息发送器内有特殊判定。
+        // PS：这儿还是用就的方式 …… 因为新的调用不友好。回复消息不会被加入文本行，在消息发送器内有特殊判定。
         this.addSpecialMsg({msgObj: {type: 'reply', id: msgId}, addText: false, addTop: true})
         // 显示回复指示器
         this.tags.isReply = true
