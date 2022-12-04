@@ -2,6 +2,8 @@
 
 简体中文 | 
 
+![card](README/card.png)
+
 <div align="center">
     <h1>Stapxs QQ Lite 2.0</h1>
     <h3>这是一个兼容 oicq-http2 的非官方网页版 QQ 客户端</h3>
