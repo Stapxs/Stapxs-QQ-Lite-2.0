@@ -6,7 +6,7 @@
 .message {
     transition: background .3s;
     display: flex;
-    padding: 5px 10px;
+    padding: 5px 10px 10px 10px;
     width: calc(100% - 30px);
     border-radius: 7px;
     margin: 5px 0;
@@ -185,32 +185,6 @@
     fill: var(--color-font-1-r);
 }
 
-.note-base {
-    text-align: center;
-    margin: 40px 0 10px 0;
-}
-.note-nomsg {
-    font-size: 0.6rem;
-    display: block;
-    color: var(--color-font-2);
-    margin-top: -30px;
-    opacity: 0.5;
-}
-.note-time {
-    width: 100%;
-    background: var(--color-card-1);
-    padding: 5px 20px;
-    border-radius: 100vh;
-    font-size: 0.8rem;
-    color: var(--color-font-2) !important;
-}
-.note-hr {
-    border-bottom: 1px solid var(--color-font-2) !important;
-    margin: 20px auto 40px auto;
-    opacity: 0.7;
-    width: 80%;
-}
-
 .msg-xml {
     padding: 5px 15px;
 }
@@ -315,35 +289,54 @@
     margin-top: 7px;
     padding: 10px;
 }
-.msg-link-view div:nth-child(1) {
+.msg-link-view > div.bar {
     width: 5px;
     min-width: 5px;
     background: #00000030;
     border-radius: 5px;
     margin-right: 7px;
 }
-.msg-link-view img {
-    max-width: 50%;
-    min-height: 5rem;
-    max-height: 7rem;
+.msg-link-view > div.bar.me {
+    background: var(--color-font-r);
+    opacity: 0.6;
+}
+.msg-link-view > div {
+    display: flex;
+}
+.msg-link-view > div > img {
     border-radius: 7px;
     margin-right: 7px;
-    cursor: pointer;
+    min-height: 5rem;
+    max-height: 7rem;
+    max-width: 50%;
 }
-.msg-link-view div:nth-child(3) {
-    display: flex;
+.msg-link-view > div > div.body {
     flex-direction: column;
+    display: flex;
 }
-.msg-link-view div:nth-child(3) p {
+.msg-link-view > div > div.body p {
     font-weight: bold;
     margin-bottom: 0;
 }
-.msg-link-view div:nth-child(3) span {
+.msg-link-view > div > div.body span {
     font-size: 0.9rem;
 }
-.msg-link-view div:nth-child(3) span:nth-child(3) {
+.msg-link-view > div > div.body span:nth-child(3) {
     font-size: 0.8rem;
     opacity: 0.7;
+}
+.msg-link-view.large > div {
+    flex-direction: column-reverse;
+    align-items: center;
+    display: flex;
+}
+.msg-link-view.large > div > img {
+    margin-bottom: 5px;
+    border-radius: 7px;
+    max-width: unset;
+    min-height: 5rem;
+    max-height: 7rem;
+    margin-top: 15px;
 }
 
 .msg-json {
@@ -384,6 +377,31 @@
     font-size: 0.9rem;
     opacity: 0.7;
     margin-left: 7px;
+}
+
+.note {
+    justify-content: center;
+    margin: 10px 0;
+    display: flex;
+}
+.note.top {
+    margin: 40px 0 10px 0;
+}
+.note-base {
+    border-radius: calc(3rem + 30px);
+    background: var(--color-card-1);
+    padding: 7px 30px;
+    font-size: 0.6rem;
+}
+.note-nomsg {
+    color: var(--color-font-2);
+    display: block;
+    margin-top: -30px;
+    opacity: 0.5;
+}
+.note-recall > a {
+    color: var(--color-main);
+    font-weight: bold;
 }
 
 @media (max-width: 992px) {

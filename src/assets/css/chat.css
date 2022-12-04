@@ -507,6 +507,77 @@ textarea {
     overflow-y: scroll;
 }
 
+.bulletins {
+    padding: 0 20px;
+}
+.bulletins > div {
+    transition: background .3s;
+    border-radius: 7px;
+    padding: 10px 20px;
+}
+.bulletins > div:hover {
+    background: var(--color-card-1);
+}
+.bulletins > div.base {
+    cursor: pointer;
+}
+.bulletins > div.base > header {
+    align-items: center;
+    display: flex;
+}
+.bulletins > div.base > header > svg {
+    fill: var(--color-main);
+    margin-right: 10px;
+    margin-top: 2px;
+    height: 1.1rem;
+}
+.bulletins > div.base > header > span {
+    color: var(--color-main);
+    font-weight: bold;
+    font-size: 1rem;
+}
+.bulletins > div.base > div.body {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-height: 6rem;
+}
+.bulletins > div.base > div.body.all {
+    max-height: unset;
+}
+.bulletins > div.base > div.body > span {
+    white-space: pre-line;
+}
+.bulletins > div.base > div.info {
+    background: var(--color-card-1);
+    transition: background .3s;
+    align-items: center;
+    border-radius: 7px;
+    padding: 10px 20px;
+    margin-top: 10px;
+    display: flex;
+}
+.bulletins > div.base:hover > div.info {
+    background: var(--color-card-2);
+}
+.bulletins > div.base > div.info > img {
+    outline: 2px solid var(--color-main);
+    border: 2px solid var(--color-card);
+    border-radius: 100%;
+    width: 20px;
+}
+.bulletins > div.base > div.info > a {
+    fill: var(--color-main);
+    margin-left: 10px;
+    font-size: 0.9rem;
+}
+.bulletins > div.base > div.info > div {
+    flex: 1;
+}
+.bulletins > div.base > div.info > span {
+    color: var(--color-font-2);
+    font-size: 0.8rem;
+}
+
 .group-files {
     padding: 0 20px;
 }
@@ -744,6 +815,7 @@ textarea {
     border: 2px var(--color-card-2) solid;
     background: var(--color-card-2);
     border-radius: 7px;
+    cursor: pointer;
     height: 50px;
     width: 50px;
     margin: 5px;

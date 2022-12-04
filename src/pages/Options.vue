@@ -33,7 +33,7 @@
         </div>
         <span style="text-align: center;">{{ $t('description') }}</span>
         <a>v{{ packageInfo.version }}</a>
-        <a class="ss-button" href="">{{ $t('option.info.visit_github') }}</a>
+        <a class="ss-button" href="">{{ $t('option_info_visit_github') }}</a>
         <div>
           <span>1 - {{ packageInfo.version }}</span>
           <span>2 - {{ browser.name }}</span>
@@ -128,13 +128,13 @@
     <div>
       <div class="layui-tab layui-tab-brief" style="display: flex;flex-direction: column;height: 100%;margin: 0;">
         <div class="opt-title">
-          <span>{{ $t('option.title') }}</span>
+          <span>{{ $t('option_title') }}</span>
         </div>
         <ul class="layui-tab-title opt-tab ss-card">
-          <li class="layui-this">{{ $t('option.bar.account') }}</li>
-          <li>{{ $t('option.bar.view') }}</li>
-          <li>{{ $t('option.bar.function') }}</li>
-          <li>{{ $t('option.bar.dev')}}</li>
+          <li class="layui-this">{{ $t('option_bar_account') }}</li>
+          <li>{{ $t('option_bar_view') }}</li>
+          <li>{{ $t('option_bar_function') }}</li>
+          <li>{{ $t('option_bar_dev')}}</li>
         </ul>
         <div class="opt-body layui-tab-content">
           <div class="layui-tab-item layui-show">

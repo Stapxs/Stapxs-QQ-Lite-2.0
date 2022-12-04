@@ -31,6 +31,7 @@ export function parse (str) {
       case 'getGroupMemberList' : saveGroupMember(msg.data); break
       case 'getGroupFiles'      : saveFileList(msg.data.data); break
       case 'getMoreGroupFiles'  : saveMoreFileList(msg.data.data); break
+      case 'getGroupNotices'    : Vue.set(runtimeData.onChat.info, 'group_notices', msg.data.data); break
       case 'getForwardMsg'      : saveForwardMsg(msg.data); break
       case 'getChatHistoryFist' : saveMsgFist(msg); break
       case 'getChatHistory'     : saveMsg(msg); break
@@ -44,7 +45,7 @@ export function parse (str) {
           // 复杂消息头
           // PS：复杂消息头由“消息头_参数1_参数N”组成
           switch (head) {
-            case 'getSendMsg'         : saveSendedMsg(msg); break
+            case 'getSendMsg'         : saveSendedMsg(echoList, msg); break
             case 'getGroupMemberInfo' : saveMemberInfo(msg); break
             case 'getGroupDirFiles'   : saveDirFile(msg); break
             case 'downloadGroupFile'  : downloadGroupFile(msg); break
@@ -90,12 +91,20 @@ function saveLoginInfo (data) {
     { 'url': url, 'method': 'post', 'data': info },
     'getMoreLoginInfo'
   )
+  // GA：将 QQ 号 MD5 编码后用于用户识别码
+  if (Option.get('open_ga_user') === true) {
+    const md5 = require('js-md5')
+    const userId = md5(data.uin)
+    Vue.$gtag.config({
+      user_id: userId
+    })
+  }
 }
 function saveFileList (data) {
   if (data.ec !== 0) {
     popInfo.add(
       popInfo.appMsgType.err,
-      Util.$t('chat.chat_info.load_file_err', {code: data.ec})
+      Util.$t('pop_chat_chat_info_load_file_err', {code: data.ec})
     )
   } else {
     saveInfo(runtimeData.onChat.info, 'group_files', data)
@@ -128,8 +137,8 @@ function backTestInfo (data) {
   console.log('=========================')
 }
 function saveMsgFist (msg) {
-  if (msg.error !== undefined) {
-    popInfo.add(popInfo.appMsgType.err, Util.$t('chat.load_msg_err', {code: msg.error}))
+  if (msg.error !== undefined || msg.status === 'failed') {
+    popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_load_msg_err', {code: msg.error}))
     Vue.set(runtimeData, 'messageList', [])
   } else {
     Vue.set(runtimeData, 'messageList', msg.data)
@@ -140,20 +149,20 @@ function saveMsgFist (msg) {
 }
 function saveMsg (msg) {
   if (msg.error !== undefined) {
-    popInfo.add(popInfo.appMsgType.err, this.$t('chat.load_msg_err', {code: msg.error}))
+    popInfo.add(popInfo.appMsgType.err, this.$t('pop_chat_load_msg_err', {code: msg.error}))
   } else {
     const items = msg.data
     items.pop() // 去除最后一条重复的消息，获取历史消息会返回当前消息 **以及** 之前的 N-1 条
-    // if (items.length < 1) {
-    //   this.$refs.chat.setNoMoreHistory()
-    //   return
-    // }
+    if (items.length < 1) {
+      Vue.set(runtimeData.tags, 'canLoadHistory', false)
+      return
+    }
     Vue.set(runtimeData, 'messageList', Util.mergeList(items, runtimeData.messageList))
   }
 }
 function showSendedMsg (msg) {
   if (msg.error !== undefined) {
-    popInfo.add(popInfo.appMsgType.err, Util.$t('chat.send_msg_err', {code: msg.error}))
+    popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_send_msg_err', {code: msg.error}))
   } else {
     if (msg.message_id !== undefined && Option.get('send_reget') !== true) {
       // 请求消息内容
@@ -165,9 +174,25 @@ function showSendedMsg (msg) {
     }
   }
 }
-function saveSendedMsg (msg) {
-  // TODO 这里暂时没有考虑消息获取失败的情况（因为没有例子）
-  Vue.set(runtimeData, 'messageList', Util.mergeList(runtimeData.messageList, [msg]))
+function saveSendedMsg (echoList, msg) {
+  // TODO: 这里暂时没有考虑消息获取失败的情况（因为没有例子）
+  if (Number(echoList[2]) <= 5) {
+    if (echoList[1] !== msg.message_id) {
+      // 返回的不是这条消息，重新请求
+      popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_get_msg_err') + '(' + echoList[2] + ')')
+      setTimeout(() => {
+        connecter.send(
+          'get_msg',
+          { 'message_id': echoList[1] },
+          'getSendMsg_' + echoList[1] + '_' + (Number(echoList[2]) + 1)
+        )
+      }, 5000)
+    } else {
+      Vue.set(runtimeData, 'messageList', Util.mergeList(runtimeData.messageList, [msg]))
+    }
+  } else {
+    popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_get_msg_err_fin'))
+  }
 }
 function saveMemberInfo (msg) {
   const pointInfo = msg.echo.split('_')
@@ -176,7 +201,7 @@ function saveMemberInfo (msg) {
   Vue.set(runtimeData, 'nowMemberInfo', msg)
 }
 function saveDirFile (msg) {
-  // TODO 这边不分页直接拿全
+  // TODO: 这边不分页直接拿全
   const id = msg.echo.split('_')[1]
   let fileIndex = -1
   runtimeData.onChat.info.group_files.file_list.forEach((item, index) => {
@@ -256,10 +281,20 @@ function newMsg (data) {
     const list = runtimeData.messageList
     Vue.set(runtimeData, 'messageList', Util.mergeList(list, [data]))
   }
-  // 新消息提示处理
-  // (发送者没有被打开 || 窗口被最小化) && (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息)
-  if (id !== runtimeData.onChat.id || document.hidden) {
-    if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
+  // 刷新消息列表
+  const get = runtimeData.onMsg.filter((item) => {
+    return Number(id) === Number(item.user_id) || Number(id) === Number(item.group_id)
+  })
+  // PS：在消息列表内的永远会刷新，不需要被提及
+  if (get.length === 1) {
+    const item = get[0]
+    Vue.set(item, 'raw_msg', data.raw_message)
+    Vue.set(item, 'time', Number(data.time) * 1000)
+  }
+  // (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息) 这些情况需要进行新消息处理
+  if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
+    // (发送者没有被打开 || 窗口被最小化) 这些情况需要进行消息通知
+    if (id !== runtimeData.onChat.id || document.hidden) {
       // 检查通知权限，老旧浏览器不支持这个功能
       if (Notification.permission === 'default') {
         Notification.requestPermission(function (status) {
@@ -273,6 +308,39 @@ function newMsg (data) {
         sendNotice(data)
       }
     }
+    // 对消息列表进行一些处理
+    let listItem = null
+    // 如果发送者已经在消息列表里了，直接获取
+    // 否则将它添加到消息列表里
+    if (get.length === 1) {
+      listItem = get[0]
+    } else {
+      const getList = runtimeData.userList.filter((item) => { return item.user_id === id || item.group_id === id })
+      if (getList.length === 1) {
+        runtimeData.onMsg.push(getList[0])
+        listItem = getList[0]
+      }
+    }
+    if (listItem !== null) {
+      Vue.set(listItem, 'raw_msg', data.raw_message)
+      Vue.set(listItem, 'time', Number(data.time) * 1000)
+      if (id !== runtimeData.onChat.id) {
+        Vue.set(listItem, 'new_msg', true)
+      }
+    }
+    // 重新排序列表
+    let newList = []
+    let topNum = 1
+    runtimeData.onMsg.filter((item) => {
+      if (item.always_top === true) {
+        newList.unshift(item)
+      } else if (item.new_msg === true) {
+        newList.splice(topNum - 1, 0, item)
+      } else {
+        newList.push(item)
+      }
+    })
+    Vue.set(runtimeData, 'onMsg', newList)
   }
 }
 function sendNotice (msg) {
@@ -343,6 +411,16 @@ function sendNotice (msg) {
 }
 function saveBotInfo (data) {
   Vue.set(runtimeData, 'botInfo', data)
+  // GA：提交统计信息，主要在意的是 bot 类型
+  if (Option.get('open_ga_bot') !== false) {
+    if (data.app_name !== undefined) {
+      Vue.$gtag.event('login', {method: data.app_name})
+    } else {
+      Vue.$gtag.event('login')
+    }
+  }
+  // 加载切换兼容页面
+  Util.loadPage(data.app_name)
 }
 function saveGroupMember (data) {
   // 筛选列表
@@ -362,24 +440,24 @@ function saveGroupMember (data) {
 function revokeMsg (msg) {
   const chatId = msg.notice_type === 'group' ? msg.group_id : msg.user_id
   const whoRevoke = msg.operator_id
-  // const msgId = msg.message_id
+  const msgId = msg.message_id
   const msgSeq = msg.seq
   // 当前窗口
   if (Number(chatId) === Number(runtimeData.onChat.id)) {
     // 寻找消息
     // let msgGet = null
-    // let msgIndex = -1
-    // runtimeData.messageList.forEach((item, index) => {
-    //   if (item.message_id === msgId) {
-    //     msgGet = item
-    //     msgIndex = index
-    //   }
-    // })
+    let msgIndex = -1
+    runtimeData.messageList.forEach((item, index) => {
+      if (item.message_id === msgId) {
+        // msgGet = item
+        msgIndex = index
+      }
+    })
     // if (msgGet !== null && msgIndex !== -1) {
     //   msgGet.revoke = true
     //   Vue.set(runtimeData.messageList, msgIndex, msgGet)
     // } else {
-    //   logger.error(Util.$t('log.revoke_miss'))
+    //   logger.error(Util.$t('log_revoke_miss'))
     // }
     // 寻找 DOM
     // PS：这儿本来打算通过更新数据的方式更新消息 ……
@@ -394,8 +472,16 @@ function revokeMsg (msg) {
         // 隐藏消息
         document.getElementById('chat-' + msgSeq).style.display = 'none'
       }
+      // 显示撤回提示
+      const list = runtimeData.messageList
+      if (msgIndex !== -1) {
+        list.splice((msgIndex + 1), 0, msg)
+        Vue.set(runtimeData, 'messageList', list)
+      } else {
+        Vue.set(runtimeData, 'messageList', Util.mergeList(list, [msg]))
+      }
     } else {
-      logger.error(Util.$t('log.revoke_miss'))
+      logger.error(Util.$t('log_revoke_miss'))
     }
   }
   // // 尝试撤回通知
@@ -409,10 +495,13 @@ let notificationList = {}
 // 运行时数据，用于在全程序内共享使用
 export let runtimeData = {
   onChat: { type: '', id: '', name: '', avatar: '', info: {} },
+  onMsg: [],
   messageList: [],
   botInfo: {},
   loginInfo: {},
   pageView: {
-    chatView: () => import('../../pages/Chat.vue')
-  }
+    chatView: () => import('../../pages/Chat.vue'),
+    msgView: () => import('../../components/msg/MsgBody.vue')
+  },
+  tags: {}
 }
