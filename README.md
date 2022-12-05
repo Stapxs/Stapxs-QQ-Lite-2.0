@@ -1,6 +1,9 @@
 # stapxs-qq-lite
 
-简体中文 | 
+简体中文 | [English (US)](README/en_US.md)
+
+<br>
+<br>
 
 ![card](README/card.png)
 
@@ -101,3 +104,6 @@ npm run build
 
 ![build](README/build.png)
 
+## 鸣谢
+<a href="https://github.com/Logic-Accepted"><img style="border-radius:100%;margin-right:10px" src="https://avatars.githubusercontent.com/u/36406453?s=64&v=4"></a>
+<a href="https://github.com/doodlehuang"><img style="border-radius:100%;margin-right:10px" src="https://avatars.githubusercontent.com/u/25525621?s=64&v=4"></a>

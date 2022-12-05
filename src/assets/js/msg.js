@@ -55,15 +55,19 @@ export function parse (str) {
     }
     /* eslint-enable */
   } else {
+    /* eslint-disable */
     switch (msg.post_type) {
-      case 'message': newMsg(msg); break
-      case 'notice' : {
+      // gocqhttp 自动发送的消息回调和其他消息有区分
+      case 'message_sent' : msg.post_type = 'message'
+      case 'message'      : newMsg(msg); break
+      case 'notice'       : {
         switch (msg.sub_type) {
-          case 'recall' : revokeMsg(msg); break
+          case 'recall'     : revokeMsg(msg); break
         }
         break
       }
     }
+    /* eslint-enable */
   }
 }
 
@@ -79,8 +83,27 @@ function saveInfo (parent, name, data) {
 function saveUser (list) {
   const back = Util.mergeList(runtimeData.userList, list)
   Vue.set(runtimeData, 'userList', back)
+  // 刷新置顶列表
+  let info = Vue.$cookies.get('top')
+  if (info !== null) {
+    Vue.set(runtimeData, 'topInfo', info)
+    const topList = info[runtimeData.loginInfo.uin]
+    if (topList !== undefined) {
+      list.forEach((item) => {
+        const id = Number(item.user_id ? item.user_id : item.group_id)
+        if (topList.indexOf(id) >= 0) {
+          item.always_top = true
+          runtimeData.onMsg.push(item)
+        }
+      })
+    }
+  }
 }
 function saveLoginInfo (data) {
+  // 如果是 user_id 的话 ……
+  if (data.uin === undefined && data.user_id !== undefined) {
+    data.uin = data.user_id
+  }
   Vue.set(runtimeData, 'loginInfo', data)
   Vue.set(login, 'status', true)
   // 获取更详细的信息
@@ -141,6 +164,7 @@ function saveMsgFist (msg) {
     popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_load_msg_err', {code: msg.error}))
     Vue.set(runtimeData, 'messageList', [])
   } else {
+    // TODO: 对 CQCode 消息进行转换
     Vue.set(runtimeData, 'messageList', msg.data)
     // setTimeout(() => {
     //   this.$refs.chat.scrollBottom()
@@ -157,6 +181,7 @@ function saveMsg (msg) {
       Vue.set(runtimeData.tags, 'canLoadHistory', false)
       return
     }
+    // TODO: 对 CQCode 消息进行转换
     Vue.set(runtimeData, 'messageList', Util.mergeList(items, runtimeData.messageList))
   }
 }
@@ -269,6 +294,10 @@ function downloadGroupFile (msg) {
     })
 }
 function newMsg (data) {
+  // 对 CQCode 消息进行转换
+  if (runtimeData.tags.msgType === 'CQCode') {
+    data.message = Util.parseCQ(data.message)
+  }
   const id = data.from_id ? data.from_id : data.group_id
   const sender = data.sender.user_id
   // 消息回调检查
@@ -334,6 +363,7 @@ function newMsg (data) {
     runtimeData.onMsg.filter((item) => {
       if (item.always_top === true) {
         newList.unshift(item)
+        topNum++
       } else if (item.new_msg === true) {
         newList.splice(topNum - 1, 0, item)
       } else {
@@ -503,5 +533,6 @@ export let runtimeData = {
     chatView: () => import('../../pages/Chat.vue'),
     msgView: () => import('../../components/msg/MsgBody.vue')
   },
-  tags: {}
+  tags: {},
+  topInfo: {}
 }

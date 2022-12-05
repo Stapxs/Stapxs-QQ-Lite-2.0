@@ -98,7 +98,14 @@ export default {
       //   newList.push(item)
       // })
       // Vue.set(runtimeData, 'userList', newList)
-      runtimeData.onMsg.push(data)
+      // 查重
+      const getList = runtimeData.onMsg.filter((item) => {
+        const id = item.user_id ? item.user_id : item.group_id
+        return Number(id) === Number(back.id)
+      })
+      if (getList.length === 0) {
+        runtimeData.onMsg.push(data)
+      }
       // 获取历史消息
       this.$emit('loadHistory', back)
       // 切换标签卡

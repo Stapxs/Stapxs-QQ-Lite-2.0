@@ -333,9 +333,8 @@
 .msg-link-view.large > div > img {
     margin-bottom: 5px;
     border-radius: 7px;
-    max-width: unset;
-    min-height: 5rem;
-    max-height: 7rem;
+    max-width: 100%;
+    max-height: unset;
     margin-top: 15px;
 }
 
@@ -390,8 +389,10 @@
 .note-base {
     border-radius: calc(3rem + 30px);
     background: var(--color-card-1);
+    align-items: center;
     padding: 7px 30px;
     font-size: 0.6rem;
+    display: flex;
 }
 .note-nomsg {
     color: var(--color-font-2);
@@ -402,6 +403,11 @@
 .note-recall > a {
     color: var(--color-main);
     font-weight: bold;
+    max-width: 19vw;
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 @media (max-width: 992px) {

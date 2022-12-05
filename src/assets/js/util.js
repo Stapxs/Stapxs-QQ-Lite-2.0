@@ -271,8 +271,7 @@ export function loadPage (botName) {
   switch(botName) {
     // go-cqhttp 兼容，渲染 CQCode -> JSON，消息发送 JSON -> CQCode
     case 'go-cqhttp': {
-      Vue.set(runtimeData.pageView, 'msgView', () => import(`../../components/msg/body/GOCQHttp.vue`))
-      Vue.set(runtimeData.tags, 'sendType', 'CQCode')
+      Vue.set(runtimeData.tags, 'msgType', 'CQCode')
     }
   }
 }
@@ -281,12 +280,15 @@ export function parseCQ (msg) {
   // 将纯文本也处理为 CQCode 格式
   // PS：这儿不用担心方括号本身，go-cqhttp 会把它转义掉
   let reg = /^[^\]]+?\[|\].+\[|\][^\[]+$|^[^\[\]]+$/g
-  msg.match(reg).forEach((item) => {
-    // PS：顺便把被转义的方括号转回来
-    const trueText = item.replace('[', '').replace(']', '')
-                         .replace('&#91;', '[').replace('&#93;', ']')
-    msg = msg.replace(trueText, `[CQ:text,text=${trueText}]`)
-  })
+  const textList = msg.match(reg)
+  if(textList !== null) {
+    textList.forEach((item) => {
+      // PS：顺便把被转义的方括号转回来
+      const trueText = item.replace('[', '').replace(']', '')
+                           .replace('&#91;', '[').replace('&#93;', ']')
+      msg = msg.replace(trueText, `[CQ:text,text=${trueText}]`)
+    })
+  }
   // 拆分 CQCode
   reg = /\[.+?\]/g
   const list = msg.match(reg)
