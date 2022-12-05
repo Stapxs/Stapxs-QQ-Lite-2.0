@@ -122,7 +122,7 @@
         </div>
         <span>Border Card UI For Web</span>
         <br>
-        <a>vsrsion rolling</a>
+        <a>version rolling</a>
       </div>
     </div>
     <div>
