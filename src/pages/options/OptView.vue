@@ -24,7 +24,7 @@
           <span>{{ $t('option_view_language_tip') }}</span>
         </div>
         <label>
-          <select @change="save" name="language" v-model="config.language">
+          <select @change="save" name="language" v-model="configIn.language">
             <option v-for="item in languages" :value="item.value" :key="item.value">{{ item.name }}</option>
           </select>
         </label>
@@ -39,7 +39,7 @@
           <span>{{ $t('option_view_dark_mode_tip') }}</span>
         </div>
         <label class="ss-switch">
-          <input type="checkbox" @change="save" name="opt_dark" v-model="config.opt_dark">
+          <input type="checkbox" @change="save" name="opt_dark" v-model="configIn.opt_dark">
           <div><div></div></div>
         </label>
       </div>
@@ -50,7 +50,7 @@
           <span>{{ $t('option_view_auto_dark_tip') }}</span>
         </div>
         <label class="ss-switch">
-          <input type="checkbox" @change="save" name="opt_auto_dark" v-model="config.opt_auto_dark">
+          <input type="checkbox" @change="save" name="opt_auto_dark" v-model="configIn.opt_auto_dark">
           <div><div></div></div>
         </label>
       </div>
@@ -84,6 +84,7 @@ export default {
   props: ['config'],
   data () {
     return {
+      configIn: this.config,
       save: save,
       languages: languages,
       // 别问我为什么微软是紫色的

@@ -175,7 +175,7 @@ import OptFunction from './options/OptFunction.vue'
 const { detect } = require('detect-browser')
 
 export default {
-  name: 'Options',
+  name: 'options_view',
   props: ['config', 'login', 'uinfo'],
   components: { OptView, OptDev, OptAccount, OptFunction },
   data () {
@@ -194,10 +194,10 @@ export default {
       .then(data => {
         for (let i = 0; i < data.length; i++) {
           this.contributors.push({
-            url: data[i]['avatar_url'],
-            link: data[i]['html_url'],
-            title: data[i]['login'],
-            isMe: data[i]['login'] === 'Stapxs'
+            url: data[i].avatar_url,
+            link: data[i].html_url,
+            title: data[i].login,
+            isMe: data[i].login === 'Stapxs'
           })
         }
       })

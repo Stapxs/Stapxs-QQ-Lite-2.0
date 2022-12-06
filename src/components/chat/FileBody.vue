@@ -65,10 +65,10 @@ export default {
     getFile: function (item) {
       const url = `https://pan.qun.qq.com/cgi-bin/group_share_get_downurl?uin=${Vue.loginInfo.uin}&groupid=${this.chat.id}&pa=/${item.bus_id}${item.id}&r=${getRandom(true, false, false, 16)}&charset=utf-8&g_tk=${runtimeData.loginInfo.bkn}`
       if (this.parent === undefined) {
-        connecter.send('http_proxy', { 'url': url }, 'downloadGroupFile_' + item.id)
+        connecter.send('http_proxy', { url: url }, 'downloadGroupFile_' + item.id)
       } else {
         // 对于文件夹里的文件需要再找一次 ……
-        connecter.send('http_proxy', { 'url': url }, 'downloadGroupFile_' + this.parent + '_' + item.id)
+        connecter.send('http_proxy', { url: url }, 'downloadGroupFile_' + this.parent + '_' + item.id)
       }
     },
     /**
@@ -78,7 +78,7 @@ export default {
       if (type === 2 && this.item.sub_list === undefined) {
         // 加载群文件列表
         const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${runtimeData.loginInfo.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=${id}&show_onlinedoc_folder=0`
-        connecter.send('http_proxy', { 'url': url }, 'getGroupDirFiles_' + id)
+        connecter.send('http_proxy', { url: url }, 'getGroupDirFiles_' + id)
       }
     }
   }

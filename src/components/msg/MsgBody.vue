@@ -154,9 +154,9 @@ export default {
         const reg1 = /\/\/(.*?)\//g
         const getDom = fistLink.match(reg1)
         if (getDom !== null) {
-          Vue.$gtag.event('link_view', {domain: RegExp.$1})
+          // Vue.$gtag.event('link_view', {domain: RegExp.$1})
         } else {
-          Vue.$gtag.event('link_view')
+          // Vue.$gtag.event('link_view')
         }
         // 获取链接预览
         fetch('https://api.stapxs.cn/Page-Info?address=' + fistLink)
@@ -210,7 +210,7 @@ export default {
       const pointY = pointEvent.clientY
       // TODO: 出界判定不做了怪麻烦的
       // 请求用户信息
-      connecter.send('getGroupMemberInfo', {group_id: group, user_id: id},
+      connecter.send('getGroupMemberInfo', { group_id: group, user_id: id },
         'getGroupMemberInfo_' + pointX + '_' + pointY)
     },
     hiddenUserInfo: function () {

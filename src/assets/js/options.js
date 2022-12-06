@@ -40,7 +40,7 @@ function changeChatView (name) {
   if (name !== '') {
     Vue.set(runtimeData.pageView, 'chatView', () => import(`../../pages/chat-view/${name}.vue`))
   } else {
-    Vue.set(runtimeData.pageView, 'chatView', () => import('../../pages/Chat.vue'))
+    Vue.set(runtimeData.pageView, 'chatView', () => import('../../pages/chat.vue'))
   }
 }
 
@@ -71,7 +71,7 @@ function changeTheme (id) {
 
 // 读取存储在 cookie 的设置项
 function load () {
-  let options = {}
+  const options = {}
   const str = Vue.$cookies.get('options')
   if (str != null) {
     const list = str.split('&')

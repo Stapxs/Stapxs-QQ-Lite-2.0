@@ -16,7 +16,7 @@
             <span>{{ $t('option_dev_log_level_tip') }}</span>
           </div>
           <label>
-            <select @change="save" name="log_level" v-model="config.log_level">
+            <select @change="save" name="log_level" v-model="configIn.log_level">
               <option value="err">{{ $t('option_dev_log_level_err') }}</option>
               <option value="debug">{{ $t('option_dev_log_level_debug') }}</option>
               <option value="info">{{ $t('option_dev_log_level_info') }}</option>
@@ -31,7 +31,7 @@
             <span>{{ $t('option_dev_msg_menu_tip') }}</span>
           </div>
           <label class="ss-switch">
-            <input type="checkbox" @change="save" name="msg_menu" v-model="config.msg_menu">
+            <input type="checkbox" @change="save" name="msg_menu" v-model="configIn.msg_menu">
             <div>
               <div></div>
             </div>
@@ -44,7 +44,7 @@
             <span><a style="cursor:pointer;" @click="sendAbab">{{ $t('option_dev_debug_msg_tip') }}</a></span>
           </div>
           <label class="ss-switch">
-            <input type="checkbox" @change="save" name="debug_msg" v-model="config.debug_msg">
+            <input type="checkbox" @change="save" name="debug_msg" v-model="configIn.debug_msg">
             <div>
               <div></div>
             </div>
@@ -84,7 +84,7 @@
             <span>{{ $t('option_dev_ui_test_tip') }}</span>
           </div>
           <label class="ss-switch">
-            <input type="checkbox" @change="save" name="ui_test" v-model="config.ui_test">
+            <input type="checkbox" @change="save" name="ui_test" v-model="configIn.ui_test">
             <div>
               <div></div>
             </div>
@@ -103,7 +103,7 @@
             <span>{{ $t('option_dev_connect_beat_tip') }}</span>
           </div>
           <label class="ss-switch">
-            <input type="checkbox" @change="save" name="connect_beat" v-model="config.connect_beat">
+            <input type="checkbox" @change="save" name="connect_beat" v-model="configIn.connect_beat">
             <div>
               <div></div>
             </div>
@@ -129,7 +129,7 @@
             <span>{{ $t('option_dev_chatview_name') }}</span>
             <span>{{ $t('option_dev_chatview_name_tip') }}</span>
           </div>
-          <input class="ss-input" style="width:150px" type="text" v-model="config.chatview_name" @keyup="saveWName($event, 'chatview_name')">
+          <input class="ss-input" style="width:150px" type="text" v-model="configIn.chatview_name" @keyup="saveWName($event, 'chatview_name')">
         </div>
     </div>
   </div>
@@ -146,6 +146,7 @@ export default {
   props: ['config'],
   data () {
     return {
+      configIn: this.config,
       save: save,
       ws_text: '',
       appmsg_text: ''

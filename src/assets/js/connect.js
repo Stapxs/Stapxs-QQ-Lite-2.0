@@ -54,7 +54,7 @@ export class connect {
 
   static send (name, value, echo) {
     // 构建 JSON
-    let obj = {}
+    const obj = {}
     obj.action = name
     obj.params = (value === null || value === undefined) ? {} : value
     obj.echo = (echo === null || echo === undefined) ? name : echo

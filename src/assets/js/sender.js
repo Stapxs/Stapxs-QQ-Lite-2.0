@@ -39,11 +39,11 @@ export default {
 // ========================================
 
 function parseMsgToJSON (msg, cache) {
-  let back = []
+  const back = []
   // 如果消息发送框功能是启用的，则先将 cache 的图片插入到返回列表的最前面
   if (Vue.cacheImg != null) {
     Vue.cacheImg.forEach((item) => {
-      back.push({type: 'image', file: 'base64://' + item.substring(item.indexOf('base64,') + 7, item.length)})
+      back.push({ type: 'image', file: 'base64://' + item.substring(item.indexOf('base64,') + 7, item.length) })
     })
   }
   // 处理消息文本

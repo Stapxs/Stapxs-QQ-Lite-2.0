@@ -52,6 +52,7 @@ class Logger {
   error (args) {
     this.add(this.logMode.err, args)
   }
+
   debug (args) {
     this.add(this.logMode.debug, args)
   }
@@ -94,4 +95,4 @@ class PopInfo {
 
 export const logger = new Logger()
 export const popInfo = new PopInfo()
-export let popList = []
+export const popList = []

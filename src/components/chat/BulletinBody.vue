@@ -5,7 +5,8 @@
       <span>{{ data.msg.title }}</span>
     </header>
     <div :class="'body' + (!showAll ? '' : ' all')">
-      <span v-html="Xss(data.msg.text_face).replaceAll('\r', '\n').replaceAll('\n\n', '\n')"></span>
+      <!-- need Xss -->
+      <span v-html="data.msg.text_face.replaceAll('\r', '\n').replaceAll('\n\n', '\n')"></span>
     </div>
     <div class="info">
       <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.u">
@@ -21,7 +22,6 @@
 </template>
 
 <script>
-import Xss from 'xss'
 import { runtimeData } from '../../assets/js/msg'
 
 export default {
@@ -29,7 +29,6 @@ export default {
   props: ['data'],
   data () {
     return {
-      Xss: Xss,
       runtimeData: runtimeData,
       showAll: false
     }

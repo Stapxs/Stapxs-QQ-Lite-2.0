@@ -6,8 +6,6 @@
  * @Description: 此模块抽离出了本来在 MsgBody.vue 中的一些较为通用的方法便于进行多 Bot 适配。
 */
 
-import Xss from 'xss'
-
 import Util from './util'
 
 import { popInfo } from './base'
@@ -33,6 +31,7 @@ export class MsgBodyFuns {
       case 'xml': return false
     }
   }
+
   /**
    * 尝试渲染 xml 消息
    * @param { string } xml xml 消息内容
@@ -76,7 +75,7 @@ export class MsgBodyFuns {
     msgHeader = msgHeader.replace('msg', 'div')
     msgHeader = msgHeader.replace('m_resid=', 'data-resid=')
     msgHeader = msgHeader.replace('url=', 'data-url=')
-    let header = document.createElement('div')
+    const header = document.createElement('div')
     header.innerHTML = msgHeader
     // 处理特殊的出处
     let sourceBody = ''
@@ -106,6 +105,7 @@ export class MsgBodyFuns {
     }
     return div.outerHTML
   }
+
   /**
    * 尝试渲染 json 消息
    * @param {object } data json 消息内容
@@ -114,8 +114,8 @@ export class MsgBodyFuns {
    */
   static buildJSON (data, msgId) {
     // 解析 JSON
-    let json = JSON.parse(data)
-    let body = json.meta[Object.keys(json.meta)[0]]
+    const json = JSON.parse(data)
+    const body = json.meta[Object.keys(json.meta)[0]]
     // App 信息
     let name = body.tag === undefined ? body.title : body.tag
     let icon = body.icon === undefined ? body.source_icon : body.icon
@@ -135,9 +135,9 @@ export class MsgBodyFuns {
       name = json.desc
     }
 
-    let url = body.qqdocurl === undefined ? body.jumpUrl : body.qqdocurl
+    const url = body.qqdocurl === undefined ? body.jumpUrl : body.qqdocurl
     // 构建 HTML
-    let html = '<div class="msg-json" id="json-' + msgId + '" data-url="' + url + '">' +
+    const html = '<div class="msg-json" id="json-' + msgId + '" data-url="' + url + '">' +
                '<p>' + title + '</p>' +
                '<span>' + desc + '</span>' +
                '<img style="' + (preview === undefined ? 'display:none' : '') + '" src="' + preview + '">' +
@@ -146,6 +146,7 @@ export class MsgBodyFuns {
     // 返回
     return html
   }
+
   /**
    * xml, json 消息的点击事件
    * @param { string } bodyId 用于寻找 DOM 的 id
@@ -162,12 +163,13 @@ export class MsgBodyFuns {
     if (type === 'forward') {
       // 解析合并转发消息
       if (sender.dataset.id !== 'undefined') {
-        connecter.send('get_forward_msg', { 'resid': sender.dataset.id }, 'getForwardMsg')
+        connecter.send('get_forward_msg', { resid: sender.dataset.id }, 'getForwardMsg')
       } else {
         popInfo.add(popInfo.appMsgType.err, this.$t('pop_chat_forward_toooomany'))
       }
     }
   }
+
   /**
    * 处理纯文本消息（处理换行，转义字符并进行 xss 过滤便于高亮链接）
    * @param { string } text 文本
@@ -179,7 +181,7 @@ export class MsgBodyFuns {
     // 防止意外渲染转义字符串
     text = text.replaceAll('&', '&amp;')
     // XSS 过滤
-    text = Xss(text)
+    // text = Xss(text)
     // 返回
     return text
   }

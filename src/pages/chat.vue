@@ -32,7 +32,7 @@
           :data="msg"
           @scrollToMsg="scrollToMsg"
           @viewImg="viewImg"
-          @contextmenu.native.prevent="showMsgMeun($event, msg)"></component>
+          @contextmenu.prevent="showMsgMeun($event, msg)"></component>
         <NoticeBody
           v-if="msg.post_type === 'notice'"
           :key="'notice-' + index"
@@ -197,7 +197,7 @@ import { connect as connecter } from '../assets/js/connect'
 import { runtimeData } from '../assets/js/msg'
 
 export default {
-  name: 'Chat',
+  name: 'chat_view',
   props: ['chat', 'list', 'mergeList', 'mumberInfo', 'imgView'],
   components: { MsgBody, InfoBody, FacePan, NoticeBody },
   data () {
@@ -260,7 +260,7 @@ export default {
         // 发起获取历史消息请求
         connecter.send(
           'get_chat_history',
-          { 'message_id': firstMsgId },
+          { message_id: firstMsgId },
           'getChatHistory'
         )
       }
@@ -444,7 +444,7 @@ export default {
         const msgId = msg.message_id
         // 添加回复内容
         // PS：这儿还是用就的方式 …… 因为新的调用不友好。回复消息不会被加入文本行，在消息发送器内有特殊判定。
-        this.addSpecialMsg({msgObj: {type: 'reply', id: msgId}, addText: false, addTop: true})
+        this.addSpecialMsg({ msgObj: { type: 'reply', id: msgId }, addText: false, addTop: true })
         // 显示回复指示器
         this.tags.isReply = true
         // 聚焦输入框
@@ -477,7 +477,7 @@ export default {
       const msg = this.selectedMsg
       if (this.selectedMsg !== null) {
         const msgId = msg.message_id
-        connecter.send('delete_msg', {'message_id': msgId})
+        connecter.send('delete_msg', { message_id: msgId })
         // 关闭消息菜单
         this.closeMsgMenu()
       }
@@ -513,7 +513,7 @@ export default {
           const url = `https://qinfo.clt.qq.com/cgi-bin/qun_info/get_group_info_all?gc=${this.chat.id}&bkn=${runtimeData.loginInfo.bkn}`
           connecter.send(
             'http_proxy',
-            {'url': url},
+            { url: url },
             'getMoreGroupInfo'
           )
         } else if (this.chat.type === 'user' && this.chat.info.user.uin !== this.chat.id) {
@@ -521,7 +521,7 @@ export default {
           const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${this.chat.id}&nf=0&of=0&ldw=${runtimeData.loginInfo.bkn}`
           connecter.send(
             'http_proxy',
-            { 'url': url, 'method': 'post', 'data': info },
+            { url: url, method: 'post', data: info },
             'getMoreUserInfo'
           )
         }
@@ -530,7 +530,7 @@ export default {
         (Object.keys(this.chat.info.group_members).length === 0 || this.chat.info.group_members.length <= 0 || this.chat.info.group_members[0].group_id !== this.chat.id)) {
           connecter.send(
             'get_group_member_list',
-            {'group_id': this.chat.id},
+            { group_id: this.chat.id },
             'getGroupMemberList'
           )
         }
@@ -539,7 +539,7 @@ export default {
           const url = `https://web.qun.qq.com/cgi-bin/announce/get_t_list?bkn=${runtimeData.loginInfo.bkn}&qid=${this.chat.id}&ft=23&s=-1&n=20`
           connecter.send(
             'http_proxy',
-            { 'url': url },
+            { url: url },
             'getGroupNotices'
           )
         }
@@ -548,7 +548,7 @@ export default {
           const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${runtimeData.loginInfo.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
           connecter.send(
             'http_proxy',
-            { 'url': url },
+            { url: url },
             'getGroupFiles'
           )
         }
@@ -564,7 +564,7 @@ export default {
         const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.id}&bkn=${runtimeData.loginInfo.bkn}&start_index=${this.chat.info.group_files.next_index}&cnt=30&filter_code=0&folder_id=%2F&show_onlinedoc_folder=0`
         connecter.send(
           'http_proxy',
-          { 'url': url },
+          { url: url },
           'getMoreGroupFiles'
         )
       }
@@ -616,9 +616,9 @@ export default {
         return
       }
       for (let i = 0, len = e.clipboardData.items.length; i < len; i++) {
-        let item = e.clipboardData.items[i]
+        const item = e.clipboardData.items[i]
         if (item.kind === 'file') {
-          let blob = item.getAsFile()
+          const blob = item.getAsFile()
           if (blob.type.indexOf('image/') >= 0 && blob.size !== 0) {
             popInfo.add(popInfo.appMsgType.info, this.$t('pop_chat_image_processing'))
             if (blob.size < 3145728) {
@@ -666,11 +666,11 @@ export default {
       // const sendCache = [{type:"face",id:1},{type:"at",qq:1007028430}]
       //                     ^^^^^^ 0 ^^^^^^    ^^^^^^^^^^ 1 ^^^^^^^^^^
       // 在发送操作触发之后，将会解析此条字符串排列出最终需要发送的消息结构用于发送。
-      let msg = SendUtil.parseMsg(this.msg, this.sendCache)
+      const msg = SendUtil.parseMsg(this.msg, this.sendCache)
       if (msg !== null && msg.length > 0) {
         switch (this.chat.type) {
-          case 'group': connecter.send('send_group_msg', {'group_id': this.chat.id, 'message': msg}, 'sendMsgBack'); break
-          case 'user': connecter.send('send_private_msg', {'user_id': this.chat.id, 'message': msg}, 'sendMsgBack'); break
+          case 'group': connecter.send('send_group_msg', { group_id: this.chat.id, message: msg }, 'sendMsgBack'); break
+          case 'user': connecter.send('send_private_msg', { user_id: this.chat.id, message: msg }, 'sendMsgBack'); break
         }
       }
       // 发送后事务
@@ -689,9 +689,10 @@ export default {
         this.NewMsgNum += this.list.length - this.listSize
       }
       // 超过 100 条消息时 shift 出一条
-      if (this.list.length > 100 && !this.tags.nowGetHistroy) {
-        this.list.shift()
-      }
+      // TODO: 这个操作需要让父组件完成
+      // if (this.list.length > 100 && !this.tags.nowGetHistroy) {
+      //   this.list.shift()
+      // }
       // 刷新列表长度记录
       this.listSize = this.list.length
 
@@ -719,7 +720,7 @@ export default {
           this.scrollBottom(true)
         }
         // 刷新图片列表
-        let getImgList = []
+        const getImgList = []
         this.list.forEach((item) => {
           if (item.message !== undefined) {
             item.message.forEach((msg) => {
@@ -731,7 +732,8 @@ export default {
             })
           }
         })
-        this.imgView.srcList = getImgList
+        // TODO: 这个操作需要让父组件完成
+        // this.imgView.srcList = getImgList
         // 处理跳入跳转预设
         // 如果 onChat 的 jump 参数不是 undefined
         // 则意味着这次加载历史记录的同时需要跳转到指定的消息

@@ -51,14 +51,14 @@ export function isExternal (path) {
 }
 
 export function waveAnimation (wave) {
-  let waves = wave.children[1].children
-  let min = 20
-  let max = 195
-  let add = 1
-  let timer = setInterval(() => {
+  const waves = wave.children[1].children
+  const min = 20
+  const max = 195
+  const add = 1
+  const timer = setInterval(() => {
     // 遍历波浪体
     for (var i = 0; i < waves.length; i++) {
-      let now = waves[i].getAttribute('x')
+      const now = waves[i].getAttribute('x')
       if (Number(now) + add > max) {
         waves[i].setAttribute('x', min)
       } else {
@@ -105,7 +105,7 @@ export function loadHistoryMessage (id, type) {
     // 发送请求
     connector.send(
       'get_chat_history',
-      { 'message_id': msgid },
+      { message_id: msgid },
       'getChatHistoryFist'
     )
     return true
@@ -163,9 +163,9 @@ export function htmlDecodeByRegExp (str) {
 }
 
 export function getRandom (num, maxA, minlA, fqy) {
-  let arr = []
-  let arr1 = []
-  let arr2 = []
+  const arr = []
+  const arr1 = []
+  const arr2 = []
   if (num) {
     for (let m = 0; m <= 9; m++) {
       arr.push(m)
@@ -184,9 +184,9 @@ export function getRandom (num, maxA, minlA, fqy) {
   if (!fqy) {
     console.log('生成位数必传')
   }
-  let mergeArr = arr.concat(arr1)
-  let mergeArr1 = mergeArr.concat(arr2)
-  let _length = mergeArr1.length
+  const mergeArr = arr.concat(arr1)
+  const mergeArr1 = mergeArr.concat(arr2)
+  const _length = mergeArr1.length
   let text = ''
   for (let m = 0; m < fqy; m++) {
     let text1 = ''
@@ -196,7 +196,7 @@ export function getRandom (num, maxA, minlA, fqy) {
       max = _length
       min = 0
     }
-    let random = parseInt(Math.random() * (max - min)) + min
+    const random = parseInt(Math.random() * (max - min)) + min
     if ((mergeArr1[random]) <= 9) {
       text1 = mergeArr1[random]
     } else if ((mergeArr1[random]) > 9) {

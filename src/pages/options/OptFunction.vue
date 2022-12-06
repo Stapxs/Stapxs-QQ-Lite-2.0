@@ -16,7 +16,7 @@
             <span>{{ $t('option_dev_notice_close_tip') }}</span>
           </div>
           <label class="ss-switch">
-            <input type="checkbox" @change="save" name="close_notice" v-model="config.close_notice">
+            <input type="checkbox" @change="save" name="close_notice" v-model="configIn.close_notice">
             <div>
               <div></div>
             </div>
@@ -29,7 +29,7 @@
             <span>{{ $t('option_dev_notice_all_tip') }}</span>
           </div>
           <label class="ss-switch">
-            <input type="checkbox" @change="save" name="notice_all" v-model="config.notice_all">
+            <input type="checkbox" @change="save" name="notice_all" v-model="configIn.notice_all">
             <div>
               <div></div>
             </div>
@@ -45,7 +45,7 @@
             <span>{{ $t('option_dev_send_reget_tip') }}</span>
           </div>
           <label class="ss-switch">
-            <input type="checkbox" @change="save" name="send_reget" v-model="config.send_reget">
+            <input type="checkbox" @change="save" name="send_reget" v-model="configIn.send_reget">
             <div>
               <div></div>
             </div>
@@ -71,7 +71,7 @@
             <span>{{ $t('option_dev_chat_pic_pan_tip') }}</span>
           </div>
           <label class="ss-switch">
-            <input type="checkbox" @change="save" name="close_chat_pic_pan" v-model="config.close_chat_pic_pan">
+            <input type="checkbox" @change="save" name="close_chat_pic_pan" v-model="configIn.close_chat_pic_pan">
             <div>
               <div></div>
             </div>
@@ -87,7 +87,7 @@
             <span>{{ $t('option_fun_ga_turn_tip') }}</span>
           </div>
           <label class="ss-switch">
-            <input type="checkbox" @change="save" name="close_ga" v-model="config.close_ga">
+            <input type="checkbox" @change="save" name="close_ga" v-model="configIn.close_ga">
             <div>
               <div></div>
             </div>
@@ -103,7 +103,7 @@
             <span>{{ $t('option_fun_ga_user_tip') }}</span>
           </div>
           <label class="ss-switch">
-            <input type="checkbox" @change="save" name="open_ga_user" v-model="config.open_ga_user">
+            <input type="checkbox" @change="save" name="open_ga_user" v-model="configIn.open_ga_user">
             <div>
               <div></div>
             </div>
@@ -116,7 +116,7 @@
             <span>{{ $t('option_fun_ga_bot_tip') }}</span>
           </div>
           <label class="ss-switch">
-            <input type="checkbox" @change="save" name="open_ga_bot" v-model="config.open_ga_bot">
+            <input type="checkbox" @change="save" name="open_ga_bot" v-model="configIn.open_ga_bot">
             <div>
               <div></div>
             </div>
@@ -134,6 +134,7 @@ export default {
   props: ['config'],
   data () {
     return {
+      configIn: this.config,
       save: save,
       ndt: 0,
       ndv: false

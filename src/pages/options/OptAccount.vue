@@ -78,7 +78,7 @@ export default {
           }
           return Intl.DateTimeFormat(
             Util.getTrueLang(),
-            {year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric'}).format(new Date(value))
+            { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }).format(new Date(value))
         }
       } catch (ex) {
         return value

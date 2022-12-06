@@ -84,7 +84,7 @@ function saveUser (list) {
   const back = Util.mergeList(runtimeData.userList, list)
   Vue.set(runtimeData, 'userList', back)
   // 刷新置顶列表
-  let info = Vue.$cookies.get('top')
+  const info = Vue.$cookies.get('top')
   if (info !== null) {
     Vue.set(runtimeData, 'topInfo', info)
     const topList = info[runtimeData.loginInfo.uin]
@@ -107,12 +107,10 @@ function saveLoginInfo (data) {
   Vue.set(runtimeData, 'loginInfo', data)
   Vue.set(login, 'status', true)
   // 获取更详细的信息
-  let url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
-  let info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${data.uin}&nf=0&of=0&ldw=${data.bkn}`
+  const url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
+  const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${data.uin}&nf=0&of=0&ldw=${data.bkn}`
   connecter.send(
-    'http_proxy',
-    { 'url': url, 'method': 'post', 'data': info },
-    'getMoreLoginInfo'
+    'http_proxy', { url: url, method: 'post', data: info }, 'getMoreLoginInfo'
   )
   // GA：将 QQ 号 MD5 编码后用于用户识别码
   if (Option.get('open_ga_user') === true) {
@@ -127,7 +125,7 @@ function saveFileList (data) {
   if (data.ec !== 0) {
     popInfo.add(
       popInfo.appMsgType.err,
-      Util.$t('pop_chat_chat_info_load_file_err', {code: data.ec})
+      Util.$t('pop_chat_chat_info_load_file_err', { code: data.ec })
     )
   } else {
     saveInfo(runtimeData.onChat.info, 'group_files', data)
@@ -161,7 +159,7 @@ function backTestInfo (data) {
 }
 function saveMsgFist (msg) {
   if (msg.error !== undefined || msg.status === 'failed') {
-    popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_load_msg_err', {code: msg.error}))
+    popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_load_msg_err', { code: msg.error }))
     Vue.set(runtimeData, 'messageList', [])
   } else {
     // TODO: 对 CQCode 消息进行转换
@@ -173,7 +171,7 @@ function saveMsgFist (msg) {
 }
 function saveMsg (msg) {
   if (msg.error !== undefined) {
-    popInfo.add(popInfo.appMsgType.err, this.$t('pop_chat_load_msg_err', {code: msg.error}))
+    popInfo.add(popInfo.appMsgType.err, this.$t('pop_chat_load_msg_err', { code: msg.error }))
   } else {
     const items = msg.data
     items.pop() // 去除最后一条重复的消息，获取历史消息会返回当前消息 **以及** 之前的 N-1 条
@@ -187,13 +185,13 @@ function saveMsg (msg) {
 }
 function showSendedMsg (msg) {
   if (msg.error !== undefined) {
-    popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_send_msg_err', {code: msg.error}))
+    popInfo.add(popInfo.appMsgType.err, Util.$t('pop_chat_send_msg_err', { code: msg.error }))
   } else {
     if (msg.message_id !== undefined && Option.get('send_reget') !== true) {
       // 请求消息内容
       connecter.send(
         'get_msg',
-        { 'message_id': msg.message_id },
+        { message_id: msg.message_id },
         'getSendMsg_' + msg.message_id + '_0'
       )
     }
@@ -208,7 +206,7 @@ function saveSendedMsg (echoList, msg) {
       setTimeout(() => {
         connecter.send(
           'get_msg',
-          { 'message_id': echoList[1] },
+          { message_id: echoList[1] },
           'getSendMsg_' + echoList[1] + '_' + (Number(echoList[2]) + 1)
         )
       }, 5000)
@@ -358,9 +356,9 @@ function newMsg (data) {
       }
     }
     // 重新排序列表
-    let newList = []
+    const newList = []
     let topNum = 1
-    runtimeData.onMsg.filter((item) => {
+    runtimeData.onMsg.forEach((item) => {
       if (item.always_top === true) {
         newList.unshift(item)
         topNum++
@@ -379,7 +377,7 @@ function sendNotice (msg) {
     raw = raw === '' ? msg.raw_message : raw
     // 构建通知
     let notificationTile = ''
-    let notificationBody = {}
+    const notificationBody = {}
     if (msg.message_type === 'group') {
       notificationTile = msg.group_name
       notificationBody.body = msg.sender.nickname + ':' + raw
@@ -398,7 +396,7 @@ function sendNotice (msg) {
       }
     })
     // 发起通知
-    let notification = new Notification(notificationTile, notificationBody)
+    const notification = new Notification(notificationTile, notificationBody)
     notificationList[msg.message_id] = notification
     notification.onclick = function () {
       const userId = event.target.tag.split('/')[0]
@@ -409,7 +407,7 @@ function sendNotice (msg) {
 
       // 跳转到这条消息的发送者页面
       window.focus()
-      let body = document.getElementById('user-' + userId)
+      const body = document.getElementById('user-' + userId)
       if (body === null) {
         // 从缓存列表里寻找这个 ID
         for (var i = 0; i < runtimeData.userList.length; i++) {
@@ -444,7 +442,7 @@ function saveBotInfo (data) {
   // GA：提交统计信息，主要在意的是 bot 类型
   if (Option.get('open_ga_bot') !== false) {
     if (data.app_name !== undefined) {
-      Vue.$gtag.event('login', {method: data.app_name})
+      Vue.$gtag.event('login', { method: data.app_name })
     } else {
       Vue.$gtag.event('login')
     }
@@ -520,17 +518,17 @@ function revokeMsg (msg) {
   // }
 }
 
-let notificationList = {}
+const notificationList = {}
 
 // 运行时数据，用于在全程序内共享使用
-export let runtimeData = {
+export const runtimeData = {
   onChat: { type: '', id: '', name: '', avatar: '', info: {} },
   onMsg: [],
   messageList: [],
   botInfo: {},
   loginInfo: {},
   pageView: {
-    chatView: () => import('../../pages/Chat.vue'),
+    chatView: () => import('../../pages/chat.vue'),
     msgView: () => import('../../components/msg/MsgBody.vue')
   },
   tags: {},

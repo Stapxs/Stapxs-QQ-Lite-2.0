@@ -18,7 +18,7 @@
           :key="'in' + item.user_id ? item.user_id : item.group_id"
           :select="item.user_id ? item.user_id === chat.id : item.group_id === chat.id"
           :data="item"
-          @click.native="userClick(item)"></FriendBody>
+          @click="userClick(item)"></FriendBody>
       </div>
     </div>
     <div>
@@ -40,7 +40,7 @@ import FriendBody from '../components/FriendBody.vue'
 import { runtimeData } from '../assets/js/msg'
 
 export default {
-  name: 'Messages',
+  name: 'messages_list',
   props: ['chat'],
   components: { FriendBody },
   data () {

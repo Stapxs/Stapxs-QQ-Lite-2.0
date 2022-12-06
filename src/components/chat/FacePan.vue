@@ -16,7 +16,7 @@
               <div
                 v-for="index in baseFaceMax"
                 :key="'base-face-' + index"
-                v-if="baseFacePass.indexOf(index) == -1"
+                v-show="baseFacePass.indexOf(index) == -1"
                 @click="addBaseFace(index)">
                 <img loading="lazy"
                   :src="require('./../../assets/src/qq-face/' + index + '.gif')">
@@ -71,10 +71,10 @@ export default {
       )
     },
     addBaseFace: function (id) {
-      this.addSpecialMsg({type: 'face', id: id}, true)
+      this.addSpecialMsg({ type: 'face', id: id }, true)
     },
     addImgFace: function (url) {
-      this.addSpecialMsg({type: 'image', file: url, cache: true, asface: true}, true)
+      this.addSpecialMsg({ type: 'image', file: url, cache: true, asface: true }, true)
     }
   },
   mounted () {

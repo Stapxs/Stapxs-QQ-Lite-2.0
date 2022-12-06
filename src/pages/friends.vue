@@ -32,7 +32,7 @@
           v-for="item in runtimeData.showData"
           :key="'fb-' + (item.user_id ? item.user_id : item.group_id)"
           :data="item"
-          @click.native="userClick(item, $event)"></FriendBody>
+          @click="userClick(item, $event)"></FriendBody>
       </div>
     </div>
     <div>
@@ -53,7 +53,7 @@ import { connect as connecter } from '../assets/js/connect'
 import { runtimeData } from '../assets/js/msg'
 
 export default {
-  name: 'Friends',
+  name: 'friends_list',
   props: ['list'],
   data () {
     return {

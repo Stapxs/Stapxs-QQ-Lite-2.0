@@ -162,11 +162,10 @@ import Vue from 'vue'
 import Util from './assets/js/util'
 import Option from './assets/js/options'
 
-import Friends from './pages/Friends.vue'
-import Options from './pages/Options.vue'
-import Messages from './pages/Messages.vue'
+import Friends from './pages/friends.vue'
+import Options from './pages/options.vue'
+import Messages from './pages/messages.vue'
 import { component as Viewer } from 'v-viewer'
-import { bootstrap } from 'vue-gtag'
 
 import { logger, popInfo, popList } from './assets/js/base'
 import { connect as connector, login } from './assets/js/connect'
@@ -191,7 +190,7 @@ export default {
       inList: [],
       // 图片查看器相关参数
       imgView: {
-        options: {inline: false, button: false, title: false, toolbar: {prev: true, rotateLeft: true, reset: true, rotateRight: true, next: true}},
+        options: { inline: false, button: false, title: false, toolbar: { prev: true, rotateLeft: true, reset: true, rotateRight: true, next: true } },
         srcList: []
       },
       // 下面的整理好了
@@ -241,10 +240,10 @@ export default {
       Object.assign(this.$data.imgView, this.$options.data().imgView)
       if (data.type === 'group') {
         // 获取自己在群内的资料
-        connector.send('get_group_member_info', {group_id: data.id, user_id: this.runtimeData.loginInfo.uin}, 'getUserInfoInGroup')
+        connector.send('get_group_member_info', { group_id: data.id, user_id: this.runtimeData.loginInfo.uin }, 'getUserInfoInGroup')
         // 获取群成员列表
         // PS：部分功能不返回用户名需要进来查找所以提前获取
-        connector.send('get_group_member_list', {group_id: data.id}, 'getGroupMemberList')
+        connector.send('get_group_member_list', { group_id: data.id }, 'getGroupMemberList')
       }
     },
 
@@ -343,14 +342,14 @@ export default {
       logger.debug(this.$t('log_runtime') + ': ' + process.env.NODE_ENV)
       // 加载谷歌统计功能
       if (Option.get('close_ga') !== true && process.env.NODE_ENV === 'production') {
-        bootstrap().then(() => {
-          logger.debug(this.$t('log_GA_loaded'))
-        })
+        // bootstrap().then(() => {
+        //   logger.debug(this.$t('log_GA_loaded'))
+        // })
       } else if (process.env.NODE_ENV === 'development') {
         logger.debug(this.$t('log_GA_auto_closed'))
       }
       // GA：发送主页页面路由统计（首次打开）
-      this.$gtag.pageview({page_path: '/Home', page_title: '主页'})
+      this.$gtag.pageview({ page_path: '/Home', page_title: '主页' })
     }
   }
 }
