@@ -644,6 +644,29 @@ textarea {
     width: 1rem;
 }
 
+.info-pan-set {
+    padding: 0 20px;
+}
+.info-pan-set > div:hover {
+    background: var(--color-card-1) !important;
+}
+.info-pan-set > div > label.ss-switch {
+    --switch-dot-border: 5px;
+    --switch-dot-margin: 8px;
+    --switch-height: 25px;
+    min-width: 45px;
+    margin: 5px 0;
+}
+.info-pan-set > div > label.ss-switch > div {
+    background: var(--color-card-2);
+}
+.info-pan-set > div > label.ss-switch > div > div {
+    margin-top: 3px;
+}
+.info-pan-set > div > label.ss-switch input:checked ~ div {
+    background: var(--color-main);
+}
+
 .sub_file {
     margin-top: 10px;
     width: 100%;

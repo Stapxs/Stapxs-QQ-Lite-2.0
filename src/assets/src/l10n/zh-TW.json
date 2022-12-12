@@ -182,5 +182,9 @@
   "pop_chat_image_ok": "圖片處理完成",
   "pop_chat_image_toooo_big": "圖片過大",
   "pop_option_dev_debug_msg_tip_1": "你不是人（逃",
-  "pop_print_all_pop": "即將輸出所有應用訊息（5s） ……"
+  "pop_print_all_pop": "即將輸出所有應用訊息（5s） ……",
+  "log_cq_msg_parsred": "記錄 CQ 訊息解析結果",
+  "chat_chat_info_option_top": "釘選群組/好友",
+  "chat_chat_info_option_top_tip": "將群組或好友置於列表頂部",
+  "log_com_err": "未能建立連線"
 }

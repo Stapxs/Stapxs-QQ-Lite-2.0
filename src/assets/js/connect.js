@@ -18,7 +18,11 @@ export class connect {
     logger.debug(Util.$t('log_ws_log_debug'))
     logger.add(logger.logMode.ws, Util.$t('log_we_log_all'))
 
-    websocket = new WebSocket(`ws://${address}?access_token=${token}`)
+    try {
+      websocket = new WebSocket(`ws://${address}?access_token=${token}`)
+    } catch (e) {
+      popInfo.add(popInfo.appMsgType.err, Util.$t('log_com_err') + ': ' + e.message)
+    }
     websocket.onopen = () => {
       logger.add(logger.logMode.ws, Util.$t('log_con_success'))
       // 保存登录信息（一个月）
@@ -45,6 +49,7 @@ export class connect {
       login = {}
       login.address = loginAddress
     }
+    websocket.onerr = (e) => {}
   }
 
   static send (name, value, echo) {

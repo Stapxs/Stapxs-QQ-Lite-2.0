@@ -339,9 +339,11 @@ html, body {
     overflow: unset;
 }
 .friend-body > div > div svg {
-    width: 0.7rem;
+    width: 0.6rem;
     fill: var(--color-font);
     opacity: 0.7;
+    transform: rotate(45deg);
+    margin-right: 5px;
 }
 .friend-body.active > div > div svg {
     fill: var(--color-font-r);

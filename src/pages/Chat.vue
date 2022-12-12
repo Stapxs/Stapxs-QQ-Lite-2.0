@@ -324,9 +324,6 @@ export default {
       } else if (event.keyCode === 8) {
         // backspace 删除内容
         this.selectSQ()
-      } else {
-        // cache 非回车发送的输入消息已用于在回车发送时去除按下的回车（复盖为回车前的内容）
-        this.msgCache = this.msg
       }
     },
     /**
@@ -751,6 +748,9 @@ export default {
       this.msgMenus = this.$options.data().msgMenus
       this.sendCache = []
       this.initMenuDisplay()
+    },
+    msg: function (newVal, oldVal) {
+      this.msgCache = oldVal
     }
   },
   mounted () {

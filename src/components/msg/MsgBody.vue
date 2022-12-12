@@ -17,7 +17,7 @@
     <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id" v-show="!isMe || isMerge">
     <div class="message-space" v-if="isMe && !isMerge"></div>
     <div :class="isMe ? (isMerge ? 'message-body' : 'message-body me') : 'message-body'">
-      <a v-show="!isMe || isMerge">{{ data.sender.card ? data.sender.card : data.sender.nickname }}</a>
+      <a v-show="!isMe || isMerge">{{ data.sender.card ? data.sender.card : data.sender.nickname }}{{ runtimeData.onChat.type !== 'group' ? (isMe ? runtimeData.loginInfo.nickname : runtimeData.onChat.name) : '' }}</a>
       <div>
         <!-- 回复指示框 -->
         <div
@@ -228,7 +228,7 @@ export default {
   },
   mounted: function () {
     // 初始化 isMe 参数
-    this.isMe = runtimeData.loginInfo.uin.toString() === this.data.sender.user_id.toString()
+    this.isMe = Number(runtimeData.loginInfo.uin) === Number(this.data.sender.user_id)
   }
 }
 </script>

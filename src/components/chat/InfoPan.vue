@@ -17,13 +17,13 @@
             <span>{{ chat.id }}</span>
           </div>
           <div v-if="chat.type === 'group'">
-            <svg :title="$t('chat_chat_info_is_owner')" v-if="chat.info.group.gOwner === Vue.loginInfo.uin"
+            <svg :title="$t('chat_chat_info_is_owner')" v-if="chat.info.group.gOwner === runtimeData.loginInfo.uin"
               xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
               <path
                 d="M309 106c11.4-7 19-19.7 19-34c0-22.1-17.9-40-40-40s-40 17.9-40 40c0 14.4 7.6 27 19 34L209.7 220.6c-9.1 18.2-32.7 23.4-48.6 10.7L72 160c5-6.7 8-15 8-24c0-22.1-17.9-40-40-40S0 113.9 0 136s17.9 40 40 40c.2 0 .5 0 .7 0L86.4 427.4c5.5 30.4 32 52.6 63 52.6H426.6c30.9 0 57.4-22.1 63-52.6L535.3 176c.2 0 .5 0 .7 0c22.1 0 40-17.9 40-40s-17.9-40-40-40s-40 17.9-40 40c0 9 3 17.3 8 24l-89.1 71.3c-15.9 12.7-39.5 7.5-48.6-10.7L309 106z" />
             </svg>
             <svg :title="$t('chat_chat_info_is_admin')"
-              v-if="chat.info.group.gAdmins != undefined && chat.info.group.gAdmins.indexOf(Vue.loginInfo.uin) >= 0"
+              v-if="chat.info.group.gAdmins != undefined && chat.info.group.gAdmins.indexOf(runtimeData.loginInfo.uin) >= 0"
               xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
               <path
                 d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z" />
@@ -121,7 +121,21 @@
               </svg>
             </div>
           </div>
-          <div class="layui-tab-item">3</div>
+          <div class="layui-tab-item info-pan-set">
+            <div class="opt-item">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M32 32C32 14.3 46.3 0 64 0H320c17.7 0 32 14.3 32 32s-14.3 32-32 32H290.5l11.4 148.2c36.7 19.9 65.7 53.2 79.5 94.7l1 3c3.3 9.8 1.6 20.5-4.4 28.8s-15.7 13.3-26 13.3H32c-10.3 0-19.9-4.9-26-13.3s-7.7-19.1-4.4-28.8l1-3c13.8-41.5 42.8-74.8 79.5-94.7L93.5 64H64C46.3 64 32 49.7 32 32zM160 384h64v96c0 17.7-14.3 32-32 32s-32-14.3-32-32V384z"/></svg>
+              <div>
+                <span>{{ $t('chat_chat_info_option_top') }}</span>
+                <span>{{ $t('chat_chat_info_option_top_tip') }}</span>
+              </div>
+              <label class="ss-switch">
+                <input type="checkbox" @change="saveTop" v-model="isTop">
+                <div>
+                  <div></div>
+                </div>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -135,6 +149,7 @@ import BulletinBody from './BulletinBody.vue'
 import FileBody from './FileBody.vue'
 
 import { getTrueLang } from '../../assets/js/util'
+import { runtimeData } from '../../assets/js/msg'
 
 export default {
   name: 'InfoBody',
@@ -143,7 +158,9 @@ export default {
   data () {
     return {
       Vue: Vue,
-      trueLang: getTrueLang()
+      runtimeData: runtimeData,
+      trueLang: getTrueLang(),
+      isTop: false
     }
   },
   methods: {
@@ -152,6 +169,40 @@ export default {
     },
     fileLoad: function (event) {
       this.$emit('loadFile', event)
+    },
+    /**
+     * 保存置顶信息
+     */
+    saveTop: function (event) {
+      let topList = runtimeData.topInfo[runtimeData.loginInfo.uin]
+      let sender = event.srcElement
+      if (event.path !== undefined) {
+        sender = event.path[0]
+      }
+      const value = sender.checked
+      if (value === true) {
+        if (topList !== undefined) {
+          topList.push(this.chat.id)
+        } else {
+          topList = [this.chat.id]
+        }
+      } else {
+        if (topList !== undefined) {
+          topList.splice(topList.indexOf(this.chat.id), 1)
+        }
+      }
+      Vue.set(runtimeData.topInfo, runtimeData.loginInfo.uin, topList)
+      // 刷新 cookie
+      Vue.$cookies.set('top', JSON.stringify(runtimeData.topInfo), '1m')
+    }
+  },
+  watch: {
+    chat: function () {
+      const topList = runtimeData.topInfo[runtimeData.loginInfo.uin]
+      // 修改 isTop
+      if (topList !== undefined) {
+        this.isTop = topList.indexOf(Number(this.chat.id)) >= 0
+      }
     }
   }
 }
