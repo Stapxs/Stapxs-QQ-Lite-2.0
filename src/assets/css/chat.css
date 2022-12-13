@@ -15,7 +15,7 @@ textarea {
     right: 0;
     top: 0;
 }
-.chat-pan > div:first-child {
+.chat-pan > div.info {
     background: var(--color-card-1);
     width: calc(100% - 60px);
     pointer-events: all;
@@ -25,41 +25,41 @@ textarea {
     padding: 15px;
     margin: 15px;
 }
-.chat-pan > div:first-child > img {
+.chat-pan > div.info > img {
     border: 2px solid var(--color-card-2);
     border-radius: 7px;
     margin-right: 10px;
     height: 50px;
     width: 50px;
 }
-.chat-pan > div:first-child > div:nth-child(2) p {
+.chat-pan > div.info > div:nth-child(2) p {
     font-weight: bold;
     font-size: 1rem;
 }
-.chat-pan > div:first-child > div:nth-child(2) span {
+.chat-pan > div.info > div:nth-child(2) span {
     font-size: 0.8rem;
     font-weight: 100;
     margin-top: 3px;
     display: block;
 }
-.chat-pan > div:first-child > div:nth-child(3) {
+.chat-pan > div.info > div:nth-child(3) {
     flex: 1;
 }
-.chat-pan > div:first-child > div:nth-child(4) {
+.chat-pan > div.info > div:nth-child(4) {
     background: var(--color-card-2);
     border-radius: 50%;
     cursor: pointer;
     height: 45px;
     width: 45px;
 }
-.chat-pan > div:first-child > div:nth-child(4) > svg {
+.chat-pan > div.info > div:nth-child(4) > svg {
     fill: var(--color-main);
     margin: 10px;
     height: 25px;
     width: 25px;
 }
 
-.chat-pan > div:nth-child(2) {
+.chat-pan > div.chat {
     max-width: calc(100% - 40px);
     width: calc(100% - 20px);
     pointer-events: all;
@@ -70,7 +70,7 @@ textarea {
     
 }
 
-.chat-pan > div:nth-child(3) {
+.chat-pan > div.new-msg {
     border-right: 7px solid var(--color-card);
     border-radius: 50px 0 0 50px;
     margin: -50px 20px 0 auto;
@@ -78,7 +78,7 @@ textarea {
     cursor: pointer;
     height: 50px;
 }
-.chat-pan > div:nth-child(3) > div {
+.chat-pan > div.new-msg > div {
     background: var(--color-card-1);
     border-radius: 40px;
     align-items: center;
@@ -88,45 +88,45 @@ textarea {
     height: 100%;
     padding: 0;
 }
-.chat-pan > div:nth-child(3) > div > svg {
+.chat-pan > div.new-msg > div > svg {
     fill: var(--color-font);
     padding: 16px;
     height: 17px;
     width: 17px;
 }
-.chat-pan > div:nth-child(3) > div > span {
+.chat-pan > div.new-msg > div > span {
     margin-right: 20px;
     margin-left: -5px;
 }
-.chat-pan > div:nth-child(4) {
+.chat-pan > div.more {
     pointer-events: all;
 }
-.chat-pan > div:nth-child(4) > div:nth-child(2) {
+.chat-pan > div.more > div:nth-child(2) {
     display: flex;
     padding: 20px;
 }
-.chat-pan > div:nth-child(4) > div:nth-child(2) > div {
+.chat-pan > div.more > div:nth-child(2) > div {
     background: var(--color-card-1);
     border-radius: 7px;
 }
-.chat-pan > div:nth-child(4) > div:nth-child(2) > div:first-child {
+.chat-pan > div.more > div:nth-child(2) > div:first-child {
     margin-right: 20px;
     cursor: pointer;
     height: 50px;
     width: 50px;
 }
-.chat-pan > div:nth-child(4) > div:nth-child(2) > div:first-child > svg {
+.chat-pan > div.more > div:nth-child(2) > div:first-child > svg {
     fill: var(--color-font-1);
     margin: 15px;
     height: 20px;
     width: 20px;
 }
-.chat-pan > div:nth-child(4) > div:nth-child(2) > div:nth-child(2) {
+.chat-pan > div.more > div:nth-child(2) > div:nth-child(2) {
     display: flex;
     height: 50px;
     flex: 1;
 }
-.chat-pan > div:nth-child(4) > div:nth-child(2) > div > textarea {
+.chat-pan > div.more > div:nth-child(2) > div > textarea {
     padding: 14px 20px 0 20px;
     color: var(--color-font);
     background: transparent;
@@ -139,21 +139,52 @@ textarea {
     width: 100%;
     border: 0;
 }
-.chat-pan > div:nth-child(4) > div:nth-child(2) > div > div {
+.chat-pan > div.more > div:nth-child(2) > div > div {
     border-radius: 7px;
     min-height: 40px;
     min-width: 40px;
     cursor: pointer;
     margin: 5px;
 }
-.chat-pan > div:nth-child(4) > div:nth-child(2) > div > div:hover {
+.chat-pan > div.more > div:nth-child(2) > div > div:hover {
     background: var(--color-card-2);
 }
-.chat-pan > div:nth-child(4) > div:nth-child(2) > div svg {
+.chat-pan > div.more > div:nth-child(2) > div svg {
     fill: var(--color-font-1);
     width: 20px;
     height: 20px;
     margin: 11px;
+}
+.chat-pan > div.loading {
+    background: var(--color-card-1);
+    margin: -10px 15px 15px 15px;
+    justify-content: center;
+    align-items: center;
+    transition: all .3s;
+    border-radius: 7px;
+    overflow: hidden;
+    display: flex;
+    padding: 0;
+    height: 0;
+}
+.chat-pan > div.loading.show {
+    height: unset;
+    padding: 10px;
+}
+@-webkit-keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.chat-pan > div.loading svg {
+    -webkit-animation: rotate 1.5s linear infinite;
+    animation: rotate 1.5s linear infinite;
+    margin-right: 5px;
+    margin-top: 2px;
+    height: 0.9rem;
 }
 
 .more-detail {
@@ -608,6 +639,9 @@ textarea {
     margin-right: 20px;
     flex: 1;
 }
+.group-files > div > div > div.main span {
+    overflow-wrap: anywhere;
+}
 .group-files > div > div > div.download {
     background: var(--color-card-2);
     border-radius: 100%;
@@ -769,9 +803,9 @@ textarea {
     fill: var(--color-font);
     height: 1rem;
 }
-.img-sender > div.card > div.sender {
+/* .img-sender > div.card > div.sender {
 
-}
+} */
 .img-sender > div.card > div.sender > input {
     background: var(--color-card-1);
     width: calc(100% - 20px);

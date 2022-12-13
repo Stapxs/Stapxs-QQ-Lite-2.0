@@ -1,9 +1,11 @@
-/*
- * @FileDescription: 设置页面（账号子页面）
- * @Author: Stapxs
- * @Date: 2022/09/29
- * @Version: 1.0
-*/
+<!--
+ - @FileDescription: 设置页面（账号子页面）
+ - @Author: Stapxs
+ - @Date: 2022/9/29
+          2022/12/9
+ - @Version: 1.0
+             1.5
+-->
 
 <template>
   <div class="opt-page">
@@ -14,7 +16,7 @@
           <span>{{ runtimeData.loginInfo.nickname }}</span>
           <span>{{ runtimeData.loginInfo.uin }}</span>
         </div>
-        <span>{{ uinfo.info !== undefined ? uinfo.info.lnick : '' }}</span>
+        <span>{{ Object.keys(runtimeData.loginInfo).length > 0 ? runtimeData.loginInfo.lnick : '' }}</span>
       </div>
       <svg :title="$t('base_exit')" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32H96C43 32 0 75 0 128V384c0 53 43 96 96 96h64c17.7 0 32-14.3 32-32s-14.3-32-32-32H96c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32h64zM504.5 273.4c4.8-4.5 7.5-10.8 7.5-17.4s-2.7-12.9-7.5-17.4l-144-136c-7-6.6-17.2-8.4-26-4.6s-14.5 12.5-14.5 22v72H192c-17.7 0-32 14.3-32 32l0 64c0 17.7 14.3 32 32 32H320v72c0 9.6 5.7 18.2 14.5 22s19 2 26-4.6l144-136z"/></svg>
     </div>
@@ -50,26 +52,28 @@
   </div>
 </template>
 
-<script>
-import Vue from 'vue'
-import Util from '../../assets/js/util'
+<script lang="ts">
+import Util from '../../function/util'
 
-import { runASWEvent as save } from '../../assets/js/options'
-import { runtimeData } from '../../assets/js/msg'
-import { login } from '../../assets/js/connect'
+import { runASWEvent as save } from '../../function/option'
+import { runtimeData } from '../../function/msg'
 
 export default {
-  name: 'OptAccount',
-  props: ['config', 'login'],
+  name: 'Opt-Account',
+  props: [],
   data () {
     return {
-      uinfo: login,
-      save: save,
-      runtimeData: runtimeData
+      runtimeData: runtimeData,
+      save: save
     }
   },
   methods: {
-    paseBotInfo: function (name, value) {
+    /**
+     * 对 botInfo 字段部分需要处理的数据进行处理
+     * @param name 键名
+     * @param value 键值
+     */
+    paseBotInfo (name: string, value: any) {
       try {
         if (name.indexOf('time') > 0 && (typeof value) === 'number' && value > 1000000000) {
           // 尝试转换时间戳
@@ -78,22 +82,12 @@ export default {
           }
           return Intl.DateTimeFormat(
             Util.getTrueLang(),
-            { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }).format(new Date(value))
+            {year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric'}).format(new Date(value))
         }
       } catch (ex) {
         return value
       }
       return value
-    }
-  },
-  watch: {
-    login: function () {
-      if (this.login === true) {
-        this.$nextTick(() => {
-          // 获取登陆信息
-          this.info = Vue.loginInfo
-        })
-      }
     }
   }
 }
