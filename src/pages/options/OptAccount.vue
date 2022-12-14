@@ -3,8 +3,8 @@
  - @Author: Stapxs
  - @Date: 2022/9/29
           2022/12/9
- - @Version: 1.0
-             1.5
+ - @Version: 1.0 - 初始版本
+             1.5 - 重构为 ts 版本，代码格式优化
 -->
 
 <template>
@@ -53,13 +53,13 @@
 </template>
 
 <script lang="ts">
-import Util from '../../function/util'
+import Util from '@/function/util'
 
-import { runASWEvent as save } from '../../function/option'
-import { runtimeData } from '../../function/msg'
+import { runASWEvent as save } from '@/function/option'
+import { runtimeData } from '@/function/msg'
 
 export default {
-  name: 'Opt-Account',
+  name: 'ViewOptAccount',
   props: [],
   data () {
     return {

@@ -1,9 +1,9 @@
-/*
+<!--
  * @FileDescription: 设置页面
  * @Author: Stapxs
  * @Date: 2022/09/26
  * @Version: 1.0
-*/
+-->
 
 <template>
   <div class="opt-main">
@@ -46,9 +46,9 @@
         <a class="ss-button" href="">{{ $t('option_info_visit_github') }}</a>
         <div>
           <span>1 - {{ packageInfo.version }}</span>
-          <!-- <span>2 - {{ browser.name }}</span>
+          <span>2 - {{ browser.name }}</span>
           <span>3 - {{ browser.version }}</span>
-          <span>4 - {{ browser.os }}</span> -->
+          <span>4 - {{ browser.os }}</span>
         </div>
       </div>
       <div v-if="constList.length > 0" class="ss-card contributors-card">
@@ -151,12 +151,12 @@
           <div class="layui-tab-item">
             <OptView></OptView>
           </div>
-          <!-- <div class="layui-tab-item">
+          <div class="layui-tab-item">
             <OptFunction :config="config"></OptFunction>
           </div>
           <div class="layui-tab-item">
-            <OptDev :config="config"></OptDev>
-          </div> -->
+            <OptDev></OptDev>
+          </div>
         </div>
       </div>
       <div class="ss-card end-card">
@@ -203,34 +203,31 @@
 
 <script lang='ts'>
 import { defineComponent } from 'vue'
+import { detect } from 'detect-browser'
 
 import packageInfo from '../../package.json'
-import Util from '../function/util'
+import Util from '@/function/util'
 
-import OptAccount from '../pages/options/OptAccount.vue'
-import OptView from '../pages/options/OptView.vue'
-// import OptDev from './options/OptDev.vue'
-// import OptFunction from './options/OptFunction.vue'
+import OptAccount from './options/OptAccount.vue'
+import OptView from './options/OptView.vue'
+import OptDev from './options/OptDev.vue'
+import OptFunction from './options/OptFunction.vue'
 
-import { ContributorElem } from '../function/elements/system'
-
-// const { detect } = require('detect-browser')
+import { ContributorElem } from '@/function/elements/system'
 
 export default defineComponent({
-  name: 'Options-View',
-  props: {
-    config: {}
-  },
-  components: { OptAccount, OptView },
-  data() {
+  name: 'ViewOption',
+  props: ['config'],
+  components: { OptAccount, OptView, OptDev, OptFunction },
+  data () {
     return {
       constList: [] as ContributorElem[],
       packageInfo: packageInfo,
-      // browser: detect(),
+      browser: detect() as { [key: string]: any },
       util: Util
     }
   },
-  mounted() {
+  mounted () {
     // 加载贡献者信息
     fetch('https://api.github.com/repos/stapxs/stapxs-qq-lite-2.0/contributors')
       .then(response => response.json())

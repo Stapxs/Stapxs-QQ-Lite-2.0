@@ -1,5 +1,5 @@
 <!--
- * @FileDescription: 消息组件
+ * @FileDescription: 消息模板
  * @Author: Stapxs
  * @Date: 
  *      2022/08/03
@@ -81,7 +81,7 @@ import { Logger } from '@/function/base'
 export default defineComponent({
     name: 'MsgBody',
     props: ['data', 'isMerge'],
-    data() {
+    data () {
         return {
             isMe: false,
             isDebugMsg: Option.get('debug_msg'),
@@ -97,7 +97,7 @@ export default defineComponent({
          * 获取消息的纯文本（此方法可能会被遗弃）
          * @param message 消息对象
          */
-        getMsgRawTxt(message: any) {
+        getMsgRawTxt (message: any) {
             return Util.getMsgRawTxt(message)
         },
 
@@ -106,7 +106,7 @@ export default defineComponent({
          * @param source 回复信息
          * @param at at 信息
          */
-        isAtShow(source: any, at: any) {
+        isAtShow (source: any, at: any) {
             if (source !== undefined) {
                 return !(at === source.user_id)
             }
@@ -117,7 +117,7 @@ export default defineComponent({
          * 根据消息状态获取 At 消息实际的 CSS class
          * @param who 
          */
-        getAtClass(who: number) {
+        getAtClass (who: number) {
             let back = 'msg-at'
             if (this.isMe && !(this.isMerge)) {
                 back += ' me'
@@ -132,7 +132,7 @@ export default defineComponent({
          * 滚动到指定消息
          * @param id 消息 ID
          */
-        scrollToMsg(id: string) {
+        scrollToMsg (id: string) {
             this.$emit('scrollToMsg', 'chat-' + id)
         },
 
@@ -141,7 +141,7 @@ export default defineComponent({
          * @param length 消息段数
          * @param at 图片在消息中的位置
          */
-        imgStyle: function (length: number, at: number) {
+        imgStyle (length: number, at: number) {
             // 处理样式
             if (length === 1) { return 'msg-img alone' }
             if (at === 0) { return 'msg-img top' }
@@ -153,7 +153,7 @@ export default defineComponent({
          * 图片点击
          * @param msgId 消息 ID
          */
-        imgClick: function (msgId: string) {
+        imgClick (msgId: string) {
             this.$emit('viewImg', msgId)
         },
 
@@ -161,7 +161,7 @@ export default defineComponent({
          * 获取消息 ID 的 seq
          * @param id 消息 ID
          */
-        getSeq: function (id: string) {
+        getSeq (id: string) {
             return Util.parseMsgId(id).seqid
         },
 
@@ -169,7 +169,7 @@ export default defineComponent({
          * 处理纯文本消息和链接预览
          * @param text 纯文本消息
          */
-        parseText: function (text: string) {
+        parseText (text: string) {
             const logger = new Logger()
 
             text = ViewFuns.parseText(text)
@@ -217,7 +217,7 @@ export default defineComponent({
         /**
          * 对链接预览的图片长宽进行判定以确定显示样式
          */
-        linkViewPicFin: function () {
+        linkViewPicFin () {
             const img = document.getElementById(this.data.message_id + '-linkview-img') as HTMLImageElement
             if (img !== null) {
                 const w = img.naturalWidth
@@ -232,7 +232,7 @@ export default defineComponent({
          * 当鼠标悬停在 at 消息上时显示被 at 人的消息悬浮窗
          * @param event 消息事件
          */
-        showUserInfo: function (event: Event) {
+        showUserInfo (event: Event) {
             const sender = event.currentTarget as HTMLDivElement
             const id = sender.dataset.id
             const group = sender.dataset.group
@@ -249,7 +249,7 @@ export default defineComponent({
         /**
          * 隐藏 At 信息面板
          */
-        hiddenUserInfo: function () {
+        hiddenUserInfo () {
             if(runtimeData.chatInfo.info.now_member_info !== undefined) {
                 runtimeData.chatInfo.info.now_member_info = undefined
             }
@@ -260,7 +260,7 @@ export default defineComponent({
          * @param msg 消息对象
          * @param data 回复信息
          */
-        getRepInfo: function (msg: any, data: any) {
+        getRepInfo (msg: any, data: any) {
             const list = this.runtimeData.chatInfo.info.group_members.filter((item) => {
                 return Number(item.user_id) === Number(data.source.user_id)
             })
@@ -270,7 +270,7 @@ export default defineComponent({
             return msg
         }
     },
-    mounted: function () {
+    mounted () {
         // 初始化 isMe 参数
         this.isMe = Number(runtimeData.loginInfo.uin) === Number(this.data.sender.user_id)
     }

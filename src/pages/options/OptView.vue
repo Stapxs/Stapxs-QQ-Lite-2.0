@@ -1,9 +1,9 @@
-/*
+<!--
  * @FileDescription: 设置页面（界面子页面）
  * @Author: Stapxs
  * @Date: 2022/09/26
  * @Version: 1.0
-*/
+-->
 
 <template>
   <div class="opt-page">
@@ -79,12 +79,13 @@ import { defineComponent } from 'vue'
 
 import { runtimeData } from '../../function/msg'
 import { runASWEvent as save } from '../../function/option'
+import cmp from 'semver-compare'
 
 import appInfo from '../../../package.json'
 import languages from '../../assets/l10n/_l10nconfig.json'
 
 export default defineComponent({
-  name: 'OptView',
+  name: 'ViewOptTheme',
   data () {
     return {
       runtimeData: runtimeData,
@@ -99,14 +100,12 @@ export default defineComponent({
      * 判断当前加载的语言是否是最新版本
      * @param version 
      */
-    isI10nExpired: function (version: string) {
-      // var cmp = require('semver-compare')
-      // const appVersion = appInfo.version
-      // if (cmp(appVersion, version) === 1) {
-      //   return true
-      // }
-      // return false
-      return true
+    isI10nExpired (version: string) {
+      const appVersion = appInfo.version
+      if (cmp(appVersion, version) === 1) {
+        return true
+      }
+      return false
     }
   }
 })

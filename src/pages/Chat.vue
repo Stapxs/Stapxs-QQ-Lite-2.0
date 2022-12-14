@@ -262,10 +262,10 @@ import { runtimeData } from '@/function/msg'
 import { MsgItemElem, SQCodeElem } from '@/function/elements/information'
 
 export default defineComponent({
-    name: 'ChatView',
+    name: 'ViewChat',
     props: ['chat', 'list', 'mergeList', 'mumberInfo', 'imgView'],
     components: { Info, MsgBody, NoticeBody, FacePan },
-    data() {
+    data () {
         return {
             runtimeData: runtimeData,
             trueLang: getTrueLang(),
@@ -303,7 +303,7 @@ export default defineComponent({
          * 消息区滚动
          * @param event 滚动事件
          */
-        chatScroll(event: Event) {
+        chatScroll (event: Event) {
             const body = event.target as HTMLDivElement
             // 顶部
             if (body.scrollTop === 0 && this.list.length > 0) {
@@ -324,7 +324,7 @@ export default defineComponent({
         /**
          * 加载更多历史消息
          */
-        loadMoreHistory() {
+        loadMoreHistory () {
             if (!this.tags.nowGetHistroy && runtimeData.tags.canLoadHistory !== false) {
                 // 获取列表第一条消息 ID
                 const firstMsgId = this.list[0].message_id
@@ -344,7 +344,7 @@ export default defineComponent({
          * @param where 位置（px）
          * @param showAnimation 是否使用动画
          */
-        scrollTo(where: number, showAnimation = true) {
+        scrollTo (where: number, showAnimation = true) {
             const pan = document.getElementById('msgPan')
             if(pan !== null) {
                 if (showAnimation === false) {
@@ -356,13 +356,13 @@ export default defineComponent({
                 pan.style.scrollBehavior = 'smooth'
             }
         },
-        scrollBottom(showAnimation = false) {
+        scrollBottom (showAnimation = false) {
             const pan = document.getElementById('msgPan')
             if(pan !== null) {
                 this.scrollTo(pan.scrollHeight, showAnimation)
             }
         },
-        scrollToMsg(seqName: string) {
+        scrollToMsg (seqName: string) {
             const msg = document.getElementById(seqName)
             if (msg) {
                 this.scrollTo(msg.offsetTop - msg.offsetHeight + 10)
@@ -383,7 +383,7 @@ export default defineComponent({
          * 消息中的图片被点击
          * @param msgId 消息 ID
          */
-        viewImg(msgId: number) {
+        viewImg (msgId: number) {
             this.$emit('viewImg', msgId)
         },
 
@@ -400,7 +400,7 @@ export default defineComponent({
          * 发送框按键事件
          * @param event 事件
          */
-        mainKeyUp(event: KeyboardEvent) {
+        mainKeyUp (event: KeyboardEvent) {
             // console.log(event.keyCode)
             if (!event.shiftKey && event.keyCode === 13) {
                 // enter 发送消息
@@ -415,7 +415,7 @@ export default defineComponent({
         /**
          * 选中当前输入框光标位置前面的一个 SQCode
          */
-        selectSQ() {
+        selectSQ () {
             var input = document.getElementById('main-input') as HTMLInputElement
             // 如果文本框里本来就选中着什么东西就不触发了
             if (input !== null && input.selectionStart === input.selectionEnd) {
@@ -442,7 +442,7 @@ export default defineComponent({
         /**
          * 选中光标在其内部的那个 SQLCode
          */
-        selectSQIn() {
+        selectSQIn () {
             var input = document.getElementById('main-input') as HTMLInputElement
             // 如果文本框里本来就选中着什么东西就不触发了
             if (input !== null && input.selectionStart === input.selectionEnd) {
@@ -473,7 +473,7 @@ export default defineComponent({
          * @param event 右击事件
          * @param data 消息信息
          */
-        showMsgMeun(event: Event, data: any) {
+        showMsgMeun (event: Event, data: any) {
             this.selectedMsg = data
             if (Option.get('log_level') === 'debug') {
                 console.log(data)
@@ -529,7 +529,7 @@ export default defineComponent({
         /**
          * 初始化菜单状态
          */
-        initMenuDisplay() {
+        initMenuDisplay () {
             this.tags.menuDisplay = {
                 relpy: true,
                 forward: true,
@@ -543,7 +543,7 @@ export default defineComponent({
         /**
          * 回复消息
          */
-        replyMsg() {
+        replyMsg () {
             const msg = this.selectedMsg
             if (msg !== null) {
                 const msgId = msg.message_id
@@ -565,7 +565,7 @@ export default defineComponent({
         /**
          * 取消回复消息
          */
-        cancelReply() {
+        cancelReply () {
             // 去除回复消息缓存
             this.sendCache = this.sendCache.filter((item) => {
                 return item.type !== 'reply'
@@ -576,7 +576,7 @@ export default defineComponent({
         /**
          * 复制选中的消息
          */
-        copyMsg() {
+        copyMsg () {
             const msg = this.selectedMsg
             if (msg !== null) {
                 const popInfo = new PopInfo()
@@ -593,7 +593,7 @@ export default defineComponent({
         /**
          * 撤回消息
          */
-        revokeMsg() {
+        revokeMsg () {
             const msg = this.selectedMsg
             if (msg !== null) {
                 const msgId = msg.message_id
@@ -606,13 +606,13 @@ export default defineComponent({
         /**
          * 获取悬浮窗显示位置
          */
-        getPopPost() {
+        getPopPost () {
             const x = this.mumberInfo.x === undefined ? '0' : this.mumberInfo.x
             const y = this.mumberInfo.y === undefined ? '0' : this.mumberInfo.y
             return 'margin-left:' + x + 'px;margin-top:' + y + 'px;'
         },
 
-        closeMsgMenu: function () {
+        closeMsgMenu () {
             // 关闭菜单
             this.tags.showMsgMenu = false
             // 清理消息背景
@@ -620,7 +620,7 @@ export default defineComponent({
             // 重置菜单显示状态
             this.initMenuDisplay()
         },
-        closeMergeMsg: function () {
+        closeMergeMsg () {
             this.$emit('cleanMerge', null)
         },
 
@@ -668,10 +668,11 @@ export default defineComponent({
                 }
             }
         },
+
         // /**
         //  * 加载更多文件
         //  */
-        fileLoad: function (event: Event) {
+        fileLoad (event: Event) {
             const sender = event.currentTarget as HTMLDivElement
             if (sender.scrollTop + sender.clientHeight >= sender.scrollHeight && this.chat.info.group_files.next_index !== 0 &&
                 this.chat.info.group_files.next_index !== this.chat.info.group_files.total_cnt) {
@@ -688,7 +689,7 @@ export default defineComponent({
          * 根据 index 删除图片
          * @param { number } index 图片编号
          */
-        deleteImg: function (index: number) {
+        deleteImg (index: number) {
             this.imgCache.splice(index, 1)
         },
 
@@ -716,7 +717,7 @@ export default defineComponent({
          * 添加图片缓存
          * @param event 事件
          */
-        addImg: function (event: ClipboardEvent) {
+        addImg (event: ClipboardEvent) {
             const popInfo = new PopInfo()
             // 判断粘贴类型
             if (!(event.clipboardData && event.clipboardData.items)) {
@@ -766,7 +767,7 @@ export default defineComponent({
         /**
          * 发送消息
          */
-        sendMsg: function () {
+        sendMsg () {
             // 为了减少对于复杂图文排版页面显示上的工作量，对于非纯文本的消息依旧处理为纯文本，如：
             // "这是一段话[SQ:0]，[SQ:1] 你要不要来试试 Stapxs QQ Lite？"
             // 其中 [SQ:n] 结构代表着这是特殊消息以及这个消息具体内容在消息缓存中的 index，像是这样：
@@ -788,7 +789,7 @@ export default defineComponent({
         }
     },
     watch: {
-        list: function () {
+        list () {
             // =================== 刷新统计数据 ===================
 
             // 判断新消息数量
@@ -852,7 +853,7 @@ export default defineComponent({
                 })
         }
         },
-        chat: function () {
+        chat () {
             // 重置部分状态数据
             // if(this.$options !== undefined) {
             //     Object.assign(this.$data.tags, this.$options.data.tags)
@@ -862,7 +863,7 @@ export default defineComponent({
             this.sendCache = []
             this.initMenuDisplay()
         },
-        msg: function (newVal, oldVal) {
+        msg (newVal, oldVal) {
             this.msgCache = oldVal
         }
     }

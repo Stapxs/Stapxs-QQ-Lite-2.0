@@ -1,3 +1,10 @@
+<!--
+ * @FileDescription: 群 / 好友信息页面
+ * @Author: Stapxs
+ * @Date: missing
+ * @Version: 1.0
+-->
+
 <template>
     <div v-if="tags.openChatInfo" class="chat-info-pan">
       <div class="ss-card chat-info">
@@ -154,7 +161,7 @@
   import app from '@/main'
   
   export default defineComponent({
-    name: 'InfoView',
+    name: 'ViewInfo',
     props: ['tags', 'chat'],
     components: { BulletinBody, FileBody },
     data () {
@@ -168,7 +175,7 @@
         /**
          * 关闭面板
          */
-      closeChatInfoPan() {
+      closeChatInfoPan () {
         this.$emit('close', null)
       },
 
@@ -176,7 +183,7 @@
        * 加载更多文件
        * @param event 滚动事件
        */
-      fileLoad(event: Event) {
+      fileLoad (event: Event) {
         this.$emit('loadFile', event)
       },
 
@@ -184,7 +191,7 @@
        * 保存置顶信息
        * @param event 点击事件
        */
-      saveTop(event: Event) {
+      saveTop (event: Event) {
         let topList = runtimeData.sysConfig.top_info[runtimeData.loginInfo.uin]
         const sender = event.currentTarget as HTMLInputElement
         const value = sender.checked

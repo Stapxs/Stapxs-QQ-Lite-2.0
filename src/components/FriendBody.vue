@@ -1,3 +1,10 @@
+<!--
+ * @FileDescription: 联系人 / 消息列表项模板
+ * @Author: Stapxs
+ * @Date: 2022/08/14
+ * @Version: 1.0
+-->
+
 <template>
     <div :class="'friend-body' + (select ? ' active' : '')"
         :id="'user-' + (data.user_id ? data.user_id : data.group_id)"
@@ -38,7 +45,7 @@ import { getTrueLang } from '@/function/util'
 export default defineComponent({
     name: 'FriendBody',
     props: ['data', 'select'],
-    data() {
+    data () {
         return {
             trueLang: getTrueLang()
         }

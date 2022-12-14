@@ -1,8 +1,8 @@
 /*
  * @FileDescription: Websocket 底层模块
  * @Author: Stapxs
- * @Date: 2022/12/07
- * @Version: 2.0
+ * @Date: 2022/10/20
+ * @Version: 1.0
  * @Description: 此模块主要处理 Websocket 交互相关功能
 */
 
@@ -17,7 +17,7 @@ import { BotActionElem, LoginCacheElem } from "./elements/system"
 const logger = new Logger()
 const popInfo = new PopInfo()
 
-let websocket: WebSocket
+export let websocket: WebSocket
 
 export class Connector {
     /**

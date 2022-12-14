@@ -1,14 +1,19 @@
 /*
  * @FileDescription: 设置功能模块
  * @Author: Stapxs
- * @Date: 2022/12/07
- * @Version: 2.0
+ * @Date: 
+ *      2022/09/27
+ *      2022/12/07
+ * @Version: 
+ *      1.0 - 初始版本
+ *      1.5 - 重构为 ts 版本，代码格式优化
  * @Description: 设置功能相关模块
 */
 
 import app from '@/main'
 import { i18n } from '@/main'
 import { runtimeData } from './msg'
+import { initUITest } from './util'
 
 let cacheConfigs: { [key: string]: any }
 
@@ -24,7 +29,19 @@ const selectDefault: { [key: string]: any } = {
 const configFunction: { [key: string]: (value: any) => void } = {
     language: setLanguage,
     opt_dark: setDarkMode,
-    theme_color: changeTheme
+    theme_color: changeTheme,
+    chatview_name: changeChatView,
+    ui_test: changeUiTest
+}
+
+/**
+ * 启用 UI 测试模式以便于翻译等需要浏览全部 UI 的行为
+ * @param value 是否启用 UI 测试模式
+ */
+function changeUiTest(value: boolean) {
+    if (value === true) {
+        initUITest()
+    }
 }
 
 /**
@@ -55,6 +72,11 @@ function setDarkMode(value: boolean) {
         }
     // }
 }
+
+/**
+ * 修改颜色模式
+ * @param mode 颜色模式
+ */
 function changeColorMode(mode: string) {
     if (!runtimeData.tags.firstLoad) {
         // 启用颜色渐变动画
@@ -92,6 +114,19 @@ function changeColorMode(mode: string) {
  */
 function changeTheme(id: number) {
     document.documentElement.style.setProperty('--color-main', 'var(--color-main-' + id + ')')
+}
+
+/**
+ * 根据文件名加载自定义聊天面板
+ * @param name 名字
+ */
+function changeChatView(name: string) {
+    // TODO: 这儿需要在首次使用的时候弹一个免责声明提示框
+    if (name !== '') {
+        runtimeData.pageView.chatView = () => import(`@/pages/chat-view/${name}.vue`)
+    } else {
+        runtimeData.pageView.chatView = () => import('@/pages/Chat.vue')
+    }
 }
 
 // =============== 设置基础功能 ===============

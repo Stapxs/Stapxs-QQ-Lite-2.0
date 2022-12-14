@@ -1,10 +1,12 @@
 /*
  * @FileDescription: 消息发送模块
  * @Author: Stapxs
- * @Date: 2022/10/20
- *        2022/12/12
- * @Version: 1.0
- *           1.5
+ * @Date:
+ *      2022/10/20
+ *      2022/12/12
+ * @Version: 
+ *      1.0 - 初始版本
+ *      1.5 - 重构为 ts 版本，代码格式优化
  * @Description: 此模块包括消息发送相关的功能
 */
 
@@ -12,8 +14,6 @@
 // https://github.com/takayama-lily/oicq/blob/main/lib/message/elements.ts
 // CQ Code 参考
 // https://docs.go-cqhttp.org/cqcode/#%E8%BD%AC%E4%B9%89
-
-import Vue from 'vue'
 
 import { BotMsgType, MsgItemElem, SQCodeElem } from './elements/information'
 import { runtimeData } from './msg'

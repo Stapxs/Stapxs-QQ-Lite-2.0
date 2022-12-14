@@ -1,3 +1,10 @@
+<!--
+ * @FileDescription: 表情面板模板
+ * @Author: Stapxs
+ * @Date: missing
+ * @Version: 1.0
+-->
+
 <template>
     <div class="ss-card face-pan">
       <div class="layui-tab layui-tab-brief">

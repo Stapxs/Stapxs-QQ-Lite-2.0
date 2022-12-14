@@ -1,8 +1,12 @@
 /*
  * @FileDescription: 消息处理模块
  * @Author: Stapxs
- * @Date: 2022/12/7
- * @Version: 2.0
+ * @Date: 
+ *      2022/11/1
+ *      2022/12/7
+ * @Version: 
+ *      1.0 - 初始版本
+ *      2.0 - 重构为 ts 版本，修改 Vue3 相关变更
  * @Description: 此模块用于拆分和保存/处理 bot 返回的各类信息，整个运行时数据也保存在这儿。
 */
 

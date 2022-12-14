@@ -117,7 +117,6 @@
             </div>
         </div>
         <!-- 消息主框体 -->
-        <!-- "runtimeData.messageList" -->
         <Chat
           ref="chat"
           v-if="loginInfo.status && runtimeData.chatInfo !== undefined && runtimeData.chatInfo.show.id !== 0"
@@ -130,20 +129,21 @@
 </template>
 
 <script lang="ts">
-import app from '@/main'
+import cmp from 'semver-compare'
 import appInfo from '../package.json'
-import Option from './function/option'
+import app from '@/main'
+import Option from '@/function/option'
 
 import { defineComponent } from 'vue'
-import { Connector, login as loginInfo } from './function/connect'
-import { Logger, PopInfo, PopType } from './function/base'
-import { runtimeData } from './function/msg'
-import { BaseChatInfoElem, ChatInfoElem } from './function/elements/information'
-import { buildMsgIdInfo } from './function/util'
+import { Connector, login as loginInfo } from '@/function/connect'
+import { Logger, PopInfo, PopType } from '@/function/base'
+import { runtimeData } from '@/function/msg'
+import { BaseChatInfoElem, ChatInfoElem } from '@/function/elements/information'
+import { buildMsgIdInfo } from '@/function/util'
 
-import Options from './pages/Options.vue'
-import Friends from './pages/Friends.vue'
-import Chat from './pages/Chat.vue'
+import Options from '@/pages/Options.vue'
+import Friends from '@/pages/Friends.vue'
+import Chat from '@/pages/Chat.vue'
 
 export default defineComponent({
     name: 'App',
@@ -152,11 +152,10 @@ export default defineComponent({
     Friends,
     Chat
 },
-    data() {
+    data () {
         return {
             loginInfo: loginInfo,
             runtimeData: runtimeData,
-            globalData: {} as { [key: string]: any },
             tags: {
                 showChat: false
             }
@@ -166,7 +165,7 @@ export default defineComponent({
         /**
          * 发起连接
          */
-        connect() {
+        connect () {
             Connector.create(this.loginInfo.address, this.loginInfo.token)
         },
 
@@ -176,7 +175,7 @@ export default defineComponent({
          * @param view 虚拟路径名称
          * @param show 是否显示聊天面板
          */
-        changeTab(name: string, view: string, show: boolean) {
+        changeTab (name: string, view: string, show: boolean) {
             // // GA：发送页面路由统计
             // this.$gtag.pageview({
             //   page_path: '/' + view,
@@ -194,7 +193,7 @@ export default defineComponent({
          * @param wave HTML 对象
          * @returns 动画循环器对象
          */
-        waveAnimation(wave: HTMLElement | null) {
+        waveAnimation (wave: HTMLElement | null) {
             if (wave !== null) {
                 let waves = wave.children[1].children
                 let min = 20
@@ -219,7 +218,7 @@ export default defineComponent({
          * 切换聊天对象状态
          * @param data 切换信息
          */
-        changeChat: function (data: BaseChatInfoElem) {
+        changeChat (data: BaseChatInfoElem) {
             // 设置聊天信息
             this.runtimeData.chatInfo = {
                 show: data,
@@ -255,7 +254,7 @@ export default defineComponent({
                 new PopInfo().add(PopType.ERR, this.$t('pop_load_history_fail'), false)
             }
         },
-        loadHistoryMessage(id: number, type: string) {
+        loadHistoryMessage (id: number, type: string) {
             console.log(id + "/" + type)
             // 加载历史消息
             // Note: https://github.com/takayama-lily/oicq/wiki/93.%E8%A7%A3%E6%9E%90%E6%B6%88%E6%81%AFID
@@ -300,17 +299,17 @@ export default defineComponent({
             }
         }
     },
-    mounted() {
+    mounted () {
         const logger = new Logger()
         // 检查版本
-        // var cmp = require('semver-compare')
-        // const appVersion = appInfo.version
-        // const cacheVersion = $cookies.get('version')
-        // if (!$cookies.isKey('version') || cmp(appVersion, cacheVersion) === 1) {
-        //     // 更新 cookie 中的版本信息并抓取更新日志
-        //     $cookies.set('version', appVersion, '1m')
-        //     logger.debug(this.$t('version_updated') + ': ' + cacheVersion + ' -> ' + appVersion)
-        // }
+        const appVersion = appInfo.version
+        const cacheVersion = app.config.globalProperties.$cookies.get('version')
+        if (!app.config.globalProperties.$cookies.isKey('version') || cmp(appVersion, cacheVersion) === 1) {
+            // 更新 cookie 中的版本信息并抓取更新日志
+            app.config.globalProperties.$cookies.set('version', appVersion, '1m')
+            logger.debug(this.$t('version_updated') + ': ' + cacheVersion + ' -> ' + appVersion)
+            // TODO: 获取更新日志
+        }
         // 页面加载完成后
         window.onload = () => {
             const $cookies = app.config.globalProperties.$cookies

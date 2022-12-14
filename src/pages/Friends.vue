@@ -1,3 +1,14 @@
+<!--
+ * @FileDescription: 联系人列表页面
+ * @Author: Stapxs
+ * @Date: 
+ *      2022/08/14
+ *      2022/12/12
+ * @Version:
+ *      1.0 - 初始版本
+ *      1.5 - 重构为 ts 版本，代码格式优化
+-->
+
 <template>
     <div class="friend-view">
         <div class="friend-list" id="friend-list">
@@ -60,7 +71,7 @@
   
 <script lang="ts">
 import { defineComponent } from 'vue'
-import FriendBody from '../components/FriendBody.vue'
+import FriendBody from '@/components/FriendBody.vue'
 
 import { BaseChatInfoElem, UserFriendElem } from '@/function/elements/information'
 import { UserGroupElem } from '@/function/elements/information'
@@ -69,12 +80,10 @@ import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
 
 export default defineComponent({
-    name: 'FriendsView',
-    components: {
-        FriendBody
-    },
+    name: 'ViewFriends',
+    components: { FriendBody },
     props: ['list'],
-    data() {
+    data () {
         return {
             runtimeData: runtimeData,
             listPage: 1,
@@ -84,14 +93,13 @@ export default defineComponent({
             isLeftBarOpen: false
         }
     },
-    // components: { FriendBody },
     methods: {
         /**
          * 联系人被点击事件
          * @param data 联系人信息
          * @param event 点击事件
          */
-        userClick(data: UserFriendElem & UserGroupElem, event: Event) {
+        userClick (data: UserFriendElem & UserGroupElem, event: Event) {
             // const sender = event.currentTarget
             if (this.isLeftBarOpen) {
                 this.openLeftBar()
@@ -151,7 +159,7 @@ export default defineComponent({
          * 列表搜索
          * @param event 输入事件
          */
-        search(event: Event) {
+        search (event: Event) {
             const value = (event.target as HTMLInputElement).value
             if (value !== '') {
                 this.isSearch = true
@@ -170,7 +178,7 @@ export default defineComponent({
         /**
          * 重新加载联系人列表
          */
-        reloadUser() {
+        reloadUser () {
             Connector.send('get_friend_list', {}, 'getFriendList')
             Connector.send('get_group_list', {}, 'getGroupList')
         },
@@ -178,7 +186,7 @@ export default defineComponent({
         /**
          * 切换侧边栏状态
          */
-        openLeftBar() {
+        openLeftBar () {
             const list = [
                 document.getElementById('friend-list'),
                 document.getElementById('friend-list-body'),

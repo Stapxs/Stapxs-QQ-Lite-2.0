@@ -1,12 +1,10 @@
 /*
  * @FileDescription: 基础功能模块
  * @Author: Stapxs
- * @Date: 2022/12/07
- * @Version: 2.0
+ * @Date: 2022/10/20
+ * @Version: 1.0
  * @Description: 此模块主要为程序相关的基础功能
 */
-
-import Option from './option'
 
 import { PopInfoElem } from './elements/system'
 

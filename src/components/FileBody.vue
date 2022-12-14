@@ -1,3 +1,10 @@
+<!--
+ * @FileDescription: 群文件列表项模板
+ * @Author: Stapxs
+ * @Date: missing
+ * @Version: 1.0
+-->
+
 <template>
     <div :class="(item.type === 2 ? ' folder' : '') + ((item.sub_list !== undefined && item.sub_list.length > 0) ? ' open' : '')"
         @click="loadFileDir(item.id, item.type)">
@@ -54,7 +61,7 @@ import { runtimeData } from '@/function/msg'
 export default defineComponent({
     name: 'FileBody',
     props: ['item', 'chat', 'parent'],
-    data() {
+    data () {
         return {
             trueLang: getTrueLang(),
             getSize: getSizeFromBytes,
@@ -65,7 +72,7 @@ export default defineComponent({
         /**
          * 下载文件（获取文件下载地址并下载）
          */
-        getFile: function (item: { [key: string]: any }) {
+        getFile (item: { [key: string]: any }) {
             const url = `https://pan.qun.qq.com/cgi-bin/group_share_get_downurl?uin=${runtimeData.loginInfo.uin}&groupid=${this.chat.show.id}&pa=/${item.bus_id}${item.id}&r=${getRandom(true, false, false, 16)}&charset=utf-8&g_tk=${runtimeData.loginInfo.bkn}`
             if (this.parent === undefined) {
                 Connector.send('http_proxy', { 'url': url }, 'downloadGroupFile_' + item.id)
@@ -77,7 +84,7 @@ export default defineComponent({
         /**
          * 加载子文件夹
          */
-        loadFileDir: function (id: string, type: number) {
+        loadFileDir (id: string, type: number) {
             if (type === 2 && this.item.sub_list === undefined) {
                 // 加载群文件列表
                 const url = `https://pan.qun.qq.com/cgi-bin/group_file/get_file_list?gc=${this.chat.show.id}&bkn=${runtimeData.loginInfo.bkn}&start_index=0&cnt=30&filter_code=0&folder_id=${id}&show_onlinedoc_folder=0`

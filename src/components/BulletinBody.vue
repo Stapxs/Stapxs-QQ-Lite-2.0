@@ -1,3 +1,10 @@
+<!--
+ * @FileDescription: 公告列表项模板
+ * @Author: Stapxs
+ * @Date: 2022-12-01
+ * @Version: 1.0
+-->
+
 <template>
     <div class="base" @click="showAll = !showAll">
       <header>

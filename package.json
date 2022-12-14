@@ -1,6 +1,6 @@
 {
   "name": "stapxs-qq-lite",
-  "version": "0.1.0",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@types/semver-compare": "^1.0.1",
     "core-js": "^3.8.3",
     "date-format": "^4.0.13",
     "detect-browser": "^5.3.0",
