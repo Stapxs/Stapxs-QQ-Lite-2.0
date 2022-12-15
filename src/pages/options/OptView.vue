@@ -1,9 +1,9 @@
-/*
+<!--
  * @FileDescription: 设置页面（界面子页面）
  * @Author: Stapxs
  * @Date: 2022/09/26
  * @Version: 1.0
-*/
+-->
 
 <template>
   <div class="opt-page">
@@ -24,7 +24,7 @@
           <span>{{ $t('option_view_language_tip') }}</span>
         </div>
         <label>
-          <select @change="save" name="language" v-model="config.language">
+          <select @change="save" name="language" v-model="runtimeData.sysConfig.language">
             <option v-for="item in languages" :value="item.value" :key="item.value">{{ item.name }}</option>
           </select>
         </label>
@@ -39,7 +39,7 @@
           <span>{{ $t('option_view_dark_mode_tip') }}</span>
         </div>
         <label class="ss-switch">
-          <input type="checkbox" @change="save" name="opt_dark" v-model="config.opt_dark">
+          <input type="checkbox" @change="save" name="opt_dark" v-model="runtimeData.sysConfig.opt_dark">
           <div><div></div></div>
         </label>
       </div>
@@ -50,7 +50,7 @@
           <span>{{ $t('option_view_auto_dark_tip') }}</span>
         </div>
         <label class="ss-switch">
-          <input type="checkbox" @change="save" name="opt_auto_dark" v-model="config.opt_auto_dark">
+          <input type="checkbox" @change="save" name="opt_auto_dark" v-model="runtimeData.sysConfig.opt_auto_dark">
           <div><div></div></div>
         </label>
       </div>
@@ -65,7 +65,7 @@
             <input type="radio" name="theme_color"
               @change="save"
               :data-id="index"
-              :checked="config.theme_color === undefined ? index === 0 : Number(config.theme_color) === index">
+              :checked="runtimeData.sysConfig.theme_color === undefined ? index === 0 : Number(runtimeData.sysConfig.theme_color) === index">
             <div :style="'background: var(--color-main-' + index + ');'"><div></div></div>
           </label>
         </div>
@@ -74,16 +74,21 @@
   </div>
 </template>
 
-<script>
-import config from '../../../package.json'
-import { runASWEvent as save } from '../../assets/js/options'
-import languages from '../../assets/src/l10n/_l10nconfig.json'
+<script lang="ts">
+import { defineComponent } from 'vue'
 
-export default {
-  name: 'OptView',
-  props: ['config'],
+import { runtimeData } from '../../function/msg'
+import { runASWEvent as save } from '../../function/option'
+import cmp from 'semver-compare'
+
+import appInfo from '../../../package.json'
+import languages from '../../assets/l10n/_l10nconfig.json'
+
+export default defineComponent({
+  name: 'ViewOptTheme',
   data () {
     return {
+      runtimeData: runtimeData,
       save: save,
       languages: languages,
       // 别问我为什么微软是紫色的
@@ -91,14 +96,17 @@ export default {
     }
   },
   methods: {
-    isI10nExpired: function (version) {
-      var cmp = require('semver-compare')
-      const appVersion = config.version
+    /**
+     * 判断当前加载的语言是否是最新版本
+     * @param version 
+     */
+    isI10nExpired (version: string) {
+      const appVersion = appInfo.version
       if (cmp(appVersion, version) === 1) {
         return true
       }
       return false
     }
   }
-}
+})
 </script>
