@@ -5,6 +5,7 @@ function resolve(dir) {
 
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
+    publicPath: '/Stapxs-QQ-Lite-2.0/',
     transpileDependencies: true,
     chainWebpack(config) {
         // set svg-sprite-loader
