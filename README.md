@@ -87,7 +87,7 @@ Stapxs QQ Lite 需要一个 QQ Bot 来支持功能，目前 2.0 版本只支持�
 ## 构建应用
 Stapxs QQ Lite 2.0 是一个基于 Vue 的单页应用，这意味着如果你想自行部署服务需要进行构建，你可以参考下面的 bash 进行构建：
 
-注意，在正式构建前，你需要修改 `config/index.js` 内 `build` 下 `assetsPublicPath` 的值，它代表着最终你会运行在的地址，比如它现在是 `https://stapxs.github.io/Stapxs-QQ-Lite-2.0/`；这个参数可以使用 `/` 直接表示运行在根域名，但是它不可以为空。
+注意，在正式构建前，你需要修改根目录下 `vue.config.js` 内导出的 `publicPath` 字段的值，它代表着最终你会运行在的根目录，比如它现在是 `/Stapxs-QQ-Lite-2.0/`；如果你本来就运行在根目录下，可以直接删去它。
 
 ``` bash
 # 安装依赖
