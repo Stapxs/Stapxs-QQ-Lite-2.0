@@ -29,6 +29,13 @@
 .message.merge > div.message-body {
     max-width: 100%;
 }
+.message.revoke {
+    display: none;
+}
+.message.revoke.me {
+    display: flex;
+    opacity: 0.4;
+}
 .message-body a {
     color: var(--color-font);
 }
@@ -408,6 +415,7 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    margin: 0 5px;
 }
 
 @media (max-width: 992px) {

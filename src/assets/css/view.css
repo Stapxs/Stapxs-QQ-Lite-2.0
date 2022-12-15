@@ -484,12 +484,15 @@ html, body {
 }
 
 .viewer-toolbar > ul > li {
-    background-color: var(--color-card-2);
+    background-color: var(--color-main);
+    justify-content: center;
+    align-items: center;
     border-radius: 7px;
-    float: left;
-    height: 35px;
-    width: 35px;
     margin: 0 10px;
+    display: flex;
+    height: 45px;
+    width: 45px;
+    float: left;
 }
 
 .viewer-toolbar > ul > li:focus,
@@ -518,9 +521,9 @@ html, body {
     display: none;
 }
 
-.viewer-canvas {
-    backdrop-filter: blur(10px);
-    background: transparent;
+.viewer-backdrop {
+    background: rgba(var(--color-card-2-rgb), 0.7);
+    /* backdrop-filter: blur(10px); */
 }
 
 .viewer-navbar {

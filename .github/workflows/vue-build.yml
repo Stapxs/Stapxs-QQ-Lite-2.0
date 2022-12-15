@@ -17,10 +17,10 @@ jobs:
         persist-credentials: false
     # 更新依赖
     - name: install
-      run: npm install
+      run: yarn
     # 构建
     - name: build
-      run: npm run build
+      run: yarn build
 
     # 部署
     - name: push

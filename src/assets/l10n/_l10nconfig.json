@@ -1,0 +1,17 @@
+[
+    {
+        "value": "zh-CN",
+        "lang": "zh-CN",
+        "name": "简体中文"
+    },
+    {
+        "value": "en-US",
+        "lang": "en-US",
+        "name": "English (US)"
+    },
+	{
+        "value": "zh-TW",
+        "lang": "zh-TW",
+        "name": "繁體中文（台灣）"
+    }
+]

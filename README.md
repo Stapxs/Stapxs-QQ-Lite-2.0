@@ -91,14 +91,16 @@ Stapxs QQ Lite 2.0 是一个基于 Vue 的单页应用，这意味着如果你�
 
 ``` bash
 # 安装依赖
-npm install
+yarn install
 # 运行热重载开发模式在本机 8080 端口
-npm run dev
+yarn serve
 # 构建应用
-npm run build
+yarn build
+# 代码检查
+yarn lint
 ```
 
-\* 你可以查看这些文档了解构建流程详情 [guide](http://vuejs-templates.github.io/webpack/) 、 [vue-loader 文档](http://vuejs.github.io/vue-loader)。
+\* 你可以查看文档了解构建流程详情 [vue-cli 文档](https://cli.vuejs.org/config/)。
 
 这是构建的一个例子：
 
