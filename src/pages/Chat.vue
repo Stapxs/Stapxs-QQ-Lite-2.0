@@ -10,7 +10,7 @@
 -->
 
 <template>
-    <div class="chat-pan" id="chat-pan">
+    <div :class="'chat-pan' + (runtimeData.tags.openSideBar ? ' open': '')" id="chat-pan">
         <!-- 聊天基本信息 -->
         <div class="info">
             <img :src="chat.show.avatar">
@@ -52,7 +52,8 @@
                     :data="msg"
                     @scrollToMsg="scrollToMsg"
                     @viewImg="viewImg"
-                    @contextmenu.prevent="showMsgMeun($event, msg)">
+                    @contextmenu.prevent="showMsgMeun($event, msg)"
+                    @scrollButtom="imgLoadedScroll">
                 </MsgBody>
                 <!-- 通知（notice） -->
                 <NoticeBody v-if="msg.post_type === 'notice'" :key="'notice-' + index" :data="msg"></NoticeBody>
@@ -111,8 +112,15 @@
                     </svg>
                 </div>
                 <div>
-                    <textarea id="main-input" type="text" v-model="msg" @paste="addImg" @keyup="mainKeyUp"
-                        @click="selectSQ(), selectSQIn()"></textarea>
+                    <textarea
+                        id="main-input"
+                        type="text"
+                        v-model="msg"
+                        :disabled="runtimeData.tags.openSideBar"
+                        @paste="addImg"
+                        @keyup="mainKeyUp"
+                        @click="selectSQ(), selectSQIn()">
+                    </textarea>
                     <div @click="sendMsg">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512">
                             <path
@@ -216,16 +224,14 @@
         <!-- 群 / 好友信息弹窗 -->
         <Info :chat="chat" :tags="tags" @close="openChatInfoPan" @loadFile="fileLoad"></Info>
         <!-- 图片发送器 -->
-        <!-- <div class="img-sender" v-if="Vue.cacheImg != undefined && Vue.cacheImg.length > 0">
+        <div class="img-sender" v-show="imgCache.length > 0">
             <div class="card ss-card">
                 <div class="hander">
                     <span>{{ $t('chat_send_pic_title') }}</span>
-                    <button @click="sendMsg(); Vue.cacheImg = undefined" class="ss-button">{{ $t('chat_send_pic_send')
-                    }}</button>
+                    <button @click="sendMsg" class="ss-button">{{ $t('chat_send_pic_send') }}</button>
                 </div>
                 <div class="imgs">
-                    <div v-for="(img64, index) in Vue.cacheImg"
-                        :key="'sendImg-' + img64.substring(img64.length - 5, img64.length)">
+                    <div v-for="(img64, index) in imgCache" :key="'sendImg-' + index">
                         <div @click="deleteImg(index)">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
                                 <path
@@ -236,11 +242,11 @@
                     </div>
                 </div>
                 <div class="sender">
-                    <input type="text" @paste="addImg" v-model="msg">
+                    <input type="text" @paste="addImg" :disabled="runtimeData.tags.openSideBar" @click="toMainInput" v-model="msg">
                 </div>
             </div>
-            <div class="bg" @click="Vue.cacheImg = undefined"></div>
-        </div> -->
+            <div class="bg" @click="imgCache = []"></div>
+        </div>
     </div>
 </template>
 
@@ -255,11 +261,11 @@ import MsgBody from '@/components/MsgBody.vue'
 import NoticeBody from '@/components/NoticeBody.vue'
 import FacePan from '@/components/FacePan.vue'
 
-import { parseMsgId, getTrueLang } from '@/function/util'
+import { parseMsgId, getTrueLang, loadHistory as loadHistoryFirst } from '@/function/util'
 import { Logger, PopInfo, PopType } from '@/function/base'
 import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
-import { MsgItemElem, SQCodeElem } from '@/function/elements/information'
+import { BaseChatInfoElem, MsgItemElem, SQCodeElem } from '@/function/elements/information'
 
 export default defineComponent({
     name: 'ViewChat',
@@ -289,7 +295,6 @@ export default defineComponent({
             details: [{ open: false }, { open: false }],
             msgMenus: [],
             NewMsgNum: 0,
-            listSize: 0,
             msg: '',
             msgCache: '',
             imgCache: [] as string[],
@@ -312,12 +317,11 @@ export default defineComponent({
             // 底部
             if (body.scrollTop + body.clientHeight === body.scrollHeight) {
                 this.NewMsgNum = 0
+                this.tags.showBottomButton = false
             }
             // 显示回到底部
-            if (body.scrollTop < body.scrollHeight - body.clientHeight * 2) {
+            if (body.scrollTop < body.scrollHeight - body.clientHeight * 2 && this.tags.showBottomButton !== true) {
                 this.tags.showBottomButton = true
-            } else {
-                this.tags.showBottomButton = false
             }
         },
 
@@ -344,9 +348,9 @@ export default defineComponent({
          * @param where 位置（px）
          * @param showAnimation 是否使用动画
          */
-        scrollTo (where: number, showAnimation = true) {
+        scrollTo (where: number | undefined, showAnimation = true) {
             const pan = document.getElementById('msgPan')
-            if(pan !== null) {
+            if(pan !== null && where) {
                 if (showAnimation === false) {
                     pan.style.scrollBehavior = 'unset'
                 } else {
@@ -378,6 +382,12 @@ export default defineComponent({
                 new PopInfo().add(PopType.INFO, this.$t('pop_chat_msg_not_load'))
             }
         },
+        imgLoadedScroll () {
+            const pan = document.getElementById('msgPan')
+            if(pan && !this.tags.showBottomButton) {
+                this.scrollBottom()
+            }
+        },
 
         /**
          * 消息中的图片被点击
@@ -386,15 +396,6 @@ export default defineComponent({
         viewImg (msgId: number) {
             this.$emit('viewImg', msgId)
         },
-
-        // /**
-        //  * 格式化时间
-        //  * @param time 时间
-        //  */
-        // formatTime: function (time, like) {
-        //     var format = require('date-format')
-        //     return format.asString(like, time)
-        // },
 
         /**
          * 发送框按键事件
@@ -612,6 +613,9 @@ export default defineComponent({
             return 'margin-left:' + x + 'px;margin-top:' + y + 'px;'
         },
 
+        /**
+         * 关闭右击菜单
+         */
         closeMsgMenu () {
             // 关闭菜单
             this.tags.showMsgMenu = false
@@ -620,8 +624,12 @@ export default defineComponent({
             // 重置菜单显示状态
             this.initMenuDisplay()
         },
+
+        /**
+         * 关闭合并转发弹窗
+         */
         closeMergeMsg () {
-            this.$emit('cleanMerge', null)
+            this.runtimeData.mergeMessageList = undefined
         },
 
         /**
@@ -765,6 +773,17 @@ export default defineComponent({
         },
 
         /**
+         * 将焦点移回主发送框
+         * PS：我实在懒得再做一次回车发送了。所以当点击图片发送框的输入框后，焦点会被移动到主输入框上以方便回车发送
+         */
+        toMainInput () {
+            const mainInput = document.getElementById('main-input')
+            if(mainInput !== null) {
+                mainInput.focus()
+            }
+        },
+
+        /**
          * 发送消息
          */
         sendMsg () {
@@ -774,7 +793,7 @@ export default defineComponent({
             // const sendCache = [{type:"face",id:1},{type:"at",qq:1007028430}]
             //                     ^^^^^^ 0 ^^^^^^    ^^^^^^^^^^ 1 ^^^^^^^^^^
             // 在发送操作触发之后，将会解析此条字符串排列出最终需要发送的消息结构用于发送。
-            let msg = SendUtil.parseMsg(this.msg, this.sendCache)
+            let msg = SendUtil.parseMsg(this.msg, this.sendCache, this.imgCache)
             if (msg !== undefined && msg.length > 0) {
                 switch (this.chat.show.type) {
                     case 'group': Connector.send('send_group_msg', { 'group_id': this.chat.show.id, 'message': msg }, 'sendMsgBack'); break
@@ -784,49 +803,63 @@ export default defineComponent({
             // 发送后事务
             this.msg = ''
             this.sendCache = []
+            this.imgCache = []
             this.scrollBottom()
             this.cancelReply()
-        }
-    },
-    watch: {
-        list () {
+        },
+
+        updateList(newLength: number, oldLength: number) {
             // =================== 刷新统计数据 ===================
 
-            // 判断新消息数量
-            if (this.tags.showBottomButton && !this.tags.nowGetHistroy && this.listSize > 0) {
-                this.NewMsgNum += this.list.length - this.listSize
+            // 判断新消息数量（回到底部按钮显示、不在加载历史消息、不是首次加载消息）
+            if (this.tags.showBottomButton && !this.tags.nowGetHistroy && oldLength > 0) {
+                if(this.NewMsgNum !== 0) {
+                    this.NewMsgNum = this.NewMsgNum + Math.abs(newLength - oldLength)
+                } else {
+                    this.NewMsgNum = Math.abs(newLength - oldLength)
+                }
             }
-            // 超过 100 条消息时 shift 出一条
-            // if (this.list.length > 100 && !this.tags.nowGetHistroy) {
-            //     this.list.shift()
-            // }
-            // 刷新列表长度记录
-            this.listSize = this.list.length
+            // 清屏重新加载消息列表（超过 500 条消息、回到底部按钮不显示）
+            // PS：也就是说只在消息底部时才会触发，以防止你是在看历史消息攒满了 500 条刷掉
+            if (this.list.length > 300 && !this.tags.nowGetHistroy && !this.tags.showBottomButton) {
+                runtimeData.messageList = []
+                const info = {
+                    type: this.chat.show.type,
+                    id: this.chat.show.id,
+                    name: this.chat.show.name,
+                    avatar: this.chat.show.avatar,
+                    jump: this.chat.show.jump
+                } as BaseChatInfoElem
+                loadHistoryFirst(info)
+                this.tags.nowGetHistroy = true
+            }
 
             // =================== 渲染监听操作 ===================
 
-            // 渲染前的数据
             const pan = document.getElementById('msgPan')
-            if(pan !== null) {
+            if (pan !== null) {
+                // 渲染前的数据
                 const height = pan.scrollHeight
                 const top = pan.scrollTop
                 // 渲染后操作
                 this.$nextTick(() => {
                     const newPan = document.getElementById('msgPan')
-                    if(newPan !== null) {
+                    if (newPan !== null) {
                         // 加载历史记录锁定滚动条位置
                         if (this.tags.nowGetHistroy) {
                             this.scrollTo(newPan.scrollHeight - height, false)
-                            this.tags.nowGetHistroy = false
-                        } else {
-                            // 解除锁定加载
-                            this.tags.nowGetHistroy = false
                         }
-                        // 新消息自动下滚
-                        if (top === height - newPan.clientHeight) {
-                            // 刚刚页面在最底部
-                            this.scrollBottom(true)
+                        // 新消息自动下滚（只要回到底部按钮没显示就算是在最底部、首次加载（不需要滚动动画））
+                        if(!this.tags.nowGetHistroy) {
+                            if (!this.tags.showBottomButton) {
+                                this.scrollTo(newPan.scrollHeight)
+                            }
+                            if(oldLength <= 0) {
+                                this.scrollTo(newPan.scrollHeight, false)
+                            }
                         }
+                        // 解除锁定加载
+                        this.tags.nowGetHistroy = false
                     }
                     // 刷新图片列表
                     // let getImgList = []
@@ -843,29 +876,34 @@ export default defineComponent({
                     // })
                     // this.imgView.srcList = getImgList
                     // 处理跳入跳转预设
-                    // 如果 onChat 的 jump 参数不是 undefined
-                    // 则意味着这次加载历史记录的同时需要跳转到指定的消息
-                    if (runtimeData.chatInfo.show !== undefined && runtimeData.chatInfo.show.jump !== undefined) {
+                    // 如果 jump 参数不是 undefined，则意味着这次加载历史记录的同时需要跳转到指定的消息
+                    if (runtimeData.chatInfo.show && runtimeData.chatInfo.show.jump) {
                         new Logger().debug('进入跳转至消息：' + runtimeData.chatInfo.show.jump)
                         this.scrollToMsg('chat-' + parseMsgId(runtimeData.chatInfo.show.jump).seqid)
                         runtimeData.chatInfo.show.jump = undefined
                     }
                 })
+            }
         }
-        },
+    },
+    watch: {
         chat () {
             // 重置部分状态数据
-            // if(this.$options !== undefined) {
-            //     Object.assign(this.$data.tags, this.$options.data.tags)
-            //     this.tags = this.$options.data().tags
-            //     this.msgMenus = this.$options.data().msgMenus
-            // }
+            const data = (this as any).$options.data(this)
+            this.tags = data.tags
+            this.msgMenus = data.msgMenus
             this.sendCache = []
+            this.imgCache = [] as string[]
             this.initMenuDisplay()
         },
         msg (newVal, oldVal) {
             this.msgCache = oldVal
         }
+    },
+    mounted() {
+        // PS：由于列表指向的是堆栈
+        // 监听 list 本身新旧值是一样，于是监听 length（反正也只要用这个）
+        this.$watch(() => this.list.length, this.updateList)
     }
 })
 </script>

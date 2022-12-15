@@ -40,7 +40,7 @@ export class Logger {
         //     logLevel === 'err' && type === LogType.ERR) {
         //     this.print(type, args)
         // }
-        this.print(type, args)
+        // this.print(type, args)
     }
     error(args: string) {
         this.add(LogType.ERR, args)

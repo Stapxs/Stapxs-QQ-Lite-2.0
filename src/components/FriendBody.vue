@@ -22,7 +22,7 @@
                 }}</p>
                 <div style="flex:1"></div>
                 <a class="time">{{ data.time !== undefined ? Intl.DateTimeFormat(trueLang,
-                        { hour: "numeric", minute: "numeric", second: "numeric" }).format(new Date(data.time)) : ''
+                        { hour: "numeric", minute: "numeric" }).format(new Date(data.time)) : ''
                 }}</a>
             </div>
             <div>

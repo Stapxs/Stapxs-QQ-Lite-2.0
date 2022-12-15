@@ -769,18 +769,20 @@ textarea {
     display: none;
 }
 .img-sender > div.card > div.imgs > div {
-    /* background: var(--color-card-1); */
+    border: 2px solid var(--color-card-2);
     border-radius: 7px;
     margin-right: 9px;
     margin-top: 10px;
+    padding: 10px;
 }
 .img-sender > div.card > div.imgs > div > img {
     transform: translateX(-50%);
-    margin-bottom: 4px;
+    margin-bottom: 9px;
     border-radius: 7px;
     max-height: 30vh;
     margin-left: 50%;
     max-width: 100%;
+    margin-top: 5px;
 }
 .img-sender > div.card > div.imgs > div > div {
     margin-bottom: calc(-20px - 1rem);
@@ -804,7 +806,7 @@ textarea {
     height: 1rem;
 }
 /* .img-sender > div.card > div.sender {
-
+    margin-top: 10px;
 } */
 .img-sender > div.card > div.sender > input {
     background: var(--color-card-1);

@@ -3,10 +3,7 @@
         <div class="layui-tab layui-tab-brief main-body">
             <ul class="layui-tab-title">
                 <li @click="changeTab('主页', 'Home', true)" :class="loginInfo.status ? 'hiden-home' : 'layui-this'">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
-                        <path
-                            d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z" />
-                    </svg>
+                <!-- <svg-icon iconClass="#house-solid"></svg-icon> -->
                 </li>
                 <li id="bar-msg" @click="changeTab('信息', 'Messages', false)"
                     :class="!loginInfo.status ? '' : 'layui-this'">
@@ -100,8 +97,11 @@
                     </div>
                 </div>
                 <div id="messageTab" :class="loginInfo.status ? 'layui-tab-item layui-show' : 'layui-tab-item'">
-                    <!-- <Messages :chat="runtimeData.onChat" @userClick="changeChat" @loadHistory="loadHistory">
-                    </Messages> -->
+                    <Messages
+                        :chat="runtimeData.chatInfo"
+                        @userClick="changeChat"
+                        @loadHistory="loadHistory">
+                    </Messages>
                 </div>
                 <div class="layui-tab-item">
                     <Friends
@@ -119,9 +119,9 @@
         <!-- 消息主框体 -->
         <Chat
           ref="chat"
-          v-if="loginInfo.status && runtimeData.chatInfo !== undefined && runtimeData.chatInfo.show.id !== 0"
+          v-if="loginInfo.status && runtimeData.chatInfo && runtimeData.chatInfo.show.id != 0"
           v-show="tags.showChat"
-          :mumberInfo="runtimeData.chatInfo.info.now_member_info === undefined ? {} : runtimeData.chatInfo.info.now_member_info"
+          :mumberInfo="runtimeData.chatInfo.info.now_member_info == undefined ? {} : runtimeData.chatInfo.info.now_member_info"
           :mergeList="runtimeData.mergeMessageList == undefined ? [] : runtimeData.mergeMessageList"
           :list= runtimeData.messageList
           :chat="runtimeData.chatInfo"></Chat>
@@ -136,24 +136,27 @@ import Option from '@/function/option'
 
 import { defineComponent } from 'vue'
 import { Connector, login as loginInfo } from '@/function/connect'
-import { Logger, PopInfo, PopType } from '@/function/base'
+import { Logger } from '@/function/base'
 import { runtimeData } from '@/function/msg'
-import { BaseChatInfoElem, ChatInfoElem } from '@/function/elements/information'
-import { buildMsgIdInfo } from '@/function/util'
+import { BaseChatInfoElem } from '@/function/elements/information'
+import { loadHistory } from '@/function/util'
 
 import Options from '@/pages/Options.vue'
 import Friends from '@/pages/Friends.vue'
+import Messages from '@/pages/Messages.vue'
 import Chat from '@/pages/Chat.vue'
 
 export default defineComponent({
     name: 'App',
     components: {
-    Options,
-    Friends,
-    Chat
-},
+        Options,
+        Friends,
+        Messages,
+        Chat
+    },
     data () {
         return {
+            loadHistory: loadHistory,
             loginInfo: loginInfo,
             runtimeData: runtimeData,
             tags: {
@@ -194,7 +197,7 @@ export default defineComponent({
          * @returns 动画循环器对象
          */
         waveAnimation (wave: HTMLElement | null) {
-            if (wave !== null) {
+            if (wave) {
                 let waves = wave.children[1].children
                 let min = 20
                 let max = 195
@@ -235,81 +238,18 @@ export default defineComponent({
             runtimeData.mergeMessageList = []
             // 重置图片预览器状态
             // Object.assign(this.$data.imgView, this.$options.data().imgView)
-            if (data.type === 'group') {
+            if (data.type == 'group') {
                 // 获取自己在群内的资料
                 Connector.send('get_group_member_info', { group_id: data.id, user_id: this.runtimeData.loginInfo.uin }, 'getUserInfoInGroup')
                 // 获取群成员列表
                 // PS：部分功能不返回用户名需要进来查找所以提前获取
                 Connector.send('get_group_member_list', { group_id: data.id }, 'getGroupMemberList')
             }
-        },
-
-        /**
-         * 加载历史消息
-         * @param info 聊天基本信息
-         */
-        loadHistory (info: BaseChatInfoElem) {
-            runtimeData.messageList = []
-            if (!this.loadHistoryMessage(info.id, info.type)) {
-                new PopInfo().add(PopType.ERR, this.$t('pop_load_history_fail'), false)
-            }
-        },
-        loadHistoryMessage (id: number, type: string) {
-            console.log(id + "/" + type)
-            // 加载历史消息
-            // Note: https://github.com/takayama-lily/oicq/wiki/93.%E8%A7%A3%E6%9E%90%E6%B6%88%E6%81%AFID
-            var msgid = null
-            switch (type) {
-                case 'user': {
-                    // friend msg id 为 4*4+1 = 17 bit
-                    const buffer = new ArrayBuffer(17)
-                    const dv = new DataView(buffer, 0)
-                    dv.setInt32(0, id)
-                    dv.setInt32(4, 0)
-                    dv.setInt32(8, 0)
-                    dv.setInt32(12, 0)
-                    dv.setInt8(16, 0)
-                    msgid = buildMsgIdInfo(buffer)
-                    break
-                }
-                case 'group': {
-                    // group msg id 为 4*5+1 = 21 bit
-                    const buffer = new ArrayBuffer(21)
-                    const dv = new DataView(buffer, 0)
-                    dv.setInt32(0, id)
-                    dv.setInt32(4, 0)
-                    dv.setInt32(8, 0)
-                    dv.setInt32(12, 0)
-                    dv.setInt32(16, 0)
-                    dv.setInt8(20, 0)
-                    msgid = buildMsgIdInfo(buffer)
-                    break
-                }
-            }
-            if (msgid != null) {
-                // 发送请求
-                Connector.send(
-                    'get_chat_history',
-                    { 'message_id': msgid },
-                    'getChatHistoryFist'
-                )
-                return true
-            } else {
-                return false
-            }
         }
     },
     mounted () {
         const logger = new Logger()
-        // 检查版本
-        const appVersion = appInfo.version
-        const cacheVersion = app.config.globalProperties.$cookies.get('version')
-        if (!app.config.globalProperties.$cookies.isKey('version') || cmp(appVersion, cacheVersion) === 1) {
-            // 更新 cookie 中的版本信息并抓取更新日志
-            app.config.globalProperties.$cookies.set('version', appVersion, '1m')
-            logger.debug(this.$t('version_updated') + ': ' + cacheVersion + ' -> ' + appVersion)
-            // TODO: 获取更新日志
-        }
+        
         // 页面加载完成后
         window.onload = () => {
             const $cookies = app.config.globalProperties.$cookies
@@ -322,17 +262,27 @@ export default defineComponent({
             }
             // 加载设置项
             runtimeData.sysConfig = Option.load()
+            runtimeData.sysConfig.top_info = $cookies.get('top')
             // 初始化完成
             logger.debug(this.$t('log_welcome'))
             logger.debug(this.$t('log_runtime') + ': ' + process.env.NODE_ENV)
             // 加载谷歌统计功能
-            // if (Option.get('close_ga') !== true && process.env.NODE_ENV === 'production') {
+            // if (!Option.get('close_ga') && process.env.NODE_ENV == 'production') {
             //     bootstrap().then(() => {
             //         logger.debug(this.$t('log_GA_loaded'))
             //     })
-            // } else if (process.env.NODE_ENV === 'development') {
+            // } else if (process.env.NODE_ENV == 'development') {
             //     logger.debug(this.$t('log_GA_auto_closed'))
             // }
+            // 检查版本
+            const appVersion = appInfo.version
+            const cacheVersion = app.config.globalProperties.$cookies.get('version')
+            if (!app.config.globalProperties.$cookies.isKey('version') || cmp(appVersion, cacheVersion) == 1) {
+                // 更新 cookie 中的版本信息并抓取更新日志
+                app.config.globalProperties.$cookies.set('version', appVersion, '1m')
+                logger.debug(this.$t('version_updated') + ': ' + cacheVersion + ' -> ' + appVersion)
+                // TODO: 获取更新日志
+            }
         }
     }
 })

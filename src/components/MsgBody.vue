@@ -35,7 +35,7 @@
                 <div v-for="(item, index) in data.message" :class="View.isMsgInline(item.type) ? 'msg-inline' : ''" :key="data.message_id + '-m-' + index">
                     <span v-if="isDebugMsg" class="msg-text">{{ item }}</span>
                     <span v-else-if="item.type === 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
-                    <img v-else-if="item.type === 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
+                    <img v-else-if="item.type === 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @load="scrollButtom" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
                     <img v-else-if="item.type === 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/img/qq-face/' + item.id + '.gif')" :title="item.text">
                     <span v-else-if="item.type === 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat_fun_menu_pic') }}：{{ item.text }} ]</span>
                     <div v-else-if="item.type === 'at'" v-show="isAtShow(data.source, item.qq)" :class="getAtClass(item.qq)">
@@ -155,6 +155,13 @@ export default defineComponent({
          */
         imgClick (msgId: string) {
             this.$emit('viewImg', msgId)
+        },
+
+        /**
+         * 图片加载完成，滚到底部
+         */
+        scrollButtom () {
+            this.$emit('scrollButtom', null)
         },
 
         /**

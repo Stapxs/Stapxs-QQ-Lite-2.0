@@ -11,7 +11,7 @@
 
 <template>
     <div class="friend-view">
-        <div class="friend-list" id="friend-list">
+        <div :class="'friend-list' + (runtimeData.tags.openSideBar ? ' open' : '')" id="friend-list">
             <div>
                 <div class="base">
                     <span>{{ $t('friend_title') }}</span>
@@ -51,6 +51,7 @@
                 </label>
             </div>
             <div id="friend-list-body" v-infinite-scroll="addLoad" infinite-scroll-watch-disabled="loading"
+                :class="(runtimeData.tags.openSideBar ? 'open' : '')"
                 infinite-scroll-distance="10" infinite-scroll-immediate-check="false">
                 <FriendBody v-for="item in runtimeData.showList"
                     :key="'fb-' + (item.user_id ? item.user_id : item.group_id)" :data="item"
@@ -89,8 +90,7 @@ export default defineComponent({
             listPage: 1,
             loading: false,
             isSearch: false,
-            searchInfo: '',
-            isLeftBarOpen: false
+            searchInfo: ''
         }
     },
     methods: {
@@ -100,8 +100,8 @@ export default defineComponent({
          * @param event 点击事件
          */
         userClick (data: UserFriendElem & UserGroupElem, event: Event) {
-            // const sender = event.currentTarget
-            if (this.isLeftBarOpen) {
+            const sender = event.currentTarget as HTMLDivElement
+            if (this.runtimeData.tags.openSideBar) {
                 this.openLeftBar()
             }
             this.isSearch = false
@@ -113,19 +113,10 @@ export default defineComponent({
                 id: data.user_id ? data.user_id : data.group_id,
                 name: data.group_name ? data.group_name : data.remark === data.nickname ? data.nickname : data.remark + '（' + data.nickname + '）',
                 avatar: data.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id : 'https://p.qlogo.cn/gh/' + data.group_id + '/' + data.group_id + '/0',
-                // jump: sender.dataset.jump
+                jump: sender.dataset.jump
             } as BaseChatInfoElem
             // 更新聊天框
             this.$emit('userClick', back)
-            // 追加到正在进行的消息列表内
-            // let newList = []
-            // runtimeData.userList.forEach((item) => {
-            //   if (Number(item.user_id) === Number(back.id) || Number(item.group_id) === Number(back.id)) {
-            //     item.showInMsg = true
-            //   }
-            //   newList.push(item)
-            // })
-            // Vue.set(runtimeData, 'userList', newList)
             // 查重
             const getList = runtimeData.onMsgList.filter((item) => {
                 const id = item.user_id ? item.user_id : item.group_id
@@ -187,21 +178,7 @@ export default defineComponent({
          * 切换侧边栏状态
          */
         openLeftBar () {
-            const list = [
-                document.getElementById('friend-list'),
-                document.getElementById('friend-list-body'),
-                document.getElementById('chat-pan')
-            ]
-            list.forEach((item) => {
-                if (item !== null) {
-                    if (!this.isLeftBarOpen) {
-                        item.classList.add('open')
-                    } else {
-                        item.classList.remove('open')
-                    }
-                }
-            })
-            this.isLeftBarOpen = !this.isLeftBarOpen
+            runtimeData.tags.openSideBar = !runtimeData.tags.openSideBar
         }
     },
     watch: {

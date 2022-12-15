@@ -24,7 +24,7 @@ import zh from './assets/l10n/zh-CN.json'
 
 // 载入 l10n
 const messages = { 'zh-CN': zh }
-// 初始化
+// 初始化 i18n
 export const i18n = createI18n({
   legacy: false,
   locale: 'zh-CN',
@@ -33,9 +33,9 @@ export const i18n = createI18n({
   messages
 })
 
+// 创建 App
 const app = createApp(App)
 app.use(i18n)
-// app.use(infScroll)
 app.use(VueCookies)
 app.use(VueViewer)
 app.use(VueClipboard)

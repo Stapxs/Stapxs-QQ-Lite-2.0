@@ -203,7 +203,7 @@
 
 <script lang='ts'>
 import { defineComponent } from 'vue'
-import { detect } from 'detect-browser'
+import { BrowserInfo, detect } from 'detect-browser'
 
 import packageInfo from '../../package.json'
 import Util from '@/function/util'
@@ -217,13 +217,15 @@ import { ContributorElem } from '@/function/elements/system'
 
 export default defineComponent({
   name: 'ViewOption',
-  props: ['config'],
+  props: {
+    config: {} as { [key: string]: any }
+  },
   components: { OptAccount, OptView, OptDev, OptFunction },
   data () {
     return {
       constList: [] as ContributorElem[],
       packageInfo: packageInfo,
-      browser: detect() as { [key: string]: any },
+      browser: detect() as BrowserInfo,
       util: Util
     }
   },
@@ -231,14 +233,14 @@ export default defineComponent({
     // 加载贡献者信息
     fetch('https://api.github.com/repos/stapxs/stapxs-qq-lite-2.0/contributors')
       .then(response => response.json())
-      .then(data => {
+      .then((data: { [key: string]: string }[]) => {
         for (let i = 0; i < data.length; i++) {
           this.constList.push({
-            url: data[i]['avatar_url'],
-            link: data[i]['html_url'],
-            title: data[i]['login'],
-            isMe: data[i]['login'] === 'Stapxs'
-          } as ContributorElem)
+            url: data[i].avatar_url,
+            link: data[i].html_url,
+            title: data[i].login,
+            isMe: data[i].login == 'Stapxs'
+          })
         }
       })
       .catch(console.error)

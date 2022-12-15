@@ -18,7 +18,7 @@ import { initUITest } from './util'
 let cacheConfigs: { [key: string]: any }
 
 // 下拉菜单设置项的初始值，防止选项为空
-const selectDefault: { [key: string]: any } = {
+const optDefault: { [key: string]: any } = {
     language: 'zh-CN',
     log_level: 'err',
     open_ga_bot: true
@@ -158,9 +158,9 @@ export function load(): { [key: string]: any } {
         }
     }
     // 初始化不存在的需要进行初始化的值
-    Object.keys(selectDefault).forEach((key) => {
+    Object.keys(optDefault).forEach((key) => {
         if (options[key] === undefined) {
-            options[key] = selectDefault[key]
+            options[key] = optDefault[key]
         }
     })
     // 保存返回
@@ -262,5 +262,6 @@ export function runASWEvent(event: Event) {
 
 export default {
     get,
-    load
+    load,
+    save
 }

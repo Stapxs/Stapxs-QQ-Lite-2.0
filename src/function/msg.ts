@@ -15,12 +15,11 @@ import app from '@/main'
 import Option from './option'
 import Util from './util'
 
-import { reactive } from 'vue'
+import { reactive, nextTick } from 'vue'
 import { PopInfo, PopType, Logger } from './base'
 import { Connector, login } from './connect'
-import { GroupMemberInfoElem, UserFriendElem, UserGroupElem } from './elements/information'
-import { BotMsgType } from './elements/information'
-import { RunTimeDataElem } from './elements/information'
+import { GroupMemberInfoElem, UserFriendElem, UserGroupElem, MsgItemElem, RunTimeDataElem, BotMsgType } from './elements/information'
+import { NotificationElem } from './elements/system'
 
 const popInfo = new PopInfo()
 
@@ -30,6 +29,7 @@ export function parse(str: string) {
         switch (msg.echo) {
             case 'getVersionInfo'       : saveBotInfo(msg.data); break
             case 'getLoginInfo'         : saveLoginInfo(msg.data); break
+            case 'getMoreLoginInfo'     : runtimeData.loginInfo.info = msg.data.data.result.buddy.info_list[0]; break
             case 'getGroupList'         : saveUser(msg.data); break
             case 'getFriendList'        : saveUser(msg.data); break
             case 'getUserInfoInGroup'   : runtimeData.chatInfo.info.me_info = msg; break
@@ -62,8 +62,9 @@ export function parse(str: string) {
     } else {
         switch (msg.post_type) {
             // gocqhttp 自动发送的消息回调和其他消息有区分
-            // case 'message_sent'         : msg.post_type = 'message'
-            // case 'message'              : newMsg(msg); break
+            case 'message_sent'         : msg.post_type = 'message'
+            // eslint-disable-next-line
+            case 'message'              : newMsg(msg); break
             case 'notice'               : {
                 switch (msg.sub_type) {
                     case 'recall'           : revokeMsg(msg); break
@@ -111,6 +112,10 @@ function saveLoginInfo(data: { [key: string]: any }) {
     }
     runtimeData.loginInfo = data
     login.status = true
+    const barMsg = document.getElementById('bar-msg')
+    if(barMsg != null) {
+        barMsg.click()
+    }
     // 获取更详细的信息
     const url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
     const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${data.uin}&nf=0&of=0&ldw=${data.bkn}`
@@ -127,26 +132,28 @@ function saveLoginInfo(data: { [key: string]: any }) {
     //     user_id: userId
     //   })
     // }
+    // 好友列表
+    Connector.send('get_friend_list', {}, 'getFriendList')
+    // 群列表
+    Connector.send('get_group_list', {}, 'getGroupList')
 }
 
 function saveUser(list: (UserFriendElem & UserGroupElem)[]) {
-    const back = runtimeData.userList.concat(list)
-    runtimeData.userList = back
+    runtimeData.userList = runtimeData.userList.concat(list)
     // 刷新置顶列表
-    // let info = Vue.$cookies.get('top')
-    // if (info !== null) {
-    //     Vue.set(runtimeData, 'topInfo', info)
-    //     const topList = info[runtimeData.loginInfo.uin]
-    //     if (topList !== undefined) {
-    //         list.forEach((item) => {
-    //             const id = Number(item.user_id ? item.user_id : item.group_id)
-    //             if (topList.indexOf(id) >= 0) {
-    //                 item.always_top = true
-    //                 runtimeData.onMsg.push(item)
-    //             }
-    //         })
-    //     }
-    // }
+    const info = runtimeData.sysConfig.top_info as { [key: string]: number[] } | null
+    if (info != null) {
+        const topList = info[runtimeData.loginInfo.uin]
+        if (topList !== undefined) {
+            list.forEach((item) => {
+                const id = Number(item.user_id ? item.user_id : item.group_id)
+                if (topList.indexOf(id) >= 0) {
+                    item.always_top = true
+                    runtimeData.onMsgList.push(item)
+                }
+            })
+        }
+    }
 }
 
 function saveGroupMember(data: GroupMemberInfoElem[]) {
@@ -374,12 +381,167 @@ function saveMoreFileList(data: any) {
     }
 }
 
+function newMsg(data: any) {
+    // 对 CQCode 消息进行转换
+    if (runtimeData.tags.msgType === BotMsgType.CQCode) {
+        data.message = Util.parseCQ(data.message)
+    }
+    const id = data.from_id ? data.from_id : data.group_id
+    const sender = data.sender.user_id
+    // 消息回调检查
+    // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复
+    if (Option.get('send_reget') !== true && sender === runtimeData.loginInfo.uin) {
+        Option.save('send_reget', true)
+    }
+    // 显示消息
+    if (id === runtimeData.chatInfo.show.id) {
+        runtimeData.messageList.push(data)
+    }
+    // 刷新消息列表
+    // PS：在消息列表内的永远会刷新，不需要被提及
+    const get = runtimeData.onMsgList.filter((item, index) => {
+        if(Number(id) === item.user_id || Number(id) === item.group_id) {
+            if(data.message_type === 'group') {
+                const name = (data.sender.card && data.sender.card !== '') ? data.sender.card : data.sender.nickname
+                runtimeData.onMsgList[index].raw_msg = name + ': ' + data.raw_message
+            } else {
+                runtimeData.onMsgList[index].raw_msg = data.raw_message
+            }
+            runtimeData.onMsgList[index].time = Number(data.time) * 1000
+            return true
+        }
+        return false
+    })
+    // (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息) 这些情况需要进行新消息处理
+    if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
+        // (发送者没有被打开 || 窗口被最小化) 这些情况需要进行消息通知
+        if (id !== runtimeData.chatInfo.show.id || document.hidden) {
+            // 检查通知权限，老旧浏览器不支持这个功能
+            if (Notification.permission === 'default') {
+                Notification.requestPermission(() => {
+                    sendNotice(data)
+                })
+            } else if (Notification.permission !== 'denied') {
+                sendNotice(data)
+            }
+        }
+        // 如果发送者不在消息列表里，将它添加到消息列表里
+        if (get.length !== 1) {
+            const getList = runtimeData.userList.filter((item) => { return item.user_id === id || item.group_id === id })
+            if (getList.length === 1) {
+                runtimeData.onMsgList.push(getList[0])
+            }
+        }
+        runtimeData.onMsgList.forEach((item, index) => {
+            // 刷新新消息标签
+            if (id !== runtimeData.chatInfo.show.id && (id == item.group_id || id == item.user_id)) {
+                item.new_msg = true
+            }
+        })
+        // 重新排序列表
+        const newList = [] as (UserFriendElem & UserGroupElem)[]
+        let topNum = 1
+        runtimeData.onMsgList.forEach((item) => {
+            // 排序操作
+            if (item.always_top === true) {
+                newList.unshift(item)
+                topNum++
+            } else if (item.new_msg === true) {
+                newList.splice(topNum - 1, 0, item)
+            } else {
+                newList.push(item)
+            }
+        })
+        runtimeData.onMsgList = newList
+    }
+}
+
+function sendNotice(msg: any) {
+    if (Option.get('close_notice') !== true) {
+        let raw = Util.getMsgRawTxt(msg.message)
+        raw = raw === '' ? msg.raw_message : raw
+        // 构建通知
+        let notificationTile = ''
+        const notificationBody = {} as NotificationElem
+        if (msg.message_type === 'group') {
+            notificationTile = msg.group_name
+            notificationBody.body = msg.sender.nickname + ':' + raw
+            notificationBody.tag = `${msg.group_id}/${msg.message_id}`
+            notificationBody.icon = `https://p.qlogo.cn/gh/${msg.group_id}/${msg.group_id}/0`
+        } else {
+            notificationTile = msg.sender.nickname
+            notificationBody.body = raw
+            notificationBody.tag = `${msg.user_id}/${msg.message_id}`
+            notificationBody.icon = `https://q1.qlogo.cn/g?b=qq&s=0&nk=${msg.user_id}`
+        }
+        // 如果消息有图片，追加第一张图片
+        msg.message.forEach((item: MsgItemElem) => {
+            if (item.type === 'image' && notificationBody.image === undefined) {
+                notificationBody.image = item.url
+            }
+        })
+        // 发起通知
+        const notification = new Notification(notificationTile, notificationBody)
+        notificationList[msg.message_id] = notification
+        notification.onclick = (event: Event) => {
+            const info = event.target as NotificationOptions
+            if(info.tag !== undefined) {
+                const userId = info.tag.split('/')[0]
+                const msgId = Number(info.tag.substring(userId.length + 1, info.tag.length))
+                if (notificationList[msgId] !== undefined) {
+                    delete notificationList[msgId]
+                }
+
+                // 跳转到这条消息的发送者页面
+                window.focus()
+                const body = document.getElementById('user-' + userId)
+                if (body === null) {
+                    // 从缓存列表里寻找这个 ID
+                    for (let i = 0; i < runtimeData.userList.length; i++) {
+                        const item = runtimeData.userList[i]
+                        const id = item.user_id !== undefined ? item.user_id : item.group_id
+                        if (String(id) === userId) {
+                            // 把它插入到显示列表的第一个
+                            runtimeData.showList?.unshift(item)
+                            nextTick(() => {
+                                const bodyNext = document.getElementById('user-' + userId)
+                                if(bodyNext !== null) {
+                                    // 添加一个消息跳转标记
+                                    bodyNext.dataset.jump = msgId.toString()
+                                    // 然后点一下它触发聊天框切换
+                                    bodyNext.click()
+                                }
+                            })
+                            break
+                        }
+                    }
+                } else {
+                    body.click()
+                }
+
+            }
+        }
+        notification.onclose = (event: Event) => {
+            const info = event.target as NotificationOptions
+            if(info.tag !== undefined) {
+                const msgId = Number(info.tag.split('/')[1])
+                if (notificationList[msgId] !== undefined) {
+                    delete notificationList[msgId]
+                }
+            }
+        }
+    }
+}
+
 // ==============================================================
+
+const notificationList: Notification[] = []
 
 export const runtimeData: RunTimeDataElem = reactive({
     tags: {
         firstLoad: false,
-        canLoadHistory: true
+        canLoadHistory: true,
+        openSideBar: false
     },
     pageView: {
         chatView: () => import('@/pages/Chat.vue'),

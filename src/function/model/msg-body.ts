@@ -6,14 +6,11 @@
  * @Description: 此模块抽离出了本来在 MsgBody.vue 中的一些较为通用的方法便于进行多 Bot 适配。
 */
 
-// import Xss from 'xss'
-
-import app from '@/main'
 import xss from 'xss'
-import Util from '../util'
+import app from '@/main'
 
-import { PopInfo, PopType } from '../base'
-import { Connector } from '../connect'
+import { PopInfo, PopType } from '@/function/base'
+import { Connector } from '@/function/connect'
 
 const popInfo = new PopInfo()
 

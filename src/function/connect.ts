@@ -82,10 +82,6 @@ function getBaseInfo() {
     Connector.send('get_version_info', {}, 'getVersionInfo')
     // 用户信息
     Connector.send('get_login_info', {}, 'getLoginInfo')
-    // 好友列表
-    Connector.send('get_friend_list', {}, 'getFriendList')
-    // 群列表
-    Connector.send('get_group_list', {}, 'getGroupList')
 }
 
 export let login: LoginCacheElem = { status: false, address: '', token: '' }

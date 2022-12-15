@@ -6,7 +6,7 @@
 -->
 
 <template>
-    <div :class="(item.type === 2 ? ' folder' : '') + ((item.sub_list !== undefined && item.sub_list.length > 0) ? ' open' : '')"
+    <div :class="(item.type === 2 ? ' folder' : '') + ((item.sub_list && item.sub_list.length > 0) ? ' open' : '')"
         @click="loadFileDir(item.id, item.type)">
         <svg v-if="item.type === 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
             <path
@@ -24,7 +24,7 @@
                         { year: 'numeric', month: "short", day: "numeric" })
                         .format(new Date(item.create_time * 1000))
                 }}</span>
-                <span v-if="item.dead_time !== 0 && item.dead_time !== undefined">{{ ((item.dead_time -
+                <span v-if="!item.dead_time && item.dead_time">{{ ((item.dead_time -
                         item.create_time / 86400) - 1) + $t('chat_chat_info_dead_day')
                 }}</span>
                 <span v-if="item.type === 2">{{ $t('chat_chat_info_file_num', { num: item.size }) }}</span>

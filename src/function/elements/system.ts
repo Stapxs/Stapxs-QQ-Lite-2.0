@@ -1,5 +1,3 @@
-import { UserFriendElem, UserGroupElem } from "./information"
-
 /**
  * 登录状态记录（地址、密钥、状态等）
  */
@@ -33,4 +31,11 @@ export interface ContributorElem {
     link: string,
     title: string
     isMe: boolean
+}
+
+export interface NotificationElem {
+    body: string,
+    tag: string,
+    icon: string,
+    image?: string
 }

@@ -24,8 +24,20 @@ import { runtimeData } from './msg'
  * @param cache 多媒体消息缓存列表
  * @returns 用于发送的纯文本消息（根据 Bot 类型可能是 CQ 码或者 JSON 对象等）
  */
-export function parseMsg(msg: string, cache: MsgItemElem[]) {
-    let back
+export function parseMsg(msg: string, cache: MsgItemElem[], img: string[]) {
+    // 如果消息发送框功能是启用的，则先将 cache 的图片插入到最前面
+    // 将图片插入 cache 列表并在消息文本前插入 SQCode
+    if (img.length > 0) {
+        img.forEach((item) => {
+            cache.push({
+                type: 'image',
+                file: 'base64://' + item.substring(item.indexOf('base64,') + 7, item.length)
+            })
+            msg = `[SQ:${cache.length - 1}]` + msg
+        })
+    }
+    // 处理消息
+    let back = undefined
     if (runtimeData.tags.msgType === undefined || runtimeData.tags.msgType === BotMsgType.JSON) {
         back = parseMsgToJSON(msg, cache)
     } else if (runtimeData.tags.msgType === BotMsgType.CQCode) {
@@ -59,13 +71,6 @@ export default {
  */
 function parseMsgToJSON(msg: string, cache: MsgItemElem[]) {
     const back = []
-    // 如果消息发送框功能是启用的，则先将 cache 的图片插入到返回列表的最前面
-    // TODO: 这儿没有判断设置项
-    // if (Vue.cacheImg != null) {
-    //     Vue.cacheImg.forEach((item) => {
-    //         back.push({ type: 'image', file: 'base64://' + item.substring(item.indexOf('base64,') + 7, item.length) })
-    //     })
-    // }
     // 处理消息文本
     const specialList = getSQList(msg)
     if (specialList !== null) {
@@ -105,12 +110,6 @@ function parseMsgToJSON(msg: string, cache: MsgItemElem[]) {
 
 function parseMsgToCQ(msg: string, cache: MsgItemElem[]) {
     let back = ''
-    // 如果消息发送框功能是启用的，则先将 cache 的图片插入到返回列表的最前面
-    // if (Vue.cacheImg != null) {
-    //     Vue.cacheImg.forEach((item) => {
-    //         back += `[CQ:image,file=${'base64://' + item.substring(item.indexOf('base64,') + 7, item.length)}]`
-    //     })
-    // }
     // 处理消息文本
     const specialList = getSQList(msg)
     if (specialList !== null) {
