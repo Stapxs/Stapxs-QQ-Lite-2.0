@@ -76,7 +76,8 @@ import { MsgBodyFuns as ViewFuns } from '@/function/model/msg-body'
 import { defineComponent } from 'vue'
 import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
-import { Logger } from '@/function/base'
+import { Logger, PopInfo, PopType } from '@/function/base'
+import app from '@/main'
 
 export default defineComponent({
     name: 'MsgBody',
@@ -154,7 +155,27 @@ export default defineComponent({
          * @param msgId 消息 ID
          */
         imgClick (msgId: string) {
-            this.$emit('viewImg', msgId)
+            const seq = Util.parseMsgId(msgId).seqid
+            if(runtimeData.chatInfo.info.image_list !== undefined) {
+                // 寻找实际的序号
+                let num = -1
+                for(let i = 0; i < runtimeData.chatInfo.info.image_list.length; i++) {
+                    const item = runtimeData.chatInfo.info.image_list[i]
+                    if(item.index == seq && item.message_id == msgId) {
+                        num = i
+                        break
+                    }
+                }
+                // 显示
+                const viewer = app.config.globalProperties.$viewer
+                if(num >= 0 && viewer) {
+                    viewer.view(num)
+                    viewer.show()
+                    runtimeData.tags.viewer.index = num
+                } else {
+                    new PopInfo().add(PopType.INFO, this.$t('pop_find_pic_fail'))
+                }
+            }
         },
 
         /**

@@ -20,7 +20,11 @@ export interface RunTimeDataElem {
         firstLoad: boolean
         msgType?: BotMsgType
         canLoadHistory: boolean
-        openSideBar: boolean
+        openSideBar: boolean,
+        viewer: {
+            show?: boolean,
+            index: number
+        }
     },
     messageList: any[]
     mergeMessageList?: [],
@@ -37,7 +41,8 @@ export interface ChatInfoElem {
         group_files: { [key: string]: any },
         group_sub_files: { [key: string]: any },
         group_notices?: { [key: string]: any },
-        now_member_info?: { [key: string]: any }
+        now_member_info?: { [key: string]: any },
+        image_list?: { index: number, message_id: string, img_url: string }[]
     }
 }
 

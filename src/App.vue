@@ -3,7 +3,10 @@
         <div class="layui-tab layui-tab-brief main-body">
             <ul class="layui-tab-title">
                 <li @click="changeTab('主页', 'Home', true)" :class="loginInfo.status ? 'hiden-home' : 'layui-this'">
-                <!-- <svg-icon iconClass="#house-solid"></svg-icon> -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">>
+                        <path
+                            d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z" />
+                    </svg>
                 </li>
                 <li id="bar-msg" @click="changeTab('信息', 'Messages', false)"
                     :class="!loginInfo.status ? '' : 'layui-this'">
@@ -124,7 +127,31 @@
           :mumberInfo="runtimeData.chatInfo.info.now_member_info == undefined ? {} : runtimeData.chatInfo.info.now_member_info"
           :mergeList="runtimeData.mergeMessageList == undefined ? [] : runtimeData.mergeMessageList"
           :list= runtimeData.messageList
-          :chat="runtimeData.chatInfo"></Chat>
+          :chat="runtimeData.chatInfo">
+        </Chat>
+        <!-- 提示信息显示区 -->
+        <TransitionGroup class="app-msg" name="ViewNotices" tag="div">
+          <div v-for="msg in appMsgs" :key="'appmsg-' + msg.id">
+            <div v-html="msg.svg"></div>
+            <a>{{ msg.text }}</a>
+            <div v-if="!msg.autoClose" @click="popInfo.remove(msg.id)">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>
+            </div>
+          </div>
+        </TransitionGroup>
+        <!-- 图片预览器 -->
+        <viewer
+            class="viewer" ref="viewer"
+            :options="viewerOpt"
+            :images="runtimeData.chatInfo.info.image_list"
+            @inited="viewerInited"
+            @hide="viewerHide"
+            @show="viewerShow">
+            <template #default="scope">
+              <img v-for="info in scope.images" :src="info.img_url" :key="'imgView-' + info.index">
+              {{scope.options}}
+            </template>
+        </viewer>
     </div>
 </template>
 
@@ -136,7 +163,7 @@ import Option from '@/function/option'
 
 import { defineComponent } from 'vue'
 import { Connector, login as loginInfo } from '@/function/connect'
-import { Logger } from '@/function/base'
+import { Logger, popList, PopInfo } from '@/function/base'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem } from '@/function/elements/information'
 import { loadHistory } from '@/function/util'
@@ -156,12 +183,16 @@ export default defineComponent({
     },
     data () {
         return {
+            popInfo: new PopInfo(),
+            appMsgs: popList,
             loadHistory: loadHistory,
             loginInfo: loginInfo,
             runtimeData: runtimeData,
             tags: {
                 showChat: false
-            }
+            },
+            viewerOpt: { inline: false, button: false, title: false, toolbar: { prev: true, rotateLeft: true, reset: true, rotateRight: true, next: true } },
+            viewerBody: undefined
         }
     },
     methods: {
@@ -245,6 +276,24 @@ export default defineComponent({
                 // PS：部分功能不返回用户名需要进来查找所以提前获取
                 Connector.send('get_group_member_list', { group_id: data.id }, 'getGroupMemberList')
             }
+        },
+
+        /**
+         * 图片查看器初始化
+         * @param viewer viewer 对象
+         */
+        viewerInited (viewer: any) {
+            this.viewerBody = viewer
+        },
+
+        /**
+         * 图片查看器事件
+         */
+        viewerHide () {
+            runtimeData.tags.viewer.show = false
+        },
+        viewerShow () {
+            runtimeData.tags.viewer.show = true
         }
     },
     mounted () {
@@ -252,6 +301,7 @@ export default defineComponent({
         
         // 页面加载完成后
         window.onload = () => {
+            app.config.globalProperties.$viewer = this.viewerBody
             const $cookies = app.config.globalProperties.$cookies
 
             // 初始化波浪动画

@@ -51,7 +51,6 @@
                     :key="msg.message_id"
                     :data="msg"
                     @scrollToMsg="scrollToMsg"
-                    @viewImg="viewImg"
                     @contextmenu.prevent="showMsgMeun($event, msg)"
                     @scrollButtom="imgLoadedScroll">
                 </MsgBody>
@@ -387,14 +386,6 @@ export default defineComponent({
             if(pan && !this.tags.showBottomButton) {
                 this.scrollBottom()
             }
-        },
-
-        /**
-         * 消息中的图片被点击
-         * @param msgId 消息 ID
-         */
-        viewImg (msgId: number) {
-            this.$emit('viewImg', msgId)
         },
 
         /**
@@ -862,19 +853,30 @@ export default defineComponent({
                         this.tags.nowGetHistroy = false
                     }
                     // 刷新图片列表
-                    // let getImgList = []
-                    // this.list.forEach((item) => {
-                    //     if (item.message !== undefined) {
-                    //         item.message.forEach((msg) => {
-                    //             if (msg.type === 'image' && !msg.asface) {
-                    //                 const index = (parseMsgId(item.message_id)).seqid
-                    //                 const info = [index, item.message_id, msg.url]
-                    //                 getImgList.push(info)
-                    //             }
-                    //         })
-                    //     }
-                    // })
-                    // this.imgView.srcList = getImgList
+                    // TODO: 需要优化性能
+                    let getImgList = [] as { index: number, message_id: string, img_url: string }[]
+                    this.list.forEach((item: any) => {
+                        if (item.message !== undefined) {
+                            item.message.forEach((msg: MsgItemElem) => {
+                                if (msg.type === 'image' && !msg.asface) {
+                                    const index = (parseMsgId(item.message_id)).seqid
+                                    if(index != undefined) {
+                                        const info = {
+                                            index: index,
+                                            message_id: item.message_id,
+                                            img_url: msg.url
+                                        }
+                                        getImgList.push(info)
+                                    }
+                                }
+                            })
+                        }
+                    })
+                    // TODO: BUG - 在刷新图片列表时整个图片模板都会被刷新并字段弹到默认的第一张图片去，
+                    // 此处只是在没有变更的时候不刷新列表，并未解决此 BUG
+                    if(getImgList.length != runtimeData.chatInfo.info.image_list?.length) {
+                        runtimeData.chatInfo.info.image_list = getImgList
+                    }
                     // 处理跳入跳转预设
                     // 如果 jump 参数不是 undefined，则意味着这次加载历史记录的同时需要跳转到指定的消息
                     if (runtimeData.chatInfo.show && runtimeData.chatInfo.show.jump) {

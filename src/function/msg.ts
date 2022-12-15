@@ -232,7 +232,7 @@ function saveSendedMsg(echoList: string[], msg: any) {
     if (Number(echoList[2]) <= 5) {
         if (echoList[1] !== msg.message_id) {
             // 返回的不是这条消息，重新请求
-            popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_get_msg_err') + '(' + echoList[2] + ')')
+            popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_get_msg_err') + ' ( ' + echoList[2] + ' )')
             setTimeout(() => {
                 Connector.send(
                     'get_msg',
@@ -541,7 +541,8 @@ export const runtimeData: RunTimeDataElem = reactive({
     tags: {
         firstLoad: false,
         canLoadHistory: true,
-        openSideBar: false
+        openSideBar: false,
+        viewer: { index: 0 }
     },
     pageView: {
         chatView: () => import('@/pages/Chat.vue'),

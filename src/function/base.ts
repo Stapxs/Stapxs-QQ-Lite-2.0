@@ -6,6 +6,7 @@
  * @Description: 此模块主要为程序相关的基础功能
 */
 
+import { reactive } from 'vue'
 import { PopInfoElem } from './elements/system'
 
 // =============== 日志 ===============
@@ -104,4 +105,4 @@ export class PopInfo {
     }
 }
 
-export const popList: PopInfoElem[] = []
+export const popList: PopInfoElem[] = reactive([])
