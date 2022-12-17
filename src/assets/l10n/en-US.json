@@ -54,7 +54,7 @@
   "chat_msg_menu_withdraw": "Revoke",
   "chat_no_more_msg": "No more messages available",
   "chat_no_msg": "No messages found",
-  "chat_send_pic_send": "Send",
+  "chat_send": "Send",
   "chat_send_pic_title": "Send Image",
   "chat_space": "Start messaging with one of your contacts",
   "chat_unsupported_msg": "(Unsupported message)",
@@ -187,5 +187,12 @@
   "log_cq_msg_parsred": "Log CQ messages parsed",
   "chat_chat_info_option_top": "Pin group / contact",
   "chat_chat_info_option_top_tip": "But no cyberstalking allowed plz",
-  "log_com_err": "Failed to establish connection"
+  "log_com_err": "Failed to establish connection",
+  "sw_ready": "App is being served from cache by a service worker. For more details, visit https://goo.gl/AFskqB",
+  "sw_registered": "Service worker has been registered.",
+  "sw_cached": "Content has been cached for offline use.",
+  "sw_update": "New content is downloading.",
+  "sw_updated": "New content is available; please refresh.",
+  "sw_offline": "No internet connection found. App is running in offline mode.",
+  "sw_error": "Error during service worker registration"
 }

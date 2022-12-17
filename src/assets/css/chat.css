@@ -898,6 +898,85 @@ textarea {
     width: 25px;
 }
 
+.jin-pan {
+    background: var(--color-card-1);
+    transform: translateY(-100%);
+    width: calc(100% - 40px);
+    flex-direction: column;
+    position: absolute;
+    margin-left: 20px;
+    max-height: 50vh;
+    overflow: hidden;
+    display: flex;
+    padding: 0;
+}
+.jin-pan > div:first-child {
+    align-items: center;
+    display: flex;
+    padding: 20px;
+}
+.jin-pan > div:first-child > svg {
+    fill: var(--color-font);
+    cursor: pointer;
+    height: 1.5rem;
+}
+.jin-pan > div:first-child > span {
+    white-space: nowrap;
+    margin-left: 15px;
+    font-size: 1rem;
+    flex: 1;
+}
+.jin-pan-body {
+    margin-bottom: -15px;
+    overflow: scroll;
+    padding: 0 5px;
+}
+.jin-pan-body > div {
+    background: var(--color-card-2);
+    border-radius: 7px;
+    margin: 10px 0;
+    padding: 10px;
+}
+.jin-pan-body > div:first-child {
+    margin-top: 0 !important;
+}
+.jin-pan-body > div > div:first-child {
+    align-items: center;
+    display: flex;
+}
+.jin-pan-body > div > div:first-child > img {
+    border: 1px solid var(--color-card-2);
+    outline: 2px solid var(--color-main);
+    border-radius: 100%;
+    margin-right: 10px;
+    width: 22px;
+}
+.jin-pan-body > div > div:first-child > div {
+    flex-direction: column;
+    display: flex;
+}
+.jin-pan-body > div > div:first-child span {
+    color: var(--color-font-2);
+    border-radius: 2rem;
+    font-size: 0.5rem;
+}
+.jin-pan-body > div > div.context {
+    align-items: flex-end;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 15px;
+    display: flex;
+}
+.jin-pan-body > div > div.context > img {
+    margin: 0 10px 10px 10px;
+    border-radius: 7px;
+    max-width: 60%;
+}
+.jin-pan-body > div > div.context > img.face {
+    margin: -5px 5px 0 5px;
+    height: 1.4rem;
+}
+
 .replay-tag {
     background: var(--color-card-1);
     margin: 0 20px -10px 20px;

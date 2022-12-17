@@ -192,7 +192,7 @@ export default defineComponent({
                 showChat: false
             },
             viewerOpt: { inline: false, button: false, title: false, toolbar: { prev: true, rotateLeft: true, reset: true, rotateRight: true, next: true } },
-            viewerBody: undefined
+            viewerBody: undefined as HTMLDivElement | undefined
         }
     },
     methods: {
@@ -265,8 +265,8 @@ export default defineComponent({
                     group_sub_files: {}
                 }
             }
-            // 清空合并转发缓存
-            runtimeData.mergeMessageList = []
+            runtimeData.mergeMessageList = []           // 清空合并转发缓存
+            runtimeData.tags.canLoadHistory = true      // 重置终止加载标志
             // 重置图片预览器状态
             // Object.assign(this.$data.imgView, this.$options.data().imgView)
             if (data.type == 'group') {
@@ -282,7 +282,7 @@ export default defineComponent({
          * 图片查看器初始化
          * @param viewer viewer 对象
          */
-        viewerInited (viewer: any) {
+        viewerInited (viewer: HTMLDivElement) {
             this.viewerBody = viewer
         },
 
@@ -337,3 +337,20 @@ export default defineComponent({
     }
 })
 </script>
+
+<style>
+  .appmsg-move,
+  .appmsg-enter-active,
+  .appmsg-leave-active {
+    transition: all 0.2s;
+  }
+  .appmsg-leave-active {
+    position: absolute;
+  }
+
+  .appmsg-enter-from,
+  .appmsg-leave-to {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+</style>

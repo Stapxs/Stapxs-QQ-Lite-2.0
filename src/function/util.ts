@@ -299,7 +299,6 @@ export function loadHistory(info: BaseChatInfoElem) {
     }
 }
 function loadHistoryMessage(id: number, type: string) {
-    console.log(id + "/" + type)
     // 加载历史消息
     // Note: https://github.com/takayama-lily/oicq/wiki/93.%E8%A7%A3%E6%9E%90%E6%B6%88%E6%81%AFID
     let msgid = null
@@ -343,6 +342,36 @@ function loadHistoryMessage(id: number, type: string) {
     }
 }
 
+/**
+ * 滚动到目标消息（不自动加载）
+ * @param seqName DOM 名
+ */
+export function scrollToMsg (seqName: string, showAnimation: boolean): boolean {
+    const msg = document.getElementById(seqName)
+    if (msg) {
+        const pan = document.getElementById('msgPan')
+        if (pan !== null) {
+            if (showAnimation === false) {
+                pan.style.scrollBehavior = 'unset'
+            } else {
+                pan.style.scrollBehavior = 'smooth'
+            }
+            pan.scrollTop = msg.offsetTop - msg.offsetHeight + 10
+            pan.style.scrollBehavior = 'smooth'
+            msg.style.transition = 'background 1s'
+            msg.style.background = 'rgba(0, 0, 0, 0.06)'
+            setTimeout(() => {
+                msg.style.background = 'unset'
+                setTimeout(() => {
+                    msg.style.transition = 'background .3s'
+                }, 1100)
+            }, 3000)
+            return true
+        }
+    }
+    return false
+}
+
 export default {
     openLink,
     getTrueLang,
@@ -350,5 +379,6 @@ export default {
     parseMsgId,
     htmlDecodeByRegExp,
     parseCQ,
-    loadHistory
+    loadHistory,
+    scrollToMsg
 }

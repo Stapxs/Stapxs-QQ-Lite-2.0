@@ -34,16 +34,19 @@
             </div>
         </div>
         <!-- 加载中指示器 -->
-        <div :class="'loading' + (tags.nowGetHistroy ? ' show': '')">
+        <div :class="'loading' + (tags.nowGetHistroy && runtimeData.tags.canLoadHistory ? ' show': '')">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg>
             <span>加载中</span>
         </div>
         <!-- 消息显示区 -->
         <div class="chat" @scroll="chatScroll" id="msgPan" style="scroll-behavior: smooth;">
-            <div class="note top" v-if="!runtimeData.tags.canLoadHistory">
-                <span class="note-nomsg">{{ $t('chat_no_more_msg') }}</span>
+            <div class="note note-nomsg" v-if="!runtimeData.tags.canLoadHistory">
+                <hr>
+                <a>{{ $t('chat_no_more_msg') }}</a>
             </div>
             <template v-for="(msg, index) in list">
+                <!-- 时间戳（notice） -->
+                <NoticeBody v-if="isShowTime((list[index - 1] ? list[index - 1].time : undefined), msg.time)" :key="'notice-time-' + index" :data="{sub_type: 'time', time: msg.time}"></NoticeBody>
                 <!-- 消息（message） -->
                 <MsgBody
                     :is="runtimeData.pageView.msgView"
@@ -52,7 +55,10 @@
                     :data="msg"
                     @scrollToMsg="scrollToMsg"
                     @contextmenu.prevent="showMsgMeun($event, msg)"
-                    @scrollButtom="imgLoadedScroll">
+                    @scrollButtom="imgLoadedScroll"
+                    @touchstart="msgStartMove($event, msg)"
+                    @touchmove="msgOnMove"
+                    @touchend="msgMoveEnd($event, msg)">
                 </MsgBody>
                 <!-- 通知（notice） -->
                 <NoticeBody v-if="msg.post_type === 'notice'" :key="'notice-' + index" :data="msg"></NoticeBody>
@@ -75,6 +81,37 @@
                 <div>
                     <!-- 表情面板 -->
                     <FacePan v-show="details[1].open" @addSpecialMsg="addSpecialMsg"></FacePan>
+                    <!-- 精华消息 -->
+                    <div v-show="details[2].open && runtimeData.chatInfo.info.jin_info && runtimeData.chatInfo.info.jin_info.data.msg_list" class="ss-card jin-pan">
+                        <div>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="margin-top: 5px;"><path d="M511.1 63.1v287.1c0 35.25-28.75 63.1-64 63.1h-144l-124.9 93.68c-7.875 5.75-19.12 .0497-19.12-9.7v-83.98h-96c-35.25 0-64-28.75-64-63.1V63.1c0-35.25 28.75-63.1 64-63.1h384C483.2 0 511.1 28.75 511.1 63.1z"></path></svg>
+                            <span>{{ $t('chat_fun_menu_jin') }}</span>
+                            <svg @click="details[2].open = !details[2].open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path></svg>
+                        </div>
+                        <div class="jin-pan-body">
+                            <div v-for="(item, index) in runtimeData.chatInfo.info.jin_info ? 
+                                    runtimeData.chatInfo.info.jin_info.data.msg_list : []"
+                                :key="'jin-' + index">
+                                <div>
+                                    <img :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.sender_uin}`">
+                                    <div>
+                                        <a>{{ item.sender_nick }}</a>
+                                        <span>{{ Intl.DateTimeFormat(trueLang,
+                                            { hour: "numeric", minute: "numeric" })
+                                            .format(new Date(item.sender_time * 1000)) }} {{ $t('chat_send') }}</span>
+                                    </div>
+                                </div>
+                                <div class="context">
+                                    <template v-for="(context, indexc) in item.msg_content"
+                                        :key="'jinc-' + index + '-' + indexc">
+                                        <span v-if="context.msg_type === 1">{{ context.text }}</span>
+                                        <img v-if="context.msg_type === 2" class="face" :src="require('./../assets/img/qq-face/' + context.face_index + '.gif')">
+                                        <img v-if="context.msg_type === 3" :src="context.image_url">
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <!-- 回复指示器 -->
                 <div :class="tags.isReply ? 'replay-tag show' : 'replay-tag'">
@@ -100,11 +137,14 @@
                                 d="M0 256C0 114.6 114.6 0 256 0C397.4 0 512 114.6 512 256C512 397.4 397.4 512 256 512C114.6 512 0 397.4 0 256zM256 432C332.1 432 396.2 382 415.2 314.1C419.1 300.4 407.8 288 393.6 288H118.4C104.2 288 92.92 300.4 96.76 314.1C115.8 382 179.9 432 256 432V432zM176.4 160C158.7 160 144.4 174.3 144.4 192C144.4 209.7 158.7 224 176.4 224C194 224 208.4 209.7 208.4 192C208.4 174.3 194 160 176.4 160zM336.4 224C354 224 368.4 209.7 368.4 192C368.4 174.3 354 160 336.4 160C318.7 160 304.4 174.3 304.4 192C304.4 209.7 318.7 224 336.4 224z" />
                         </svg>
                     </div>
+                    <div :title="$t('chat_fun_menu_jin')" v-if="chat.show.type === 'group'" @click="showJin">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"/></svg>
+                    </div>
                 </div>
             </div>
             <!-- 消息发送框 -->
             <div>
-                <div @click="tags.showMoreDetail = !tags.showMoreDetail">
+                <div @click="moreFunClick">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
                         <path
                             d="M432 256c0 17.69-14.33 32.01-32 32.01H256v144c0 17.69-14.33 31.99-32 31.99s-32-14.3-32-31.99v-144H48c-17.67 0-32-14.32-32-32.01s14.33-31.99 32-31.99H192v-144c0-17.69 14.33-32.01 32-32.01s32 14.32 32 32.01v144h144C417.7 224 432 238.3 432 256z" />
@@ -185,7 +225,7 @@
         <div class="msg-menu">
             <div v-show="tags.showMsgMenu" class="msg-menu-bg" @click="closeMsgMenu"></div>
             <div :class="tags.showMsgMenu ? 'ss-card menu show' : 'ss-card menu'" id="msgMenu">
-                <div @click="replyMsg" v-show="tags.menuDisplay.relpy">
+                <div @click="replyMsg(true)" v-show="tags.menuDisplay.relpy">
                     <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                             <path
                                 d="M511.1 63.1v287.1c0 35.25-28.75 63.1-64 63.1h-144l-124.9 93.68c-7.875 5.75-19.12 .0497-19.12-9.7v-83.98h-96c-35.25 0-64-28.75-64-63.1V63.1c0-35.25 28.75-63.1 64-63.1h384C483.2 0 511.1 28.75 511.1 63.1z" />
@@ -227,7 +267,7 @@
             <div class="card ss-card">
                 <div class="hander">
                     <span>{{ $t('chat_send_pic_title') }}</span>
-                    <button @click="sendMsg" class="ss-button">{{ $t('chat_send_pic_send') }}</button>
+                    <button @click="sendMsg" class="ss-button">{{ $t('chat_send') }}</button>
                 </div>
                 <div class="imgs">
                     <div v-for="(img64, index) in imgCache" :key="'sendImg-' + index">
@@ -254,6 +294,7 @@ import { defineComponent } from 'vue'
 import app from '@/main'
 import SendUtil from '@/function/sender'
 import Option from '@/function/option'
+import Util from '@/function/util'
 
 import Info from '@/pages/Info.vue'
 import MsgBody from '@/components/MsgBody.vue'
@@ -261,7 +302,7 @@ import NoticeBody from '@/components/NoticeBody.vue'
 import FacePan from '@/components/FacePan.vue'
 
 import { parseMsgId, getTrueLang, loadHistory as loadHistoryFirst } from '@/function/util'
-import { Logger, PopInfo, PopType } from '@/function/base'
+import { Logger, LogType, PopInfo, PopType } from '@/function/base'
 import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem, MsgItemElem, SQCodeElem } from '@/function/elements/information'
@@ -289,9 +330,15 @@ export default defineComponent({
                     copy: true,
                     copySelect: false,
                     revoke: false
+                },
+                msgTouch: {
+                    x: -1,
+                    y: -1,
+                    msgOnTouchDown: false,
+                    onMove: 'no'
                 }
             },
-            details: [{ open: false }, { open: false }],
+            details: [{ open: false }, { open: false }, {open: false}],
             msgMenus: [],
             NewMsgNum: 0,
             msg: '',
@@ -299,10 +346,22 @@ export default defineComponent({
             imgCache: [] as string[],
             sendCache: [] as MsgItemElem[],
             selectedMsg: null as { [key: string]: any } | null,
-            replyMsgInfo: null
+            replyMsgInfo: null,
         }
     },
     methods: {
+        
+        /**
+         * 判断是否需要显示时间戳（上下超过五分钟的消息）
+         * @param timePrv 上条消息的时间戳（10 位）
+         * @param timeNow 当前消息的时间戳（10 位）
+         */
+        isShowTime (timePrv: number | undefined, timeNow: number) {
+            if(timePrv == undefined) return false
+            // 五分钟 10 位时间戳相差 300
+            return timeNow - timePrv >= 300
+        },
+
         /**
          * 消息区滚动
          * @param event 滚动事件
@@ -366,18 +425,27 @@ export default defineComponent({
             }
         },
         scrollToMsg (seqName: string) {
-            const msg = document.getElementById(seqName)
-            if (msg) {
-                this.scrollTo(msg.offsetTop - msg.offsetHeight + 10)
-                msg.style.transition = 'background 1s'
-                msg.style.background = 'rgba(0, 0, 0, 0.06)'
-                setTimeout(() => {
-                    msg.style.background = 'unset'
-                    setTimeout(() => {
-                        msg.style.transition = 'background .3s'
-                    }, 1100)
-                }, 3000)
-            } else {
+            if (!Util.scrollToMsg(seqName, true)) {
+                // // 尝试向前自动加载历史消息到目标消息
+                // const seq = Number(seqName.split('-')[1])       // 目标 seq 编号
+                // const seqNow = Number(this.list[0].seq)         // 当前列表最早的消息 seq 编号
+                // if(seq && seqNow && seq < seqNow) {
+                //     new Logger().debug('正在尝试回溯历史消息，回溯数量：' + (seqNow - seq))
+                //     // 最多尝试回溯 10 次
+                //     const maxTimes = 10
+                //     if(seqNow - seq < (20 * maxTimes)) {
+                //         // this.loadMoreHistory()
+                //         const firstMsgId = this.list[0].message_id
+                //         this.tags.nowGetHistroy = true
+                //         Connector.send(
+                //             'get_chat_history',
+                //             { 'message_id': firstMsgId },
+                //             // 目标 seq 、最大跳转次数、当前已跳转次数
+                //             'getChatHistoryScroll_' + seq + '_' + maxTimes + '_0'
+                //         )
+                //         return
+                //     }
+                // }
                 new PopInfo().add(PopType.INFO, this.$t('pop_chat_msg_not_load'))
             }
         },
@@ -535,7 +603,7 @@ export default defineComponent({
         /**
          * 回复消息
          */
-        replyMsg () {
+        replyMsg (closeMenu = true) {
             const msg = this.selectedMsg
             if (msg !== null) {
                 const msgId = msg.message_id
@@ -550,7 +618,9 @@ export default defineComponent({
                     mainInput.focus()
                 }
                 // 关闭消息菜单
-                this.closeMsgMenu()
+                if(closeMenu) {
+                    this.closeMsgMenu()
+                }
             }
         },
 
@@ -800,6 +870,7 @@ export default defineComponent({
         },
 
         updateList(newLength: number, oldLength: number) {
+
             // =================== 刷新统计数据 ===================
 
             // 判断新消息数量（回到底部按钮显示、不在加载历史消息、不是首次加载消息）
@@ -810,9 +881,9 @@ export default defineComponent({
                     this.NewMsgNum = Math.abs(newLength - oldLength)
                 }
             }
-            // 清屏重新加载消息列表（超过 500 条消息、回到底部按钮不显示）
-            // PS：也就是说只在消息底部时才会触发，以防止你是在看历史消息攒满了 500 条刷掉
-            if (this.list.length > 300 && !this.tags.nowGetHistroy && !this.tags.showBottomButton) {
+            // 清屏重新加载消息列表（超过 n 条消息、回到底部按钮不显示）
+            // PS：也就是说只在消息底部时才会触发，以防止你是在看历史消息攒满了刷掉
+            if (this.list.length > 200 && !this.tags.nowGetHistroy && !this.tags.showBottomButton) {
                 runtimeData.messageList = []
                 const info = {
                     type: this.chat.show.type,
@@ -831,7 +902,7 @@ export default defineComponent({
             if (pan !== null) {
                 // 渲染前的数据
                 const height = pan.scrollHeight
-                const top = pan.scrollTop
+                // const top = pan.scrollTop
                 // 渲染后操作
                 this.$nextTick(() => {
                     const newPan = document.getElementById('msgPan')
@@ -872,7 +943,7 @@ export default defineComponent({
                             })
                         }
                     })
-                    // TODO: BUG - 在刷新图片列表时整个图片模板都会被刷新并字段弹到默认的第一张图片去，
+                    // TODO: BUG - 在刷新图片列表时整个图片模板都会被刷新并弹到默认的第一张图片去，
                     // 此处只是在没有变更的时候不刷新列表，并未解决此 BUG
                     if(getImgList.length != runtimeData.chatInfo.info.image_list?.length) {
                         runtimeData.chatInfo.info.image_list = getImgList
@@ -886,6 +957,128 @@ export default defineComponent({
                     }
                 })
             }
+        },
+
+        /**
+         * 消息触屏开始
+         * @param event 触摸事件
+         */
+        msgStartMove (event: TouchEvent, msg: any) {
+            const logger = new Logger()
+            const sender = event.currentTarget as HTMLDivElement
+            logger.add(LogType.UI, '消息触屏点击事件开始 ……')
+            this.tags.msgTouch.msgOnTouchDown = true
+            this.tags.msgTouch.x = event.targetTouches[0].pageX
+            this.tags.msgTouch.y = event.targetTouches[0].pageY
+            // 消息长按事件，计时判定长按
+            setTimeout(() => {
+                logger.add(LogType.UI, "消息触屏长按判定：" + this.tags.msgTouch.msgOnTouchDown)
+                if (this.tags.msgTouch.msgOnTouchDown === true) {
+                    sender.style.background = '#00000008'
+                    this.showMsgMeun(event, msg)
+                }
+            }, 400)
+        },
+        
+        /**
+         * 消息触屏移动
+         * @param event 触摸事件
+         */
+        msgOnMove (event: TouchEvent) {
+            const logger = new Logger()
+            const sender = event.currentTarget as HTMLDivElement
+            // 开始点击的位置
+            const startX = this.tags.msgTouch.x
+            const startY = this.tags.msgTouch.y
+            // // 移动的允许范围，用来防止按住了挪出控件范围导致无法触发 end
+            // TODO: 懒得写了
+            // const maxTop = sender.
+            if(startX > -1 && startY > -1) {
+                // 计算移动差值
+                const dx = Math.abs(startX - event.targetTouches[0].pageX)
+                const dy = Math.abs(startY - event.targetTouches[0].pageY)
+                const x = startX - event.targetTouches[0].pageX
+                // 如果 dy 大于 10px 则判定为用户在滚动页面，打断长按消息判定
+                if (dy > 10 || dx > 5) {
+                    if (this.tags.msgTouch.msgOnTouchDown) {
+                        logger.add(LogType.UI, "用户正在滑动，打断长按判定。")
+                        this.tags.msgTouch.msgOnTouchDown = false
+                    }
+                }
+                if (dy < 50) {
+                    this.tags.msgTouch.onMove = 'on'
+                    if (x < -10) {
+                        // 左滑
+                        if (dx >= sender.offsetWidth / 15) {
+                            this.tags.msgTouch.onMove = 'right'
+                            logger.add(LogType.UI, "触发右滑判定 ……（转发）")
+                        } else {
+                            sender.style.transform = "translate(" + dx + "px)"
+                            sender.style.transition = "transform 0s"
+                        }
+                    } else if (x > 10) {
+                        // 右滑
+                        if (dx >= sender.offsetWidth / 15) {
+                            this.tags.msgTouch.onMove = 'left'
+                            logger.add(LogType.UI, "触发左滑判定 ……（回复）")
+                        } else {
+                            sender.style.transform = "translate(-" + dx + "px)"
+                            sender.style.transition = "transform 0s"
+                        }
+                    }
+                } else {
+                    this.tags.msgTouch.onMove = 'no'
+                    sender.style.transform = "translate(0px)"
+                }
+            }
+        },
+
+        /**
+         * 消息触屏结束
+         * @param event 触摸事件
+         * @param msg 消息对象
+         */
+        msgMoveEnd (event: Event, msg: any) {
+            const sender = event.currentTarget as HTMLDivElement
+            sender.style.transform = 'translate(0px)'
+            // 判断操作
+            if (this.tags.msgTouch.onMove == 'left') {
+                // 左滑回复
+                this.selectedMsg = msg
+                this.replyMsg(false)
+            } else if (this.tags.msgTouch.onMove == 'right') {
+                // 右滑转发
+            }
+            // 重置数据
+            const data = (this as any).$options.data(this)
+            this.tags.msgTouch = data.tags.msgTouch
+        },
+        
+        /**
+         * 获取显示群精华消息
+         */
+        showJin () {
+            this.details[2].open = !this.details[2].open
+            if (!runtimeData.chatInfo.info.jin_info || Object.keys(runtimeData.chatInfo.info.jin_info).length == 0) {
+                const url = `https://qun.qq.com/cgi-bin/group_digest/digest_list?bkn=${runtimeData.loginInfo.bkn}&group_code=${this.chat.show.id}&page_start=0&page_limit=40`
+                Connector.send(
+                    'http_proxy',
+                    { 'url': url },
+                    'getJin'
+                )
+            }
+            this.tags.showMoreDetail = !this.tags.showMoreDetail
+        },
+
+        /**
+         * 更多功能按钮被点击
+         */
+        moreFunClick () {
+            this.tags.showMoreDetail = !this.tags.showMoreDetail
+            // 关闭所有其他的已打开的更多功能弹窗
+            this.details.forEach((item) => {
+                item.open = false
+            })
         }
     },
     watch: {

@@ -44,6 +44,7 @@ export function parse(str: string) {
             case 'getGroupNotices'      : runtimeData.chatInfo.info.group_notices = msg.data.data; break
             case 'getGroupFiles'        : saveFileList(msg.data.data); break
             case 'getMoreGroupFiles'    : saveMoreFileList(msg.data.data); break
+            case 'getJin'               : runtimeData.chatInfo.info.jin_info = msg.data.data; break
             default                     : {
                 const echoList = msg.echo.split('_')
                 const head = echoList[0]
@@ -55,6 +56,7 @@ export function parse(str: string) {
                         case 'getGroupMemberInfo'   : saveMemberInfo(msg); break
                         case 'downloadGroupFile'    : downloadGroupFile(msg); break
                         case 'getGroupDirFiles'     : saveDirFile(msg); break
+                        case 'getChatHistoryScroll' : saveChatHistoryScroll(echoList, msg); break
                     }
                 }
             }
@@ -200,6 +202,21 @@ function saveMsg(msg: any) {
     }
 }
 
+function saveChatHistoryScroll(list: string[], msg: any) {
+    saveMsg(msg)
+    // 尝试跳转消息
+    console.log(list)
+    const back = Util.scrollToMsg('chat-' + list[1], true)
+    if(!back && Number(list[3]) < Number(list[2])) {
+        Connector.send(
+            'get_chat_history',
+            { 'message_id': msg.data[0].message_id },
+            // 目标 seq 、最大跳转次数、当前已跳转次数
+            'getChatHistoryScroll_' + list[1] + '_' + list[2] + '_' + (Number(list[3]) + 1)
+        )
+    }
+}
+
 function saveForwardMsg(data: any) {
     // 格式化不规范消息格式
     for (let i = 0; i < data.length; i++) {
@@ -275,9 +292,9 @@ function revokeMsg(msg: any) {
               // 显示撤回提示
               const list = runtimeData.messageList
               if (msgIndex !== -1) {
-                  runtimeData.messageList.splice((msgIndex + 1), 0, msg)
+                list.splice((msgIndex + 1), 0, msg)
               } else {
-                runtimeData.messageList.push(msg)
+                list.push(msg)
               }
           }
         } else {
@@ -432,7 +449,7 @@ function newMsg(data: any) {
                 runtimeData.onMsgList.push(getList[0])
             }
         }
-        runtimeData.onMsgList.forEach((item, index) => {
+        runtimeData.onMsgList.forEach((item) => {
             // 刷新新消息标签
             if (id !== runtimeData.chatInfo.show.id && (id == item.group_id || id == item.user_id)) {
                 item.new_msg = true

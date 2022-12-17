@@ -14,18 +14,25 @@
 
             </div>
         </div>
+        <div class="note-time note-base" v-if="data.sub_type === 'time'">
+            <a>{{ Intl.DateTimeFormat(trueLang, 
+                { hour: "numeric", minute: "numeric", second: "numeric" })
+                    .format(new Date(data.time * 1000)) }}</a>
+        </div>
     </div>
 </template>
   
 <script lang="ts">
 import { defineComponent, ref } from 'vue'
 import { runtimeData } from '@/function/msg'
+import { getTrueLang } from '@/function/util'
 
 export default defineComponent({
     name: 'NoticeBody',
     props: ['data'],
     data () {
         return {
+            trueLang: getTrueLang(),
             info: ref(this.data) as { [key: string]: any }
         }
     },

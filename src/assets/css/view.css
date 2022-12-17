@@ -495,12 +495,12 @@ html, body {
     float: left;
 }
 
-.viewer-toolbar > ul > li:focus,
 .viewer-toolbar > ul > li:hover {
-    background-color: var(--color-card-2);
+    background-color: var(--color-main);
 }
 
 .viewer-toolbar > ul > li:focus {
+    background-color: var(--color-main);
     box-shadow: 0 0 3px transparent;
 }
 
