@@ -197,5 +197,7 @@
   "sw_no_internet": "没有网络",
   "chat_load_img_fail": "加载图片失败",
   "chat_fun_menu_jin": "精华消息",
-  "message_title": "消息"
+  "message_title": "消息",
+  "chat_fun_menu_jin_sender": "{time}，由 {name} 设置",
+  "sw_need_reload": "检查到应用更新，需要重新加载 ……"
 }

@@ -41,7 +41,14 @@ export interface ChatInfoElem {
         group_notices?: { [key: string]: any },
         now_member_info?: { [key: string]: any },
         image_list?: { index: number, message_id: string, img_url: string }[]
-        jin_info?: { [key: string]: any }
+        jin_info: {
+            data: {
+                msg_list: { [key: string]: any }[],
+                [key: string]: any
+            },
+            retcode?: number,
+            retmsg?: string
+        }
     }
 }
 

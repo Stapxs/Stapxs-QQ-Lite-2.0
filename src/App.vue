@@ -77,7 +77,7 @@
                                 <button id="connect_btn" class="ss-button" type="submit">{{ $t('home_card_connect')
                                 }}</button>
                             </form>
-                            <a href="https://github.com/Stapxs/Stapxs-QQ-Lite/blob/main/README.md#%E4%BD%BF%E7%94%A8"
+                            <a href="https://github.com/Stapxs/Stapxs-QQ-Lite-2.0#%E5%BF%AB%E9%80%9F%E4%BD%BF%E7%94%A8"
                                 target="_blank" style="margin-bottom: -20px;">{{ $t('home_card_how_to_connect') }}</a>
                             <div class="wave-pan" style="margin-left: -30px;">
                                 <svg id="login-wave" class="waves-svg" xmlns="http://www.w3.org/2000/svg"
@@ -262,7 +262,8 @@ export default defineComponent({
                     me_info: {},
                     group_members: [],
                     group_files: {},
-                    group_sub_files: {}
+                    group_sub_files: {},
+                    jin_info: { data: { msg_list: [] } }
                 }
             }
             runtimeData.mergeMessageList = []           // 清空合并转发缓存

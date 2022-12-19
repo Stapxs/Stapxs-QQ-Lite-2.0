@@ -88,7 +88,7 @@
                             <span>{{ $t('chat_fun_menu_jin') }}</span>
                             <svg @click="details[2].open = !details[2].open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path></svg>
                         </div>
-                        <div class="jin-pan-body">
+                        <div class="jin-pan-body" @scroll="jinScroll">
                             <div v-for="(item, index) in runtimeData.chatInfo.info.jin_info ? 
                                     runtimeData.chatInfo.info.jin_info.data.msg_list : []"
                                 :key="'jin-' + index">
@@ -109,6 +109,13 @@
                                         <img v-if="context.msg_type === 3" :src="context.image_url">
                                     </template>
                                 </div>
+                                <span>{{ $t('chat_fun_menu_jin_sender',
+                                 { time: Intl.DateTimeFormat(trueLang,
+                                            { hour: "numeric", minute: "numeric" })
+                                            .format(new Date(item.add_digest_time * 1000)),name: item.add_digest_nick }) }}</span>
+                            </div>
+                            <div class="jin-pan-load" v-show="tags.isJinLoading">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M120 256c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm160 0c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm104 56c-30.9 0-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56s-25.1 56-56 56z"></path></svg>
                             </div>
                         </div>
                     </div>
@@ -323,6 +330,7 @@ export default defineComponent({
                 openedMenuMsg: {} as HTMLDivElement,
                 openChatInfo: false,
                 isReply: false,
+                isJinLoading: false,
                 menuDisplay: {
                     relpy: true,
                     forward: true,
@@ -1059,7 +1067,7 @@ export default defineComponent({
          */
         showJin () {
             this.details[2].open = !this.details[2].open
-            if (!runtimeData.chatInfo.info.jin_info || Object.keys(runtimeData.chatInfo.info.jin_info).length == 0) {
+            if (runtimeData.chatInfo.info.jin_info.data.msg_list.length == 0) {
                 const url = `https://qun.qq.com/cgi-bin/group_digest/digest_list?bkn=${runtimeData.loginInfo.bkn}&group_code=${this.chat.show.id}&page_start=0&page_limit=40`
                 Connector.send(
                     'http_proxy',
@@ -1068,6 +1076,25 @@ export default defineComponent({
                 )
             }
             this.tags.showMoreDetail = !this.tags.showMoreDetail
+        },
+
+        /**
+         * 精华消息滚动事件
+         */
+        jinScroll (event: Event) {
+            const body = event.target as HTMLDivElement
+            // 滚动到底部，加载更多
+            if (body.scrollTop + body.clientHeight === body.scrollHeight && !this.tags.isJinLoading) {
+                if (this.chat.info.jin_info.retcode == 0 && this.chat.info.jin_info.data.is_end == false) {
+                    this.tags.isJinLoading = true
+                    const url = `https://qun.qq.com/cgi-bin/group_digest/digest_list?bkn=${runtimeData.loginInfo.bkn}&group_code=${this.chat.show.id}&page_start=${(this.chat.info.jin_info.data.msg_list.length) / 40 + 1}&page_limit=40`
+                    Connector.send(
+                        'http_proxy',
+                        { 'url': url },
+                        'getJin'
+                    )
+                }
+            }
         },
 
         /**
@@ -1096,9 +1123,13 @@ export default defineComponent({
         }
     },
     mounted() {
-        // PS：由于列表指向的是堆栈
-        // 监听 list 本身新旧值是一样，于是监听 length（反正也只要用这个）
+        // 消息列表刷新
+        // PS：由于监听 list 本身返回的新旧值是一样，于是监听 length（反正也只要知道长度）
         this.$watch(() => this.list.length, this.updateList)
+        //精华消息列表刷新
+        this.$watch(() => this.chat.info.jin_info.data.msg_list.length, () => {
+            this.tags.isJinLoading = false
+        })
     }
 })
 </script>

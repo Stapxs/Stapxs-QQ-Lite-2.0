@@ -906,6 +906,7 @@ textarea {
     position: absolute;
     margin-left: 20px;
     max-height: 50vh;
+    max-width: 340px;
     overflow: hidden;
     display: flex;
     padding: 0;
@@ -940,6 +941,13 @@ textarea {
 .jin-pan-body > div:first-child {
     margin-top: 0 !important;
 }
+.jin-pan-body > div > span {
+    color: var(--color-font-2);
+    text-align: right;
+    font-size: 0.8rem;
+    display: block;
+    width: 100%;
+}
 .jin-pan-body > div > div:first-child {
     align-items: center;
     display: flex;
@@ -961,10 +969,10 @@ textarea {
     font-size: 0.5rem;
 }
 .jin-pan-body > div > div.context {
+    padding: 15px 15px 5px 15px;
     align-items: flex-end;
     flex-direction: row;
     flex-wrap: wrap;
-    padding: 15px;
     display: flex;
 }
 .jin-pan-body > div > div.context > img {
@@ -975,6 +983,15 @@ textarea {
 .jin-pan-body > div > div.context > img.face {
     margin: -5px 5px 0 5px;
     height: 1.4rem;
+}
+.jin-pan-load {
+    background: transparent !important;
+    justify-content: center;
+    display: flex;
+}
+.jin-pan-load > svg {
+    fill: var(--color-font);
+    width: 1rem;
 }
 
 .replay-tag {
@@ -1047,5 +1064,9 @@ textarea {
     /* 发送图片面板 */
     .img-sender > div.card {
         width: calc(100% - 80px);
+    }
+    /* 精华消息面板 */
+    .jin-pan {
+        max-width: unset;
     }
 }

@@ -44,7 +44,7 @@ export function parse(str: string) {
             case 'getGroupNotices'      : runtimeData.chatInfo.info.group_notices = msg.data.data; break
             case 'getGroupFiles'        : saveFileList(msg.data.data); break
             case 'getMoreGroupFiles'    : saveMoreFileList(msg.data.data); break
-            case 'getJin'               : runtimeData.chatInfo.info.jin_info = msg.data.data; break
+            case 'getJin'               : saveJin(msg.data.data); break
             default                     : {
                 const echoList = msg.echo.split('_')
                 const head = echoList[0]
@@ -550,6 +550,24 @@ function sendNotice(msg: any) {
     }
 }
 
+/**
+ * 保存精华消息
+ * @param data 返回数据
+ */
+function saveJin (data: any) {
+    if(runtimeData.chatInfo.info.jin_info.data.msg_list.length == 0) {
+        // 首次获取
+        runtimeData.chatInfo.info.jin_info = data
+    } else {
+        // 追加保存
+        if(data.retcode == 0) {
+            runtimeData.chatInfo.info.jin_info.data.msg_list = 
+                runtimeData.chatInfo.info.jin_info.data.msg_list.concat(data.data.msg_list)
+                runtimeData.chatInfo.info.jin_info.data.is_end = data.data.is_end
+        }
+    }
+}
+
 // ==============================================================
 
 const notificationList: Notification[] = []
@@ -573,7 +591,8 @@ export const runtimeData: RunTimeDataElem = reactive({
             me_info: {},
             group_members: [],
             group_files: {},
-            group_sub_files: {}
+            group_sub_files: {},
+            jin_info: { data: { msg_list: [] } }
         }
     },
     userList: [],
