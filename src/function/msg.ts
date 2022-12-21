@@ -392,7 +392,7 @@ function saveFileList(data: any) {
 function saveMoreFileList(data: any) {
     if (runtimeData.chatInfo.info !== undefined && runtimeData.chatInfo.info.group_files !== undefined) {
         // 追加文件列表
-        runtimeData.chatInfo.info.group_files = runtimeData.chatInfo.info.group_files.concat(data.file_list)
+        runtimeData.chatInfo.info.group_files.file_list = runtimeData.chatInfo.info.group_files.file_list.concat(data.file_list)
         // 设置最大值位置
         runtimeData.chatInfo.info.group_files.next_index = data.next_index
     }
@@ -600,5 +600,6 @@ export const runtimeData: RunTimeDataElem = reactive({
     loginInfo: {},
     botInfo: {},
     sysConfig: {},
-    messageList: []
+    messageList: [],
+    popBoxList: []
 })

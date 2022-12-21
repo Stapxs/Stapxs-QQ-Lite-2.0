@@ -45,9 +45,7 @@
                 <a>{{ $t('chat_no_more_msg') }}</a>
             </div>
             <template v-for="(msg, index) in list">
-                <!-- 时间戳（notice） -->
                 <NoticeBody v-if="isShowTime((list[index - 1] ? list[index - 1].time : undefined), msg.time)" :key="'notice-time-' + index" :data="{sub_type: 'time', time: msg.time}"></NoticeBody>
-                <!-- 消息（message） -->
                 <MsgBody
                     :is="runtimeData.pageView.msgView"
                     v-if="msg.post_type === 'message'"
@@ -60,7 +58,6 @@
                     @touchmove="msgOnMove"
                     @touchend="msgMoveEnd($event, msg)">
                 </MsgBody>
-                <!-- 通知（notice） -->
                 <NoticeBody v-if="msg.post_type === 'notice'" :key="'notice-' + index" :data="msg"></NoticeBody>
             </template> 
         </div>
@@ -1101,11 +1098,16 @@ export default defineComponent({
          * 更多功能按钮被点击
          */
         moreFunClick () {
-            this.tags.showMoreDetail = !this.tags.showMoreDetail
+            let hasOpen = false
             // 关闭所有其他的已打开的更多功能弹窗
             this.details.forEach((item) => {
+                if(item.open) hasOpen = true
                 item.open = false
             })
+            // 如果有关闭操作，就不打开更多功能菜单
+            if(!hasOpen) {
+                this.tags.showMoreDetail = !this.tags.showMoreDetail
+            }
         }
     },
     watch: {

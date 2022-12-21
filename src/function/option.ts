@@ -263,5 +263,6 @@ export function runASWEvent(event: Event) {
 export default {
     get,
     load,
-    save
+    save,
+    runAS
 }

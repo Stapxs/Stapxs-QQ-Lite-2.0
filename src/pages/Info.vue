@@ -112,9 +112,7 @@
             <div v-if="chat.show.type === 'group'" class="layui-tab layui-tab-brief"
                 style="overflow: hidden; display: flex;flex-direction: column;height: 100%;margin: 0;">
                 <ul class="layui-tab-title chat-info-tab">
-                    <li class="layui-this">{{ $t('chat_chat_info_member') + `(${chat.info.group_members.length ==
-                            undefined ? 0 : chat.info.group_members.length})`
-                    }}</li>
+                    <li class="layui-this">{{ $t('chat_chat_info_member') }}</li>
                     <li>{{ $t('chat_chat_info_notice') }}</li>
                     <li>{{ $t('chat_chat_info_file') + `(${chat.info.group_files.total_cnt === undefined ? 0 :
                             chat.info.group_files.total_cnt})`

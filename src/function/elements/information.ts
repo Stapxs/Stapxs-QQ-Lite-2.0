@@ -26,7 +26,17 @@ export interface RunTimeDataElem {
     },
     messageList: any[]
     mergeMessageList?: [],
-    stickerCache?: any[]
+    stickerCache?: any[],
+    popBoxList: {
+        svg?: string,
+        title?: string,
+        html: string,
+        button: {
+            master?: boolean,
+            fun?: (value: any) => void,
+            text: string
+        }[]
+    }[]
 }
 
 export interface ChatInfoElem {

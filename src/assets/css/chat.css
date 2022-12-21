@@ -180,8 +180,8 @@ textarea {
     to { transform: rotate(360deg); }
 }
 .chat-pan > div.loading svg {
-    -webkit-animation: rotate 1.5s linear infinite;
     animation: rotate 1.5s linear infinite;
+    fill: var(--color-font);
     margin-right: 5px;
     margin-top: 2px;
     height: 0.9rem;
@@ -597,7 +597,7 @@ textarea {
     width: 20px;
 }
 .bulletins > div.base > div.info > a {
-    fill: var(--color-main);
+    color: var(--color-main);
     margin-left: 10px;
     font-size: 0.9rem;
 }
@@ -610,7 +610,7 @@ textarea {
 }
 
 .group-files {
-    padding: 0 20px;
+    padding: 0 10px;
 }
 .group-files > div > div {
     transition: background .3s;
@@ -906,7 +906,7 @@ textarea {
     position: absolute;
     margin-left: 20px;
     max-height: 50vh;
-    max-width: 340px;
+    max-width: 400px;
     overflow: hidden;
     display: flex;
     padding: 0;
@@ -928,15 +928,15 @@ textarea {
     flex: 1;
 }
 .jin-pan-body {
-    margin-bottom: -15px;
-    overflow: scroll;
-    padding: 0 5px;
+    padding: 0 13px 0 20px;
+    margin-bottom: 20px;
+    overflow-y: scroll;
 }
 .jin-pan-body > div {
     background: var(--color-card-2);
     border-radius: 7px;
+    padding: 15px 20px;
     margin: 10px 0;
-    padding: 10px;
 }
 .jin-pan-body > div:first-child {
     margin-top: 0 !important;
@@ -962,6 +962,9 @@ textarea {
 .jin-pan-body > div > div:first-child > div {
     flex-direction: column;
     display: flex;
+}
+.jin-pan-body > div > div:first-child a {
+    color: var(--color-font);
 }
 .jin-pan-body > div > div:first-child span {
     color: var(--color-font-2);
@@ -1064,9 +1067,5 @@ textarea {
     /* 发送图片面板 */
     .img-sender > div.card {
         width: calc(100% - 80px);
-    }
-    /* 精华消息面板 */
-    .jin-pan {
-        max-width: unset;
     }
 }

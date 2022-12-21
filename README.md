@@ -5,6 +5,8 @@
 <br>
 <br>
 
+[![old](README/to-old-ver.png)](https://github.com/Stapxs/Stapxs-QQ-Lite)
+
 ![card](README/card.png)
 
 <div align="center">

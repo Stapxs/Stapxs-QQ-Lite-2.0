@@ -166,6 +166,7 @@
 
 .msg-replay {
     background: #00000017;
+    margin-bottom: 10px;
     border-radius: 7px;
     overflow: hidden;
     cursor: pointer;
@@ -395,8 +396,11 @@
     background: var(--color-card-1);
     align-items: center;
     padding: 7px 30px;
-    font-size: 0.6rem;
+    font-size: 0.8rem;
     display: flex;
+}
+.note-base > a {
+    color: var(--color-font);
 }
 .note-time {
     color: var(--color-font-2) !important;

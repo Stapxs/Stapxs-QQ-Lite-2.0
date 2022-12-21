@@ -43,7 +43,7 @@
             <circle cx="50%" cy="50%" r="40%" stroke-width="15%" fill="none" :stroke-dasharray="item.downloadingPercentage === undefined ?
             '0,10000' : `${Math.floor(2 * Math.PI * 25) * item.downloadingPercentage / 100},10000`" />
         </svg>
-        <div :class="(item.sub_list !== undefined ? 'sub_file ' : '') + 'group-files'" v-show="item.sub_item_show !== false">
+        <div :class="(item.sub_list !== undefined ? 'sub_file ' : '') + 'group-files'" v-show="item.sub_item_show !== false && item.sub_list !== undefined">
             <div v-for="sub_item in item.sub_list" :key="'sub_file-' + sub_item.id">
                 <FileBody :chat="chat" :item="sub_item" :parent="item.id"></FileBody>
             </div>

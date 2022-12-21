@@ -199,5 +199,8 @@
   "chat_fun_menu_jin": "精华消息",
   "message_title": "消息",
   "chat_fun_menu_jin_sender": "{time}，由 {name} 设置",
-  "sw_need_reload": "检查到应用更新，需要重新加载 ……"
+  "sw_need_reload": "检查到应用更新，需要重新加载 ……",
+  "update_history": "更新记录",
+  "btn_know": "知道了",
+  "btn_see": "查看"
 }
