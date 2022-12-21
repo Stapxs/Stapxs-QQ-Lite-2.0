@@ -1,32 +1,36 @@
 /* eslint-disable no-console */
 
 import { register } from 'register-service-worker'
+import { PopInfo, PopType, Logger } from './function/base'
+import app from './main'
+
+const popInfo = new PopInfo()
+const logger = new Logger()
 
 if (process.env.NODE_ENV === 'production') {
   register(`${process.env.BASE_URL}service-worker.js`, {
     ready () {
-      console.log(
-        'App is being served from cache by a service worker.\n' +
-        'For more details, visit https://goo.gl/AFskqB'
-      )
+      logger.debug(app.config.globalProperties.$t('sw_ready'))
     },
     registered () {
-      console.log('Service worker has been registered.')
+      logger.debug(app.config.globalProperties.$t('sw_registered'))
     },
     cached () {
-      console.log('Content has been cached for offline use.')
+      console.log(app.config.globalProperties.$t('sw_cached'))
     },
     updatefound () {
-      console.log('New content is downloading.')
+      console.log(app.config.globalProperties.$t('sw_update'))
     },
     updated () {
-      console.log('New content is available; please refresh.')
+      console.log(app.config.globalProperties.$t('sw_updated'))
+      popInfo.add(PopType.INFO, app.config.globalProperties.$t('sw_need_reload'))
     },
     offline () {
-      console.log('No internet connection found. App is running in offline mode.')
+      console.log(app.config.globalProperties.$t('sw_offline'))
+      popInfo.add(PopType.INFO, app.config.globalProperties.app.config.globalProperties.$t('sw_no_internet'))
     },
     error (error) {
-      console.error('Error during service worker registration:', error)
+      console.error(app.config.globalProperties.$t('sw_error') + ': ', error)
     }
   })
 }

@@ -15,7 +15,7 @@
 // CQ Code 参考
 // https://docs.go-cqhttp.org/cqcode/#%E8%BD%AC%E4%B9%89
 
-import { BotMsgType, MsgItemElem, SQCodeElem } from './elements/information'
+import { BotMsgType, MsgItemElem } from './elements/information'
 import { runtimeData } from './msg'
 
 /**

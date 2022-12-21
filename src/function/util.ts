@@ -299,7 +299,6 @@ export function loadHistory(info: BaseChatInfoElem) {
     }
 }
 function loadHistoryMessage(id: number, type: string) {
-    console.log(id + "/" + type)
     // 加载历史消息
     // Note: https://github.com/takayama-lily/oicq/wiki/93.%E8%A7%A3%E6%9E%90%E6%B6%88%E6%81%AFID
     let msgid = null
@@ -343,6 +342,45 @@ function loadHistoryMessage(id: number, type: string) {
     }
 }
 
+/**
+ * 滚动到目标消息（不自动加载）
+ * @param seqName DOM 名
+ */
+export function scrollToMsg (seqName: string, showAnimation: boolean): boolean {
+    const msg = document.getElementById(seqName)
+    if (msg) {
+        const pan = document.getElementById('msgPan')
+        if (pan !== null) {
+            if (showAnimation === false) {
+                pan.style.scrollBehavior = 'unset'
+            } else {
+                pan.style.scrollBehavior = 'smooth'
+            }
+            pan.scrollTop = msg.offsetTop - msg.offsetHeight + 10
+            pan.style.scrollBehavior = 'smooth'
+            msg.style.transition = 'background 1s'
+            msg.style.background = 'rgba(0, 0, 0, 0.06)'
+            setTimeout(() => {
+                msg.style.background = 'unset'
+                setTimeout(() => {
+                    msg.style.transition = 'background .3s'
+                }, 1100)
+            }, 3000)
+            return true
+        }
+    }
+    return false
+}
+
+/**
+ * 将 gitmoji 字符串转为 emoji 符号
+ * @param name 名称
+ * @returns emoji 符号
+ */
+export function gitmojiToEmoji (name: string) {
+    return {":zap:":"⚡️",":art:":"🎨",":fire:":"🔥",":bug:":"🐛",":ambulance:":"🚑️",":sparkles:":"✨",":memo:":"📝",":rocket:":"🚀",":lipstick:":"💄",":tada:":"🎉",":white-check-mark:":"✅",":lock:":"🔒️",":closed-lock-with-key:":"🔐",":bookmark:":"🔖",":rotating-light:":"🚨",":construction:":"🚧",":green-heart:":"💚",":arrow-down:":"⬇️",":arrow-up:":"⬆️",":pushpin:":"📌",":construction-worker:":"👷",":chart-with-upwards-trend:":"📈",":recycle:":"♻️",":heavy-plus-sign:":"➕",":heavy-minus-sign:":"➖",":wrench:":"🔧",":hammer:":"🔨",":globe-with-meridians:":"🌐",":pencil2:":"✏️",":poop:":"💩",":rewind:":"⏪️",":twisted-rightwards-arrows:":"🔀",":package:":"📦️",":alien:":"👽️",":truck:":"🚚",":page-facing-up:":"📄",":boom:":"💥",":bento:":"🍱",":wheelchair:":"♿️",":bulb:":"💡",":beers:":"🍻",":speech-balloon:":"💬",":card-file-box:":"🗃️",":loud-sound:":"🔊",":mute:":"🔇",":busts-in-silhouette:":"👥",":children-crossing:":"🚸",":building-construction:":"🏗️",":iphone:":"📱",":clown-face:":"🤡",":egg:":"🥚",":see-no-evil:":"🙈",":camera-flash:":"📸",":alembic:":"⚗️",":mag:":"🔍️",":label:":"🏷️",":seedling:":"🌱",":triangular-flag-on-post:":"🚩",":goal-net:":"🥅",":animation:":"💫",":wastebasket:":"🗑️",":passport-control:":"🛂",":adhesive-bandage:":"🩹",":monocle-face:":"🧐",":coffin:":"⚰️",":test-tube:":"🧪",":necktie:":"👔",":stethoscope:":"🩺",":bricks:":"🧱",":technologist:":"🧑‍💻"}[name]
+}
+
 export default {
     openLink,
     getTrueLang,
@@ -350,5 +388,7 @@ export default {
     parseMsgId,
     htmlDecodeByRegExp,
     parseCQ,
-    loadHistory
+    loadHistory,
+    scrollToMsg,
+    gitmojiToEmoji
 }

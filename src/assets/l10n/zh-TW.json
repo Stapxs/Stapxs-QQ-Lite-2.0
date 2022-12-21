@@ -54,7 +54,7 @@
   "chat_msg_menu_withdraw": "收回",
   "chat_no_more_msg": "沒有更多的訊息了",
   "chat_no_msg": "沒有訊息",
-  "chat_send_pic_send": "傳送",
+  "chat_send": "傳送",
   "chat_send_pic_title": "傳送圖片",
   "chat_space": "選取聯絡人來開始聊天",
   "chat_unsupported_msg": "（不支援的訊息）",
@@ -186,5 +186,18 @@
   "log_cq_msg_parsred": "記錄 CQ 訊息解析結果",
   "chat_chat_info_option_top": "釘選群組/好友",
   "chat_chat_info_option_top_tip": "將群組或好友置於列表頂部",
-  "log_com_err": "未能建立連線"
+  "log_com_err": "未能建立連線",
+  "sw_ready": "應用現在由 service worker 從快取中載入，更多資訊請參閱 https://goo.gl/AFskqB。",
+  "sw_registered": "Service worker 註冊成功。",
+  "sw_cached": "已將內容存入快取以便在離線時存取。",
+  "sw_update": "正在下載新的內容 ……",
+  "sw_updated": "新的內容已存入快取，並在重新整理後生效。",
+  "sw_offline": "沒有有效的網路連線，應用正在以離線模式運行。",
+  "sw_error": "註冊 service worker 時出錯",
+  "sw_no_internet": "沒有網際網路連線",
+  "chat_load_img_fail": "圖片載入失敗",
+  "chat_fun_menu_jin": "精華訊息",
+  "message_title": "訊息",
+  "chat_fun_menu_jin_sender": "{time}，由 {name} 加入",
+  "sw_need_reload": "偵測到應用更新，需要重新載入 ……"
 }

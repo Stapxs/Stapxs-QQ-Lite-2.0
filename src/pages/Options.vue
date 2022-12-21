@@ -218,7 +218,7 @@ import { ContributorElem } from '@/function/elements/system'
 export default defineComponent({
   name: 'ViewOption',
   props: {
-    config: {} as { [key: string]: any }
+    config: {} as { [key: string]: string | number | boolean }
   },
   components: { OptAccount, OptView, OptDev, OptFunction },
   data () {

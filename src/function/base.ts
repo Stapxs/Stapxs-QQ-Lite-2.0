@@ -6,6 +6,7 @@
  * @Description: 此模块主要为程序相关的基础功能
 */
 
+import Option from './option'
 import { reactive } from 'vue'
 import { PopInfoElem } from './elements/system'
 
@@ -33,15 +34,14 @@ export class Logger {
      * @param args 日志内容
      */
     add(type: LogType, args: string) {
-        // const logLevel = Option.get('log_level');
-        // // PS：info 级别是指除了 ws、ui 和 debug 类型以外的其他日志
-        // if (logLevel === 'all' && (type === LogType.WS || type === LogType.UI) ||
-        //     logLevel === 'debug' && type === LogType.DEBUG||
-        //     logLevel === 'info' && type === LogType.INFO ||
-        //     logLevel === 'err' && type === LogType.ERR) {
-        //     this.print(type, args)
-        // }
-        // this.print(type, args)
+        const logLevel = Option.get('log_level')
+        // PS：info 级别是指除了 ws、ui 和 debug 类型以外的其他日志
+        if (logLevel === 'all' && (type === LogType.WS || type === LogType.UI) ||
+            logLevel === 'debug' && type === LogType.DEBUG ||
+            logLevel === 'info' && type === LogType.INFO ||
+            logLevel === 'err' && type === LogType.ERR) {
+            this.print(type, args)
+        }
     }
     error(args: string) {
         this.add(LogType.ERR, args)

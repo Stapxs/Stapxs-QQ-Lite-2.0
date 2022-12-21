@@ -35,7 +35,7 @@
                 <div v-for="(item, index) in data.message" :class="View.isMsgInline(item.type) ? 'msg-inline' : ''" :key="data.message_id + '-m-' + index">
                     <span v-if="isDebugMsg" class="msg-text">{{ item }}</span>
                     <span v-else-if="item.type === 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
-                    <img v-else-if="item.type === 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @load="scrollButtom" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
+                    <img v-else-if="item.type === 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @load="scrollButtom" @error="imgLoadFail" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
                     <img v-else-if="item.type === 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/img/qq-face/' + item.id + '.gif')" :title="item.text">
                     <span v-else-if="item.type === 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat_fun_menu_pic') }}：{{ item.text }} ]</span>
                     <div v-else-if="item.type === 'at'" v-show="isAtShow(data.source, item.qq)" :class="getAtClass(item.qq)">
@@ -131,7 +131,7 @@ export default defineComponent({
 
         /**
          * 滚动到指定消息
-         * @param id 消息 ID
+         * @param id 消息 seq
          */
         scrollToMsg (id: string) {
             this.$emit('scrollToMsg', 'chat-' + id)
@@ -183,6 +183,36 @@ export default defineComponent({
          */
         scrollButtom () {
             this.$emit('scrollButtom', null)
+        },
+
+        /**
+         * 图片加载失败
+         */
+        imgLoadFail (event: Event) {
+            const sender = event.currentTarget as HTMLImageElement
+            const parent = sender.parentNode as HTMLDivElement
+            parent.style.display = 'flex'
+            parent.style.flexDirection = 'column'
+            parent.style.alignItems = 'center'
+            parent.style.padding = '20px'
+            parent.style.border = '2px dashed var(--color-card-2)'
+            parent.innerText = ''
+            parent.title = sender.src
+            // 新建 svg
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+            svg.setAttribute('viewBox', '0 0 512 512')
+            svg.innerHTML = '<path d="M119.4 44.1c23.3-3.9 46.8-1.9 68.6 5.3l49.8 77.5-75.4 75.4c-1.5 1.5-2.4 3.6-2.3 5.8s1 4.2 2.6 5.7l112 104c2.9 2.7 7.4 2.9 10.5 .3s3.8-7 1.7-10.4l-60.4-98.1 90.7-75.6c2.6-2.1 3.5-5.7 2.4-8.8L296.8 61.8c28.5-16.7 62.4-23.2 95.7-17.6C461.5 55.6 512 115.2 512 185.1v5.8c0 41.5-17.2 81.2-47.6 109.5L283.7 469.1c-7.5 7-17.4 10.9-27.7 10.9s-20.2-3.9-27.7-10.9L47.6 300.4C17.2 272.1 0 232.4 0 190.9v-5.8c0-69.9 50.5-129.5 119.4-141z"/>'
+            svg.style.width = '40px'
+            svg.style.opacity = '0.8'
+            svg.style.fill = 'var(--color-main)'
+            parent.appendChild(svg)
+            // 新建 span
+            const span = document.createElement('span')
+            span.innerText = this.$t('chat_load_img_fail')
+            span.style.marginTop = '10px'
+            span.style.fontSize = '0.8rem'
+            span.style.color = 'var(--color-font-2)'
+            parent.appendChild(span)
         },
 
         /**

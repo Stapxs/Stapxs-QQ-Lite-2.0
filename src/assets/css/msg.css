@@ -166,6 +166,7 @@
 
 .msg-replay {
     background: #00000017;
+    margin-bottom: 10px;
     border-radius: 7px;
     overflow: hidden;
     cursor: pointer;
@@ -390,22 +391,42 @@
     margin: 10px 0;
     display: flex;
 }
-.note.top {
-    margin: 40px 0 10px 0;
-}
 .note-base {
     border-radius: calc(3rem + 30px);
     background: var(--color-card-1);
     align-items: center;
     padding: 7px 30px;
-    font-size: 0.6rem;
+    font-size: 0.8rem;
     display: flex;
 }
-.note-nomsg {
-    color: var(--color-font-2);
+.note-base > a {
+    color: var(--color-font);
+}
+.note-time {
+    color: var(--color-font-2) !important;
     display: block;
-    margin-top: -30px;
+}
+.note-nomsg {
+    margin: 10px auto 40px auto;
+    color: var(--color-font-2);
+    text-align: center;
+    display: block;
     opacity: 0.5;
+    width: 80%;
+}
+.note-nomsg > a {
+    background: var(--color-card);
+    position: relative;
+    font-size: 0.8rem;
+    padding: 0 20px;
+    z-index: 1;
+}
+.note-nomsg > hr {
+    border-style: inset !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--color-main) !important;
+    opacity: 0.5;
+    margin-bottom: -0.5rem;
 }
 .note-recall > a {
     color: var(--color-main);

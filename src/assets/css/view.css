@@ -460,6 +460,140 @@ html, body {
     height: 1rem;
 }
 
+.pop-box {
+    position: absolute;
+    height: 100vh;
+    z-index: 20;
+    width: 100%;
+    left: 0;
+    top: 0;
+}
+.pop-box > div:last-child {
+    background: var(--color-card-2);
+    opacity: 0.7;
+    height: 100%;
+    width: 100%;
+}
+.pop-box-body {
+    transform: translate(-50%, -50%);
+    margin-top: calc(50vh - 35px);
+    position: absolute;
+    margin-left: 50%;
+    max-width: 360px;
+    z-index: 20;
+    width: 50vw;
+}
+.pop-box-body > header {
+    align-items: center;
+    display: flex;
+}
+.pop-box-body > header > div:first-child {
+    background: transparent;
+    margin-right: 10px;
+    height: 1rem;
+    width: unset;
+}
+.pop-box-body > header svg {
+    fill: var(--color-font);
+    height: 1rem;
+}
+.pop-box-body > header svg:last-child {
+    cursor: pointer;
+}
+.pop-box-body > header a {
+    color: var(--color-font);
+    font-weight: bold;
+    font-size: 1rem;
+    flex: 1;
+}
+.pop-box-body > div:not(:last-child) {
+    padding: 20px;
+}
+.pop-box-body > div:last-child {
+    background: var(--color-card-1);
+    margin: 0 -20px -20px -20px;
+    border-radius: 0 0 7px 7px;
+    justify-content: flex-end;
+    flex-direction: row;
+    align-items: center;
+    padding: 15px;
+    display: flex;
+}
+.pop-box-body > div:last-child > button {
+    background: var(--color-card-2);
+    color: var(--color-font);
+    margin-left: 10px;
+    padding: 0 15px;
+    cursor: pointer;
+}
+.pop-box-body > div:last-child > button.master {
+    background: var(--color-main);
+    color: var(--color-font-r);
+}
+
+.update-info {
+    margin: -20px -20px 0px;
+    flex-direction: column;
+    align-items: center;
+    display: flex;
+}
+.update-info > span {
+    color: var(--color-main);
+    font-weight: bold;
+    font-size: 1rem;
+}
+.update-info > a {
+    color: var(--color-font-2);
+    font-size: 0.8rem;
+}
+.update-info > div {
+    width: calc(100% - 30px);
+}
+
+.update-info > div.title {
+    align-items: center;
+    margin-top: 10px;
+    display: flex;
+}
+.update-info > div.title > img {
+    outline: 2px solid var(--color-main);
+    border: 1px solid var(--color-bg);
+    height: calc(1.5rem - 3px);
+    border-radius: 100%;
+}
+.update-info > div.title > a {
+    color: var(--color-main);
+    margin-left: 10px;
+    flex: 1;
+}
+.update-info > div.title > span {
+    color: var(--color-font-2);
+    font-size: 0.8rem;
+}
+.update-info > div.info {
+    background: var(--color-bg);
+    flex-direction: column;
+    align-items: start;
+    border-radius: 7px;
+    margin-top: 15px;
+    padding: 15px;
+    display: flex;
+}
+.update-info > div.info > span {
+    color: var(--color-main);
+}
+.update-info > div.info > span::before {
+    content: '\2022';
+}
+.update-info > div.info > div {
+    overflow-y: scroll;
+    max-height: 20vh;
+    margin-top: 10px;
+}
+.update-info > div.info > div > div > span {
+    color: var(--color-font);
+}
+
 /* 图片预览器覆盖样式 */
 .viewer-button {
     background-color: var(--color-card-2);
@@ -495,12 +629,12 @@ html, body {
     float: left;
 }
 
-.viewer-toolbar > ul > li:focus,
 .viewer-toolbar > ul > li:hover {
-    background-color: var(--color-card-2);
+    background-color: var(--color-main);
 }
 
 .viewer-toolbar > ul > li:focus {
+    background-color: var(--color-main);
     box-shadow: 0 0 3px transparent;
 }
 
@@ -581,7 +715,7 @@ html, body {
     }
     /* 二级侧栏 */
     .friend-list {
-        transition: transform .3s;
+        transition: width .3s;
         width: 80px;
     }
     .friend-list.open {

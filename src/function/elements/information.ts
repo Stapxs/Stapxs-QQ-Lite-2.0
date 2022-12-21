@@ -1,5 +1,3 @@
-import { number } from "@intlify/core-base"
-
 export enum BotMsgType {
     CQCode, JSON
 }
@@ -28,7 +26,17 @@ export interface RunTimeDataElem {
     },
     messageList: any[]
     mergeMessageList?: [],
-    stickerCache?: any[]
+    stickerCache?: any[],
+    popBoxList: {
+        svg?: string,
+        title?: string,
+        html: string,
+        button: {
+            master?: boolean,
+            fun?: (value: any) => void,
+            text: string
+        }[]
+    }[]
 }
 
 export interface ChatInfoElem {
@@ -43,6 +51,14 @@ export interface ChatInfoElem {
         group_notices?: { [key: string]: any },
         now_member_info?: { [key: string]: any },
         image_list?: { index: number, message_id: string, img_url: string }[]
+        jin_info: {
+            data: {
+                msg_list: { [key: string]: any }[],
+                [key: string]: any
+            },
+            retcode?: number,
+            retmsg?: string
+        }
     }
 }
 

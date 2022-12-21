@@ -77,7 +77,7 @@
                                 <button id="connect_btn" class="ss-button" type="submit">{{ $t('home_card_connect')
                                 }}</button>
                             </form>
-                            <a href="https://github.com/Stapxs/Stapxs-QQ-Lite/blob/main/README.md#%E4%BD%BF%E7%94%A8"
+                            <a href="https://github.com/Stapxs/Stapxs-QQ-Lite-2.0#%E5%BF%AB%E9%80%9F%E4%BD%BF%E7%94%A8"
                                 target="_blank" style="margin-bottom: -20px;">{{ $t('home_card_how_to_connect') }}</a>
                             <div class="wave-pan" style="margin-left: -30px;">
                                 <svg id="login-wave" class="waves-svg" xmlns="http://www.w3.org/2000/svg"
@@ -119,7 +119,6 @@
                 </div>
             </div>
         </div>
-        <!-- 消息主框体 -->
         <Chat
           ref="chat"
           v-if="loginInfo.status && runtimeData.chatInfo && runtimeData.chatInfo.show.id != 0"
@@ -129,7 +128,6 @@
           :list= runtimeData.messageList
           :chat="runtimeData.chatInfo">
         </Chat>
-        <!-- 提示信息显示区 -->
         <TransitionGroup class="app-msg" name="ViewNotices" tag="div">
           <div v-for="msg in appMsgs" :key="'appmsg-' + msg.id">
             <div v-html="msg.svg"></div>
@@ -139,7 +137,30 @@
             </div>
           </div>
         </TransitionGroup>
-        <!-- 图片预览器 -->
+
+        <div class="pop-box" v-if="runtimeData.popBoxList.length > 0">
+            <div class="pop-box-body ss-card">
+                <header v-show="runtimeData.popBoxList[0].title != undefined">
+                    <div
+                        v-if="runtimeData.popBoxList[0].svg != undefined"
+                        v-html="runtimeData.popBoxList[0].svg">
+                    </div>
+                    <a>{{ runtimeData.popBoxList[0].title }}</a>
+                    <svg @click="removePopBox" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path></svg>
+                </header>
+                <div v-html="runtimeData.popBoxList[0].html"></div>
+                <div>
+                    <button
+                        v-for="(button, index) in runtimeData.popBoxList[0].button"
+                        :class="'ss-button' + (button.master == true ? ' master' : '')"
+                        :key="'pop-box-btn' + index"
+                        @click="button.fun">
+                        {{ button.text }}
+                    </button>
+                </div>
+            </div>
+            <div></div>
+        </div>
         <viewer
             class="viewer" ref="viewer"
             :options="viewerOpt"
@@ -166,7 +187,7 @@ import { Connector, login as loginInfo } from '@/function/connect'
 import { Logger, popList, PopInfo } from '@/function/base'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem } from '@/function/elements/information'
-import { loadHistory } from '@/function/util'
+import { loadHistory, getTrueLang, gitmojiToEmoji, openLink } from '@/function/util'
 
 import Options from '@/pages/Options.vue'
 import Friends from '@/pages/Friends.vue'
@@ -192,7 +213,7 @@ export default defineComponent({
                 showChat: false
             },
             viewerOpt: { inline: false, button: false, title: false, toolbar: { prev: true, rotateLeft: true, reset: true, rotateRight: true, next: true } },
-            viewerBody: undefined
+            viewerBody: undefined as HTMLDivElement | undefined
         }
     },
     methods: {
@@ -262,11 +283,12 @@ export default defineComponent({
                     me_info: {},
                     group_members: [],
                     group_files: {},
-                    group_sub_files: {}
+                    group_sub_files: {},
+                    jin_info: { data: { msg_list: [] } }
                 }
             }
-            // 清空合并转发缓存
-            runtimeData.mergeMessageList = []
+            runtimeData.mergeMessageList = []           // 清空合并转发缓存
+            runtimeData.tags.canLoadHistory = true      // 重置终止加载标志
             // 重置图片预览器状态
             // Object.assign(this.$data.imgView, this.$options.data().imgView)
             if (data.type == 'group') {
@@ -282,7 +304,7 @@ export default defineComponent({
          * 图片查看器初始化
          * @param viewer viewer 对象
          */
-        viewerInited (viewer: any) {
+        viewerInited (viewer: HTMLDivElement) {
             this.viewerBody = viewer
         },
 
@@ -294,6 +316,13 @@ export default defineComponent({
         },
         viewerShow () {
             runtimeData.tags.viewer.show = true
+        },
+        
+        /**
+         * 移除当前的全局弹窗
+         */
+        removePopBox () {
+            runtimeData.popBoxList.shift()
         }
     },
     mounted () {
@@ -313,6 +342,8 @@ export default defineComponent({
             // 加载设置项
             runtimeData.sysConfig = Option.load()
             runtimeData.sysConfig.top_info = $cookies.get('top')
+            // PS：重新再应用一次暗黑模式，因为需要在页面加载完成后处理
+            Option.runAS('opt_dark', Option.get('opt_dark'))
             // 初始化完成
             logger.debug(this.$t('log_welcome'))
             logger.debug(this.$t('log_runtime') + ': ' + process.env.NODE_ENV)
@@ -331,9 +362,112 @@ export default defineComponent({
                 // 更新 cookie 中的版本信息并抓取更新日志
                 app.config.globalProperties.$cookies.set('version', appVersion, '1m')
                 logger.debug(this.$t('version_updated') + ': ' + cacheVersion + ' -> ' + appVersion)
-                // TODO: 获取更新日志
+                // 从 Github 获取更新日志
+                const url = 'https://api.github.com/repos/stapxs/stapxs-qq-lite-2.0/commits'
+                const fetchData = {
+                    sha: process.env.NODE_ENV == 'development' ? 'dev' : 'main',
+                    per_page: '5'
+                } as Record<string, string>
+                fetch(url + '?' + new URLSearchParams(fetchData).toString())
+                    .then(response => response.json())
+                    .then(data => {
+                        const json =data[0]
+                        // 动态生成更新记录部分
+                        const div = document.createElement('div')
+                        div.className = 'update-info'
+                        // 标题
+                        const title = document.createElement('span')
+                        title.innerText = app.config.globalProperties.$t('update_history')
+                        const version = document.createElement('a')
+                        version.innerText = 'v' + appVersion + ' - ' + fetchData.sha
+                        div.appendChild(title)
+                        div.appendChild(version)
+
+                        const titlediv = document.createElement('div')
+                        titlediv.className = 'title'
+                        const ava = document.createElement('img')
+                        ava.src = json.author.avatar_url
+                        const name = document.createElement('a')
+                        name.innerText = json.commit.author.name
+                        name.href = json.author.html_url
+                        const time = document.createElement('span')
+                        time.innerText = Intl.DateTimeFormat(getTrueLang(),
+                            { year: 'numeric', month: 'short', day: 'numeric' })
+                            .format(new Date(json.commit.author.date))
+                        titlediv.appendChild(ava)
+                        titlediv.appendChild(name)
+                        titlediv.appendChild(time)
+                        div.appendChild(titlediv)
+
+                        // 内容
+                        const updateInfo = json.commit.message.split('\n')
+                        const condiv = document.createElement('div')
+                        condiv.className = 'info'
+                        const updatetitle = document.createElement('span')
+                        updatetitle.innerText = ' ' + updateInfo[0]
+                        condiv.appendChild(updatetitle)
+                        const textdiv = document.createElement('div')
+                        for (let i = 1; i < updateInfo.length; i++) {
+                            const baseinfodiv = document.createElement('div')
+                            const baseinfo = document.createElement('span')
+                            let text = updateInfo[i]
+                            if(text.startsWith(':')) {
+                                const end = text.substring(1).indexOf(':')
+                                const name = text.substring(0, end + 2)
+                                const emj = gitmojiToEmoji(name)
+                                console.log(name + ' / ' + emj)
+                                if(emj != undefined) {
+                                    text = text.replace(name, emj)
+                                }
+                            }
+                            baseinfo.innerText = text
+                            baseinfodiv.appendChild(baseinfo)
+                            textdiv.appendChild(baseinfodiv)
+                        }
+                        if (updateInfo.length > 1) {
+                            condiv.appendChild(textdiv)
+                        }
+
+                        div.appendChild(condiv)
+
+                        // 构建 popBox 内容
+                        const popInfo = {
+                            html: div.outerHTML,
+                            button: [
+                                {
+                                    text: app.config.globalProperties.$t('btn_see'),
+                                    fun: () => openLink('https://github.com/Stapxs/Stapxs-QQ-Lite-2.0/commit/' + json.sha)
+                                },{
+                                    text: app.config.globalProperties.$t('btn_know'),
+                                    master: true,
+                                    fun: () => { runtimeData.popBoxList.shift() }
+                                }
+                            ]
+                        }
+                        runtimeData.popBoxList.push(popInfo)
+                    })
+                    .catch(function (e) {
+                        console.log(e)
+                    })
             }
         }
     }
 })
 </script>
+
+<style>
+  .appmsg-move,
+  .appmsg-enter-active,
+  .appmsg-leave-active {
+    transition: all 0.2s;
+  }
+  .appmsg-leave-active {
+    position: absolute;
+  }
+
+  .appmsg-enter-from,
+  .appmsg-leave-to {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+</style>
