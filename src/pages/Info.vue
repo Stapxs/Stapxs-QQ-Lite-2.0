@@ -73,7 +73,7 @@
                                         { year: 'numeric', month: "short", day: "numeric" }).format(
                                             new
                                                 Date(`${chat.info.user_info.birthday.year}-${chat.info.user_info.birthday.month}-${chat.info.user_info.birthday.day}`)
-                                        ) + ` (${$t('chat_chat_info_chinese_zodiac').split('|')[chat.info.user_info.shengxiao -
+                                        ) + ` (${$t('chat_chat_info_chinese_zodiac').split('&')[chat.info.user_info.shengxiao -
                                         1]})`
                                 }}
                             </span>

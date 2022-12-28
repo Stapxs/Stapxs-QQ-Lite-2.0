@@ -194,10 +194,9 @@ export default defineComponent({
             parent.style.display = 'flex'
             parent.style.flexDirection = 'column'
             parent.style.alignItems = 'center'
-            parent.style.padding = '20px'
+            parent.style.padding = '20px 50px'
             parent.style.border = '2px dashed var(--color-card-2)'
             parent.innerText = ''
-            parent.title = sender.src
             // 新建 svg
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
             svg.setAttribute('viewBox', '0 0 512 512')
@@ -205,6 +204,9 @@ export default defineComponent({
             svg.style.width = '40px'
             svg.style.opacity = '0.8'
             svg.style.fill = 'var(--color-main)'
+            if(this.isMe) {
+            svg.style.fill = 'var(--color-font-r)'
+            }
             parent.appendChild(svg)
             // 新建 span
             const span = document.createElement('span')
@@ -212,7 +214,21 @@ export default defineComponent({
             span.style.marginTop = '10px'
             span.style.fontSize = '0.8rem'
             span.style.color = 'var(--color-font-2)'
+            if(this.isMe) {
+                span.style.color = 'var(--color-font-1-r)'
+            }
             parent.appendChild(span)
+            // 链接
+            const a = document.createElement('a')
+            a.innerText = this.$t('chat_view_pic')
+            a.href = sender.src
+            a.style.marginTop = '10px'
+            a.style.fontSize = '0.7rem'
+            a.style.color = 'var(--color-font-2)'
+            if(this.isMe) {
+                a.style.color = 'var(--color-font-1-r)'
+            }
+            parent.appendChild(a)
         },
 
         /**

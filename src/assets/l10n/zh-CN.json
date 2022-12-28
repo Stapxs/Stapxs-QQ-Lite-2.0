@@ -22,7 +22,7 @@
   "botinfo_stat": "状态信息",
   "chat_chat_info_address": "地区",
   "chat_chat_info_birthday": "生日",
-  "chat_chat_info_chinese_zodiac": "鼠|牛|虎|兔|龙|蛇|马|羊|猴|鸡|狗|猪",
+  "chat_chat_info_chinese_zodiac": "鼠&牛&虎&兔&龙&蛇&马&羊&猴&鸡&狗&猪",
   "chat_chat_info_config": "设置",
   "chat_chat_info_dead_day": "天后",
   "chat_chat_info_file": "文件",
@@ -202,5 +202,6 @@
   "sw_need_reload": "检查到应用更新，需要重新加载 ……",
   "update_history": "更新记录",
   "btn_know": "知道了",
-  "btn_see": "查看"
+  "btn_see": "查看",
+  "chat_fun_at_find_emp": "没有找到匹配的群成员"
 }

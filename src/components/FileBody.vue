@@ -27,7 +27,7 @@
                 <span v-if="!item.dead_time && item.dead_time">{{ ((item.dead_time -
                         item.create_time / 86400) - 1) + $t('chat_chat_info_dead_day')
                 }}</span>
-                <span v-if="item.type === 2">{{ $t('chat_chat_info_file_num', { num: item.size }) }}</span>
+                <span v-if="item.type === 2">{{ $t('chat_chat_info_file_num', item.size, { num: item.size }) }}</span>
                 <span v-if="item.type === 1">{{ getSize(item.size) }}</span>
             </div>
         </div>
