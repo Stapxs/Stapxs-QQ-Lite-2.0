@@ -89,7 +89,9 @@ Stapxs QQ Lite 需要一个 QQ Bot 来支持功能，目前 2.0 版本只支持�
 ## 构建应用
 Stapxs QQ Lite 2.0 是一个基于 Vue 的单页应用，这意味着如果你想自行部署服务需要进行构建，你可以参考下面的 bash 进行构建：
 
-注意，在正式构建前，你需要修改根目录下 `vue.config.js` 内导出的 `publicPath` 字段的值，它代表着最终你会运行在的根目录，比如它现在是 `/Stapxs-QQ-Lite-2.0/`；如果你本来就运行在根目录下，可以直接删去它。
+注意。在正式构建前，如果你的网站运作目录并不在根域名下，你需要修改（或增加）项目根目录下 `vue.config.js` 内导出的 `publicPath` 字段的值，它代表着最终你会运行在的目录，比如它在现在是 `/Stapxs-QQ-Lite-2.0/`；如果你本来就运行在根目录下，可以直接删去它。
+
+如果你想使用 Github Action 自动构建本项目，可以直接参考本项目的自动构建配置，它在 [这儿](.github/workflows//vue-build.yml)。
 
 ``` bash
 # 安装依赖
@@ -109,5 +111,5 @@ yarn lint
 ![build](README/build.png)
 
 ## 鸣谢
-<a href="https://github.com/Logic-Accepted"><img style="border-radius:100%;margin-right:10px" src="https://avatars.githubusercontent.com/u/36406453?s=64&v=4"></a>
-<a href="https://github.com/doodlehuang"><img style="border-radius:100%;margin-right:10px" src="https://avatars.githubusercontent.com/u/25525621?s=64&v=4"></a>
+<a href="https://github.com/Logic-Accepted"><img  src="https://avatars.githubusercontent.com/u/36406453?s=48&v=4"></a>
+<a href="https://github.com/doodlehuang"><img  src="https://avatars.githubusercontent.com/u/25525621?s=48&v=4"></a>

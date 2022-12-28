@@ -535,6 +535,7 @@ export default defineComponent({
                 // 添加 at 信息
                 this.addSpecialMsg({ msgObj: { type: 'at', qq: id }, addText: true })
             }
+            document.getElementById('main-input')?.focus()
             this.tags.onAtFind = false
             this.atFindList = null
         },
