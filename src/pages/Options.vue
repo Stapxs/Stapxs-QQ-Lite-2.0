@@ -134,7 +134,7 @@
       </div>
     </div>
     <div>
-      <div class="layui-tab layui-tab-brief" style="display: flex;flex-direction: column;height: 100%;margin: 0;">
+      <div class="layui-tab layui-tab-brief" style="display: flex;flex-direction: column;margin: 0;">
         <div class="opt-title">
           <span>{{ $t('option_title') }}</span>
         </div>

@@ -480,6 +480,7 @@ html, body {
     position: absolute;
     margin-left: 50%;
     max-width: 360px;
+    min-width: 360px;
     z-index: 20;
     width: 50vw;
 }

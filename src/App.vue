@@ -187,7 +187,7 @@ import { Connector, login as loginInfo } from '@/function/connect'
 import { Logger, popList, PopInfo } from '@/function/base'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem } from '@/function/elements/information'
-import { loadHistory, getTrueLang, gitmojiToEmoji, openLink } from '@/function/util'
+import { loadHistory, getTrueLang, gitmojiToEmoji, openLink, getWindowConfig } from '@/function/util'
 
 import Options from '@/pages/Options.vue'
 import Friends from '@/pages/Friends.vue'
@@ -332,7 +332,14 @@ export default defineComponent({
         window.onload = () => {
             app.config.globalProperties.$viewer = this.viewerBody
             const $cookies = app.config.globalProperties.$cookies
-
+            // 纠正页面高度
+            // this.$nextTick(() => {
+            //     let pageInfo = getWindowConfig()
+            //     const appDom = document.getElementById('app')
+            //     if(appDom) {
+            //         appDom.style.height = (pageInfo.windowHeight) + 'px'
+            //     }
+            // })
             // 初始化波浪动画
             this.waveAnimation(document.getElementById('login-wave'))
             // 加载 cookie 中的保存登陆信息

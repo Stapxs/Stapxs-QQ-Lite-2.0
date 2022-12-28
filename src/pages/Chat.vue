@@ -132,6 +132,19 @@
                             </path>
                         </svg></div>
                 </div>
+                <!-- At 指示器 -->
+                <div :class="atFindList != null ? 'at-tag show' : 'at-tag'" contenteditable="true" @blur="choiceAt(undefined)">
+                    <div v-for="item in (atFindList != null ? atFindList : [])"
+                        :key="'atFind-' + item.user_id"
+                        @click="choiceAt(item.user_id)">
+                        <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + item.user_id">
+                        <span>{{ item.card != '' ? item.card : item.nickname }}</span>
+                        <a>{{ item.user_id }}</a>
+                    </div>
+                    <div v-if="atFindList?.length == 0" class="emp">
+                        <span>{{ $t('chat_fun_at_find_emp') }}</span>
+                    </div>
+                </div>
                 <!-- 更多功能 -->
                 <div :class="tags.showMoreDetail ? 'more-detail show' : 'more-detail'">
                     <div :title="$t('chat_fun_menu_face')"
@@ -251,10 +264,10 @@
                         </svg></div>
                     <a>{{ $t('chat_msg_menu_copy') }}</a>
                 </div>
-                <!-- <div @click="copyMsg" v-show="tags.menuDisplay.copySelect">
-           <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M336 64h-53.88C268.9 26.8 233.7 0 192 0S115.1 26.8 101.9 64H48C21.5 64 0 85.48 0 112v352C0 490.5 21.5 512 48 512h288c26.5 0 48-21.48 48-48v-352C384 85.48 362.5 64 336 64zM192 64c17.67 0 32 14.33 32 32c0 17.67-14.33 32-32 32S160 113.7 160 96C160 78.33 174.3 64 192 64zM272 224h-160C103.2 224 96 216.8 96 208C96 199.2 103.2 192 112 192h160C280.8 192 288 199.2 288 208S280.8 224 272 224z"/></svg></div>
-           <a>{{ $t('chat_msg_menu_copy_select') }}</a>
-        </div> -->
+                <div @click="copySelectMsg" v-show="tags.menuDisplay.copySelect">
+                    <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M392.8 1.2c-17-4.9-34.7 5-39.6 22l-128 448c-4.9 17 5 34.7 22 39.6s34.7-5 39.6-22l128-448c4.9-17-5-34.7-22-39.6zm80.6 120.1c-12.5 12.5-12.5 32.8 0 45.3L562.7 256l-89.4 89.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l112-112c12.5-12.5 12.5-32.8 0-45.3l-112-112c-12.5-12.5-32.8-12.5-45.3 0zm-306.7 0c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3l112 112c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256l89.4-89.4c12.5-12.5 12.5-32.8 0-45.3z"/></svg></div>
+                    <a>{{ $t('chat_msg_menu_copy_select') }}</a>
+                </div>
                 <div @click="revokeMsg" v-show="tags.menuDisplay.revoke">
                     <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
                             <path
@@ -309,7 +322,7 @@ import { parseMsgId, getTrueLang, loadHistory as loadHistoryFirst } from '@/func
 import { Logger, LogType, PopInfo, PopType } from '@/function/base'
 import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
-import { BaseChatInfoElem, MsgItemElem, SQCodeElem } from '@/function/elements/information'
+import { BaseChatInfoElem, MsgItemElem, SQCodeElem, GroupMemberInfoElem } from '@/function/elements/information'
 
 export default defineComponent({
     name: 'ViewChat',
@@ -328,6 +341,7 @@ export default defineComponent({
                 openChatInfo: false,
                 isReply: false,
                 isJinLoading: false,
+                onAtFind: false,
                 menuDisplay: {
                     relpy: true,
                     forward: true,
@@ -351,7 +365,9 @@ export default defineComponent({
             imgCache: [] as string[],
             sendCache: [] as MsgItemElem[],
             selectedMsg: null as { [key: string]: any } | null,
+            selectCache: '',
             replyMsgInfo: null,
+            atFindList: null as GroupMemberInfoElem[] | null
         }
     },
     methods: {
@@ -451,7 +467,8 @@ export default defineComponent({
                 //         return
                 //     }
                 // }
-                new PopInfo().add(PopType.INFO, this.$t('pop_chat_msg_not_load'))
+                const pass = Number(this.list[0].seq) - Number(seqName.split('-')[1])
+                new PopInfo().add(PopType.INFO, this.$t('pop_chat_msg_not_load') + ' ( +' + pass + ' ) ')
             }
         },
         imgLoadedScroll () {
@@ -466,15 +483,61 @@ export default defineComponent({
          * @param event 事件
          */
         mainKeyUp (event: KeyboardEvent) {
+            const logger = new Logger()
             // console.log(event.keyCode)
-            if (!event.shiftKey && event.keyCode === 13) {
+            if (!event.shiftKey && event.keyCode == 13) {
                 // enter 发送消息
                 this.msg = this.msgCache
-                this.sendMsg()
-            } else if (event.keyCode === 8) {
+                if(this.msg != '') {
+                    this.sendMsg()
+                }
+            } else if (event.keyCode == 8) {
                 // backspace 删除内容
                 this.selectSQ()
             }
+            if(event.keyCode != 13) {
+                // 获取最后一个输入的符号用于判定 at
+                const lastInput = this.msg.substring(this.msg.length - 1)
+                if(!this.tags.onAtFind && lastInput == '@' && 
+                        runtimeData.chatInfo.info.group_members.length > 0 &&
+                        runtimeData.chatInfo.show.type == 'group') {
+                    logger.add(LogType.UI, '开始匹配群成员列表 ……')
+                    this.tags.onAtFind = true
+                }
+                if(this.tags.onAtFind) {
+                    if(this.msg.lastIndexOf("@") < 0) {
+                        logger.add(LogType.UI, '匹配群成员列表被打断 ……')
+                        this.tags.onAtFind = false
+                        this.atFindList = null
+                    } else {
+                        const atInfo = this.msg.substring(this.msg.lastIndexOf("@") + 1).toLowerCase()
+                        console.log(atInfo)
+                        if(atInfo != '') {
+                            this.atFindList = runtimeData.chatInfo.info.group_members.filter((item) => {
+                                return (item.card != '' && item.card.toLowerCase().indexOf(atInfo) >= 0) || 
+                                        item.nickname.toLowerCase().indexOf(atInfo) >= 0 ||
+                                        atInfo == item.user_id.toString()
+                            })
+                        }
+                    }
+                }
+            }
+        },
+
+        /**
+         * 选择 At
+         * @param id QQ 号
+         */
+        choiceAt(id: number | undefined) {
+            if(id != undefined) {
+                // 删除输入框内的 At 文本
+                this.msg = this.msg.substring(0, this.msg.lastIndexOf('@'))
+                // 添加 at 信息
+                this.addSpecialMsg({ msgObj: { type: 'at', qq: id }, addText: true })
+            }
+            document.getElementById('main-input')?.focus()
+            this.tags.onAtFind = false
+            this.atFindList = null
         },
 
         /**
@@ -546,12 +609,6 @@ export default defineComponent({
             const menu = document.getElementById('msgMenu')
             const msg = event.currentTarget as HTMLDivElement
             if(menu !== null && msg !== null) {
-                // const sender = event.srcElement
-                // if (sender.className === 'msg-text') {
-                //   // 如果是文本，不打开菜单方便使用原生复制功能
-                //   event.returnValue = true
-                //   return
-                // }
                 // 检查消息，确认菜单显示状态
                 if (data.sender.user_id === runtimeData.loginInfo.uin ||
                     runtimeData.chatInfo.info.me_info.role === 'admin' ||
@@ -564,6 +621,13 @@ export default defineComponent({
                     this.tags.menuDisplay.relpy = false
                     this.tags.menuDisplay.forward = false
                     this.tags.menuDisplay.revoke = false
+                }
+                const selection = document.getSelection()
+                const textBody = selection?.anchorNode?.parentElement
+                if(textBody && textBody.className.indexOf('msg-text') > -1) {
+                    // 用于判定是否选中了 msg-text
+                    this.tags.menuDisplay.copySelect = true
+                    this.selectCache = selection.toString()
                 }
                 // 鼠标位置
                 const pointEvent = event as PointerEvent || window.event as PointerEvent
@@ -648,6 +712,22 @@ export default defineComponent({
             if (msg !== null) {
                 const popInfo = new PopInfo()
                 app.config.globalProperties.$copyText(msg.raw_message).then(() => {
+                    popInfo.add(PopType.INFO, this.$t('pop_chat_msg_menu_copy_success'), true)
+                    this.closeMsgMenu()
+                }, (e: any) => {
+                    new Logger().error('复制消息失败：' + e)
+                    popInfo.add(PopType.ERR, this.$t('pop_chat_msg_menu_copy_err'), true)
+                })
+            }
+        },
+
+        /**
+         * 复制缓存的选中的文本
+         */
+        copySelectMsg () {
+            if (this.selectCache != '') {
+                const popInfo = new PopInfo()
+                app.config.globalProperties.$copyText(this.selectCache).then(() => {
                     popInfo.add(PopType.INFO, this.$t('pop_chat_msg_menu_copy_success'), true)
                     this.closeMsgMenu()
                 }, (e: any) => {

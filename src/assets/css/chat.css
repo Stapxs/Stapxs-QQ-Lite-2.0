@@ -1039,6 +1039,49 @@ textarea {
     fill: var(--color-font-1);
 }
 
+.at-tag {
+    background: var(--color-card-1);
+    transform-origin: bottom;
+    transform: scaleY(0);
+    transition: all .3s;
+    border-radius: 7px;
+    overflow-y: scroll;
+    max-height: 25vh;
+    padding: 0;
+    margin: 0;
+    height: 0;
+}
+.at-tag.show {
+    margin: 20px 20px -5px 20px;
+    transform: scaleY(1);
+    height: unset;
+}
+.at-tag > div {
+    align-items: center;
+    border-radius: 7px;
+    cursor: pointer;
+    padding: 10px;
+    display: flex;
+}
+.at-tag > div:hover {
+    background: var(--color-card-2);
+}
+.at-tag > div > img {
+    border-radius: 100%;
+    margin-right: 10px;
+    height: 1rem;
+}
+.at-tag > div > span {
+    flex: 1;
+}
+.at-tag > div > span.emp {
+    text-align: center;
+}
+.at-tag > div > a {
+    color: var(--color-font-2);
+    font-size: 0.8rem;
+}
+
 @media (max-width: 700px) {
     /* 消息面板 */
     .chat-pan {

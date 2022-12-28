@@ -204,7 +204,7 @@
     padding: 0;
 }
 
-.opt-body>div {
+.opt-body > div {
     height: calc(100vh - 200px);
     overflow-y: scroll;
     padding-right: 7px;
@@ -286,6 +286,10 @@
 }
 
 .opt-item>div>span:last-child {
+    color: var(--color-font-1);
+    font-size: 0.8rem;
+}
+.opt-item>div>span:last-child > a {
     color: var(--color-font-1);
     font-size: 0.8rem;
 }
@@ -490,7 +494,7 @@
         margin-left: -20px;
         width: 0;
     }
-    /* .opt-main > div:last-child > div:first-child {
-        height: calc(100% - 180px) !important;
-    } */
+    .opt-body > div {
+        height: calc(100vh - 290px);
+    }
 }

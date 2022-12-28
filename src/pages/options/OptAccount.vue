@@ -52,7 +52,9 @@
                         <span v-else v-for="item in Object.keys(runtimeData.botInfo[key])"
                             v-show="(typeof runtimeData.botInfo[key][item]) !== 'object'"
                             :key="'botinfo-' + key + item">
-                            {{ $t('botinfo_' + item) + ': ' + paseBotInfo(item, runtimeData.botInfo[key][item]) }}
+                            {{ (typeof runtimeData.botInfo[key][item] == 'number' ? 
+                            $t('botinfo_' + item, runtimeData.botInfo[key][item]) : $t('botinfo_' + item))
+                             + ': ' + paseBotInfo(item, runtimeData.botInfo[key][item]) }}
                         </span>
                     </span>
                 </div>
