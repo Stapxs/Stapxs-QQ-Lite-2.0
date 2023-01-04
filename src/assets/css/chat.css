@@ -354,7 +354,7 @@ textarea {
 .chat-info-pan {
     pointer-events: all;
     position: absolute;
-    height: 100vh;
+    height: 100%;
     width: 100%;
 }
 .card-info-pan-bg {
@@ -1097,7 +1097,9 @@ textarea {
         transform: unset;
         margin: 20px;
         bottom: 75px;
-        /* 还缺个 max-height */
+    }
+    .chat-info-pan {
+        height: calc(100% + 75px);
     }
     /* AT 信息悬浮面板 */
     .mumber-info > div:first-child {

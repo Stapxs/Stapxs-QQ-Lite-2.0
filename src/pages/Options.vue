@@ -134,7 +134,7 @@
       </div>
     </div>
     <div>
-      <div class="layui-tab layui-tab-brief" style="display: flex;flex-direction: column;margin: 0;">
+      <div class="layui-tab layui-tab-brief" style="display: flex;flex-direction: column;margin: 0;overflow: hidden;height: 100%;">
         <div class="opt-title">
           <span>{{ $t('option_title') }}</span>
         </div>
@@ -165,7 +165,7 @@
             <span>Stapxs QQ Lite</span>
             <a>{{ packageInfo.version }}</a>
           </div>
-          <span>Copyright © 2022 Stapx Steve [ 林槐 ]</span>
+          <span>Copyright © 2022 - 2023 Stapx Steve [ 林槐 ]</span>
         </div>
         <svg style="width: 50px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 274 259">
           <g id="圖層_2" data-name="圖層 2">

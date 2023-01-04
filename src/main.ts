@@ -1,8 +1,7 @@
-// import infScroll from 'vue-infinite-scroll';
 import VueCookies from 'vue3-cookies'
 import VueViewer from 'v-viewer'
 import VueClipboard from 'vue-clipboard2'
-import infiniteScroll from 'vue3-infinite-scroll-better'
+import InfiniteScroll from 'vue3-infinite-scroll-better'
 
 import App from './App.vue'
 
@@ -39,7 +38,7 @@ app.use(i18n)
 app.use(VueCookies)
 app.use(VueViewer)
 app.use(VueClipboard)
-app.use(infiniteScroll)
+app.use(InfiniteScroll)
 
 app.mount('#app')
 console.log(app)

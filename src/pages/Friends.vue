@@ -186,8 +186,11 @@ export default defineComponent({
              * @param val 完整列表数据
              */
             handler (val) {
-                runtimeData.showList = val.slice(0, 10)
-                this.listPage = 1
+                if(!this.isSearch) {
+                    // 只在非搜索状态刷新以防止意外刷新
+                    runtimeData.showList = val.slice(0, 10)
+                    this.listPage = 1
+                }
             }
         }
     }

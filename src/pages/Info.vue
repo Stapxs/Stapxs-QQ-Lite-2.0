@@ -256,16 +256,23 @@ export default defineComponent({
                 console.log(topInfo)
                 app.config.globalProperties.$cookies.set('top', JSON.stringify(topInfo), '1m')
             }
+        },
+        
+        /**
+         * 检查并修改 isTop
+         */
+        updateIsTop() {
+            if (runtimeData.sysConfig.top_info != undefined) {
+                let topList = runtimeData.sysConfig.top_info[runtimeData.loginInfo.uin]
+                if (topList != undefined) {
+                    this.isTop = topList.indexOf(this.chat.show.id) >= 0
+                }
+            }
         }
     },
     mounted() {
-        if (runtimeData.sysConfig.top_info != undefined) {
-            let topList = runtimeData.sysConfig.top_info[runtimeData.loginInfo.uin]
-            // 修改 isTop
-            if (topList != undefined) {
-                this.isTop = topList.indexOf(this.chat.show.id) >= 0
-            }
-        }
+        this.updateIsTop()
+        this.$watch(() => runtimeData.chatInfo.show.id, () => { this.$nextTick(this.updateIsTop) })
     }
 })
 </script>

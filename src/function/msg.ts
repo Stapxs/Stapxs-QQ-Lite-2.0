@@ -246,19 +246,24 @@ function showSendedMsg(msg: any) {
 
 function saveSendedMsg(echoList: string[], msg: any) {
     // TODO: 这里暂时没有考虑消息获取失败的情况（因为没有例子）
+    const msgIdInfo = Util.parseMsgId(echoList[1]);
     if (Number(echoList[2]) <= 5) {
-        if (echoList[1] !== msg.message_id) {
-            // 返回的不是这条消息，重新请求
-            popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_get_msg_err') + ' ( ' + echoList[2] + ' )')
-            setTimeout(() => {
-                Connector.send(
-                    'get_msg',
-                    { 'message_id': echoList[1] },
-                    'getSendMsg_' + echoList[1] + '_' + (Number(echoList[2]) + 1)
-                )
-            }, 5000)
-        } else {
-            runtimeData.messageList.push(msg)
+        // 防止重试过程中切换聊天
+        if(msgIdInfo.gid == runtimeData.chatInfo.show.id || msgIdInfo.uid == runtimeData.chatInfo.show.id) {
+            if (echoList[1] !== msg.message_id) {
+                // 返回的不是这条消息，重新请求
+                popInfo.add(PopType.ERR, 
+                    app.config.globalProperties.$t('pop_chat_get_msg_err') + ' ( ' + echoList[2] + ' )')
+                setTimeout(() => {
+                    Connector.send(
+                        'get_msg',
+                        { 'message_id': echoList[1] },
+                        'getSendMsg_' + echoList[1] + '_' + (Number(echoList[2]) + 1)
+                    )
+                }, 5000)
+            } else {
+                runtimeData.messageList.push(msg)
+            }
         }
     } else {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_get_msg_err_fin'))

@@ -1,6 +1,6 @@
 {
   "name": "stapxs-qq-lite",
-  "version": "2.1.5",
+  "version": "2.1.7",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",

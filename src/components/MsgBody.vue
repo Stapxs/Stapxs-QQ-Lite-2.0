@@ -118,12 +118,12 @@ export default defineComponent({
          * 根据消息状态获取 At 消息实际的 CSS class
          * @param who 
          */
-        getAtClass (who: number) {
+        getAtClass (who: number | string) {
             let back = 'msg-at'
             if (this.isMe && !(this.isMerge)) {
                 back += ' me'
             }
-            if (runtimeData.loginInfo.uin === who) {
+            if (runtimeData.loginInfo.uin == who || who == 'all') {
                 back += ' atme'
             }
             return back
@@ -221,6 +221,7 @@ export default defineComponent({
             // 链接
             const a = document.createElement('a')
             a.innerText = this.$t('chat_view_pic')
+            a.target = '__blank'
             a.href = sender.src
             a.style.marginTop = '10px'
             a.style.fontSize = '0.7rem'
