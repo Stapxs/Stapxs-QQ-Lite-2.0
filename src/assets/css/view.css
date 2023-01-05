@@ -46,7 +46,7 @@ html, body {
     width: 20px;
 }
 .main-body > div {
-    height: calc(100% - 75px);
+    height: 100%;
     width: 100%;
     padding: 0;
     flex: 1;
@@ -476,8 +476,10 @@ html, body {
     width: 100%;
 }
 .pop-box-body {
+    box-shadow: 0 0 3px var(--color-bg);
     transform: translate(-50%, -50%);
     margin-top: calc(50vh - 35px);
+    transition: all .3s;
     position: absolute;
     margin-left: 50%;
     max-width: 360px;
@@ -511,7 +513,7 @@ html, body {
 .pop-box-body > div:not(:last-child) {
     padding: 20px;
 }
-.pop-box-body > div:last-child {
+.pop-box-body > div.button {
     background: var(--color-card-1);
     margin: 0 -20px -20px -20px;
     border-radius: 0 0 7px 7px;
@@ -521,16 +523,34 @@ html, body {
     padding: 15px;
     display: flex;
 }
-.pop-box-body > div:last-child > button {
+.pop-box-body > div.button > button {
     background: var(--color-card-2);
     color: var(--color-font);
     margin-left: 10px;
     padding: 0 15px;
     cursor: pointer;
 }
-.pop-box-body > div:last-child > button.master {
+.pop-box-body > div.button > button.master {
     background: var(--color-main);
     color: var(--color-font-r);
+}
+
+.pop-box-more {
+    position: absolute;
+    margin-left: -20px;
+    margin-top: 20px;
+    z-index: -1;
+    width: 100%;
+}
+.pop-box-more > div {
+    box-shadow: 0 0 3px var(--color-bg);
+    background: var(--color-card);
+    border-radius: 0 0 7px 7px;
+    margin: 0 10px;
+    height: 10px;
+}
+.pop-box-more > div.hid {
+    height: 0;
 }
 
 .update-info {
@@ -694,6 +714,9 @@ html, body {
     .main-body {
         flex-direction: column-reverse;
     }
+    .main-body > div {
+        height: calc(100% - 75px);
+    }
     .main-body > ul {
         justify-content: center;
         align-items: center;
@@ -777,7 +800,7 @@ html, body {
         background: transparent !important;
         justify-content: center;
         padding: 10px 0;
-        margin: 0;
+        margin: 0 5px 0 0;
     }
     .friend-body > div {
         display: none;

@@ -168,12 +168,17 @@ export class MsgBodyFuns {
             // 接下来按类型处理
             if (type === 'forward') {
                 // 解析合并转发消息
-                if (sender.dataset.id !== 'undefined') {
-                    Connector.send('get_forward_msg', { 'resid': sender.dataset.id }, 'getForwardMsg')
-                } else {
-                    popInfo.add(PopType.INFO, app.config.globalProperties.$t('pop_chat_forward_toooomany'))
-                }
+                this.getForwardMsg(sender.dataset.id)
             }
+        }
+    }
+
+    static getForwardMsg(id: any) {
+        if (id !== 'undefined') {
+            // resid 是 oicq 的， message_id 是 gocqhttp 的
+            Connector.send('get_forward_msg', { 'resid': id, 'message_id': id }, 'getForwardMsg')
+        } else {
+            popInfo.add(PopType.INFO, app.config.globalProperties.$t('pop_chat_forward_toooomany'))
         }
     }
 

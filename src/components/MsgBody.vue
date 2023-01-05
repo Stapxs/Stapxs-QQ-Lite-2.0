@@ -22,7 +22,7 @@
             }}</a>
             <div>
                 <!-- 回复指示框 -->
-                <div v-if="data.source" :class="isMe ? (isMerge ? 'msg-replay' : 'msg-replay me') : 'msg-replay'"
+                <div v-if="data.source && data.source.seq" :class="isMe ? (isMerge ? 'msg-replay' : 'msg-replay me') : 'msg-replay'"
                     @click="scrollToMsg(data.source.seq)">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                         <path
@@ -39,11 +39,15 @@
                     <img v-else-if="item.type === 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/img/qq-face/' + item.id + '.gif')" :title="item.text">
                     <span v-else-if="item.type === 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat_fun_menu_pic') }}：{{ item.text }} ]</span>
                     <div v-else-if="item.type === 'at'" v-show="isAtShow(data.source, item.qq)" :class="getAtClass(item.qq)">
-                        <a @mouseenter="showUserInfo" :data-id="item.qq" :data-group="data.group_id">{{ item.text }}</a>
+                        <a @mouseenter="showUserInfo" :data-id="item.qq" :data-group="data.group_id">{{ getAtName(item) }}</a>
                     </div>
                     <div v-else-if="item.type === 'xml'" v-html="View.buildXML(item.data, item.id, data.message_id)" @click="View.cardClick('xml-' + data.message_id)"></div>
                     <div v-else-if="item.type === 'json'" v-html="View.buildJSON(item.data, data.message_id)" @click="View.cardClick('json-' + data.message_id)">
                     </div>
+                    <div v-else-if="item.type === undefined" ></div>
+
+                    <span v-else-if="item.type === 'forward'" class="msg-unknown" @click="View.getForwardMsg(item.id)">{{ $t('chat_show_forward') }}</span>
+
                     <span v-else class="msg-unknown">{{ '( ' + $t('chat_unsupported_msg') + ': ' + item.type + ' )'
                     }}</span>
                 </div>
@@ -108,7 +112,7 @@ export default defineComponent({
          * @param at at 信息
          */
         isAtShow (source: any, at: any) {
-            if (source !== undefined) {
+            if (source) {
                 return !(at === source.user_id)
             }
             return true
@@ -127,6 +131,23 @@ export default defineComponent({
                 back += ' atme'
             }
             return back
+        },
+
+        /**
+         * 在 At 消息返回内容没有名字的时候尝试在群成员列表内寻找
+         * @param item 
+         */
+        getAtName (item: { [key: string]: any }) {
+            if(item.text != undefined) {
+                return item.text
+            } else {
+                for(let i=0; i<runtimeData.chatInfo.info.group_members.length; i++) {
+                    const user = runtimeData.chatInfo.info.group_members[i]
+                    if(user.user_id == Number(item.qq)) {
+                        return '@' + (user.card != '' ? user.card : user.nickname)
+                    }
+                }
+            }
         },
 
         /**

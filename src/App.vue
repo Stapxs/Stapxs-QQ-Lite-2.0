@@ -139,7 +139,8 @@
         </TransitionGroup>
 
         <div class="pop-box" v-if="runtimeData.popBoxList.length > 0">
-            <div class="pop-box-body ss-card">
+            <div class="pop-box-body ss-card"
+                :style="'transform: translate(-50%, calc(-50% - ' + ((runtimeData.popBoxList.length > 3 ? 3 : runtimeData.popBoxList.length) * 10) + 'px))'">
                 <header v-show="runtimeData.popBoxList[0].title != undefined">
                     <div
                         v-if="runtimeData.popBoxList[0].svg != undefined"
@@ -149,7 +150,7 @@
                     <svg @click="removePopBox" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path></svg>
                 </header>
                 <div v-html="runtimeData.popBoxList[0].html"></div>
-                <div>
+                <div class="button">
                     <button
                         v-for="(button, index) in runtimeData.popBoxList[0].button"
                         :class="'ss-button' + (button.master == true ? ' master' : '')"
@@ -157,6 +158,15 @@
                         @click="button.fun">
                         {{ button.text }}
                     </button>
+                </div>
+                <div class="pop-box-more">
+                    <div
+                        v-for="index in runtimeData.popBoxList.length"
+                        :data-id="index"
+                        :key="'pop-more-' + index"
+                        :class="index > runtimeData.popBoxList.length - 1 ? 'hid' : ''"
+                        :style="'margin:-' + (2*(index-1)) + 'px ' + ((20*index-1)-(2*(index-1))) + 'px 0 ' + ((20*index-1)-(2*(index-1))) + 'px;'">
+                    </div>
                 </div>
             </div>
             <div></div>
@@ -187,7 +197,7 @@ import { Connector, login as loginInfo } from '@/function/connect'
 import { Logger, popList, PopInfo } from '@/function/base'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem } from '@/function/elements/information'
-import { loadHistory, getTrueLang, gitmojiToEmoji, openLink, getWindowConfig } from '@/function/util'
+import { loadHistory, getTrueLang, gitmojiToEmoji, openLink } from '@/function/util'
 
 import Options from '@/pages/Options.vue'
 import Friends from '@/pages/Friends.vue'
@@ -456,6 +466,37 @@ export default defineComponent({
                     .catch(function (e) {
                         console.log(e)
                     })
+            }
+            // 检查打开次数
+            if ($cookies.isKey('times')) {
+                const getTimes = Number($cookies.get('times')) + 1
+                $cookies.set('times', getTimes, '1m')
+                if (getTimes % 50 == 0) {
+                    // 构建 HTML
+                    let html = '<div style="display:flex;flex-direction:column;padding:10px 5%;align-items:center;">'
+                    html += '<svg style="height:2rem;fill:var(--color-font);margin-bottom:20px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M16 0H144c5.3 0 10.3 2.7 13.3 7.1l81.1 121.6c-49.5 4.1-94 25.6-127.6 58.3L2.7 24.9C-.6 20-.9 13.7 1.9 8.5S10.1 0 16 0zM509.3 24.9L401.2 187.1c-33.5-32.7-78.1-54.2-127.6-58.3L354.7 7.1c3-4.5 8-7.1 13.3-7.1H496c5.9 0 11.3 3.2 14.1 8.5s2.5 11.5-.8 16.4zM432 336c0 97.2-78.8 176-176 176s-176-78.8-176-176s78.8-176 176-176s176 78.8 176 176zM264.4 241.1c-3.4-7-13.3-7-16.8 0l-22.4 45.4c-1.4 2.8-4 4.7-7 5.1L168 298.9c-7.7 1.1-10.7 10.5-5.2 16l36.3 35.4c2.2 2.2 3.2 5.2 2.7 8.3l-8.6 49.9c-1.3 7.6 6.7 13.5 13.6 9.9l44.8-23.6c2.7-1.4 6-1.4 8.7 0l44.8 23.6c6.9 3.6 14.9-2.2 13.6-9.9l-8.6-49.9c-.5-3 .5-6.1 2.7-8.3l36.3-35.4c5.6-5.4 2.5-14.8-5.2-16l-50.1-7.3c-3-.4-5.7-2.4-7-5.1l-22.4-45.4z"/></svg>'
+                    html += `<span>${this.$t('popbox_open_times_1', { times: getTimes })}</span>`
+                    html += `<span>${this.$t('popbox_open_times_2')}</span>`
+                    html += '</div>'
+                    const popInfo = {
+                        title: this.$t('popbox_ohh'),
+                        svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"/></svg>',
+                        html: html,
+                        button: [
+                            {
+                                text: app.config.globalProperties.$t('btn__open_times_no'),
+                                fun: () => { runtimeData.popBoxList.shift() }
+                            }, {
+                                text: app.config.globalProperties.$t('btn_open_times_ok'),
+                                master: true,
+                                fun: () => { openLink('https://github.com/Stapxs/Stapxs-QQ-Lite-2.0');runtimeData.popBoxList.shift(); }
+                            }
+                        ]
+                    }
+                    runtimeData.popBoxList.push(popInfo)
+                }
+            } else {
+                $cookies.set('times', 1, '1m')
             }
         }
     }

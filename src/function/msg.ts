@@ -176,10 +176,15 @@ function saveGroupMember(data: GroupMemberInfoElem[]) {
 
 function saveMsgFist(msg: any) {
     if (msg.error !== undefined || msg.status === 'failed') {
-        popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error }))
+        popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error | msg.retcode }))
         runtimeData.messageList = []
     } else {
-        // TODO: 对 CQCode 消息进行转换
+        // 对 CQCode 消息进行转换
+        if (runtimeData.tags.msgType === BotMsgType.CQCode) {
+            for (let i = 0; i < msg.data.length; i++) {
+                msg.data[i] = Util.parseCQ(msg.data[i])
+            }
+        }
         runtimeData.messageList = msg.data
         // setTimeout(() => {
         //   this.$refs.chat.scrollBottom()
@@ -189,23 +194,27 @@ function saveMsgFist(msg: any) {
 
 function saveMsg(msg: any) {
     if (msg.error !== undefined) {
-      popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', {code: msg.error}))
+        popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error | msg.retcode }))
     } else {
-      const items = msg.data
-      items.pop() // 去除最后一条重复的消息，获取历史消息会返回当前消息 **以及** 之前的 N-1 条
-      if (items.length < 1) {
-        runtimeData.tags.canLoadHistory = false
-        return
-      }
-      // TODO: 对 CQCode 消息进行转换
-      runtimeData.messageList = items.concat(runtimeData.messageList)
+        const items = msg.data
+        items.pop() // 去除最后一条重复的消息，获取历史消息会返回当前消息 **以及** 之前的 N-1 条
+        if (items.length < 1) {
+            runtimeData.tags.canLoadHistory = false
+            return
+        }
+        // 对 CQCode 消息进行转换
+        if (runtimeData.tags.msgType === BotMsgType.CQCode) {
+            for (let i = 0; i < items.length; i++) {
+                items[i] = Util.parseCQ(items[i])
+            }
+        }
+        runtimeData.messageList = items.concat(runtimeData.messageList)
     }
 }
 
 function saveChatHistoryScroll(list: string[], msg: any) {
     saveMsg(msg)
     // 尝试跳转消息
-    console.log(list)
     const back = Util.scrollToMsg('chat-' + list[1], true)
     if(!back && Number(list[3]) < Number(list[2])) {
         Connector.send(
@@ -218,14 +227,28 @@ function saveChatHistoryScroll(list: string[], msg: any) {
 }
 
 function saveForwardMsg(data: any) {
+    // gocqhttp 在 message 里，消息为 content，并且直接进行一个 CQCode 的转
+    if(runtimeData.botInfo['go-cqhttp'] === true) {
+        data = data.messages
+    }
+
+    console.log(data)
     // 格式化不规范消息格式
     for (let i = 0; i < data.length; i++) {
-        data[i].sender = {
-            user_id: data[i].user_id,
-            nickname: data[i].nickname,
-            card: ''
+        if(!data[i].sender) {
+            data[i].sender = {
+                user_id: data[i].user_id,
+                nickname: data[i].nickname,
+                card: ''
+            }
+        }
+        if(!data[i].message) {
+            data[i].message = data[i].content
+            data[i] = Util.parseCQ(data[i])
         }
     }
+    console.log(data)
+    // 处理
     runtimeData.mergeMessageList = data
 }
 
@@ -248,7 +271,7 @@ function saveSendedMsg(echoList: string[], msg: any) {
     // TODO: 这里暂时没有考虑消息获取失败的情况（因为没有例子）
     const msgIdInfo = Util.parseMsgId(echoList[1]);
     if (Number(echoList[2]) <= 5) {
-        // 防止重试过程中切换聊天
+        // // 防止重试过程中切换聊天
         if(msgIdInfo.gid == runtimeData.chatInfo.show.id || msgIdInfo.uid == runtimeData.chatInfo.show.id) {
             if (echoList[1] !== msg.message_id) {
                 // 返回的不是这条消息，重新请求
@@ -404,9 +427,13 @@ function saveMoreFileList(data: any) {
 }
 
 function newMsg(data: any) {
+    // TODO: 没有对频道的支持计划
+    if(data.message_type == 'guild') {
+        return
+    }
     // 对 CQCode 消息进行转换
     if (runtimeData.tags.msgType === BotMsgType.CQCode) {
-        data.message = Util.parseCQ(data.message)
+        data = Util.parseCQ(data)
     }
     const id = data.from_id ? data.from_id : data.group_id
     const sender = data.sender.user_id
@@ -577,7 +604,7 @@ function saveJin (data: any) {
 
 const notificationList: Notification[] = []
 
-export const runtimeData: RunTimeDataElem = reactive({
+const baseRuntime = JSON.stringify({
     tags: {
         firstLoad: false,
         canLoadHistory: true,
@@ -608,3 +635,5 @@ export const runtimeData: RunTimeDataElem = reactive({
     messageList: [],
     popBoxList: []
 })
+
+export const runtimeData: RunTimeDataElem = reactive(JSON.parse(baseRuntime))

@@ -249,6 +249,10 @@ export function runASWEvent(event: Event) {
                         value = sender.dataset.id
                         break
                     }
+                    case 'text': {
+                        value = (sender as HTMLInputElement).value
+                        break
+                    }
                 }
                 break
             }

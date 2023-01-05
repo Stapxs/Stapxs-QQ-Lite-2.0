@@ -306,6 +306,10 @@
     height: 1.1rem;
     width: 1.1rem;
 }
+.opt-item input[type=text] {
+    line-height: 35px;
+    font-size: 0.8rem;
+}
 
 .l10n-info {
     border-left: 7px solid var(--color-main);
