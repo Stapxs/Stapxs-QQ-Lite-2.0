@@ -77,6 +77,14 @@
             </div>
           </label>
         </div>
+        <div class="opt-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z"/></svg>
+          <div>
+            <span>{{ $t('option_fun_taill') }}</span>
+            <span>{{ $t('option_fun_taill_tip') }}</span>
+          </div>
+          <input class="ss-input" style="width:150px" type="text" name="msg_taill" @keyup="save" v-model="runtimeData.sysConfig.msg_taill">
+        </div>
     </div>
     <!-- 这个功能暂时还没做，要修整 -->
     <div class="ss-card" v-if="false">

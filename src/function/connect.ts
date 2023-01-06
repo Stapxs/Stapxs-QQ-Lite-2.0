@@ -9,10 +9,11 @@
 import Option from "./option"
 import app from "@/main"
 
-import { LogType, Logger, PopType, PopInfo  } from "./base"
+import { reactive } from 'vue'
+import { LogType, Logger, PopType, PopInfo  } from './base'
 import { parse } from './msg'
 
-import { BotActionElem, LoginCacheElem } from "./elements/system"
+import { BotActionElem, LoginCacheElem } from './elements/system'
 
 const logger = new Logger()
 const popInfo = new PopInfo()
@@ -58,6 +59,8 @@ export class Connector {
             const loginAddress = login.address
             login = { status: false, address: '', token: '' }
             login.address = loginAddress
+            // TODO: 重置运行时数据并不会刷新，重新连接会有问题，暂时进行页面刷新。
+            location.reload()
         }
         websocket.onerror = (e) => {
             popInfo.add(PopType.ERR, $t('log_com_err') + ': ' + e)
@@ -84,4 +87,4 @@ function getBaseInfo() {
     Connector.send('get_login_info', {}, 'getLoginInfo')
 }
 
-export let login: LoginCacheElem = { status: false, address: '', token: '' }
+export let login: LoginCacheElem = reactive({ status: false, address: '', token: '' })

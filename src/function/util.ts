@@ -197,7 +197,8 @@ export function getMsgRawTxt(message: [{ [key: string]: any }]): string {
     let back = ''
     for (let i = 0; i < message.length; i++) {
         switch (message[i].type) {
-            case 'at':
+            case 'at': if(message[i].text == undefined) { break }
+            // eslint-disable-next-line
             case 'text': back += message[i].text.replaceAll('\n', ' ').replaceAll('\r', ' '); break
             case 'face':
             case 'bface': back += '[表情]'; break
@@ -205,7 +206,7 @@ export function getMsgRawTxt(message: [{ [key: string]: any }]): string {
             case 'record': back += '[语音]'; break
             case 'video': back += '[视频]'; break
             case 'file': back += '[文件]'; break
-            case 'json': back += JSON.parse(message[i].data).prompt; break
+            case 'json': console.log(message[i].data) ;back += JSON.parse(message[i].data).prompt; break
             case 'xml': {
                 let name = message[i].data.substring(message[i].data.indexOf('<source name="') + 14)
                 name = name.substring(0, name.indexOf('"'))
@@ -253,7 +254,8 @@ export function initUITest() {
  * @param msg CQCode 消息
  * @returns 消息对象
  */
-export function parseCQ(msg: string) {
+export function parseCQ(data: any) {
+    let msg = data.message as string
     // 将纯文本也处理为 CQCode 格式
     // PS：这儿不用担心方括号本身，go-cqhttp 会把它转义掉
     let reg = /^[^\]]+?\[|\].+\[|\][^[]+$|^[^[\]]+$/g
@@ -270,22 +272,37 @@ export function parseCQ(msg: string) {
     reg = /\[.+?\]/g
     const list = msg.match(reg)
     // 处理为 object
-    const back: [{ [ket: string]: any }] = [{}]
+    const back: { [ket: string]: any }[] = []
     reg = /\[CQ:([^,]+),(.*)\]/g
     if(list !== null) {
         list.forEach((item) => {
             if (item.match(reg) !== null) {
                 const info: {[key: string]: any} = { type: RegExp.$1 }
                 RegExp.$2.split(',').forEach((key) => {
-                    const kv = key.split('=')
+                    const kv = []
+                    kv.push(key.substring(0, key.indexOf('=')))
+                    // 对 html 转义字符进行反转义
+                    const a = document.createElement('a')
+                    a.innerHTML = key.substring(key.indexOf('=') + 1)
+                    kv.push(a.innerText)
                     info[kv[0]] = kv[1]
                 })
-                back.push(info)
+                // TODO: 对回复消息进行特殊处理
+                if(info.type == 'reply') {
+                    data.source = {
+                        user_id: info.user_id,
+                        seq: info.seq,
+                        message: info.message
+                    }
+                } else {
+                    back.push(info)
+                }
             }
         })
     }
     logger.debug(app.config.globalProperties.$t('log_cq_msg_parsred') + ': ' + JSON.stringify(back))
-    return back
+    data.message = back
+    return data
 }
 
 /**
@@ -331,11 +348,24 @@ function loadHistoryMessage(id: number, type: string) {
     }
     if (msgid != null) {
         // 发送请求
-        Connector.send(
-            'get_chat_history',
-            { 'message_id': msgid },
-            'getChatHistoryFist'
-        )
+        if(runtimeData.botInfo['go-cqhttp'] === true) {
+            // go-cqhttp 的特殊处理
+            Connector.send(
+                'get_msg_history',
+                {
+                    'message_id': '0',
+                    'target_id': id,
+                    'group': type == 'group'
+                },
+                'getChatHistoryFist'
+            )
+        } else {
+            Connector.send(
+                'get_chat_history',
+                { 'message_id': msgid },
+                'getChatHistoryFist'
+            )
+        }
         return true
     } else {
         return false
@@ -381,7 +411,7 @@ export function gitmojiToEmoji (name: string) {
     return {":zap:":"⚡️",":art:":"🎨",":fire:":"🔥",":bug:":"🐛",":ambulance:":"🚑️",":sparkles:":"✨",":memo:":"📝",":rocket:":"🚀",":lipstick:":"💄",":tada:":"🎉",":white-check-mark:":"✅",":lock:":"🔒️",":closed-lock-with-key:":"🔐",":bookmark:":"🔖",":rotating-light:":"🚨",":construction:":"🚧",":green-heart:":"💚",":arrow-down:":"⬇️",":arrow-up:":"⬆️",":pushpin:":"📌",":construction-worker:":"👷",":chart-with-upwards-trend:":"📈",":recycle:":"♻️",":heavy-plus-sign:":"➕",":heavy-minus-sign:":"➖",":wrench:":"🔧",":hammer:":"🔨",":globe-with-meridians:":"🌐",":pencil2:":"✏️",":poop:":"💩",":rewind:":"⏪️",":twisted-rightwards-arrows:":"🔀",":package:":"📦️",":alien:":"👽️",":truck:":"🚚",":page-facing-up:":"📄",":boom:":"💥",":bento:":"🍱",":wheelchair:":"♿️",":bulb:":"💡",":beers:":"🍻",":speech-balloon:":"💬",":card-file-box:":"🗃️",":loud-sound:":"🔊",":mute:":"🔇",":busts-in-silhouette:":"👥",":children-crossing:":"🚸",":building-construction:":"🏗️",":iphone:":"📱",":clown-face:":"🤡",":egg:":"🥚",":see-no-evil:":"🙈",":camera-flash:":"📸",":alembic:":"⚗️",":mag:":"🔍️",":label:":"🏷️",":seedling:":"🌱",":triangular-flag-on-post:":"🚩",":goal-net:":"🥅",":animation:":"💫",":wastebasket:":"🗑️",":passport-control:":"🛂",":adhesive-bandage:":"🩹",":monocle-face:":"🧐",":coffin:":"⚰️",":test-tube:":"🧪",":necktie:":"👔",":stethoscope:":"🩺",":bricks:":"🧱",":technologist:":"🧑‍💻"}[name]
 }
 
-export function getWindowConfig () {
+export function getWindowConfig() {
     let windowWidth = window.innerWidth
     let windowHeight = window.innerHeight
     if (typeof windowWidth !== 'number') {
@@ -389,8 +419,7 @@ export function getWindowConfig () {
         windowHeight = document.documentElement.clientHeight
     }
     return { windowWidth: windowWidth, windowHeight: windowHeight }
-  }
-
+}
 
 export default {
     openLink,

@@ -104,6 +104,16 @@ function parseMsgToJSON(msg: string, cache: MsgItemElem[]) {
             case 'reply': back.unshift(item); break
         }
     })
+    // 插入小尾巴
+    const taill = runtimeData.sysConfig.msg_taill
+    if(taill && taill != '') {
+        for(let i=back.length - 1; i>=0; i--) {
+            if(back[i].type == 'text') {
+                back[i].text = back[i].text + taill
+                break
+            }
+        }
+    }
     // 返回
     return back
 }
@@ -142,6 +152,8 @@ function parseMsgToCQ(msg: string, cache: MsgItemElem[]) {
     if (msg !== '') {
         back += msg
     }
+    // 插入小尾巴
+    back = back + runtimeData.sysConfig.msg_taill
     // 返回
     return back
 }

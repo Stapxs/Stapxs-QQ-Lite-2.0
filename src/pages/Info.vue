@@ -191,6 +191,7 @@ import FileBody from '@/components/FileBody.vue'
 import { getTrueLang } from '@/function/util'
 import { runtimeData } from '@/function/msg'
 import app from '@/main'
+import { UserFriendElem, UserGroupElem } from '@/function/elements/information'
 
 export default defineComponent({
     name: 'ViewInfo',
@@ -256,16 +257,46 @@ export default defineComponent({
                 console.log(topInfo)
                 app.config.globalProperties.$cookies.set('top', JSON.stringify(topInfo), '1m')
             }
+            // 为消息列表内的对象刷新置顶标志
+            for(let i=0; i<runtimeData.onMsgList.length; i++) {
+                const item = runtimeData.onMsgList[i]
+                if(item.user_id == this.chat.show.id || item.group_id == this.chat.show.id) {
+                    runtimeData.onMsgList[i].always_top = value
+                    break
+                }
+            }
+            // 重新排序列表
+            const newList = [] as (UserFriendElem & UserGroupElem)[]
+            let topNum = 1
+            runtimeData.onMsgList.forEach((item) => {
+                // 排序操作
+                if (item.always_top === true) {
+                    newList.unshift(item)
+                    topNum++
+                } else if (item.new_msg === true) {
+                    newList.splice(topNum - 1, 0, item)
+                } else {
+                    newList.push(item)
+                }
+            })
+            runtimeData.onMsgList = newList
+        },
+        
+        /**
+         * 检查并修改 isTop
+         */
+        updateIsTop() {
+            if (runtimeData.sysConfig.top_info != undefined) {
+                let topList = runtimeData.sysConfig.top_info[runtimeData.loginInfo.uin]
+                if (topList != undefined) {
+                    this.isTop = topList.indexOf(this.chat.show.id) >= 0
+                }
+            }
         }
     },
     mounted() {
-        if (runtimeData.sysConfig.top_info != undefined) {
-            let topList = runtimeData.sysConfig.top_info[runtimeData.loginInfo.uin]
-            // 修改 isTop
-            if (topList != undefined) {
-                this.isTop = topList.indexOf(this.chat.show.id) >= 0
-            }
-        }
+        this.updateIsTop()
+        this.$watch(() => runtimeData.chatInfo.show.id, () => { this.$nextTick(this.updateIsTop) })
     }
 })
 </script>

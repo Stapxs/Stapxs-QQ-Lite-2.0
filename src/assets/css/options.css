@@ -12,7 +12,7 @@
 }
 
 .opt-main {
-    height: calc(100vh - 40px);
+    height: 100%;
     flex-direction: row;
     display: flex;
     padding: 20px;
@@ -38,6 +38,8 @@
     margin-left: 20px;
     display: flex;
     flex: 1;
+    height: 100%;
+    overflow: hidden;
 }
 
 .logo-card {
@@ -125,12 +127,13 @@
 
 .opt-title {
     pointer-events: none;
-    margin-bottom: -50px;
+    margin-bottom: -38px;
     flex-direction: row;
     align-items: center;
     display: flex;
     height: 50px;
     z-index: 1;
+    margin-top: 13px;
 }
 
 .opt-title>span {
@@ -200,12 +203,14 @@
 }
 
 .opt-body {
+    overflow-y: scroll;
     margin-top: 20px;
     padding: 0;
+    flex: 1;
 }
 
 .opt-body > div {
-    height: calc(100vh - 200px);
+    height: 100%;
     overflow-y: scroll;
     padding-right: 7px;
 }
@@ -301,6 +306,10 @@
     height: 1.1rem;
     width: 1.1rem;
 }
+.opt-item input[type=text] {
+    line-height: 35px;
+    font-size: 0.8rem;
+}
 
 .l10n-info {
     border-left: 7px solid var(--color-main);
@@ -326,22 +335,24 @@
     flex: 1;
 }
 
-.l10n-info>div>span {
+.l10n-info>div>span:first-child {
+    margin-bottom: 8px;
     font-size: 1rem;
     font-weight: bold;
 }
-
 .l10n-info>div>span:first-child>a {
     color: var(--color-font-2);
     font-weight: normal;
     font-size: 0.7rem;
     margin-left: 5px;
 }
-
+.l10n-info>div>span.author {
+    color: var(--color-font-1);
+    font-size: 0.8rem;
+}
 .l10n-info>div>span:last-child {
     font-weight: unset;
     font-size: 0.8rem;
-    margin-top: 5px;
 }
 
 .l10n-info>span {
@@ -424,6 +435,7 @@
 }
 
 .end-card {
+    margin-bottom: 40px;
     margin-top: 20px;
     display: flex;
 }
@@ -461,12 +473,6 @@
     width: 100%;
 }
 
-.bot-info {
-
-}
-.bot-info > div {
-
-}
 .bot-info > div > span {
     width: 100%;
     display: flex;
@@ -490,11 +496,11 @@
     .opt-tab {
         justify-content: center;
     }
+    .opt-main {
+        height: 100%;
+    }
     .opt-main > div:first-child {
         margin-left: -20px;
         width: 0;
-    }
-    .opt-body > div {
-        height: calc(100vh - 290px);
     }
 }
