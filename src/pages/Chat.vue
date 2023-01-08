@@ -1075,8 +1075,7 @@ export default defineComponent({
             // 开始点击的位置
             const startX = this.tags.msgTouch.x
             const startY = this.tags.msgTouch.y
-            // // 移动的允许范围，用来防止按住了挪出控件范围导致无法触发 end
-            // TODO: 懒得写了
+            // TODO: 懒得写了, 移动的允许范围，用来防止按住了挪出控件范围导致无法触发 end
             // const maxTop = sender.
             if(startX > -1 && startY > -1) {
                 // 计算移动差值

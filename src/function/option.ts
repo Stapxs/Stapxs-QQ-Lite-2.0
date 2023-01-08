@@ -264,9 +264,20 @@ export function runASWEvent(event: Event) {
     }
 }
 
+/**
+ * 删除设置项
+ * @param name 设置项名称
+ */
+export function remove(name: string) {
+    delete cacheConfigs[name]
+    saveAll()
+}
+
 export default {
     get,
     load,
     save,
-    runAS
+    runAS,
+    runASWEvent,
+    remove
 }

@@ -139,7 +139,7 @@ export function htmlDecodeByRegExp(str: string): string {
 }
 
 /**
- * 根据区间和位数生成指定数量的随机数
+ * 根据区间和位数生成指定长度的随机数
  * @param TODO: 我忘了这些参数都是干嘛的了，懒得看
  * @returns 随机数组
  */
@@ -186,6 +186,21 @@ export function getRandom(num: boolean, maxA: boolean, minlA: boolean, fqy: numb
         text += text1
     }
     return text
+}
+
+/**
+ * 根据区间生成一个随机数
+ * @param minNum 最小值
+ * @param maxNum 最大值
+ * @returns 随机数
+ */
+export function randomNum(minNum: number, maxNum: number) {
+    switch (arguments.length)
+    {
+        case 1: return parseInt((Math.random() * minNum + 1).toString(), 10);
+        case 2: return parseInt((Math.random() * (maxNum - minNum + 1) + minNum).toString(), 10);
+        default: return 0;
+    }
 }
 
 /**
@@ -431,5 +446,6 @@ export default {
     loadHistory,
     scrollToMsg,
     gitmojiToEmoji,
-    getWindowConfig
+    getWindowConfig,
+    randomNum
 }
