@@ -15,8 +15,8 @@
 .message > img {
     width: 35px;
     height: 35px;
-    border-radius: 100%;
-    margin: 5px 15px 0 0;
+    border-radius: 7px;
+    margin: 10px 15px 0 0;
 }
 
 .message-body {

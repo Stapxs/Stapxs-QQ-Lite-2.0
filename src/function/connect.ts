@@ -11,7 +11,7 @@ import app from "@/main"
 
 import { reactive } from 'vue'
 import { LogType, Logger, PopType, PopInfo  } from './base'
-import { parse } from './msg'
+import { parse, runtimeData } from './msg'
 
 import { BotActionElem, LoginCacheElem } from './elements/system'
 
@@ -33,11 +33,20 @@ export class Connector {
         logger.debug($t('log_ws_log_debug'))
         logger.add(LogType.WS, $t('log_we_log_all'))
 
-        websocket = new WebSocket(`ws://${address}?access_token=${token}`)
+        try {
+            websocket = new WebSocket(`ws://${address}?access_token=${token}`)
+        } catch (ex) {
+            websocket = new WebSocket(`wss://${address}?access_token=${token}`)
+        }
+
         websocket.onopen = () => {
             logger.add(LogType.WS, $t('log_con_success'))
             // 保存登录信息（一个月）
             $cookies.set('address', address, '1m')
+            // 保存密钥
+            if(runtimeData.sysConfig.save_password == true) {
+                Option.save('save_password', token)
+            }
             // 加载初始化数据
             // PS：标记登陆成功在获取用户信息的回调位置，防止无法获取到内容
             getBaseInfo()

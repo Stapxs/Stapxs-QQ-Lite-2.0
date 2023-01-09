@@ -31,7 +31,7 @@ export interface RunTimeDataElem {
         svg?: string,
         title?: string,
         html: string,
-        button: {
+        button?: {
             master?: boolean,
             fun?: (value: any) => void,
             text: string

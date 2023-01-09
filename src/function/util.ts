@@ -139,7 +139,7 @@ export function htmlDecodeByRegExp(str: string): string {
 }
 
 /**
- * 根据区间和位数生成指定数量的随机数
+ * 根据区间和位数生成指定长度的随机数
  * @param TODO: 我忘了这些参数都是干嘛的了，懒得看
  * @returns 随机数组
  */
@@ -186,6 +186,21 @@ export function getRandom(num: boolean, maxA: boolean, minlA: boolean, fqy: numb
         text += text1
     }
     return text
+}
+
+/**
+ * 根据区间生成一个随机数
+ * @param minNum 最小值
+ * @param maxNum 最大值
+ * @returns 随机数
+ */
+export function randomNum(minNum: number, maxNum: number) {
+    switch (arguments.length)
+    {
+        case 1: return parseInt((Math.random() * minNum + 1).toString(), 10);
+        case 2: return parseInt((Math.random() * (maxNum - minNum + 1) + minNum).toString(), 10);
+        default: return 0;
+    }
 }
 
 /**
@@ -411,16 +426,6 @@ export function gitmojiToEmoji (name: string) {
     return {":zap:":"⚡️",":art:":"🎨",":fire:":"🔥",":bug:":"🐛",":ambulance:":"🚑️",":sparkles:":"✨",":memo:":"📝",":rocket:":"🚀",":lipstick:":"💄",":tada:":"🎉",":white-check-mark:":"✅",":lock:":"🔒️",":closed-lock-with-key:":"🔐",":bookmark:":"🔖",":rotating-light:":"🚨",":construction:":"🚧",":green-heart:":"💚",":arrow-down:":"⬇️",":arrow-up:":"⬆️",":pushpin:":"📌",":construction-worker:":"👷",":chart-with-upwards-trend:":"📈",":recycle:":"♻️",":heavy-plus-sign:":"➕",":heavy-minus-sign:":"➖",":wrench:":"🔧",":hammer:":"🔨",":globe-with-meridians:":"🌐",":pencil2:":"✏️",":poop:":"💩",":rewind:":"⏪️",":twisted-rightwards-arrows:":"🔀",":package:":"📦️",":alien:":"👽️",":truck:":"🚚",":page-facing-up:":"📄",":boom:":"💥",":bento:":"🍱",":wheelchair:":"♿️",":bulb:":"💡",":beers:":"🍻",":speech-balloon:":"💬",":card-file-box:":"🗃️",":loud-sound:":"🔊",":mute:":"🔇",":busts-in-silhouette:":"👥",":children-crossing:":"🚸",":building-construction:":"🏗️",":iphone:":"📱",":clown-face:":"🤡",":egg:":"🥚",":see-no-evil:":"🙈",":camera-flash:":"📸",":alembic:":"⚗️",":mag:":"🔍️",":label:":"🏷️",":seedling:":"🌱",":triangular-flag-on-post:":"🚩",":goal-net:":"🥅",":animation:":"💫",":wastebasket:":"🗑️",":passport-control:":"🛂",":adhesive-bandage:":"🩹",":monocle-face:":"🧐",":coffin:":"⚰️",":test-tube:":"🧪",":necktie:":"👔",":stethoscope:":"🩺",":bricks:":"🧱",":technologist:":"🧑‍💻"}[name]
 }
 
-export function getWindowConfig() {
-    let windowWidth = window.innerWidth
-    let windowHeight = window.innerHeight
-    if (typeof windowWidth !== 'number') {
-        windowWidth = document.documentElement.clientWidth
-        windowHeight = document.documentElement.clientHeight
-    }
-    return { windowWidth: windowWidth, windowHeight: windowHeight }
-}
-
 export default {
     openLink,
     getTrueLang,
@@ -431,5 +436,5 @@ export default {
     loadHistory,
     scrollToMsg,
     gitmojiToEmoji,
-    getWindowConfig
+    randomNum
 }

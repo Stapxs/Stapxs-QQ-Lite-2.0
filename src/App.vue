@@ -62,18 +62,15 @@
                                 </label>
                                 <div style="display: flex;">
                                     <label class="default">
-                                        <input type="checkbox" id="opt_save_password" onclick="changeSavePwd(this)">
+                                        <input id="in_" type="checkbox" name="save_password" @click="savePassword" v-model="tags.savePassword">
                                         <a>{{ $t('home_card_save_pwd') }}</a>
                                     </label>
                                     <div style="flex: 1;"></div>
                                     <label class="default" style="justify-content: flex-end;">
-                                        <input type="checkbox" id="opt_auto_connect" onclick="changeOpt(this)">
+                                        <input type="checkbox" name="auto_connect" @click="save($event);savePassword($event);" v-model="runtimeData.sysConfig.auto_connect">
                                         <a>{{ $t('home_card_auto_con') }}</a>
                                     </label>
                                 </div>
-                                <a id="save_pwd_note" class="opt-tip login-tip" style="display: none;">
-                                    {{ $t('home_card_tip', { name: $t('name') }) }}
-                                </a>
                                 <button id="connect_btn" class="ss-button" type="submit">{{ $t('home_card_connect')
                                 }}</button>
                             </form>
@@ -150,7 +147,7 @@
                     <svg @click="removePopBox" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path></svg>
                 </header>
                 <div v-html="runtimeData.popBoxList[0].html"></div>
-                <div class="button">
+                <div class="button" v-show="runtimeData.popBoxList[0].button">
                     <button
                         v-for="(button, index) in runtimeData.popBoxList[0].button"
                         :class="'ss-button' + (button.master == true ? ' master' : '')"
@@ -214,13 +211,16 @@ export default defineComponent({
     },
     data () {
         return {
+            save: Option.runASWEvent,
             popInfo: new PopInfo(),
             appMsgs: popList,
             loadHistory: loadHistory,
             loginInfo: loginInfo,
             runtimeData: runtimeData,
             tags: {
-                showChat: false
+                showChat: false,
+                isSavePwdClick: false,
+                savePassword: false
             },
             viewerOpt: { inline: false, button: false, title: false, toolbar: { prev: true, rotateLeft: true, reset: true, rotateRight: true, next: true } },
             viewerBody: undefined as HTMLDivElement | undefined
@@ -333,6 +333,33 @@ export default defineComponent({
          */
         removePopBox () {
             runtimeData.popBoxList.shift()
+        },
+
+        /**
+         * 保存密码
+         * @param event 事件
+         */
+        savePassword(event: Event) {
+            const sender = event.target as HTMLInputElement
+            const value = sender.checked
+            if(value) {
+                Option.save('save_password', true)
+                // 创建提示弹窗
+                const popInfo = {
+                    title: this.$t('popbox_tip'),
+                    html: `<span>${this.$t('auto_connect_tip')}</span>`,
+                    button: [
+                        {
+                            text: app.config.globalProperties.$t('btn_know'),
+                            master: true,
+                            fun: () => { runtimeData.popBoxList.shift() }
+                        }
+                    ]
+                }
+                runtimeData.popBoxList.push(popInfo)
+            } else {
+                Option.remove('save_password')
+            }
         }
     },
     mounted () {
@@ -342,14 +369,6 @@ export default defineComponent({
         window.onload = () => {
             app.config.globalProperties.$viewer = this.viewerBody
             const $cookies = app.config.globalProperties.$cookies
-            // 纠正页面高度
-            // this.$nextTick(() => {
-            //     let pageInfo = getWindowConfig()
-            //     const appDom = document.getElementById('app')
-            //     if(appDom) {
-            //         appDom.style.height = (pageInfo.windowHeight) + 'px'
-            //     }
-            // })
             // 初始化波浪动画
             this.waveAnimation(document.getElementById('login-wave'))
             // 加载 cookie 中的保存登陆信息
@@ -361,6 +380,14 @@ export default defineComponent({
             runtimeData.sysConfig.top_info = $cookies.get('top')
             // PS：重新再应用一次暗黑模式，因为需要在页面加载完成后处理
             Option.runAS('opt_dark', Option.get('opt_dark'))
+            // 加载密码保存和自动连接
+            if(runtimeData.sysConfig.save_password && runtimeData.sysConfig.save_password != true) {
+                loginInfo.token = runtimeData.sysConfig.save_password
+                this.tags.savePassword = true
+            }
+            if(runtimeData.sysConfig.auto_connect == true) {
+                this.connect()
+            }
             // 初始化完成
             logger.debug(this.$t('log_welcome'))
             logger.debug(this.$t('log_runtime') + ': ' + process.env.NODE_ENV)

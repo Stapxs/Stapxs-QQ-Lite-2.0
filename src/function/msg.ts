@@ -9,6 +9,7 @@
  *      2.0 - 重构为 ts 版本，修改 Vue3 相关变更
  * @Description: 此模块用于拆分和保存/处理 bot 返回的各类信息，整个运行时数据也保存在这儿。
 */
+import qed from '@/assets/qed.txt'
 
 import FileDownloader from 'js-file-downloader'
 import app from '@/main'
@@ -16,7 +17,7 @@ import Option from './option'
 import Util from './util'
 
 import { reactive, nextTick } from 'vue'
-import { PopInfo, PopType, Logger } from './base'
+import { PopInfo, PopType, Logger, LogType } from './base'
 import { Connector, login } from './connect'
 import { GroupMemberInfoElem, UserFriendElem, UserGroupElem, MsgItemElem, RunTimeDataElem, BotMsgType } from './elements/information'
 import { NotificationElem } from './elements/system'
@@ -502,6 +503,23 @@ function newMsg(data: any) {
             }
         })
         runtimeData.onMsgList = newList
+        // 抽个签
+        const num = Util.randomNum(0, 10000)
+        if (num >= 4500 && num <= 5500) {
+            new Logger().add(LogType.INFO, num.toString())
+        }
+        if (num === 5000) {
+            const popInfo = {
+                html: qed,
+                button: [
+                    {
+                        text: '确定(O)',
+                        fun: () => { runtimeData.popBoxList.shift() }
+                    }
+                ]
+            }
+            runtimeData.popBoxList.push(popInfo)
+        }
     }
 }
 

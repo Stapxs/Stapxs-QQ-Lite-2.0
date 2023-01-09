@@ -476,7 +476,6 @@ html, body {
     width: 100%;
 }
 .pop-box-body {
-    box-shadow: 0 0 3px var(--color-bg);
     transform: translate(-50%, -50%);
     margin-top: calc(50vh - 35px);
     transition: all .3s;
@@ -707,6 +706,108 @@ html, body {
 
 .hiden-home {
     margin-top: calc(-100% + 5px);
+}
+
+.qq-err-card {
+    margin: -40px -30px -20px -30px;
+}
+.qq-err-card > div:first-child {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: -5px;
+    height: 2rem;
+}
+.qq-err-card > div:first-child img {
+    margin-right: 10px;
+}
+.qq-err-card > div:first-child span {
+    font-size: 0.9rem;
+    color: var(--color-font);
+    flex: 1;
+}
+.qq-err-card > div:first-child span span {
+    opacity: 0.1;
+    margin-left: 5px;
+    color: var(--color-font-2);
+}
+.qq-err-card > div:first-child svg {
+    cursor: pointer;
+    height: 1.5rem;
+    width: 1.5rem;
+    fill: var(--color-font-2);
+}
+.qq-err-card > div:last-child {
+    margin: 0 -8px;
+    padding: 10px;
+    color: var(--color-font);
+    margin: 0 -8px -3px -8px;
+}
+
+.qq-err-card > div:last-child hr {
+    margin: 5px 0;
+    background: var(--color-font-2);
+    opacity: 0.7;
+    border-bottom: 1px solid #fff;
+}
+.qq-err-card > div:last-child > div:first-child {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 10px;
+}
+.qq-err-card > div:last-child > div:first-child img {
+    margin-right: 15px;
+}
+.qq-err-card > div:last-child > div:first-child span {
+    font-size: 0.7rem;
+}
+.qq-err-card > div:last-child > div:last-child {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.7rem;
+}
+.qq-err-card > div:last-child > div:last-child div {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+}
+.qq-err-card > div:last-child > div:last-child textarea {
+    max-height: 100px;
+    height: 100px;
+    border: 0;
+    margin: 10px 0;
+    border-bottom: 1px solid var(--color-font-2);
+    border-radius: 3px;
+    background: var(--color-bg);
+    padding: 10px;
+    color: var(--color-font-2);
+}
+.qq-err-card > div:last-child > div:last-child button {
+    width: 90px;
+    border: 1px solid #007bff;;
+    border-radius: 7px;
+    background: var(--color-bg);
+    color: var(--color-font);
+}
+.qq-err-card-err {
+    color: var(--color-font-2);
+    margin-bottom: 10px;
+}
+.qq-err-card-err span:last-child {
+    flex: 1;
+    text-align: center;
+}
+.qq-err-card-err a {
+    color: #007bff;
+    position: absolute;
+    right: 15px;
+    cursor: pointer;
+}
+.qq-err-card-err a span:first-child {
+    transform: rotate(90deg);
+    display: inline-block;
+    margin-right: 5px;
 }
 
 @media (max-width: 700px) {

@@ -1,6 +1,6 @@
 {
   "name": "stapxs-qq-lite",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -16,6 +16,7 @@
     "js-file-downloader": "^1.1.24",
     "js-md5": "^0.7.3",
     "layui": "^2.8.0-beta.2",
+    "raw-loader": "^4.0.2",
     "register-service-worker": "^1.7.2",
     "semver-compare": "^1.0.0",
     "svg-sprite-loader": "^6.0.11",
