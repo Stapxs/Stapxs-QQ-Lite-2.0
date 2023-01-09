@@ -1,7 +1,6 @@
 const { defineConfig } = require('@vue/cli-service')
 
 module.exports = defineConfig({
-    // publicPath: '/Stapxs-QQ-Lite-2.0/',
     transpileDependencies: true,
     configureWebpack: {
         module: {
