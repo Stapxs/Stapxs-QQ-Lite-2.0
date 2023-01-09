@@ -18,6 +18,9 @@ jobs:
     # 更新依赖
     - name: install
       run: yarn
+    # 替换构建配置
+    - name: move config
+      run: rm vue.config.js && mv vue.config.action.js vue.config.js && cat vue.config.js
     # 构建
     - name: build
       run: yarn build
