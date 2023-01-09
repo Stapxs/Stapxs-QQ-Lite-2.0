@@ -199,7 +199,7 @@ export function get(name: string): any {
  * @param name 设置项名称
  * @param value 设置项值
  */
-function save(name: string, value: any) {
+export function save(name: string, value: any) {
     cacheConfigs[name] = value
     saveAll()
 }

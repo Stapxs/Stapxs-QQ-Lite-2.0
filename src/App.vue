@@ -67,7 +67,7 @@
                                     </label>
                                     <div style="flex: 1;"></div>
                                     <label class="default" style="justify-content: flex-end;">
-                                        <input type="checkbox" name="auto_connect" @click="save" v-model="runtimeData.sysConfig.auto_connect">
+                                        <input type="checkbox" name="auto_connect" @click="save($event);savePassword($event);" v-model="runtimeData.sysConfig.auto_connect">
                                         <a>{{ $t('home_card_auto_con') }}</a>
                                     </label>
                                 </div>
@@ -188,6 +188,7 @@ import cmp from 'semver-compare'
 import appInfo from '../package.json'
 import app from '@/main'
 import Option from '@/function/option'
+import qed from '@/assets/qed.txt'
 
 import { defineComponent } from 'vue'
 import { Connector, login as loginInfo } from '@/function/connect'
@@ -344,6 +345,19 @@ export default defineComponent({
             const value = sender.checked
             if(value) {
                 Option.save('save_password', true)
+                // 创建提示弹窗
+                const popInfo = {
+                    title: this.$t('popbox_tip'),
+                    html: `<span>${this.$t('auto_connect_tip')}</span>`,
+                    button: [
+                        {
+                            text: app.config.globalProperties.$t('btn_know'),
+                            master: true,
+                            fun: () => { runtimeData.popBoxList.shift() }
+                        }
+                    ]
+                }
+                runtimeData.popBoxList.push(popInfo)
             } else {
                 Option.remove('save_password')
             }
@@ -356,14 +370,6 @@ export default defineComponent({
         window.onload = () => {
             app.config.globalProperties.$viewer = this.viewerBody
             const $cookies = app.config.globalProperties.$cookies
-            // 纠正页面高度
-            // this.$nextTick(() => {
-            //     let pageInfo = getWindowConfig()
-            //     const appDom = document.getElementById('app')
-            //     if(appDom) {
-            //         appDom.style.height = (pageInfo.windowHeight) + 'px'
-            //     }
-            // })
             // 初始化波浪动画
             this.waveAnimation(document.getElementById('login-wave'))
             // 加载 cookie 中的保存登陆信息
@@ -521,6 +527,19 @@ export default defineComponent({
                 $cookies.set('times', 1, '1m')
             }
         }
+
+
+        const popInfo = {
+            html: qed,
+            button: [
+                {
+                    text: '确定(O)',
+                    fun: () => { runtimeData.popBoxList.shift() }
+                }
+            ]
+        }
+        runtimeData.popBoxList.push(popInfo)
+
     }
 })
 </script>

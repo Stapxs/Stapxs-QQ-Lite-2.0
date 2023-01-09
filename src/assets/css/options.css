@@ -429,6 +429,7 @@
     background: var(--color-card-2);
     fill: var(--color-main);
     border-radius: 100%;
+    cursor: pointer;
     padding: 10px;
     height: 20px;
     width: 20px;

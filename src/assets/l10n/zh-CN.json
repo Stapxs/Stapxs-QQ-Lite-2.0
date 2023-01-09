@@ -211,5 +211,7 @@
   "popbox_open_times_1": "好耶！Stapxs QQ Lite 已经被打开 {times} 次了！",
   "popbox_open_times_2": "真的不去点个 star 吗 ……",
   "btn_open_times_ok": "好喔",
-  "btn__open_times_no": "不要"
+  "btn__open_times_no": "不要",
+  "popbox_tip": "提醒",
+  "auto_connect_tip": "连接密钥将以明文存储在浏览器 Cookie 中，请确保设备安全以防止密钥泄漏。"
 }
