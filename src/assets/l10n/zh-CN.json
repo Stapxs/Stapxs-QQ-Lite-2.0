@@ -72,7 +72,7 @@
   "l10n_author": "Stapxs QQ Lite",
   "l10n_description": "你好世界！这是 Stapxs QQ Lite 的默认简体中文。",
   "l10n_name": "中文（简体）",
-  "l10n_version": "2.1.8",
+  "l10n_version": "2.1.9",
   "log_con_fail": "",
   "log_con_success": "连接成功",
   "log_revoke_miss": "没有找到这条被撤回的消息 ……",

@@ -188,7 +188,6 @@ import cmp from 'semver-compare'
 import appInfo from '../package.json'
 import app from '@/main'
 import Option from '@/function/option'
-import qed from '@/assets/qed.txt'
 
 import { defineComponent } from 'vue'
 import { Connector, login as loginInfo } from '@/function/connect'
@@ -527,19 +526,6 @@ export default defineComponent({
                 $cookies.set('times', 1, '1m')
             }
         }
-
-
-        const popInfo = {
-            html: qed,
-            button: [
-                {
-                    text: '确定(O)',
-                    fun: () => { runtimeData.popBoxList.shift() }
-                }
-            ]
-        }
-        runtimeData.popBoxList.push(popInfo)
-
     }
 })
 </script>
