@@ -18,6 +18,7 @@ import './assets/css/view.css'
 import './assets/css/chat.css'
 import './assets/css/msg.css'
 import './assets/css/options.css'
+import './assets/css/sys_notice.css'
 
 import zh from './assets/l10n/zh-CN.json'
 

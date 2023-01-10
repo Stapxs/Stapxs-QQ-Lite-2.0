@@ -147,6 +147,10 @@
                 </div>
                 <!-- 更多功能 -->
                 <div :class="tags.showMoreDetail ? 'more-detail show' : 'more-detail'">
+                    <div :title="$t('chat_fun_menu_pic')" @click="runSelectImg">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM323.8 202.5c-4.5-6.6-11.9-10.5-19.8-10.5s-15.4 3.9-19.8 10.5l-87 127.6L170.7 297c-4.6-5.7-11.5-9-18.7-9s-14.2 3.3-18.7 9l-64 80c-5.8 7.2-6.9 17.1-2.9 25.4s12.4 13.6 21.6 13.6h96 32H424c8.9 0 17.1-4.9 21.2-12.8s3.6-17.4-1.4-24.7l-120-176zM112 192c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48z"/></svg>
+                        <input id="choice-pic" type="file" style="display: none;" @change="selectImg">
+                    </div>
                     <div :title="$t('chat_fun_menu_face')"
                         @click="details[1].open = !details[1].open, tags.showMoreDetail = false">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -203,13 +207,16 @@
                     </svg>
                 </div>
                 <div>
-                    <!-- 合并转发消息忽略是不是自己的判定 -->
-                    <MsgBody
-                        v-for="(msg, index) in mergeList"
-                        :key="'merge-' + index"
-                        :data="msg"
-                        :isMerge="true">
-                    </MsgBody>
+                    <template v-for="(msg, index) in mergeList"
+                        :key="'merge-' + index">
+                        <NoticeBody
+                            v-if="isShowTime((mergeList[index - 1] ? mergeList[index - 1].time : undefined), msg.time, index == 0)"
+                            :key="'notice-time-' + index"
+                            :data="{sub_type: 'time', time: msg.time}">
+                        </NoticeBody>
+                        <!-- 合并转发消息忽略是不是自己的判定 -->
+                        <MsgBody :data="msg" :isMerge="true"></MsgBody>
+                    </template>
                 </div>
             </div>
         </div>
@@ -377,7 +384,8 @@ export default defineComponent({
          * @param timePrv 上条消息的时间戳（10 位）
          * @param timeNow 当前消息的时间戳（10 位）
          */
-        isShowTime (timePrv: number | undefined, timeNow: number) {
+        isShowTime (timePrv: number | undefined, timeNow: number, alwaysShow = false) {
+            if(alwaysShow) return true
             if(timePrv == undefined) return false
             // 五分钟 10 位时间戳相差 300
             return timeNow - timePrv >= 300
@@ -872,7 +880,6 @@ export default defineComponent({
          * @param event 事件
          */
         addImg (event: ClipboardEvent) {
-            const popInfo = new PopInfo()
             // 判断粘贴类型
             if (!(event.clipboardData && event.clipboardData.items)) {
                 return
@@ -880,40 +887,65 @@ export default defineComponent({
             for (let i = 0, len = event.clipboardData.items.length; i < len; i++) {
                 let item = event.clipboardData.items[i]
                 if (item.kind === 'file') {
-                    let blob = item.getAsFile()
-                    if ( blob !== null && blob.type.indexOf('image/') >= 0 && blob.size !== 0) {
-                        popInfo.add(PopType.INFO, this.$t('pop_chat_image_processing'))
-                        if (blob.size < 3145728) {
-                            // 转换为 Base64
-                            var reader = new FileReader()
-                            reader.readAsDataURL(blob)
-                            reader.onloadend = () => {
-                                var base64data = reader.result as string
-                                if(base64data !== null) {
-                                    if (Option.get('close_chat_pic_pan') === true) {
-                                        // 在关闭图片插入面板的模式下将直接以 SQCode 插入输入框
-                                        const data = {
-                                            addText: true,
-                                            msgObj: {
-                                                type: 'image',
-                                                file: 'base64://' + base64data.substring(base64data.indexOf('base64,') + 7, base64data.length)
-                                            }
-                                        }
-                                        this.addSpecialMsg(data)
-                                    } else {
-                                        // 记录图片信息
-                                        // 只要你内存够猛，随便 cache 图片，这边就不做限制了
-                                        this.imgCache.push(base64data)
+                    this.setImg(item.getAsFile())
+                    // 阻止默认行为
+                    event.preventDefault()
+                }
+            }
+        },
+
+        runSelectImg () {
+            const input = document.getElementById('choice-pic')
+            if(input) {
+                input.click()
+            }
+        },
+        /**
+         * 手动选择图片
+         */
+        selectImg (event: Event) {
+            this.tags.showMoreDetail = false
+            const sender = event.target as HTMLInputElement
+            if(sender && sender.files) {
+                this.setImg(sender.files[0])
+            }
+        },
+
+        /**
+         * 将图片转换为 base64 并缓存
+         * @param blob 文件对象
+         */
+        setImg(blob: File | null) {
+            const popInfo = new PopInfo()
+            if (blob !== null && blob.type.indexOf('image/') >= 0 && blob.size !== 0) {
+                popInfo.add(PopType.INFO, this.$t('pop_chat_image_processing'))
+                if (blob.size < 3145728) {
+                    // 转换为 Base64
+                    var reader = new FileReader()
+                    reader.readAsDataURL(blob)
+                    reader.onloadend = () => {
+                        var base64data = reader.result as string
+                        if (base64data !== null) {
+                            if (Option.get('close_chat_pic_pan') === true) {
+                                // 在关闭图片插入面板的模式下将直接以 SQCode 插入输入框
+                                const data = {
+                                    addText: true,
+                                    msgObj: {
+                                        type: 'image',
+                                        file: 'base64://' + base64data.substring(base64data.indexOf('base64,') + 7, base64data.length)
                                     }
                                 }
+                                this.addSpecialMsg(data)
+                            } else {
+                                // 记录图片信息
+                                // 只要你内存够猛，随便 cache 图片，这边就不做限制了
+                                this.imgCache.push(base64data)
                             }
-                            popInfo.add(PopType.INFO, this.$t('pop_chat_image_ok'))
-                        } else {
-                            popInfo.add(PopType.INFO, this.$t('pop_chat_image_toooo_big'))
                         }
-                        // 阻止默认行为
-                        event.preventDefault()
                     }
+                    popInfo.add(PopType.INFO, this.$t('pop_chat_image_ok'))
+                } else {
+                    popInfo.add(PopType.INFO, this.$t('pop_chat_image_toooo_big'))
                 }
             }
         },
@@ -1205,6 +1237,7 @@ export default defineComponent({
     },
     mounted() {
         // 消息列表刷新
+        this.updateList(this.list.length, 0)
         // PS：由于监听 list 本身返回的新旧值是一样，于是监听 length（反正也只要知道长度）
         this.$watch(() => this.list.length, this.updateList)
         //精华消息列表刷新

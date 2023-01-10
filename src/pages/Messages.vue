@@ -24,6 +24,13 @@
                 </div>
             </div>
             <div id="message-list-body" :class="(runtimeData.tags.openSideBar ? 'open' : '')">
+                <!-- 系统信息 -->
+                <!-- <FriendBody key="inMessage--10000"
+                    v-if="runtimeData.systemNoticesList && Object.keys(runtimeData.systemNoticesList).length > 0"
+                    :select="chat.show.id === -10000"
+                    :data="{user_id:-10000, always_top: true, nickname: $t('list_system_notice'), remark: $t('list_system_notice')}"
+                    @click="systemNoticeClick"></FriendBody> -->
+                <!-- 其他消息 -->
                 <FriendBody v-for="item in runtimeData.onMsgList" :key="'inMessage-' + item.user_id ? item.user_id : item.group_id"
                     :select="chat.show.id === item.user_id || chat.show.id === item.group_id" :data="item"
                     @click="userClick(item)"></FriendBody>
@@ -47,6 +54,7 @@ import FriendBody from '@/components/FriendBody.vue'
 
 import { runtimeData } from '@/function/msg'
 import { UserFriendElem, UserGroupElem } from '@/function/elements/information'
+import { getRaw as getOpt } from '@/function/option'
 
 export default defineComponent({
     name: 'VueMessages',
@@ -78,9 +86,31 @@ export default defineComponent({
                 this.$emit('userClick', back)
                 // 获取历史消息
                 this.$emit('loadHistory', back)
+                // 重置消息面板
+                // PS：这儿的作用是在运行时如果切换到了特殊面板，在点击联系人的时候可以切回来
+                if(runtimeData.sysConfig.chatview_name != '' && runtimeData.sysConfig.chatview_name != getOpt('chatview_name')) {
+                    runtimeData.sysConfig.chatview_name = getOpt('chatview_name')
+                }
+
             }
             // 清除新消息标记
             runtimeData.onMsgList[index].new_msg = false
+        },
+
+        /**
+         * 系统通知点击事件
+         */
+        systemNoticeClick() {
+            if (this.runtimeData.tags.openSideBar) {
+                this.openLeftBar()
+            }
+            const back = {
+                type: 'user',
+                id: -10000,
+                name: '系统消息'
+            }
+            this.$emit('userClick', back)
+            runtimeData.sysConfig.chatview_name = 'SystemNotice'
         },
 
         /**

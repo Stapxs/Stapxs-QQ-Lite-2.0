@@ -67,7 +67,7 @@
                                     </label>
                                     <div style="flex: 1;"></div>
                                     <label class="default" style="justify-content: flex-end;">
-                                        <input type="checkbox" name="auto_connect" @click="save($event);savePassword($event);" v-model="runtimeData.sysConfig.auto_connect">
+                                        <input type="checkbox" name="auto_connect" @click="saveAutoConnect" v-model="runtimeData.sysConfig.auto_connect">
                                         <a>{{ $t('home_card_auto_con') }}</a>
                                     </label>
                                 </div>
@@ -116,15 +116,19 @@
                 </div>
             </div>
         </div>
-        <Chat
+        <component
           ref="chat"
           v-if="loginInfo.status && runtimeData.chatInfo && runtimeData.chatInfo.show.id != 0"
           v-show="tags.showChat"
+          :is="(runtimeData.sysConfig.chatview_name && runtimeData.sysConfig.chatview_name != '') ?
+                defineAsyncComponent(() => import(`@/pages/chat-view/${runtimeData.sysConfig.chatview_name}.vue`)) : 
+                defineAsyncComponent(() => import('@/pages/Chat.vue'))"
           :mumberInfo="runtimeData.chatInfo.info.now_member_info == undefined ? {} : runtimeData.chatInfo.info.now_member_info"
           :mergeList="runtimeData.mergeMessageList == undefined ? [] : runtimeData.mergeMessageList"
           :list= runtimeData.messageList
-          :chat="runtimeData.chatInfo">
-        </Chat>
+          :chat="runtimeData.chatInfo"
+          @userClick="changeChat">
+        </component>
         <TransitionGroup class="app-msg" name="ViewNotices" tag="div">
           <div v-for="msg in appMsgs" :key="'appmsg-' + msg.id">
             <div v-html="msg.svg"></div>
@@ -177,7 +181,6 @@
             @show="viewerShow">
             <template #default="scope">
               <img v-for="info in scope.images" :src="info.img_url" :key="'imgView-' + info.index">
-              {{scope.options}}
             </template>
         </viewer>
     </div>
@@ -189,7 +192,7 @@ import appInfo from '../package.json'
 import app from '@/main'
 import Option from '@/function/option'
 
-import { defineComponent } from 'vue'
+import { defineComponent, defineAsyncComponent } from 'vue'
 import { Connector, login as loginInfo } from '@/function/connect'
 import { Logger, popList, PopInfo } from '@/function/base'
 import { runtimeData } from '@/function/msg'
@@ -211,6 +214,7 @@ export default defineComponent({
     },
     data () {
         return {
+            defineAsyncComponent: defineAsyncComponent,
             save: Option.runASWEvent,
             popInfo: new PopInfo(),
             appMsgs: popList,
@@ -360,6 +364,18 @@ export default defineComponent({
             } else {
                 Option.remove('save_password')
             }
+        },
+
+        /**
+         * 保存自动连接
+         * @param event 事件
+         */
+        saveAutoConnect(event: Event) {
+            Option.runASWEvent(event)
+            // 如果自动保存密码没开，那也需要开
+            if(!runtimeData.sysConfig.save_password) {
+                this.savePassword(event)
+            }
         }
     },
     mounted () {
@@ -370,7 +386,7 @@ export default defineComponent({
             app.config.globalProperties.$viewer = this.viewerBody
             const $cookies = app.config.globalProperties.$cookies
             // 初始化波浪动画
-            this.waveAnimation(document.getElementById('login-wave'))
+            runtimeData.tags.loginWaveTimer = this.waveAnimation(document.getElementById('login-wave'))
             // 加载 cookie 中的保存登陆信息
             if ($cookies.isKey('address')) {
                 this.loginInfo.address = $cookies.get('address')

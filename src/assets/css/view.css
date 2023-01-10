@@ -288,6 +288,14 @@ html, body {
     height: 50px;
     width: 50px;
 }
+.friend-body > svg {
+    background: var(--color-main);
+    fill: var(--color-font-1-r);
+    border-radius: 7px;
+    padding: 10px;
+    height: 30px;
+    width: 30px;
+}
 .friend-body > div {
     flex: 1;
     margin-left: 10px;
@@ -409,12 +417,12 @@ html, body {
     flex-direction: column-reverse;
     justify-content: flex-start;
     height: calc(100% - 20px);
+    width: calc(100% - 20px);
     pointer-events: none;
     position: absolute;
     padding-left: 90px;
     display: flex;
     z-index: 10;
-    width: 100%;
     left: 0;
     top: 0;
 }
@@ -594,7 +602,7 @@ html, body {
 .update-info > div.info {
     background: var(--color-bg);
     flex-direction: column;
-    align-items: start;
+    align-items: flex-start;
     border-radius: 7px;
     margin-top: 15px;
     padding: 15px;
@@ -610,12 +618,17 @@ html, body {
     overflow-y: scroll;
     max-height: 20vh;
     margin-top: 10px;
+    width: 100%;
 }
 .update-info > div.info > div > div > span {
     color: var(--color-font);
 }
 
 /* 图片预览器覆盖样式 */
+.viewer {
+    overflow: hidden;
+}
+
 .viewer-button {
     background-color: var(--color-card-2);
     border-radius: 7px;
@@ -626,12 +639,10 @@ html, body {
     margin-top: 10px;
     margin-right: 10px;
 }
-  
 .viewer-button:focus,
 .viewer-button:hover {
     background-color: var(--color-card-2);
 }
-
 .viewer-button::before {
     bottom: 10px;
     left: 11px;
@@ -649,16 +660,13 @@ html, body {
     width: 45px;
     float: left;
 }
-
 .viewer-toolbar > ul > li:hover {
     background-color: var(--color-main);
 }
-
 .viewer-toolbar > ul > li:focus {
     background-color: var(--color-main);
     box-shadow: 0 0 3px transparent;
 }
-
 .viewer-toolbar > ul > li::before {
     margin: 7px;
 }
@@ -909,6 +917,10 @@ html, body {
     .friend-body img {
         height: 45px;
         width: 45px;
+    }
+    .friend-body > svg {
+        height: 25px;
+        width: 25px;
     }
     .friend-body.active:hover {
         background: var(--color-card-2) !important;

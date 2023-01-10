@@ -221,7 +221,7 @@ export function getMsgRawTxt(message: [{ [key: string]: any }]): string {
             case 'record': back += '[语音]'; break
             case 'video': back += '[视频]'; break
             case 'file': back += '[文件]'; break
-            case 'json': console.log(message[i].data) ;back += JSON.parse(message[i].data).prompt; break
+            case 'json': back += JSON.parse(message[i].data).prompt; break
             case 'xml': {
                 let name = message[i].data.substring(message[i].data.indexOf('<source name="') + 14)
                 name = name.substring(0, name.indexOf('"'))

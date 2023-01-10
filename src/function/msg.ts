@@ -16,7 +16,7 @@ import app from '@/main'
 import Option from './option'
 import Util from './util'
 
-import { reactive, nextTick } from 'vue'
+import { reactive, nextTick, defineAsyncComponent } from 'vue'
 import { PopInfo, PopType, Logger, LogType } from './base'
 import { Connector, login } from './connect'
 import { GroupMemberInfoElem, UserFriendElem, UserGroupElem, MsgItemElem, RunTimeDataElem, BotMsgType } from './elements/information'
@@ -46,6 +46,7 @@ export function parse(str: string) {
             case 'getGroupFiles'        : saveFileList(msg.data.data); break
             case 'getMoreGroupFiles'    : saveMoreFileList(msg.data.data); break
             case 'getJin'               : saveJin(msg.data.data); break
+            case 'getSystemMsg'         : runtimeData.systemNoticesList = msg.data; break
             default                     : {
                 const echoList = msg.echo.split('_')
                 const head = echoList[0]
@@ -113,8 +114,11 @@ function saveLoginInfo(data: { [key: string]: any }) {
     if (data.uin === undefined && data.user_id !== undefined) {
         data.uin = data.user_id
     }
+    // 完成登陆初始化
     runtimeData.loginInfo = data
     login.status = true
+    clearInterval(runtimeData.tags.loginWaveTimer)
+    // 跳转标签卡
     const barMsg = document.getElementById('bar-msg')
     if(barMsg != null) {
         barMsg.click()
@@ -139,6 +143,8 @@ function saveLoginInfo(data: { [key: string]: any }) {
     Connector.send('get_friend_list', {}, 'getFriendList')
     // 群列表
     Connector.send('get_group_list', {}, 'getGroupList')
+    // 系统通知
+    Connector.send('get_system_msg', {}, 'getSystemMsg')
 }
 
 function saveUser(list: (UserFriendElem & UserGroupElem)[]) {
@@ -622,7 +628,7 @@ function saveJin (data: any) {
 
 const notificationList: Notification[] = []
 
-const baseRuntime = JSON.stringify({
+const baseRuntime = {
     tags: {
         firstLoad: false,
         canLoadHistory: true,
@@ -630,8 +636,8 @@ const baseRuntime = JSON.stringify({
         viewer: { index: 0 }
     },
     pageView: {
-        chatView: () => import('@/pages/Chat.vue'),
-        msgView: () => import('@/components/MsgBody.vue')
+        chatView: defineAsyncComponent(() => import('@/pages/Chat.vue')),
+        msgView: defineAsyncComponent(() => import('@/components/MsgBody.vue'))
     },
     chatInfo: {
         show: { type: '', id: 0, name: '', avatar: '' },
@@ -646,12 +652,13 @@ const baseRuntime = JSON.stringify({
         }
     },
     userList: [],
+    systemNoticesList: [],
     onMsgList: [],
     loginInfo: {},
     botInfo: {},
     sysConfig: {},
     messageList: [],
     popBoxList: []
-})
+}
 
-export const runtimeData: RunTimeDataElem = reactive(JSON.parse(baseRuntime))
+export const runtimeData: RunTimeDataElem = reactive(baseRuntime)

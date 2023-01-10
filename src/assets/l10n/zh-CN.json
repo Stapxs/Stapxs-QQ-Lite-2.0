@@ -213,5 +213,11 @@
   "btn_open_times_ok": "好喔",
   "btn__open_times_no": "不要",
   "popbox_tip": "提醒",
-  "auto_connect_tip": "连接密钥将以明文存储在浏览器 Cookie 中，请确保设备安全以防止密钥泄漏。"
+  "auto_connect_tip": "连接密钥将以明文存储在浏览器 Cookie 中，请确保设备安全以防止密钥泄漏。",
+  "option_account_nick": "昵称",
+  "option_account_nick_tip": "就只是个名字而已 ……",
+  "option_account_lnick": "签名",
+  "option_account_lnick_tip": "啊吧啊吧（智慧的眼神）",
+  "list_system_notice": "系统通知",
+  "sys_notice_new_friedd_from": "来源："
 }
