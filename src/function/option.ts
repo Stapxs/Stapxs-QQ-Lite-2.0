@@ -13,6 +13,7 @@
 import app from '@/main'
 
 import { i18n } from '@/main'
+import { markRaw, defineAsyncComponent } from 'vue'
 import { runtimeData } from './msg'
 import { initUITest } from './util'
 
@@ -31,7 +32,8 @@ const configFunction: { [key: string]: (value: any) => void } = {
     language: setLanguage,
     opt_dark: setDarkMode,
     theme_color: changeTheme,
-    ui_test: changeUiTest
+    ui_test: changeUiTest,
+    chatview_name: changeChatView
 }
 
 /**
@@ -114,6 +116,20 @@ function changeColorMode(mode: string) {
  */
 function changeTheme(id: number) {
     document.documentElement.style.setProperty('--color-main', 'var(--color-main-' + id + ')')
+}
+
+/**
+ * 切换聊天面板
+ * @param name 文件名
+ */
+function changeChatView(name: string | undefined) {
+    if(name && name != '') {
+        runtimeData.pageView.chatView = 
+        markRaw(defineAsyncComponent(() => import(`@/pages/chat-view/${name}.vue`)))
+    } else {
+        runtimeData.pageView.chatView = 
+        markRaw(defineAsyncComponent(() => import(`@/pages/Chat.vue`)))
+    }
 }
 
 // =============== 设置基础功能 ===============

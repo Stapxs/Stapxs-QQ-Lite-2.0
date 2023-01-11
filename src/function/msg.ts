@@ -17,7 +17,7 @@ import app from '@/main'
 import Option from './option'
 import Util from './util'
 
-import { reactive, nextTick } from 'vue'
+import { reactive, nextTick, markRaw, defineAsyncComponent } from 'vue'
 import { PopInfo, PopType, Logger, LogType } from './base'
 import { Connector, login } from './connect'
 import { GroupMemberInfoElem, UserFriendElem, UserGroupElem, MsgItemElem, RunTimeDataElem, BotMsgType } from './elements/information'
@@ -648,6 +648,10 @@ const baseRuntime = {
             group_sub_files: {},
             jin_info: { data: { msg_list: [] } }
         }
+    },
+    pageView: {
+        chatView: markRaw(defineAsyncComponent(() => import('@/pages/Chat.vue'))),
+        msgView: markRaw(defineAsyncComponent(() => import('@/pages/Chat.vue')))
     },
     userList: [],
     systemNoticesList: [],

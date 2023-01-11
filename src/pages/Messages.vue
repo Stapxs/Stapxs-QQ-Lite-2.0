@@ -54,7 +54,7 @@ import FriendBody from '@/components/FriendBody.vue'
 
 import { runtimeData } from '@/function/msg'
 import { UserFriendElem, UserGroupElem } from '@/function/elements/information'
-import { getRaw as getOpt } from '@/function/option'
+import { getRaw as getOpt, run as runOpt } from '@/function/option'
 
 export default defineComponent({
     name: 'VueMessages',
@@ -90,6 +90,7 @@ export default defineComponent({
                 // PS：这儿的作用是在运行时如果切换到了特殊面板，在点击联系人的时候可以切回来
                 if(runtimeData.sysConfig.chatview_name != '' && runtimeData.sysConfig.chatview_name != getOpt('chatview_name')) {
                     runtimeData.sysConfig.chatview_name = getOpt('chatview_name')
+                    runOpt('chatview_name', getOpt('chatview_name'))
                 }
 
             }
@@ -111,6 +112,7 @@ export default defineComponent({
             }
             this.$emit('userClick', back)
             runtimeData.sysConfig.chatview_name = 'SystemNotice'
+            runOpt('chatview_name', 'SystemNotice')
         },
 
         /**

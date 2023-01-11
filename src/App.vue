@@ -120,9 +120,7 @@
           ref="chat"
           v-if="loginInfo.status && runtimeData.chatInfo && runtimeData.chatInfo.show.id != 0"
           v-show="tags.showChat"
-          :is="(runtimeData.sysConfig.chatview_name && runtimeData.sysConfig.chatview_name != '') ?
-                defineAsyncComponent(() => import(`@/pages/chat-view/${runtimeData.sysConfig.chatview_name}.vue`)) : 
-                defineAsyncComponent(() => import('@/pages/Chat.vue'))"
+          :is="runtimeData.pageView.chatView"
           :mumberInfo="runtimeData.chatInfo.info.now_member_info == undefined ? {} : runtimeData.chatInfo.info.now_member_info"
           :mergeList="runtimeData.mergeMessageList == undefined ? [] : runtimeData.mergeMessageList"
           :list= runtimeData.messageList
@@ -192,13 +190,13 @@ import appInfo from '../package.json'
 import app from '@/main'
 import Option from '@/function/option'
 
-import { defineComponent, defineAsyncComponent } from 'vue'
+import { defineComponent, defineAsyncComponent, markRaw } from 'vue'
 import { Connector, login as loginInfo } from '@/function/connect'
 import { Logger, popList, PopInfo } from '@/function/base'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem } from '@/function/elements/information'
 import { loadHistory, getTrueLang, gitmojiToEmoji, openLink } from '@/function/util'
-import { DomainConfig, useState, useGtag } from 'vue-gtag-next'
+import { DomainConfig, useState } from 'vue-gtag-next'
 
 import Options from '@/pages/Options.vue'
 import Friends from '@/pages/Friends.vue'
