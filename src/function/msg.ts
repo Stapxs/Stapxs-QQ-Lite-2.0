@@ -12,11 +12,12 @@
 import qed from '@/assets/qed.txt'
 
 import FileDownloader from 'js-file-downloader'
+import { Md5 } from 'ts-md5'
 import app from '@/main'
 import Option from './option'
 import Util from './util'
 
-import { reactive, nextTick, defineAsyncComponent } from 'vue'
+import { reactive, nextTick } from 'vue'
 import { PopInfo, PopType, Logger, LogType } from './base'
 import { Connector, login } from './connect'
 import { GroupMemberInfoElem, UserFriendElem, UserGroupElem, MsgItemElem, RunTimeDataElem, BotMsgType } from './elements/information'
@@ -88,14 +89,16 @@ export function parse(str: string) {
  */
 function saveBotInfo(data: { [key: string]: any }) {
     runtimeData.botInfo = data
-    // // GA：提交统计信息，主要在意的是 bot 类型
-    // if (Option.get('open_ga_bot') !== false) {
-    //     if (data.app_name !== undefined) {
-    //         Vue.$gtag.event('login', { method: data.app_name })
-    //     } else {
-    //         Vue.$gtag.event('login')
-    //     }
-    // }
+    // GA：提交分析信息，主要在意的是 bot 类型
+    if (Option.get('open_ga_bot') !== false) {
+        if (data.app_name !== undefined) {
+            app.config.globalProperties.
+                $gtag.event('login', { method: data.app_name })
+        } else {
+            app.config.globalProperties.
+                $gtag.event('login')
+        }
+    }
     // 加载切换兼容页面
     switch (data.app_name) {
         // go-cqhttp 兼容，渲染 CQCode -> JSON，消息发送 JSON -> CQCode
@@ -132,13 +135,12 @@ function saveLoginInfo(data: { [key: string]: any }) {
         'getMoreLoginInfo'
     )
     // GA：将 QQ 号 MD5 编码后用于用户识别码
-    // if (Option.get('open_ga_user') === true) {
-    //   const md5 = require('js-md5')
-    //   const userId = md5(data.uin)
-    //   Vue.$gtag.config({
-    //     user_id: userId
-    //   })
-    // }
+    if (Option.get('open_ga_user') === true) {
+        const userId = Md5.hashStr(data.uin)
+        app.config.globalProperties.$gtag.config({
+            user_id: userId
+        })
+    }
     // 好友列表
     Connector.send('get_friend_list', {}, 'getFriendList')
     // 群列表
@@ -509,23 +511,23 @@ function newMsg(data: any) {
             }
         })
         runtimeData.onMsgList = newList
-        // 抽个签
-        const num = Util.randomNum(0, 10000)
-        if (num >= 4500 && num <= 5500) {
-            new Logger().add(LogType.INFO, num.toString())
+    }
+    // 抽个签
+    const num = Util.randomNum(0, 10000)
+    if (num >= 4500 && num <= 5500) {
+        new Logger().add(LogType.INFO, num.toString())
+    }
+    if (num === 5000) {
+        const popInfo = {
+            html: qed,
+            button: [
+                {
+                    text: '确定(O)',
+                    fun: () => { runtimeData.popBoxList.shift() }
+                }
+            ]
         }
-        if (num === 5000) {
-            const popInfo = {
-                html: qed,
-                button: [
-                    {
-                        text: '确定(O)',
-                        fun: () => { runtimeData.popBoxList.shift() }
-                    }
-                ]
-            }
-            runtimeData.popBoxList.push(popInfo)
-        }
+        runtimeData.popBoxList.push(popInfo)
     }
 }
 
@@ -634,10 +636,6 @@ const baseRuntime = {
         canLoadHistory: true,
         openSideBar: false,
         viewer: { index: 0 }
-    },
-    pageView: {
-        chatView: defineAsyncComponent(() => import('@/pages/Chat.vue')),
-        msgView: defineAsyncComponent(() => import('@/components/MsgBody.vue'))
     },
     chatInfo: {
         show: { type: '', id: 0, name: '', avatar: '' },

@@ -198,6 +198,7 @@ import { Logger, popList, PopInfo } from '@/function/base'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem } from '@/function/elements/information'
 import { loadHistory, getTrueLang, gitmojiToEmoji, openLink } from '@/function/util'
+import { DomainConfig, useState, useGtag } from 'vue-gtag-next'
 
 import Options from '@/pages/Options.vue'
 import Friends from '@/pages/Friends.vue'
@@ -245,11 +246,11 @@ export default defineComponent({
          * @param show 是否显示聊天面板
          */
         changeTab (name: string, view: string, show: boolean) {
-            // // GA：发送页面路由统计
-            // this.$gtag.pageview({
-            //   page_path: '/' + view,
-            //   page_title: name
-            // })
+            // GA：发送页面路由分析
+            this.$gtag.pageview({
+              page_path: '/' + view,
+              page_title: name
+            })
             if (!show) {
                 this.tags.showChat = true
             } else {
@@ -407,14 +408,17 @@ export default defineComponent({
             // 初始化完成
             logger.debug(this.$t('log_welcome'))
             logger.debug(this.$t('log_runtime') + ': ' + process.env.NODE_ENV)
-            // 加载谷歌统计功能
-            // if (!Option.get('close_ga') && process.env.NODE_ENV == 'production') {
-            //     bootstrap().then(() => {
-            //         logger.debug(this.$t('log_GA_loaded'))
-            //     })
-            // } else if (process.env.NODE_ENV == 'development') {
-            //     logger.debug(this.$t('log_GA_auto_closed'))
-            // }
+            // GA：加载谷歌分析功能
+            if (!Option.get('close_ga') && process.env.NODE_ENV == 'production') {
+                const { property } = useState()
+                if (property) {
+                    property.value = {
+                        id: 'G-ZQ88GPJRGH'
+                    } as DomainConfig
+                }
+            } else if (process.env.NODE_ENV == 'development') {
+                logger.debug(this.$t('log_GA_auto_closed'))
+            }
             // 检查版本
             const appVersion = appInfo.version
             const cacheVersion = app.config.globalProperties.$cookies.get('version')

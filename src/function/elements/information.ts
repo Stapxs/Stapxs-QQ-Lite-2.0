@@ -11,10 +11,6 @@ export interface RunTimeDataElem {
     onMsgList: (UserFriendElem & UserGroupElem)[]
     systemNoticesList?: { [key: string]: any }
     chatInfo: ChatInfoElem
-    pageView: {
-        chatView: any,
-        msgView: any
-    },
     tags: {
         firstLoad: boolean
         msgType?: BotMsgType

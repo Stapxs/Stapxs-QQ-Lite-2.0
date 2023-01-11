@@ -47,7 +47,6 @@
             <template v-for="(msg, index) in list">
                 <NoticeBody v-if="isShowTime((list[index - 1] ? list[index - 1].time : undefined), msg.time)" :key="'notice-time-' + index" :data="{sub_type: 'time', time: msg.time}"></NoticeBody>
                 <MsgBody
-                    :is="runtimeData.pageView.msgView"
                     v-if="msg.post_type === 'message'"
                     :key="msg.message_id"
                     :data="msg"
@@ -918,7 +917,6 @@ export default defineComponent({
         setImg(blob: File | null) {
             const popInfo = new PopInfo()
             if (blob !== null && blob.type.indexOf('image/') >= 0 && blob.size !== 0) {
-                popInfo.add(PopType.INFO, this.$t('pop_chat_image_processing'))
                 if (blob.size < 3145728) {
                     // 转换为 Base64
                     var reader = new FileReader()
@@ -943,7 +941,6 @@ export default defineComponent({
                             }
                         }
                     }
-                    popInfo.add(PopType.INFO, this.$t('pop_chat_image_ok'))
                 } else {
                     popInfo.add(PopType.INFO, this.$t('pop_chat_image_toooo_big'))
                 }
@@ -1060,10 +1057,18 @@ export default defineComponent({
                             })
                         }
                     })
-                    // TODO: BUG - 在刷新图片列表时整个图片模板都会被刷新并弹到默认的第一张图片去，
-                    // 此处只是在没有变更的时候不刷新列表，并未解决此 BUG
-                    if(getImgList.length != runtimeData.chatInfo.info.image_list?.length) {
+                    if(getImgList.length != (runtimeData.chatInfo.info.image_list ? runtimeData.chatInfo.info.image_list.length : 0)) {
+                        const num = runtimeData.tags.viewer.index
                         runtimeData.chatInfo.info.image_list = getImgList
+                        const viewer = app.config.globalProperties.$viewer
+                        if(runtimeData.tags.viewer.show) {
+                            // 重新显示新的图片位置
+                            if(num >= 0 && viewer) {
+                                viewer.view(num + getImgList.length - (runtimeData.chatInfo.info.image_list ? runtimeData.chatInfo.info.image_list.length : 0))
+                                viewer.show()
+                                runtimeData.tags.viewer.index = num + getImgList.length - (runtimeData.chatInfo.info.image_list ? runtimeData.chatInfo.info.image_list.length : 0)
+                            }
+                        }
                     }
                     // 处理跳入跳转预设
                     // 如果 jump 参数不是 undefined，则意味着这次加载历史记录的同时需要跳转到指定的消息
@@ -1104,12 +1109,13 @@ export default defineComponent({
         msgOnMove (event: TouchEvent) {
             const logger = new Logger()
             const sender = event.currentTarget as HTMLDivElement
+            const msgPan = document.getElementById('msgPan')
             // 开始点击的位置
             const startX = this.tags.msgTouch.x
             const startY = this.tags.msgTouch.y
             // TODO: 懒得写了, 移动的允许范围，用来防止按住了挪出控件范围导致无法触发 end
             // const maxTop = sender.
-            if(startX > -1 && startY > -1) {
+            if(startX > -1 && startY > -1 && msgPan) {
                 // 计算移动差值
                 const dx = Math.abs(startX - event.targetTouches[0].pageX)
                 const dy = Math.abs(startY - event.targetTouches[0].pageY)
@@ -1121,24 +1127,24 @@ export default defineComponent({
                         this.tags.msgTouch.msgOnTouchDown = false
                     }
                 }
-                if (dy < 50) {
+                if (dy < sender.offsetHeight / 3 && dy < 40) {
                     this.tags.msgTouch.onMove = 'on'
                     if (x < -10) {
                         // 左滑
-                        if (dx >= sender.offsetWidth / 15) {
+                        if (dx >= sender.offsetWidth / 3) {
                             this.tags.msgTouch.onMove = 'right'
                             logger.add(LogType.UI, "触发右滑判定 ……（转发）")
                         } else {
-                            sender.style.transform = "translate(" + dx + "px)"
+                            sender.style.transform = "translate(" + (Math.sqrt(dx) + 5) + "px)"
                             sender.style.transition = "transform 0s"
                         }
                     } else if (x > 10) {
                         // 右滑
-                        if (dx >= sender.offsetWidth / 15) {
+                        if (dx >= sender.offsetWidth / 3) {
                             this.tags.msgTouch.onMove = 'left'
                             logger.add(LogType.UI, "触发左滑判定 ……（回复）")
                         } else {
-                            sender.style.transform = "translate(-" + dx + "px)"
+                            sender.style.transform = "translate(-" + (Math.sqrt(dx) + 5) + "px)"
                             sender.style.transition = "transform 0s"
                         }
                     }

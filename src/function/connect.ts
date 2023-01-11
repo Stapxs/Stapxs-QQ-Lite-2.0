@@ -72,7 +72,7 @@ export class Connector {
             location.reload()
         }
         websocket.onerror = (e) => {
-            popInfo.add(PopType.ERR, $t('log_com_err') + ': ' + e)
+            popInfo.add(PopType.ERR, $t('log_com_err'))
         }
     }
 
