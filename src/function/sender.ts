@@ -105,12 +105,14 @@ function parseMsgToJSON(msg: string, cache: MsgItemElem[]) {
         }
     })
     // 插入小尾巴
-    const taill = runtimeData.sysConfig.msg_taill
-    if(taill && taill != '') {
-        for(let i=back.length - 1; i>=0; i--) {
-            if(back[i].type == 'text') {
-                back[i].text = back[i].text + taill
-                break
+    if(runtimeData.sysConfig.msg_taill) {
+        const taill = (runtimeData.sysConfig.msg_taill as string).replaceAll('\\n', '\n')
+        if(taill && taill != '') {
+            for(let i=back.length - 1; i>=0; i--) {
+                if(back[i].type == 'text') {
+                    back[i].text = back[i].text + taill
+                    break
+                }
             }
         }
     }
@@ -153,7 +155,9 @@ function parseMsgToCQ(msg: string, cache: MsgItemElem[]) {
         back += msg
     }
     // 插入小尾巴
-    back = back + runtimeData.sysConfig.msg_taill
+    if(runtimeData.sysConfig.msg_taill) {
+        back = back + (runtimeData.sysConfig.msg_taill as string).replaceAll('\\n', '\n')
+    }
     // 返回
     return back
 }

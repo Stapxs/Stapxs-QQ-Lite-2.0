@@ -77,6 +77,7 @@ textarea {
     pointer-events: all;
     cursor: pointer;
     height: 50px;
+    z-index: 0;
 }
 .chat-pan > div.new-msg > div {
     background: var(--color-card-1);
@@ -185,6 +186,38 @@ textarea {
     margin-right: 5px;
     margin-top: 2px;
     height: 0.9rem;
+}
+
+.sys-not-pan {
+    text-align: center;
+    padding: 20px;
+    display: flex;
+}
+.sys-not-pan > div {
+    pointer-events: all;
+}
+.sys-not-pan > div:first-child {
+    background: var(--color-card-1);
+    align-items: center;
+    border-radius: 7px;
+    display: flex;
+    padding: 20px;
+}
+.sys-not-pan > div:first-child > svg {
+    fill: var(--color-font);
+    margin-right: 20px;
+    cursor: pointer;
+    height: 1.1rem;
+}
+.sys-not-pan > div:first-child > span {
+    font-size: 1rem;
+}
+
+.sys-not-list {
+    background: var(--color-card-1);
+    border-radius: 7px;
+    margin-top: 10px;
+    padding: 20px;
 }
 
 .more-detail {

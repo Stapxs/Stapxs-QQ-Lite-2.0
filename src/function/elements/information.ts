@@ -9,6 +9,7 @@ export interface RunTimeDataElem {
     userList: (UserFriendElem & UserGroupElem)[]
     showList?: (UserFriendElem & UserGroupElem)[]
     onMsgList: (UserFriendElem & UserGroupElem)[]
+    systemNoticesList?: { [key: string]: any }
     chatInfo: ChatInfoElem
     pageView: {
         chatView: any,
@@ -22,7 +23,8 @@ export interface RunTimeDataElem {
         viewer: {
             show?: boolean,
             index: number
-        }
+        },
+        loginWaveTimer?: any
     },
     messageList: any[]
     mergeMessageList?: [],

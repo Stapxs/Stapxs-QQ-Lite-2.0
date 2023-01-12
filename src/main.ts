@@ -2,6 +2,7 @@ import VueCookies from 'vue3-cookies'
 import VueViewer from 'v-viewer'
 import VueClipboard from 'vue-clipboard2'
 import InfiniteScroll from 'vue3-infinite-scroll-better'
+import VueGtag from 'vue-gtag-next'
 
 import App from './App.vue'
 
@@ -18,6 +19,7 @@ import './assets/css/view.css'
 import './assets/css/chat.css'
 import './assets/css/msg.css'
 import './assets/css/options.css'
+import './assets/css/sys_notice.css'
 
 import zh from './assets/l10n/zh-CN.json'
 
@@ -39,6 +41,7 @@ app.use(VueCookies)
 app.use(VueViewer)
 app.use(VueClipboard)
 app.use(InfiniteScroll)
+app.use(VueGtag)
 
 app.mount('#app')
 console.log(app)

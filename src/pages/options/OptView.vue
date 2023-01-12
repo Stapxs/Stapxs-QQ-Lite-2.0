@@ -24,7 +24,7 @@
           <span>{{ $t('option_view_language_tip') }}</span>
         </div>
         <label>
-          <select @change="save" name="language" v-model="runtimeData.sysConfig.language">
+          <select @change="save($event);gaLanguage($event)" name="language" v-model="runtimeData.sysConfig.language">
             <option v-for="item in languages" :value="item.value" :key="item.value">{{ item.name }}</option>
           </select>
         </label>
@@ -106,6 +106,12 @@ export default defineComponent({
         return true
       }
       return false
+    },
+
+    gaLanguage(event: Event) {
+      const sender = event.target as HTMLInputElement
+      // GA：上传语言选择
+      this.$gtag.event('use_language', { name: sender.value})
     }
   }
 })

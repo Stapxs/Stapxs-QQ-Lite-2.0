@@ -286,12 +286,16 @@
 
 .opt-item>div {
     flex-direction: column;
+    margin-right: 20px;
+    overflow: hidden;
     display: flex;
     flex: 1;
 }
 
 .opt-item>div>span:last-child {
     color: var(--color-font-1);
+    white-space: nowrap;
+    text-overflow: clip;
     font-size: 0.8rem;
 }
 .opt-item>div>span:last-child > a {
@@ -363,6 +367,8 @@
 
 .theme-color-col {
     flex-direction: row-reverse !important;
+    margin-right: 0 !important;
+    overflow: unset !important;
     display: flex !important;
     margin-top: -10px;
 }

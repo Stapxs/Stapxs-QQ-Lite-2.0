@@ -177,8 +177,6 @@
   "pop_chat_msg_not_load": "未能定位訊息",
   "pop_chat_msg_menu_copy_success": "已複製",
   "pop_chat_msg_menu_copy_err": "未能複製訊息",
-  "pop_chat_image_processing": "正在處理圖片 ……",
-  "pop_chat_image_ok": "圖片處理完成",
   "pop_chat_image_toooo_big": "圖片過大",
   "pop_option_dev_debug_msg_tip_1": "你不是人（逃",
   "pop_print_all_pop": "即將輸出所有應用訊息（5s） ……",

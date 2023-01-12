@@ -11,7 +11,9 @@
 */
 
 import app from '@/main'
+
 import { i18n } from '@/main'
+import { markRaw, defineAsyncComponent } from 'vue'
 import { runtimeData } from './msg'
 import { initUITest } from './util'
 
@@ -30,8 +32,8 @@ const configFunction: { [key: string]: (value: any) => void } = {
     language: setLanguage,
     opt_dark: setDarkMode,
     theme_color: changeTheme,
-    chatview_name: changeChatView,
-    ui_test: changeUiTest
+    ui_test: changeUiTest,
+    chatview_name: changeChatView
 }
 
 /**
@@ -46,7 +48,7 @@ function changeUiTest(value: boolean) {
 
 /**
  * 加载语言文件并设置为当前的语言
- * @param name 语言名称（不是实际语言代码）
+ * @param name 语言文件名（不是实际语言代码）
  */
 function setLanguage(name: string) {
     import(`../assets/l10n/${name}.json`).then(lang => {
@@ -117,15 +119,16 @@ function changeTheme(id: number) {
 }
 
 /**
- * 根据文件名加载自定义聊天面板
- * @param name 名字
+ * 切换聊天面板
+ * @param name 文件名
  */
-function changeChatView(name: string) {
-    // TODO: 这儿需要在首次使用的时候弹一个免责声明提示框
-    if (name !== '') {
-        runtimeData.pageView.chatView = () => import(`@/pages/chat-view/${name}.vue`)
+function changeChatView(name: string | undefined) {
+    if(name && name != '') {
+        runtimeData.pageView.chatView = 
+        markRaw(defineAsyncComponent(() => import(`@/pages/chat-view/${name}.vue`)))
     } else {
-        runtimeData.pageView.chatView = () => import('@/pages/Chat.vue')
+        runtimeData.pageView.chatView = 
+        markRaw(defineAsyncComponent(() => import(`@/pages/Chat.vue`)))
     }
 }
 
@@ -174,7 +177,7 @@ export function load(): { [key: string]: any } {
  * @param name 设置项名称
  * @param value 设置项值
  */
-function run(name: string, value: any) {
+export function run(name: string, value: any) {
     if (typeof configFunction[name] === 'function')
         configFunction[name](value)
 }
@@ -192,6 +195,29 @@ export function get(name: string): any {
         }
     }
     return null
+}
+
+/**
+ * 从 cookie 中获取原始设置项值
+ * @param name 设置项名称
+ * @returns 设置项值（如果没有则为 null）
+ */
+export function getRaw(name: string) {
+    // 解析拆分 cookie 并执行各个设置项的初始化方法
+    const str: string = app.config.globalProperties.$cookies.get('options')
+    if (str != null) {
+        const list = str.split('&')
+        for (let i = 0; i <= list.length; i++) {
+            if (list[i] !== undefined) {
+                const opt: string[] = list[i].split(':')
+                if (opt.length === 2) {
+                    if(name == opt[0]) {
+                        return opt[1]
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**

@@ -161,7 +161,7 @@
                     <span>{{ $t('option_dev_chatview_name') }}</span>
                     <span>{{ $t('option_dev_chatview_name_tip') }}</span>
                 </div>
-                <input class="ss-input" style="width:150px" type="text" v-model="runtimeData.sysConfig.chatview_name"
+                <input class="ss-input" style="width:150px" type="text" v-model="chatview_name"
                     @keyup="saveWName($event, 'chatview_name')">
             </div>
         </div>
@@ -183,13 +183,14 @@ export default defineComponent({
             runtimeData: runtimeData,
             save: save,
             ws_text: '',
-            appmsg_text: ''
+            appmsg_text: '',
+            chatview_name: ''
         }
     },
     methods: {
         saveWName (event: KeyboardEvent, name: string) {
             if (event.keyCode === 13) {
-                saveBase(name, runtimeData.sysConfig[name])
+                saveBase(name, this.chatview_name)
             }
         },
         sendTestWs (event: KeyboardEvent) {
@@ -216,6 +217,11 @@ export default defineComponent({
             console.log(runtimeData)
             console.log('=========================')
         }
+    },
+    mounted() {
+        this.$watch(() => runtimeData.sysConfig.chatview_name, () => {
+            this.chatview_name = runtimeData.sysConfig.chatview_name
+        })
     }
 })
 </script>
