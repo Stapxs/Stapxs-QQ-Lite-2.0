@@ -18,5 +18,10 @@
         "value": "zh-TW",
         "lang": "zh-TW",
         "name": "繁體中文（台灣）"
+    },
+	{
+        "value": "zh-YUE",
+        "lang": "zh-HK",
+        "name": "粵語（香港）"
     }
 ]
