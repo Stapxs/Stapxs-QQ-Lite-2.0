@@ -102,8 +102,6 @@
   "option_dev_connect_beat": "发送心跳包",
   "option_dev_connect_beat_tip": "没救了，拖出去吧",
   "option_dev_connect_tip": "这儿是关于 bot 兼容性相关的高级选项，包括一些 bot 的附加功能等。",
-  "option_dev_connect_type": "启用兼容",
-  "option_dev_connect_type_tip": "会不会发生 NTR 情节呢（无端",
   "option_dev_debug_msg": "禁用消息渲染",
   "option_dev_debug_msg_tip": "点击进行 CAPTCHA 验证",
   "option_dev_dev": "开发者选项",

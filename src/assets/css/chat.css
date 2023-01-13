@@ -4,16 +4,22 @@ textarea {
 
 .chat-pan {
     background-color: var(--color-card);
-    transition: transform .3s;
     color: var(--color-font);
     flex-direction: column;
     pointer-events: none;
+    transition: all .3s;
     position: absolute;
     display: flex;
     height: 100%;
     left: 371px;
     right: 0;
     top: 0;
+}
+.chat-pan.full {
+    height: 100%;
+    z-index: 20;
+    bottom: 0;
+    left: 0;
 }
 .chat-pan > div.info {
     background: var(--color-card-1);

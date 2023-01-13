@@ -62,6 +62,11 @@ export function parse(str: string) {
                         case 'getChatHistoryScroll' : saveChatHistoryScroll(echoList, msg); break
                     }
                 }
+                // 处理更多追加方法
+                // PS：这儿对插件附加方法进行寻找执行
+                if(appendMsg[head]) {
+                    appendMsg[head](msg)
+                }
             }
         }
     } else {
@@ -454,6 +459,23 @@ function newMsg(data: any) {
     // 显示消息
     if (id === runtimeData.chatInfo.show.id) {
         runtimeData.messageList.push(data)
+        // 抽个签
+        const num = Util.randomNum(0, 10000)
+        if (num >= 4500 && num <= 5500) {
+            new Logger().add(LogType.INFO, num.toString())
+        }
+        if (num === 5000) {
+            const popInfo = {
+                html: qed,
+                button: [
+                    {
+                        text: '确定(O)',
+                        fun: () => { runtimeData.popBoxList.shift() }
+                    }
+                ]
+            }
+            runtimeData.popBoxList.push(popInfo)
+        }
     }
     // 刷新消息列表
     // PS：在消息列表内的永远会刷新，不需要被提及
@@ -511,23 +533,6 @@ function newMsg(data: any) {
             }
         })
         runtimeData.onMsgList = newList
-    }
-    // 抽个签
-    const num = Util.randomNum(0, 10000)
-    if (num >= 4500 && num <= 5500) {
-        new Logger().add(LogType.INFO, num.toString())
-    }
-    if (num === 5000) {
-        const popInfo = {
-            html: qed,
-            button: [
-                {
-                    text: '确定(O)',
-                    fun: () => { runtimeData.popBoxList.shift() }
-                }
-            ]
-        }
-        runtimeData.popBoxList.push(popInfo)
     }
 }
 
@@ -664,3 +669,4 @@ const baseRuntime = {
 }
 
 export const runtimeData: RunTimeDataElem = reactive(baseRuntime)
+export const appendMsg: { [ key: string ]: (msg: any) => void } = reactive({})

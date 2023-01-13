@@ -510,4 +510,16 @@
         margin-left: -20px;
         width: 0;
     }
+
+    .opt-item {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 10px 15px 10px 20px;
+    }
+    .opt-item select,
+    .opt-item input[type="text"] {
+        margin-left: calc(1.1rem + 20px);
+        width: 100% !important;
+        margin-top: 10px;
+    }
 }

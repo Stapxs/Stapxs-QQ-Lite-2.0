@@ -962,6 +962,11 @@
     "@babel/helper-validator-identifier" "^7.19.1"
     to-fast-properties "^2.0.0"
 
+"@ctrl/tinycolor@^3.4.0":
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/@ctrl/tinycolor/-/tinycolor-3.5.0.tgz#6e52b3d1c38d13130101771821e09cdd414a16bc"
+  integrity sha512-tlJpwF40DEQcfR/QF+wNMVyGMaO9FQp6Z1Wahj4Gk3CJQYHwA2xVG7iKDFdW6zuxZY9XWOpGcfNCTsX4McOsOg==
+
 "@eslint/eslintrc@^0.4.3":
   version "0.4.3"
   resolved "https://registry.npmmirror.com/@eslint/eslintrc/-/eslintrc-0.4.3.tgz#9e42981ef035beb3dd49add17acb96e8ff6f394c"
@@ -2556,6 +2561,13 @@ chalk@^4.0.0, chalk@^4.0.2, chalk@^4.1.0, chalk@^4.1.2:
   dependencies:
     ansi-styles "^4.1.0"
     supports-color "^7.1.0"
+
+char-dust@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/char-dust/-/char-dust-0.1.0.tgz#dffb9562f94fba4a47bbd02980ff4614a0413ee5"
+  integrity sha512-k4cgmLBO1oU8ZHx2JgctmZ4kbsvg4qi9wF/pB9pSlGbh6w+WskseiLJyfeBf1wxjxOyzMpned4EAzXRBnOuVyw==
+  dependencies:
+    "@ctrl/tinycolor" "^3.4.0"
 
 chokidar@^3.4.2, chokidar@^3.5.3:
   version "3.5.3"

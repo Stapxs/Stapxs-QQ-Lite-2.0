@@ -102,8 +102,6 @@
   "option_dev_connect_beat": "傳送心跳封包",
   "option_dev_connect_beat_tip": "依我這麼高的醫學理解，只能說他真的沒救了",
   "option_dev_connect_tip": "這裡是與 bot 相容性相關的進階選項，包括一些 bot 的附加功能等。",
-  "option_dev_connect_type": "相容性選項",
-  "option_dev_connect_type_tip": "會不會發生 NTR 情節呢（？",
   "option_dev_debug_msg": "停用訊息彩現",
   "option_dev_debug_msg_tip": "點選以進行 CAPTCHA 驗證",
   "option_dev_dev": "開發人員選項",
