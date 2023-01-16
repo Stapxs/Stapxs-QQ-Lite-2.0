@@ -1,2 +1,0 @@
-"use strict";(self["webpackChunkstapxs_qq_lite"]=self["webpackChunkstapxs_qq_lite"]||[]).push([[828],{8828:function(t,e,n){n.r(e),n.d(e,{default:function(){return i}});var a=n(3396);function r(t,e,n,r,s,u){return(0,a.wg)(),(0,a.iD)("div")}var s=(0,a.aZ)({name:"ChatShell",components:{},data(){return{}},methods:{}}),u=n(89);const c=(0,u.Z)(s,[["render",r]]);var i=c}}]);
-//# sourceMappingURL=828.75cd746f.js.map
