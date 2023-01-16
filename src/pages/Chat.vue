@@ -272,7 +272,7 @@
                 </div>
                 <div @click="copySelectMsg" v-show="tags.menuDisplay.copySelect">
                     <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M392.8 1.2c-17-4.9-34.7 5-39.6 22l-128 448c-4.9 17 5 34.7 22 39.6s34.7-5 39.6-22l128-448c4.9-17-5-34.7-22-39.6zm80.6 120.1c-12.5 12.5-12.5 32.8 0 45.3L562.7 256l-89.4 89.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l112-112c12.5-12.5 12.5-32.8 0-45.3l-112-112c-12.5-12.5-32.8-12.5-45.3 0zm-306.7 0c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3l112 112c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256l89.4-89.4c12.5-12.5 12.5-32.8 0-45.3z"/></svg></div>
-                    <a>{{ $t('chat_msg_menu_copy_select') }}</a>
+                    <a>{{ $t('chat_msg_menu_copy_selected') }}</a>
                 </div>
                 <div @click="revokeMsg" v-show="tags.menuDisplay.revoke">
                     <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
@@ -963,7 +963,7 @@ export default defineComponent({
          */
         sendMsg () {
             // 为了减少对于复杂图文排版页面显示上的工作量，对于非纯文本的消息依旧处理为纯文本，如：
-            // "这是一段话[SQ:0]，[SQ:1] 你要不要来试试 Stapxs QQ Lite？"
+            // "这是一段话 [SQ:0]，[SQ:1] 你要不要来试试 Stapxs QQ Lite？"
             // 其中 [SQ:n] 结构代表着这是特殊消息以及这个消息具体内容在消息缓存中的 index，像是这样：
             // const sendCache = [{type:"face",id:1},{type:"at",qq:1007028430}]
             //                     ^^^^^^ 0 ^^^^^^    ^^^^^^^^^^ 1 ^^^^^^^^^^
@@ -1124,7 +1124,7 @@ export default defineComponent({
             // 开始点击的位置
             const startX = this.tags.msgTouch.x
             const startY = this.tags.msgTouch.y
-            // TODO: 懒得写了, 移动的允许范围，用来防止按住了挪出控件范围导致无法触发 end
+            // TODO: 懒得写了，移动的允许范围，用来防止按住了挪出控件范围导致无法触发 end
             // const maxTop = sender.
             if(startX > -1 && startY > -1 && msgPan) {
                 // 计算移动差值

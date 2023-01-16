@@ -11,22 +11,27 @@ jobs:
     steps:
 
     # 拉取代码
-    - name: checkout
-      uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v3
       with:
         persist-credentials: false
+    # 设置 Node.js 版本
+    - name: Load Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16.x
     # 更新依赖
-    - name: install
+    - name: Install
       run: yarn
     # 替换构建配置
-    - name: move config
+    - name: Replace config
       run: rm vue.config.js && mv vue.config.action.js vue.config.js && cat vue.config.js
     # 构建
-    - name: build
+    - name: Build
       run: yarn build
 
     # 部署
-    - name: push
+    - name: Deploy
       uses: JamesIves/github-pages-deploy-action@v4
       with:
         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}

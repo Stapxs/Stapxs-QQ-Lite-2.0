@@ -14,7 +14,7 @@ module.exports = {
   rules: {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-    // 忽略使用 any 的警告
+    // 忽略使用 any 型別的警告
     "@typescript-eslint/no-explicit-any": "off"
   }
 }
