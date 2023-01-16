@@ -963,7 +963,7 @@ export default defineComponent({
          */
         sendMsg () {
             // 为了减少对于复杂图文排版页面显示上的工作量，对于非纯文本的消息依旧处理为纯文本，如：
-            // "这是一段话[SQ:0]，[SQ:1] 你要不要来试试 Stapxs QQ Lite？"
+            // "这是一段话 [SQ:0]，[SQ:1] 你要不要来试试 Stapxs QQ Lite？"
             // 其中 [SQ:n] 结构代表着这是特殊消息以及这个消息具体内容在消息缓存中的 index，像是这样：
             // const sendCache = [{type:"face",id:1},{type:"at",qq:1007028430}]
             //                     ^^^^^^ 0 ^^^^^^    ^^^^^^^^^^ 1 ^^^^^^^^^^
@@ -1124,7 +1124,7 @@ export default defineComponent({
             // 开始点击的位置
             const startX = this.tags.msgTouch.x
             const startY = this.tags.msgTouch.y
-            // TODO: 懒得写了, 移动的允许范围，用来防止按住了挪出控件范围导致无法触发 end
+            // TODO: 懒得写了，移动的允许范围，用来防止按住了挪出控件范围导致无法触发 end
             // const maxTop = sender.
             if(startX > -1 && startY > -1 && msgPan) {
                 // 计算移动差值
