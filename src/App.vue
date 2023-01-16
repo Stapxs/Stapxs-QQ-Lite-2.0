@@ -530,7 +530,7 @@ export default defineComponent({
                         html: html,
                         button: [
                             {
-                                text: app.config.globalProperties.$t('btn__open_times_no'),
+                                text: app.config.globalProperties.$t('btn_open_times_no'),
                                 fun: () => { runtimeData.popBoxList.shift() }
                             }, {
                                 text: app.config.globalProperties.$t('btn_open_times_ok'),
