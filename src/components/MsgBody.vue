@@ -33,20 +33,37 @@
                 </div>
                 <!-- 消息体 -->
                 <div v-for="(item, index) in data.message" :class="View.isMsgInline(item.type) ? 'msg-inline' : ''" :key="data.message_id + '-m-' + index">
-                    <span v-if="isDebugMsg" class="msg-text">{{ item }}</span>
-                    <span v-else-if="item.type === 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
-                    <img v-else-if="item.type === 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @load="scrollButtom" @error="imgLoadFail" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
-                    <img v-else-if="item.type === 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/img/qq-face/' + item.id + '.gif')" :title="item.text">
-                    <span v-else-if="item.type === 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat_fun_menu_pic') }}：{{ item.text }} ]</span>
-                    <div v-else-if="item.type === 'at'" v-show="isAtShow(data.source, item.qq)" :class="getAtClass(item.qq)">
+                    <div v-if="item.type === undefined" ></div>
+                    <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
+                    <span v-else-if="item.type == 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
+                    <img v-else-if="item.type == 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @load="scrollButtom" @error="imgLoadFail" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
+                    <img v-else-if="item.type == 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/img/qq-face/' + item.id + '.gif')" :title="item.text">
+                    <span v-else-if="item.type == 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat_fun_menu_pic') }}：{{ item.text }} ]</span>
+                    <div v-else-if="item.type == 'at'" v-show="isAtShow(data.source, item.qq)" :class="getAtClass(item.qq)">
                         <a @mouseenter="showUserInfo" :data-id="item.qq" :data-group="data.group_id">{{ getAtName(item) }}</a>
                     </div>
-                    <div v-else-if="item.type === 'xml'" v-html="View.buildXML(item.data, item.id, data.message_id)" @click="View.cardClick('xml-' + data.message_id)"></div>
-                    <div v-else-if="item.type === 'json'" v-html="View.buildJSON(item.data, data.message_id)" @click="View.cardClick('json-' + data.message_id)">
+                    <div v-else-if="item.type == 'file'" :class="'msg-file' + (isMe ? ' me' : '')">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M0 64C0 28.65 28.65 0 64 0H224V128C224 145.7 238.3 160 256 160H384V448C384 483.3 355.3 512 320 512H64C28.65 512 0 483.3 0 448V64zM256 128V0L384 128H256z"/></svg>
+                        <div>
+                            <div><p>{{ item.name }}</p><a>（{{ getSizeFromBytes(item.size) }}）</a></div><i>{{ item.md5 }}</i></div>
+                            <div>
+                                <svg @click="downloadFile(item, data.message_id)" v-if="item.downloadingPercentage === undefined" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M374.6 310.6l-160 160C208.4 476.9 200.2 480 192 480s-16.38-3.125-22.62-9.375l-160-160c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 370.8V64c0-17.69 14.33-31.1 31.1-31.1S224 46.31 224 64v306.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0S387.1 298.1 374.6 310.6z"/></svg>
+                                <svg v-if="item.downloadingPercentage !== undefined" class="download-bar" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="50%" cy="50%" r="40%" stroke-width="15%" fill="none" stroke-linecap="round" />
+                                    <circle cx="50%" cy="50%" r="40%" stroke-width="15%" fill="none" :stroke-dasharray="item.downloadingPercentage === undefined ?
+                                    '0,10000' : `${Math.floor(2 * Math.PI * 25) * item.downloadingPercentage / 100},10000`" />
+                                </svg>
+                            </div>
                     </div>
-                    <div v-else-if="item.type === undefined" ></div>
+                    <div v-else-if="item.type == 'video'" class="msg-video">
+                        <video v-if="item.url" controls><source :src="item.url" type="video/mp4"></video>
+                        <div v-else-if="!getVideo" :class="getVideoUrl(item, data.message_id)"></div>
+                    </div>
+                    <div v-else-if="item.type == 'xml'" v-html="View.buildXML(item.data, item.id, data.message_id)" @click="View.cardClick('xml-' + data.message_id)"></div>
+                    <div v-else-if="item.type == 'json'" v-html="View.buildJSON(item.data, data.message_id)" @click="View.cardClick('json-' + data.message_id)">
+                    </div>
 
-                    <span v-else-if="item.type === 'forward'" class="msg-unknown" @click="View.getForwardMsg(item.id)">{{ $t('chat_show_forward') }}</span>
+                    <span v-else-if="item.type == 'forward'" class="msg-unknown" @click="View.getForwardMsg(item.id)">{{ $t('chat_show_forward') }}</span>
 
                     <span v-else class="msg-unknown">{{ '( ' + $t('chat_unsupported_msg') + ': ' + item.type + ' )'
                     }}</span>
@@ -82,19 +99,22 @@ import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
 import { Logger, PopInfo, PopType } from '@/function/base'
 import app from '@/main'
+import { isTemplateElement } from '@babel/types'
 
 export default defineComponent({
     name: 'MsgBody',
     props: ['data', 'isMerge'],
     data () {
         return {
+            getSizeFromBytes: Util.getSizeFromBytes,
             isMe: false,
             isDebugMsg: Option.get('debug_msg'),
             linkViewStyle: '',
             View: ViewFuns,
             runtimeData: runtimeData,
             pageViewInfo: undefined as { [key: string]: any } | undefined,
-            gotLink: false
+            gotLink: false,
+            getVideo: false
         }
     },
     methods: {
@@ -372,6 +392,43 @@ export default defineComponent({
                 return (list[0].card !== '' ? list[0].card : list[0].nickname) + ': ' + msg
             }
             return msg
+        },
+
+        /**
+         * 下载消息中的文件
+         * @param data 消息对象
+         */
+        downloadFile(data: any, message_id: string) {
+            const onProcess = function (event: ProgressEvent): undefined {
+                if (!event.lengthComputable) return
+                data.downloadingPercentage = Math.floor(event.loaded / event.total * 100)
+            }
+            if(data.url) {
+                // 消息中有文件链接的话就不用获取了 ……
+                Util.downloadFile(data.url, data.name, onProcess)
+            } else {
+                // 获取下载链接
+                Connector.send('get_file_url', {
+                    id: runtimeData.chatInfo.show.id,
+                    message_id: message_id,
+                    fid: data.fid
+                }, 'downloadFile_' + message_id + '_' + data.name)
+            }
+        },
+
+        /**
+         * 
+         * @param msgId 消息 ID
+         * @param fid 文件 ID
+         */
+        getVideoUrl(data: any, message_id: string) {
+            this.getVideo = true
+            Connector.send('get_video_url', {
+                id: runtimeData.chatInfo.show.id,
+                message_id: message_id,
+                fid: data.fid,
+                md5: data.md5
+            }, 'getVideoUrl_' + message_id)
         }
     },
     mounted () {

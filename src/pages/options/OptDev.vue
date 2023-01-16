@@ -18,14 +18,12 @@
                     <span>{{ $t('option_dev_log_level') }}</span>
                     <span>{{ $t('option_dev_log_level_tip') }}</span>
                 </div>
-                <label>
-                    <select @change="save" name="log_level" v-model="runtimeData.sysConfig.log_level">
-                        <option value="err">{{ $t('option_dev_log_level_err') }}</option>
-                        <option value="debug">{{ $t('option_dev_log_level_debug') }}</option>
-                        <option value="info">{{ $t('option_dev_log_level_info') }}</option>
-                        <option value="all">{{ $t('option_dev_log_level_all') }}</option>
-                    </select>
-                </label>
+                <select @change="save" name="log_level" v-model="runtimeData.sysConfig.log_level">
+                    <option value="err">{{ $t('option_dev_log_level_err') }}</option>
+                    <option value="debug">{{ $t('option_dev_log_level_debug') }}</option>
+                    <option value="info">{{ $t('option_dev_log_level_info') }}</option>
+                    <option value="all">{{ $t('option_dev_log_level_all') }}</option>
+                </select>
             </div>
             <div class="opt-item">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
@@ -134,17 +132,6 @@
                         <div></div>
                     </div>
                 </label>
-            </div>
-            <div class="opt-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-                    <path
-                        d="M96 0C78.3 0 64 14.3 64 32v96h64V32c0-17.7-14.3-32-32-32zM288 0c-17.7 0-32 14.3-32 32v96h64V32c0-17.7-14.3-32-32-32zM32 160c-17.7 0-32 14.3-32 32s14.3 32 32 32v32c0 77.4 55 142 128 156.8V480c0 17.7 14.3 32 32 32s32-14.3 32-32V412.8C297 398 352 333.4 352 256V224c17.7 0 32-14.3 32-32s-14.3-32-32-32H32z" />
-                </svg>
-                <div>
-                    <span>{{ $t('option_dev_connect_type') }}</span>
-                    <span>{{ $t('option_dev_connect_type_tip') }}</span>
-                </div>
-                <input class="ss-input" style="width:150px" type="text">
             </div>
         </div>
         <div class="ss-card">

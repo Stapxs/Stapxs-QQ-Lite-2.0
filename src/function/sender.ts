@@ -22,6 +22,7 @@ import { runtimeData } from './msg'
  * 反序列化消息
  * @param msg 带有 SQCode 标记的文本消息（也可以不带有）
  * @param cache 多媒体消息缓存列表
+ * @param img 图片缓存列表
  * @returns 用于发送的纯文本消息（根据 Bot 类型可能是 CQ 码或者 JSON 对象等）
  */
 export function parseMsg(msg: string, cache: MsgItemElem[], img: string[]) {

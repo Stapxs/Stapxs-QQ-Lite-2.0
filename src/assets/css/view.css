@@ -489,10 +489,8 @@ html, body {
     transition: all .3s;
     position: absolute;
     margin-left: 50%;
-    max-width: 360px;
-    min-width: 360px;
+    width: 360px;
     z-index: 20;
-    width: 50vw;
 }
 .pop-box-body > header {
     align-items: center;
@@ -955,6 +953,20 @@ html, body {
         padding: 5px 15px;
     }
 }
+
+/* 全局通用弹窗 */
+@media (max-width: 400px) {
+    .pop-box-body {
+        width: calc(100% - 80px);
+        transform: unset !important;
+        margin: 20px;
+        bottom: 0;
+    }
+    .pop-box-more {
+        display: none;
+    }
+}
+
 
 /* 其他覆盖样式 */
 .layui-tab-bar {

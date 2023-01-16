@@ -985,6 +985,17 @@ export default defineComponent({
 
         updateList(newLength: number, oldLength: number) {
 
+            // =================== 首次加载消息 ===================
+
+            if(oldLength == 0 && newLength > 0) {
+                // 设置最后一条消息以上都为已读
+                Connector.send(
+                    'set_message_read',
+                    { message_id: this.list[this.list.length - 1].message_id },
+                    'setMessageRead'
+                )
+            }
+
             // =================== 刷新统计数据 ===================
 
             // 判断新消息数量（回到底部按钮显示、不在加载历史消息、不是首次加载消息）

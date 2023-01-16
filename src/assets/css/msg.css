@@ -232,7 +232,7 @@
 }
 
 .msg-video {
-    margin: -10px;
+    margin: -9px;
     border-radius: 7px;
     overflow: hidden;
 }
@@ -256,6 +256,9 @@
 .msg-file svg {
     fill: var(--color-font-1);
 }
+.msg-file.me svg {
+    fill: var(--color-font-1-r);
+}
 .msg-file > div:nth-child(2) {
     display: flex;
     flex-direction: column;
@@ -275,19 +278,23 @@
     margin-bottom: 0;
 }
 .msg-file > div:nth-child(3) {
-    width: 50px;
-    height: 50px;
     background: #0000002e;
     border-radius: 100%;
-    padding: 15px;
     margin-left: 20px;
     cursor: pointer;
 }
 .msg-file > div:nth-child(3) svg {
-    width: 20px;
+    margin: 15px 10px 10px 10px;
     height: 20px;
-    margin-top: -7px;
+    width: 31px;
 }
+.msg-file > div:nth-child(3) svg.download-bar {
+    --main-size: 40px;
+    margin: 3px 1px -4px 0 !important;
+}
+.msg-file.me > div:nth-child(3) svg.download-bar > circle:last-child {
+    stroke: var(--color-card-2);
+  }
 
 .msg-link-view {
     display: flex;

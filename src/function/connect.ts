@@ -71,7 +71,7 @@ export class Connector {
             // TODO: 重置运行时数据并不会刷新，重新连接会有问题，暂时进行页面刷新。
             location.reload()
         }
-        websocket.onerror = (e) => {
+        websocket.onerror = () => {
             popInfo.add(PopType.ERR, $t('log_com_err'))
         }
     }
