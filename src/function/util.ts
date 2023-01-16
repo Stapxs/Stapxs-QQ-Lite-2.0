@@ -13,6 +13,7 @@
 import app from '@/main'
 import l10nConfig from '@/assets/l10n/_l10nconfig.json'
 import zh from '@/assets/l10n/zh-CN.json'
+import FileDownloader from 'js-file-downloader'
 
 import { Logger, PopInfo, PopType } from './base'
 
@@ -426,6 +427,26 @@ export function gitmojiToEmoji (name: string) {
     return {":zap:":"⚡️",":art:":"🎨",":fire:":"🔥",":bug:":"🐛",":ambulance:":"🚑️",":sparkles:":"✨",":memo:":"📝",":rocket:":"🚀",":lipstick:":"💄",":tada:":"🎉",":white-check-mark:":"✅",":lock:":"🔒️",":closed-lock-with-key:":"🔐",":bookmark:":"🔖",":rotating-light:":"🚨",":construction:":"🚧",":green-heart:":"💚",":arrow-down:":"⬇️",":arrow-up:":"⬆️",":pushpin:":"📌",":construction-worker:":"👷",":chart-with-upwards-trend:":"📈",":recycle:":"♻️",":heavy-plus-sign:":"➕",":heavy-minus-sign:":"➖",":wrench:":"🔧",":hammer:":"🔨",":globe-with-meridians:":"🌐",":pencil2:":"✏️",":poop:":"💩",":rewind:":"⏪️",":twisted-rightwards-arrows:":"🔀",":package:":"📦️",":alien:":"👽️",":truck:":"🚚",":page-facing-up:":"📄",":boom:":"💥",":bento:":"🍱",":wheelchair:":"♿️",":bulb:":"💡",":beers:":"🍻",":speech-balloon:":"💬",":card-file-box:":"🗃️",":loud-sound:":"🔊",":mute:":"🔇",":busts-in-silhouette:":"👥",":children-crossing:":"🚸",":building-construction:":"🏗️",":iphone:":"📱",":clown-face:":"🤡",":egg:":"🥚",":see-no-evil:":"🙈",":camera-flash:":"📸",":alembic:":"⚗️",":mag:":"🔍️",":label:":"🏷️",":seedling:":"🌱",":triangular-flag-on-post:":"🚩",":goal-net:":"🥅",":animation:":"💫",":wastebasket:":"🗑️",":passport-control:":"🛂",":adhesive-bandage:":"🩹",":monocle-face:":"🧐",":coffin:":"⚰️",":test-tube:":"🧪",":necktie:":"👔",":stethoscope:":"🩺",":bricks:":"🧱",":technologist:":"🧑‍💻"}[name]
 }
 
+/**
+ * 下载文件
+ * @param url 文件链接
+ * @param process 下载中回调
+ */
+export function downloadFile (url: string, name: string, onprocess: (event: ProgressEvent) => undefined) {
+    new FileDownloader({
+        url: url,
+        autoStart: true,
+        process: onprocess,
+        nameCallback: function () {
+            return name
+        }
+    }).catch(function (error) {
+        if (error) {
+            console.log(error)
+        }
+    })
+}
+
 export default {
     openLink,
     getTrueLang,
@@ -436,5 +457,7 @@ export default {
     loadHistory,
     scrollToMsg,
     gitmojiToEmoji,
-    randomNum
+    randomNum,
+    downloadFile,
+    getSizeFromBytes
 }

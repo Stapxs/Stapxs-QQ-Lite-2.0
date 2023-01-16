@@ -57,7 +57,9 @@ export function parse(str: string) {
                     switch (head) {
                         case 'getSendMsg'           : saveSendedMsg(echoList, msg); break
                         case 'getGroupMemberInfo'   : saveMemberInfo(msg); break
+                        case 'downloadFile'         : downloadFileChat(msg); break
                         case 'downloadGroupFile'    : downloadGroupFile(msg); break
+                        case 'getVideoUrl'          : getVideoUrl(msg); break
                         case 'getGroupDirFiles'     : saveDirFile(msg); break
                         case 'getChatHistoryScroll' : saveChatHistoryScroll(echoList, msg); break
                     }
@@ -349,6 +351,36 @@ function revokeMsg(msg: any) {
     // }
 }
 
+function downloadFileChat(msg: any) {
+    const info = msg.echo.split('_')
+    const msgId = info[1]
+    const url = msg.data.url
+    // 在消息列表内寻找这条消息（从后往前找）
+    let index = -1
+    let indexMsg = -1
+    for(let i=runtimeData.messageList.length - 1; i>0; i--) {
+        if(runtimeData.messageList[i].message_id == msgId) {
+            index = i
+            for(let j=0; j<runtimeData.messageList[i].message.length; j++) {
+                if(runtimeData.messageList[i].message[j].type == 'file') {
+                    indexMsg = j
+                    break
+                }
+            }
+            break
+        }
+    }
+    // 下载文件
+    if(index != -1 && indexMsg != -1) {
+        const onProcess = function (event: ProgressEvent): undefined {
+            if (!event.lengthComputable) return
+            runtimeData.messageList[index].message[indexMsg].
+                    downloadingPercentage = Math.floor(event.loaded / event.total * 100)
+        }
+        Util.downloadFile(url, msg.echo.substring(msg.echo.lastIndexOf('_') + 1, msg.echo.length), onProcess)
+    }
+}
+
 function downloadGroupFile(msg: any) {
     // 基本信息
     const info = msg.echo.split('_')
@@ -391,21 +423,27 @@ function downloadGroupFile(msg: any) {
             }
         }
     }
+
     // 下载文件
-    new FileDownloader({
-        url: json.data.url,
-        autoStart: true,
-        process: onProcess,
-        nameCallback: function () {
-            return fileName
+    Util.downloadFile(json.data.url, fileName, onProcess)
+}
+
+function getVideoUrl(msg: any) {
+    const info = msg.echo.split('_')
+    const msgId = info[1]
+    const url = msg.data.url
+    // 在消息列表内寻找这条消息
+    for(let i=0; i<runtimeData.messageList.length; i++) {
+        if(runtimeData.messageList[i].message_id == msgId) {
+            for(let j=0; j<runtimeData.messageList[i].message.length; j++) {
+                if(runtimeData.messageList[i].message[j].type == 'video') {
+                    runtimeData.messageList[i].message[j].url = url
+                    return
+                }
+            }
+            return
         }
-    }).then(function () {
-        console.log('finished')
-    }).catch(function (error) {
-        if (error) {
-            console.log(error)
-        }
-    })
+    }
 }
 
 function saveDirFile(msg: any) {
