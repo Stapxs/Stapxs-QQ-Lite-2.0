@@ -130,7 +130,7 @@ export default {
          */
         setNick(event: KeyboardEvent) {
             // TODO: 这玩意的返回好像永远是错误的 …… 所以干脆不处理返回了
-            if (event.keyCode === 13 && runtimeData.loginInfo.nickname !== '') {
+            if (event.key === 'Enter' && runtimeData.loginInfo.nickname !== '') {
                 Connector.send('set_nickname', {nickname: runtimeData.loginInfo.nickname}, 'setNickname')
             }
         },
@@ -141,7 +141,7 @@ export default {
          */
         setLNick(event: KeyboardEvent) {
             // TODO: 这玩意的返回好像永远是错误的 …… 所以干脆不处理返回了
-            if (event.keyCode === 13 && runtimeData.loginInfo.info.lnick !== '') {
+            if (event.key === 'Enter' && runtimeData.loginInfo.info.lnick !== '') {
                 Connector.send('set_signature', {signature: runtimeData.loginInfo.info.lnick}, 'setSignature')
             }
         }

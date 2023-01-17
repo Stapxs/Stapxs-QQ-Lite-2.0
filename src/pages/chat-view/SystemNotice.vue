@@ -25,7 +25,7 @@
                                 <span>{{ (notice.sex == 'female' ? '♀ ' : '♂ ') + notice.age }}</span>
                                 <span>{{ notice.comment }}</span>
                             </div>
-                            <span>{{ $t('sys_notice_new_friedd_from') + notice.source }}</span>
+                            <span>{{ $t('sys_notice_new_friend_from') + notice.source }}</span>
                         </div>
                     </div>
                 </div>

@@ -18,7 +18,7 @@
 </div>
 
 ## 快速使用
-### 访问应用 - Github Pages
+### 访问应用 - GitHub Pages
 本仓库开启了 GitHub Pages, 所有向主分支提交的代码将会自动构建并发布。你可以直接访问 [这儿](https://stapxs.github.io/Stapxs-QQ-Lite-2.0) 来使用已经构建并部署的页面。
 
 ### 运行服务 - oicq2-http
@@ -91,7 +91,7 @@ Stapxs QQ Lite 2.0 是一个基于 Vue 的单页应用，这意味着如果你�
 
 注意。在正式构建前，如果你的网站运作目录并不在根域名下，你需要修改（或增加）项目根目录下 `vue.config.js` 内导出的 `publicPath` 字段的值，它代表着最终你会运行在的目录，比如它在现在是 `/Stapxs-QQ-Lite-2.0/`；如果你本来就运行在根目录下，可以直接删去它。
 
-如果你想使用 Github Action 自动构建本项目，可以直接参考本项目的自动构建配置，它在 [这儿](.github/workflows//vue-build.yml)。
+如果你想使用 GitHub Action 自动构建本项目，可以直接参考本项目的自动构建配置，它在 [这儿](.github/workflows//vue-build.yml)。
 
 ``` bash
 # 安装依赖

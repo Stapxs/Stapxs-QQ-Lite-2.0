@@ -426,7 +426,7 @@ export default defineComponent({
                 // 更新 cookie 中的版本信息并抓取更新日志
                 app.config.globalProperties.$cookies.set('version', appVersion, '1m')
                 logger.debug(this.$t('version_updated') + ': ' + cacheVersion + ' -> ' + appVersion)
-                // 从 Github 获取更新日志
+                // 从 GitHub 获取更新日志
                 const url = 'https://api.github.com/repos/stapxs/stapxs-qq-lite-2.0/commits'
                 const fetchData = {
                     sha: process.env.NODE_ENV == 'development' ? 'dev' : 'main',
@@ -531,7 +531,7 @@ export default defineComponent({
                         html: html,
                         button: [
                             {
-                                text: app.config.globalProperties.$t('btn__open_times_no'),
+                                text: app.config.globalProperties.$t('btn_open_times_no'),
                                 fun: () => { runtimeData.popBoxList.shift() }
                             }, {
                                 text: app.config.globalProperties.$t('btn_open_times_ok'),
