@@ -426,7 +426,7 @@ export default defineComponent({
                 // 更新 cookie 中的版本信息并抓取更新日志
                 app.config.globalProperties.$cookies.set('version', appVersion, '1m')
                 logger.debug(this.$t('version_updated') + ': ' + cacheVersion + ' -> ' + appVersion)
-                // 从 GitHub 获取更新日志
+                // 从 Github 获取更新日志
                 const url = 'https://api.github.com/repos/stapxs/stapxs-qq-lite-2.0/commits'
                 const fetchData = {
                     sha: process.env.NODE_ENV == 'development' ? 'dev' : 'main',
@@ -558,17 +558,30 @@ export default defineComponent({
                     }
                     // 解析公告列表
                     data.forEach((notice: any) => {
-                        if (noticeShow.indexOf((notice.id).toString()) < 0 && (!notice.show_date || new Date().toDateString() === new Date(notice.show_date).toDateString())) {
+                        let isShowInDate = false
+                        if(!notice.show_date) {
+                            isShowInDate = true
+                        }
+                        else if(typeof notice.show_date == 'string' && new Date().toDateString() === new Date(notice.show_date).toDateString()) {
+                            isShowInDate = true
+                        } else if(typeof notice.show_date == 'object') {
+                            notice.show_date.forEach((date: number) => {
+                                if(new Date().toDateString() === new Date(date).toDateString()) {
+                                    isShowInDate = true
+                                }
+                            })
+                        }
+                        if (notice.version == 2 &&noticeShow.indexOf((notice.id).toString()) < 0 && isShowInDate) {
                             // 加载公告弹窗列表
                             for (let i = 0; i < notice.pops.length; i++) {
                                 // 添加弹窗
                                 const info = notice.pops[i]
                                 const popInfo = {
                                     title: info.title,
-                                    html: xss(info.html ? info.html : ''),
+                                    html: info.html ? info.html : '',
                                     button: [
                                         {
-                                            text: notice.pops.length > 1 ? app.config.globalProperties.$t('btn_next') : app.config.globalProperties.$t('btn_yes'),
+                                            text: (notice.pops.length > 1 && i != notice.pops.length - 1) ? app.config.globalProperties.$t('btn_next') : app.config.globalProperties.$t('btn_yes'),
                                             master: true,
                                             fun: () => {
                                                 // 添加已读记录
