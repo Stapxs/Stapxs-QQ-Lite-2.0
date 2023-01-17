@@ -316,7 +316,7 @@ export function parseCQ(data: any) {
             }
         })
     }
-    logger.debug(app.config.globalProperties.$t('log_cq_msg_parsred') + ': ' + JSON.stringify(back))
+    logger.debug(app.config.globalProperties.$t('log_cq_msg_parsed') + ': ' + JSON.stringify(back))
     data.message = back
     return data
 }

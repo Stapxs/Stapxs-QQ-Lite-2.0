@@ -64,7 +64,7 @@
                     <span v-html="(chat.info.user_info.lnick === undefined || chat.info.user_info.lnick === '') ?
                     $t('chat_chat_info_nolnick') : chat.info.user_info.lnick"></span>
                     <header>
-                        <span>{{ $t('chat_chat_info_outher') }}</span>
+                        <span>{{ $t('chat_chat_info_other') }}</span>
                     </header>
                     <div class="outher">
                         <span>{{ $t('chat_chat_info_birthday') }}:
@@ -78,7 +78,7 @@
                                 }}
                             </span>
                         </span>
-                        <span>{{ $t('chat_chat_info_address') }}:
+                        <span>{{ $t('chat_chat_info_district') }}:
                             <span>
                                 {{
                                         `${chat.info.user_info.country}-${chat.info.user_info.province}-${chat.info.user_info.city}`
