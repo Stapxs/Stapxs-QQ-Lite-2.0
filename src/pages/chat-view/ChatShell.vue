@@ -223,7 +223,7 @@ export default defineComponent({
         copy(str: string) {
             app.config.globalProperties.$copyText(str).then(() => {
                 this.popInfo.add(PopType.INFO, 'copy messageId successfully', true)
-            }, (e: any) => {
+            }, () => {
                 this.popInfo.add(PopType.ERR, 'copy messageId failed', true)
             })
         },

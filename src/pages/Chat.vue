@@ -454,26 +454,6 @@ export default defineComponent({
         },
         scrollToMsg (seqName: string) {
             if (!Util.scrollToMsg(seqName, true)) {
-                // // 尝试向前自动加载历史消息到目标消息
-                // const seq = Number(seqName.split('-')[1])       // 目标 seq 编号
-                // const seqNow = Number(this.list[0].seq)         // 当前列表最早的消息 seq 编号
-                // if(seq && seqNow && seq < seqNow) {
-                //     new Logger().debug('正在尝试回溯历史消息，回溯数量：' + (seqNow - seq))
-                //     // 最多尝试回溯 10 次
-                //     const maxTimes = 10
-                //     if(seqNow - seq < (20 * maxTimes)) {
-                //         // this.loadMoreHistory()
-                //         const firstMsgId = this.list[0].message_id
-                //         this.tags.nowGetHistroy = true
-                //         Connector.send(
-                //             'get_chat_history',
-                //             { 'message_id': firstMsgId },
-                //             // 目标 seq 、最大跳转次数、当前已跳转次数
-                //             'getChatHistoryScroll_' + seq + '_' + maxTimes + '_0'
-                //         )
-                //         return
-                //     }
-                // }
                 const pass = Number(this.list[0].seq) - Number(seqName.split('-')[1])
                 new PopInfo().add(PopType.INFO, this.$t('pop_chat_msg_not_load') + ' ( +' + pass + ' ) ')
             }

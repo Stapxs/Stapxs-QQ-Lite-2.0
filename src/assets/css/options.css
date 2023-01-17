@@ -88,22 +88,6 @@
     width: 100%;
 }
 
-.logo-card>div:last-child {
-    background: var(--color-card-1);
-    color: var(--color-font-1);
-    flex-direction: row;
-    border-radius: 7px;
-    padding: 10px 20px;
-    margin-top: 20px;
-    flex-wrap: wrap;
-    display: flex;
-}
-
-.logo-card>div:last-child>span {
-    font-size: unset;
-    width: 50%;
-}
-
 .contributors-card>div {
     flex-wrap: wrap;
     display: flex;
@@ -494,6 +478,23 @@
     font-weight: bold;
     font-size: 1rem;
     width: 100%;
+}
+
+.debug-info {
+    background: var(--color-card-1);
+    color: var(--color-font-1);
+    line-height: 1.3rem;
+    flex-direction: row;
+    border-radius: 7px;
+    padding: 10px 20px;
+    margin-top: -10px;
+    flex-wrap: wrap;
+    display: flex;
+}
+
+.debug-info span {
+    font-size: unset;
+    width: 50%;
 }
 
 @media (max-width: 700px) {

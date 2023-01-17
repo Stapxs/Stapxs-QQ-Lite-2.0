@@ -185,6 +185,7 @@
 </template>
 
 <script lang="ts">
+import xss from 'xss'
 import cmp from 'semver-compare'
 import appInfo from '../package.json'
 import app from '@/main'
@@ -544,6 +545,48 @@ export default defineComponent({
             } else {
                 $cookies.set('times', 1, '1m')
             }
+            // 获取公告通知
+            const url = 'https://lib.stapxs.cn/download/stapxs-qq-lite/notice-config.json'
+            const fetchData = {} as Record<string, string>
+            fetch(url + '?' + new URLSearchParams(fetchData).toString())
+                .then(response => response.json())
+                .then(data => {
+                    // 获取已显示过的公告 ID
+                    let noticeShow = [] as number[]
+                    if ($cookies.isKey('notice_show')) {
+                        noticeShow = $cookies.get('notice_show').split(',')
+                    }
+                    // 解析公告列表
+                    data.forEach((notice: any) => {
+                        if (noticeShow.indexOf((notice.id).toString()) < 0 && (!notice.show_date || new Date().toDateString() === new Date(notice.show_date).toDateString())) {
+                            // 加载公告弹窗列表
+                            for (let i = 0; i < notice.pops.length; i++) {
+                                // 添加弹窗
+                                const info = notice.pops[i]
+                                const popInfo = {
+                                    title: info.title,
+                                    html: xss(info.html ? info.html : ''),
+                                    button: [
+                                        {
+                                            text: notice.pops.length > 1 ? app.config.globalProperties.$t('btn_next') : app.config.globalProperties.$t('btn_yes'),
+                                            master: true,
+                                            fun: () => {
+                                                // 添加已读记录
+                                                if (noticeShow.indexOf(notice.id) < 0) {
+                                                    noticeShow.push(notice.id)
+                                                }
+                                                $cookies.set('notice_show', noticeShow, '1m')
+                                                // 关闭弹窗
+                                                runtimeData.popBoxList.shift()
+                                            }
+                                        }
+                                    ]
+                                }
+                                runtimeData.popBoxList.push(popInfo)
+                            }
+                        }
+                    })
+                })
         }
     }
 })

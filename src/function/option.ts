@@ -66,13 +66,11 @@ function setLanguage(name: string) {
  * @param value 是否启用暗黑模式
  */
 function setDarkMode(value: boolean) {
-    // if (get('opt_auto_dark') === 'null' || !get('opt_auto_dark')) {
-        if (value === true) {
-            changeColorMode('dark')
-        } else {
-            changeColorMode('light')
-        }
-    // }
+    if (value === true) {
+        changeColorMode('dark')
+    } else {
+        changeColorMode('light')
+    }
 }
 
 /**
@@ -229,10 +227,13 @@ export function save(name: string, value: any) {
     cacheConfigs[name] = value
     saveAll()
 }
-function saveAll() {
+export function saveAll(config = {} as {[key: string]: any}) {
+    if(Object.keys(config).length == 0) {
+        config = cacheConfigs
+    }
     let str = ''
-    Object.keys(cacheConfigs).forEach(key => {
-        str += key + ':' + cacheConfigs[key] + '&'
+    Object.keys(config).forEach(key => {
+        str += key + ':' + config[key] + '&'
     })
     str = str.substring(0, str.length - 1)
     app.config.globalProperties.$cookies.set('options', str, '1m')

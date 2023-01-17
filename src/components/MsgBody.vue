@@ -99,7 +99,6 @@ import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
 import { Logger, PopInfo, PopType } from '@/function/base'
 import app from '@/main'
-import { isTemplateElement } from '@babel/types'
 
 export default defineComponent({
     name: 'MsgBody',

@@ -11,7 +11,6 @@
 */
 import qed from '@/assets/qed.txt'
 
-import FileDownloader from 'js-file-downloader'
 import { Md5 } from 'ts-md5'
 import app from '@/main'
 import Option from './option'
@@ -28,47 +27,39 @@ const popInfo = new PopInfo()
 export function parse(str: string) {
     const msg = JSON.parse(str)
     if (msg.echo !== undefined) {
-        switch (msg.echo) {
-            case 'getVersionInfo'       : saveBotInfo(msg.data); break
-            case 'getLoginInfo'         : saveLoginInfo(msg.data); break
-            case 'getMoreLoginInfo'     : runtimeData.loginInfo.info = msg.data.data.result.buddy.info_list[0]; break
-            case 'getGroupList'         : saveUser(msg.data); break
-            case 'getFriendList'        : saveUser(msg.data); break
-            case 'getUserInfoInGroup'   : runtimeData.chatInfo.info.me_info = msg; break
-            case 'getGroupMemberList'   : saveGroupMember(msg.data); break
-            case 'getChatHistoryFist'   : saveMsgFist(msg); break
-            case 'getChatHistory'       : saveMsg(msg); break
-            case 'getForwardMsg'        : saveForwardMsg(msg.data); break
-            case 'sendMsgBack'          : showSendedMsg(msg); break
-            case 'getRoamingStamp'      : runtimeData.stickerCache = msg.data.reverse(); break
-            case 'getMoreGroupInfo'     : runtimeData.chatInfo.info.group_info = msg.data.data; break
-            case 'getMoreUserInfo'      : runtimeData.chatInfo.info.user_info = msg.data.data.result.buddy.info_list[0]; break
-            case 'getGroupNotices'      : runtimeData.chatInfo.info.group_notices = msg.data.data; break
-            case 'getGroupFiles'        : saveFileList(msg.data.data); break
-            case 'getMoreGroupFiles'    : saveMoreFileList(msg.data.data); break
-            case 'getJin'               : saveJin(msg.data.data); break
-            case 'getSystemMsg'         : runtimeData.systemNoticesList = msg.data; break
-            default                     : {
-                const echoList = msg.echo.split('_')
-                const head = echoList[0]
-                if (msg.echo.indexOf('_') > 0) {
-                    // 复杂消息头
-                    // PS：复杂消息头由“消息头_参数1_参数N”组成
-                    switch (head) {
-                        case 'getSendMsg'           : saveSendedMsg(echoList, msg); break
-                        case 'getGroupMemberInfo'   : saveMemberInfo(msg); break
-                        case 'downloadFile'         : downloadFileChat(msg); break
-                        case 'downloadGroupFile'    : downloadGroupFile(msg); break
-                        case 'getVideoUrl'          : getVideoUrl(msg); break
-                        case 'getGroupDirFiles'     : saveDirFile(msg); break
-                        case 'getChatHistoryScroll' : saveChatHistoryScroll(echoList, msg); break
-                    }
-                }
-                // 处理更多追加方法
-                // PS：这儿对插件附加方法进行寻找执行
-                if(appendMsg[head]) {
-                    appendMsg[head](msg)
-                }
+        const echoList = msg.echo.split('_')
+        const head = echoList[0]
+        // 处理追加方法
+        // PS：这儿对插件附加方法进行寻找执行，同名将会覆盖已有方法
+        if(appendMsg[head]) {
+            appendMsg[head](msg)
+        } else {
+            switch (head) {
+                case 'getVersionInfo'       : saveBotInfo(msg.data); break
+                case 'getLoginInfo'         : saveLoginInfo(msg.data); break
+                case 'getMoreLoginInfo'     : runtimeData.loginInfo.info = msg.data.data.result.buddy.info_list[0]; break
+                case 'getGroupList'         : saveUser(msg.data); break
+                case 'getFriendList'        : saveUser(msg.data); break
+                case 'getUserInfoInGroup'   : runtimeData.chatInfo.info.me_info = msg; break
+                case 'getGroupMemberList'   : saveGroupMember(msg.data); break
+                case 'getChatHistoryFist'   : saveMsgFist(msg); break
+                case 'getChatHistory'       : saveMsg(msg); break
+                case 'getForwardMsg'        : saveForwardMsg(msg.data); break
+                case 'sendMsgBack'          : showSendedMsg(msg); break
+                case 'getRoamingStamp'      : runtimeData.stickerCache = msg.data.reverse(); break
+                case 'getMoreGroupInfo'     : runtimeData.chatInfo.info.group_info = msg.data.data; break
+                case 'getMoreUserInfo'      : runtimeData.chatInfo.info.user_info = msg.data.data.result.buddy.info_list[0]; break
+                case 'getGroupNotices'      : runtimeData.chatInfo.info.group_notices = msg.data.data; break
+                case 'getGroupFiles'        : saveFileList(msg.data.data); break
+                case 'getMoreGroupFiles'    : saveMoreFileList(msg.data.data); break
+                case 'getJin'               : saveJin(msg.data.data); break
+                case 'getSystemMsg'         : runtimeData.systemNoticesList = msg.data; break
+                case 'getSendMsg'           : saveSendedMsg(echoList, msg); break
+                case 'getGroupMemberInfo'   : saveMemberInfo(msg); break
+                case 'downloadFile'         : downloadFileChat(msg); break
+                case 'downloadGroupFile'    : downloadGroupFile(msg); break
+                case 'getVideoUrl'          : getVideoUrl(msg); break
+                case 'getGroupDirFiles'     : saveDirFile(msg); break
             }
         }
     } else {
@@ -228,19 +219,6 @@ function saveMsg(msg: any) {
     }
 }
 
-function saveChatHistoryScroll(list: string[], msg: any) {
-    saveMsg(msg)
-    // 尝试跳转消息
-    const back = Util.scrollToMsg('chat-' + list[1], true)
-    if(!back && Number(list[3]) < Number(list[2])) {
-        Connector.send(
-            'get_chat_history',
-            { 'message_id': msg.data[0].message_id },
-            // 目标 seq 、最大跳转次数、当前已跳转次数
-            'getChatHistoryScroll_' + list[1] + '_' + list[2] + '_' + (Number(list[3]) + 1)
-        )
-    }
-}
 
 function saveForwardMsg(data: any) {
     // gocqhttp 在 message 里，消息为 content，并且直接进行一个 CQCode 的转
