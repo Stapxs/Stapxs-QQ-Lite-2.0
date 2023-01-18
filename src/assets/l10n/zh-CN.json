@@ -192,7 +192,6 @@
   "chat_fun_menu_jin": "精华消息",
   "message_title": "消息",
   "chat_fun_menu_jin_sender": "{time}，由 {name} 设置",
-  "sw_need_reload": "检查到应用更新，需要重新加载 ……",
   "update_history": "更新记录",
   "btn_know": "知道了",
   "btn_see": "查看",
@@ -227,5 +226,11 @@
   "btn_no": "取消",
   "import_config_fail": "导入设置项失败",
   "option_dev_reset": "重置应用",
-  "option_dev_reset_tip": "sudo rm -rf /localStorage"
+  "option_dev_reset_tip": "sudo rm -rf /localStorage",
+  "chat_jump_reply": "（查看回复消息）",
+  "option_dev_reset_tip1": "确认要重置应用吗，重置应用将会失去所有设置内容（包括设置的置顶群组），但是可能可以解决一些因为浏览器缓存导致的奇怪问题。",
+  "btn_pass": "跳过",
+  "wel_home_tip": "下面是一点点简单的使用引导 …… 如果不想看可以直接戳跳过（小声），但是也没多长啦",
+  "wel_select_language": "选择语言",
+  "wel_finish": "该说的都说了 —— 那么就可以愉快的用啦（大声），如果遇到什么奇怪的问题，尽管来 GitHub 仓库问哦。"
 }

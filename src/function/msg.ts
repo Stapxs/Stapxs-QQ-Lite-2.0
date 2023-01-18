@@ -97,11 +97,17 @@ function saveBotInfo(data: { [key: string]: any }) {
                 $gtag.event('login')
         }
     }
-    // 加载切换兼容页面
+    // 加载切换兼容功能
     switch (data.app_name) {
-        // go-cqhttp 兼容，渲染 CQCode -> JSON，消息发送 JSON -> CQCode
+        // go-cqhttp 兼容， CQCode <-> JSON
         case 'go-cqhttp': {
             runtimeData.tags.msgType = BotMsgType.CQCode
+            break
+        }
+        // oicq1 兼容，JSON_OICQ_1 <-> JSON
+        case 'oicq': {
+            runtimeData.tags.msgType = BotMsgType.JSON_OICQ_1
+            break
         }
     }
 }
@@ -182,14 +188,18 @@ function saveGroupMember(data: GroupMemberInfoElem[]) {
 }
 
 function saveMsgFist(msg: any) {
-    if (msg.error !== undefined || msg.status === 'failed') {
+    if (msg.error !== null && (msg.error !== undefined || msg.status === 'failed')) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error | msg.retcode }))
         runtimeData.messageList = []
     } else {
-        // 对 CQCode 消息进行转换
+        // 对消息进行转换
         if (runtimeData.tags.msgType === BotMsgType.CQCode) {
             for (let i = 0; i < msg.data.length; i++) {
                 msg.data[i] = Util.parseCQ(msg.data[i])
+            }
+        } else if(runtimeData.tags.msgType == BotMsgType.JSON_OICQ_1) {
+            for (let i = 0; i < msg.data.length; i++) {
+                msg.data[i] = Util.parseOICQ1JSON(msg.data[i])
             }
         }
         runtimeData.messageList = msg.data
@@ -200,7 +210,7 @@ function saveMsgFist(msg: any) {
 }
 
 function saveMsg(msg: any) {
-    if (msg.error !== undefined) {
+    if (msg.error != null && msg.error !== undefined) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error | msg.retcode }))
     } else {
         const items = msg.data
@@ -209,10 +219,14 @@ function saveMsg(msg: any) {
             runtimeData.tags.canLoadHistory = false
             return
         }
-        // 对 CQCode 消息进行转换
+        // 对消息进行转换
         if (runtimeData.tags.msgType === BotMsgType.CQCode) {
             for (let i = 0; i < items.length; i++) {
                 items[i] = Util.parseCQ(items[i])
+            }
+        } else if(runtimeData.tags.msgType == BotMsgType.JSON_OICQ_1) {
+            for (let i = 0; i < msg.data.length; i++) {
+                items[i] = Util.parseOICQ1JSON(items[i])
             }
         }
         runtimeData.messageList = items.concat(runtimeData.messageList)
@@ -247,9 +261,12 @@ function saveForwardMsg(data: any) {
 }
 
 function showSendedMsg(msg: any) {
-    if (msg.error !== undefined) {
+    if (msg.error !== null && msg.error !== undefined) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_send_msg_err', { code: msg.error }))
     } else {
+        if(msg.message_id == undefined) {
+            msg.message_id = msg.data.message_id
+        }
         if (msg.message_id !== undefined && Option.get('send_reget') !== true) {
             // 请求消息内容
             Connector.send(
@@ -267,7 +284,18 @@ function saveSendedMsg(echoList: string[], msg: any) {
     if (Number(echoList[2]) <= 5) {
         // // 防止重试过程中切换聊天
         if(msgIdInfo.gid == runtimeData.chatInfo.show.id || msgIdInfo.uid == runtimeData.chatInfo.show.id) {
+            // oicq1：返回的消息格式兼容
+            if(msg.message_id == undefined) {
+                msg = msg.data
+            }
+            // 对消息进行转换
+            if (runtimeData.tags.msgType === BotMsgType.CQCode) {
+                msg = Util.parseCQ(msg)
+            } else if(runtimeData.tags.msgType == BotMsgType.JSON_OICQ_1) {
+                msg = Util.parseOICQ1JSON(msg)
+            }
             if (echoList[1] !== msg.message_id) {
+                console.log(msg)
                 // 返回的不是这条消息，重新请求
                 popInfo.add(PopType.ERR, 
                     app.config.globalProperties.$t('pop_chat_get_msg_err') + ' ( ' + echoList[2] + ' )')
@@ -461,11 +489,15 @@ function newMsg(data: any) {
     if(data.message_type == 'guild') {
         return
     }
-    // 对 CQCode 消息进行转换
+    // 对消息进行转换
     if (runtimeData.tags.msgType === BotMsgType.CQCode) {
         data = Util.parseCQ(data)
+    } else if (runtimeData.tags.msgType == BotMsgType.JSON_OICQ_1) {
+        data = Util.parseOICQ1JSON(data)
     }
-    const id = data.from_id ? data.from_id : data.group_id
+    let id = data.from_id ? data.from_id : data.group_id
+    // oicq1：消息格式兼容
+    id = id ? id : (data.group_id ? data.group_id : data.user_id)
     const sender = data.sender.user_id
     // 消息回调检查
     // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复

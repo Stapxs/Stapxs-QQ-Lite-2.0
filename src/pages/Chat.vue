@@ -453,8 +453,10 @@ export default defineComponent({
             }
         },
         scrollToMsg (seqName: string) {
+            // oicq1：seq 字段名消息格式兼容
+            const seq = this.list[0].seq ? this.list[0].seq : this.list[0].seqid
             if (!Util.scrollToMsg(seqName, true)) {
-                const pass = Number(this.list[0].seq) - Number(seqName.split('-')[1])
+                const pass = Number(seq) - Number(seqName.split('-')[1])
                 new PopInfo().add(PopType.INFO, this.$t('pop_chat_msg_not_load') + ' ( +' + pass + ' ) ')
             }
         },

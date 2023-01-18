@@ -41,7 +41,7 @@ export function parseMsg(msg: string, cache: MsgItemElem[], img: string[]) {
     let back = undefined
     if (runtimeData.tags.msgType === undefined || runtimeData.tags.msgType === BotMsgType.JSON) {
         back = parseMsgToJSON(msg, cache)
-    } else if (runtimeData.tags.msgType === BotMsgType.CQCode) {
+    } else if (runtimeData.tags.msgType === BotMsgType.CQCode || runtimeData.tags.msgType === BotMsgType.JSON_OICQ_1) {
         back = parseMsgToCQ(msg, cache)
     }
     return back

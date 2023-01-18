@@ -203,17 +203,6 @@
     font-size: 0.95rem;
 }
 
-.opt-body select {
-    background: var(--color-card-1);
-    color: var(--color-font);
-    border: navajowhite;
-    border-radius: 7px;
-    font-size: 0.8rem;
-    padding: 0 10px;
-    height: 30px;
-    width: 150px;
-}
-
 .opt-body label[class=ss-switch] {
     --switch-dot-border: 5px;
     --switch-dot-margin: 8px;
@@ -276,6 +265,17 @@
     flex: 1;
 }
 
+.opt-item select {
+    background: var(--color-card-1);
+    color: var(--color-font);
+    border: navajowhite;
+    border-radius: 7px;
+    font-size: 0.8rem;
+    padding: 0 10px;
+    height: 30px;
+    width: 150px;
+}
+
 .opt-item>div>span:last-child {
     color: var(--color-font-1);
     white-space: nowrap;
@@ -312,7 +312,8 @@
 .l10n-info>svg {
     fill: var(--color-font);
     margin: 0 20px 0 10px;
-    height: 2.5rem;
+    min-width: 2.7rem;
+    width: 2.7rem;
 }
 
 .l10n-info span {
@@ -517,6 +518,7 @@
         height: auto;
         padding: 10px 15px 10px 20px;
     }
+    
     .opt-item select,
     .opt-item input[type="text"] {
         margin-left: calc(1.1rem + 20px);

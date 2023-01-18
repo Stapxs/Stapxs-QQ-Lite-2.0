@@ -148,7 +148,11 @@
                     <a>{{ runtimeData.popBoxList[0].title }}</a>
                     <svg @click="removePopBox" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path></svg>
                 </header>
-                <div v-html="runtimeData.popBoxList[0].html"></div>
+                <div v-if="runtimeData.popBoxList[0].html" v-html="runtimeData.popBoxList[0].html"></div>
+                <component v-else
+                    :data="runtimeData.popBoxList[0].data"
+                    :is="runtimeData.popBoxList[0].template">
+                </component>
                 <div class="button" v-show="runtimeData.popBoxList[0].button">
                     <button
                         v-for="(button, index) in runtimeData.popBoxList[0].button"
@@ -185,7 +189,6 @@
 </template>
 
 <script lang="ts">
-import xss from 'xss'
 import cmp from 'semver-compare'
 import appInfo from '../package.json'
 import app from '@/main'
@@ -203,6 +206,7 @@ import Options from '@/pages/Options.vue'
 import Friends from '@/pages/Friends.vue'
 import Messages from '@/pages/Messages.vue'
 import Chat from '@/pages/Chat.vue'
+import WelPan from '@/components/WelPan.vue'
 
 export default defineComponent({
     name: 'App',
@@ -389,6 +393,7 @@ export default defineComponent({
             // 初始化波浪动画
             runtimeData.tags.loginWaveTimer = this.waveAnimation(document.getElementById('login-wave'))
             // 加载 cookie 中的保存登陆信息
+            // TODO: 为啥不把登录信息存进设置里 ……
             if ($cookies.isKey('address')) {
                 this.loginInfo.address = $cookies.get('address')
             }
@@ -544,6 +549,18 @@ export default defineComponent({
                 }
             } else {
                 $cookies.set('times', 1, '1m')
+                // 首次打开，显示首次打开引导信息
+                const popInfo = {
+                    template: WelPan,
+                    button: [
+                        {
+                            text: 'close',
+                            master: true,
+                            fun: () => { runtimeData.popBoxList.shift() }
+                        }
+                    ]
+                }
+                runtimeData.popBoxList.push(popInfo)
             }
             // 获取公告通知
             const url = 'https://lib.stapxs.cn/download/stapxs-qq-lite/notice-config.json'
@@ -588,7 +605,7 @@ export default defineComponent({
                                                 if (noticeShow.indexOf(notice.id) < 0) {
                                                     noticeShow.push(notice.id)
                                                 }
-                                                $cookies.set('notice_show', noticeShow, '1m')
+                                                $cookies.set('notice_show', noticeShow, '7d')
                                                 // 关闭弹窗
                                                 runtimeData.popBoxList.shift()
                                             }
