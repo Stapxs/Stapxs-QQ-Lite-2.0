@@ -156,7 +156,7 @@
   "chat_chat_info_bulletin_read": "{readNum} 人已读 | {isRead}",
   "chat_chat_info_notice": "公告",
   "option_dev_ui_test": "页面测试",
-  "option_dev_ui_test_tip": "让我康康 ～",
+  "option_dev_ui_test_tip": "让我康康 ~",
   "log_runtime": "当前启动模式为",
   "log_GA_loaded": "加载谷歌分析组件完成",
   "log_GA_auto_closed": "由于运行在调试模式下，谷歌分析组件并未加载 ……",
