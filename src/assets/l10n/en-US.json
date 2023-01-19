@@ -235,7 +235,7 @@
   "chat_jump_reply": "(Replied message)",
   "option_dev_reset_tip1": "Are you sure you want to reset the app? It may fix problems caused by incorrect browser cookies, but all your settings (including pinned contacts).",
   "btn_pass": "Skip",
-  "wel_home_tip": "This is a brief tutorial to the app. It can be skipped if you want, but it won't take too long.",
-  "wel_select_language": "Select A Language",
+  "wel_home_tip": "This is a brief setup wizard. It can be skipped if you want, but it won't take too long.",
+  "wel_select_language": "Select a Language",
   "wel_finish": "Now it's time for you to enjoy the app! If you run into any problems, don't hesitate to file an issue at our GitHub repository!"
 }

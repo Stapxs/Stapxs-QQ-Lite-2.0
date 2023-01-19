@@ -38,7 +38,7 @@
   "chat_chat_info_other": "其他資訊",
   "chat_chat_info_user": "聯絡人",
   "chat_face_pan_none": "沒有貼圖",
-  "chat_fun_menu_face": "面具",
+  "chat_fun_menu_face": "表情",
   "chat_fun_menu_pic": "圖片",
   "chat_group_pic": "群組圖片",
   "chat_join_time": "於 {time} 加入群組",
@@ -231,7 +231,7 @@
   "chat_jump_reply": "（檢視回覆訊息）",
   "option_dev_reset_tip1": "確認要重設應用程式嗎？重新設定應用程式時所有的設定將會被刪除（包括已釘選的群組），但是或許可以解決瀏覽器快取引起的問題。",
   "btn_pass": "略過",
-  "wel_home_tip": "接下來是簡單的使用教學……如果不想看可以直接略過（小聲），但是它不會很長唷~",
+  "wel_home_tip": "接下來是簡單的初始設定……可以直接略過（小聲），但是它不會很長唷~",
   "wel_select_language": "選取語言",
   "wel_finish": "說了這麼多——是時候祝你使用愉快啦（大聲）。如果你遇到什麼奇怪的問題，都歡迎到 GitHub 專案儲存庫問哦~"
 }
