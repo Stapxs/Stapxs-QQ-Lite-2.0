@@ -23,7 +23,6 @@ if (process.env.NODE_ENV === 'production') {
     },
     updated () {
       console.log(app.config.globalProperties.$t('sw_updated'))
-      popInfo.add(PopType.INFO, app.config.globalProperties.$t('sw_need_reload'))
     },
     offline () {
       console.log(app.config.globalProperties.$t('sw_offline'))

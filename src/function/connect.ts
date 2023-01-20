@@ -33,10 +33,12 @@ export class Connector {
         logger.debug($t('log_ws_log_debug'))
         logger.add(LogType.WS, $t('log_we_log_all'))
 
-        try {
-            websocket = new WebSocket(`ws://${address}?access_token=${token}`)
-        } catch (ex) {
-            websocket = new WebSocket(`wss://${address}?access_token=${token}`)
+        if(!websocket || websocket.readyState != WebSocket.OPEN) {
+            try {
+                websocket = new WebSocket(`ws://${address}?access_token=${token}`)
+            } catch (ex) {
+                websocket = new WebSocket(`wss://${address}?access_token=${token}`)
+            }
         }
 
         websocket.onopen = () => {

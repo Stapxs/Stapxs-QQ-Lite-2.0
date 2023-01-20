@@ -193,7 +193,7 @@ export class MsgBodyFuns {
         // 防止意外渲染转义字符串
         text = text.replaceAll('&', '&amp;')
         // XSS 过滤
-        text = xss(text)
+        text = xss(text, {whiteList: {a: ["href", "target"]}})
         // 返回
         return text
     }

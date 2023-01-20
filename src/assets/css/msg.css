@@ -423,6 +423,7 @@
 }
 .note-nomsg > a {
     background: var(--color-card);
+    color: var(--color-font);
     position: relative;
     font-size: 0.8rem;
     padding: 0 20px;

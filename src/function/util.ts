@@ -322,6 +322,24 @@ export function parseCQ(data: any) {
 }
 
 /**
+ * 将 oicq1 的 JSON 消息转换为 oicq2
+ * @param msg oicq1 JSON 消息
+ * @returns 消息对象
+ */
+export function parseOICQ1JSON(data: any) {
+    const message = data.message
+    if(message) {
+        // 遍历 message 将 message[i].data 扁平化到 message 里
+        (message as {[key: string]: any}[])
+        .forEach((item, index) => {
+            Object.assign(data.message[index], item.data)
+            delete data.message[index].data
+        })
+    }
+    return data
+}
+
+/**
  * 加载历史消息
  * @param info 聊天基本信息
  */
@@ -365,7 +383,7 @@ function loadHistoryMessage(id: number, type: string) {
     if (msgid != null) {
         // 发送请求
         if(runtimeData.botInfo['go-cqhttp'] === true) {
-            // go-cqhttp 的特殊处理
+            // go-cqhttp： 获取历史消息内容不同
             Connector.send(
                 'get_msg_history',
                 {
@@ -454,6 +472,7 @@ export default {
     parseMsgId,
     htmlDecodeByRegExp,
     parseCQ,
+    parseOICQ1JSON,
     loadHistory,
     scrollToMsg,
     gitmojiToEmoji,

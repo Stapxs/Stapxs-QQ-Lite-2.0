@@ -11,7 +11,6 @@
 */
 import qed from '@/assets/qed.txt'
 
-import FileDownloader from 'js-file-downloader'
 import { Md5 } from 'ts-md5'
 import app from '@/main'
 import Option from './option'
@@ -28,47 +27,39 @@ const popInfo = new PopInfo()
 export function parse(str: string) {
     const msg = JSON.parse(str)
     if (msg.echo !== undefined) {
-        switch (msg.echo) {
-            case 'getVersionInfo'       : saveBotInfo(msg.data); break
-            case 'getLoginInfo'         : saveLoginInfo(msg.data); break
-            case 'getMoreLoginInfo'     : runtimeData.loginInfo.info = msg.data.data.result.buddy.info_list[0]; break
-            case 'getGroupList'         : saveUser(msg.data); break
-            case 'getFriendList'        : saveUser(msg.data); break
-            case 'getUserInfoInGroup'   : runtimeData.chatInfo.info.me_info = msg; break
-            case 'getGroupMemberList'   : saveGroupMember(msg.data); break
-            case 'getChatHistoryFist'   : saveMsgFist(msg); break
-            case 'getChatHistory'       : saveMsg(msg); break
-            case 'getForwardMsg'        : saveForwardMsg(msg.data); break
-            case 'sendMsgBack'          : showSendedMsg(msg); break
-            case 'getRoamingStamp'      : runtimeData.stickerCache = msg.data.reverse(); break
-            case 'getMoreGroupInfo'     : runtimeData.chatInfo.info.group_info = msg.data.data; break
-            case 'getMoreUserInfo'      : runtimeData.chatInfo.info.user_info = msg.data.data.result.buddy.info_list[0]; break
-            case 'getGroupNotices'      : runtimeData.chatInfo.info.group_notices = msg.data.data; break
-            case 'getGroupFiles'        : saveFileList(msg.data.data); break
-            case 'getMoreGroupFiles'    : saveMoreFileList(msg.data.data); break
-            case 'getJin'               : saveJin(msg.data.data); break
-            case 'getSystemMsg'         : runtimeData.systemNoticesList = msg.data; break
-            default                     : {
-                const echoList = msg.echo.split('_')
-                const head = echoList[0]
-                if (msg.echo.indexOf('_') > 0) {
-                    // 复杂消息头
-                    // PS：复杂消息头由“消息头_参数1_参数N”组成
-                    switch (head) {
-                        case 'getSendMsg'           : saveSendedMsg(echoList, msg); break
-                        case 'getGroupMemberInfo'   : saveMemberInfo(msg); break
-                        case 'downloadFile'         : downloadFileChat(msg); break
-                        case 'downloadGroupFile'    : downloadGroupFile(msg); break
-                        case 'getVideoUrl'          : getVideoUrl(msg); break
-                        case 'getGroupDirFiles'     : saveDirFile(msg); break
-                        case 'getChatHistoryScroll' : saveChatHistoryScroll(echoList, msg); break
-                    }
-                }
-                // 处理更多追加方法
-                // PS：这儿对插件附加方法进行寻找执行
-                if(appendMsg[head]) {
-                    appendMsg[head](msg)
-                }
+        const echoList = msg.echo.split('_')
+        const head = echoList[0]
+        // 处理追加方法
+        // PS：这儿对插件附加方法进行寻找执行，同名将会覆盖已有方法
+        if(appendMsg[head]) {
+            appendMsg[head](msg)
+        } else {
+            switch (head) {
+                case 'getVersionInfo'       : saveBotInfo(msg.data); break
+                case 'getLoginInfo'         : saveLoginInfo(msg.data); break
+                case 'getMoreLoginInfo'     : runtimeData.loginInfo.info = msg.data.data.result.buddy.info_list[0]; break
+                case 'getGroupList'         : saveUser(msg.data); break
+                case 'getFriendList'        : saveUser(msg.data); break
+                case 'getUserInfoInGroup'   : runtimeData.chatInfo.info.me_info = msg; break
+                case 'getGroupMemberList'   : saveGroupMember(msg.data); break
+                case 'getChatHistoryFist'   : saveMsgFist(msg); break
+                case 'getChatHistory'       : saveMsg(msg); break
+                case 'getForwardMsg'        : saveForwardMsg(msg.data); break
+                case 'sendMsgBack'          : showSendedMsg(msg); break
+                case 'getRoamingStamp'      : runtimeData.stickerCache = msg.data.reverse(); break
+                case 'getMoreGroupInfo'     : runtimeData.chatInfo.info.group_info = msg.data.data; break
+                case 'getMoreUserInfo'      : runtimeData.chatInfo.info.user_info = msg.data.data.result.buddy.info_list[0]; break
+                case 'getGroupNotices'      : runtimeData.chatInfo.info.group_notices = msg.data.data; break
+                case 'getGroupFiles'        : saveFileList(msg.data.data); break
+                case 'getMoreGroupFiles'    : saveMoreFileList(msg.data.data); break
+                case 'getJin'               : saveJin(msg.data.data); break
+                case 'getSystemMsg'         : runtimeData.systemNoticesList = msg.data; break
+                case 'getSendMsg'           : saveSendedMsg(echoList, msg); break
+                case 'getGroupMemberInfo'   : saveMemberInfo(msg); break
+                case 'downloadFile'         : downloadFileChat(msg); break
+                case 'downloadGroupFile'    : downloadGroupFile(msg); break
+                case 'getVideoUrl'          : getVideoUrl(msg); break
+                case 'getGroupDirFiles'     : saveDirFile(msg); break
             }
         }
     } else {
@@ -106,11 +97,17 @@ function saveBotInfo(data: { [key: string]: any }) {
                 $gtag.event('login')
         }
     }
-    // 加载切换兼容页面
+    // 加载切换兼容功能
     switch (data.app_name) {
-        // go-cqhttp 兼容，渲染 CQCode -> JSON，消息发送 JSON -> CQCode
+        // go-cqhttp 兼容， CQCode <-> JSON
         case 'go-cqhttp': {
             runtimeData.tags.msgType = BotMsgType.CQCode
+            break
+        }
+        // oicq1 兼容，JSON_OICQ_1 <-> JSON
+        case 'oicq': {
+            runtimeData.tags.msgType = BotMsgType.JSON_OICQ_1
+            break
         }
     }
 }
@@ -191,14 +188,18 @@ function saveGroupMember(data: GroupMemberInfoElem[]) {
 }
 
 function saveMsgFist(msg: any) {
-    if (msg.error !== undefined || msg.status === 'failed') {
+    if (msg.error !== null && (msg.error !== undefined || msg.status === 'failed')) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error | msg.retcode }))
         runtimeData.messageList = []
     } else {
-        // 对 CQCode 消息进行转换
+        // 对消息进行转换
         if (runtimeData.tags.msgType === BotMsgType.CQCode) {
             for (let i = 0; i < msg.data.length; i++) {
                 msg.data[i] = Util.parseCQ(msg.data[i])
+            }
+        } else if(runtimeData.tags.msgType == BotMsgType.JSON_OICQ_1) {
+            for (let i = 0; i < msg.data.length; i++) {
+                msg.data[i] = Util.parseOICQ1JSON(msg.data[i])
             }
         }
         runtimeData.messageList = msg.data
@@ -209,7 +210,7 @@ function saveMsgFist(msg: any) {
 }
 
 function saveMsg(msg: any) {
-    if (msg.error !== undefined) {
+    if (msg.error != null && msg.error !== undefined) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error | msg.retcode }))
     } else {
         const items = msg.data
@@ -218,29 +219,20 @@ function saveMsg(msg: any) {
             runtimeData.tags.canLoadHistory = false
             return
         }
-        // 对 CQCode 消息进行转换
+        // 对消息进行转换
         if (runtimeData.tags.msgType === BotMsgType.CQCode) {
             for (let i = 0; i < items.length; i++) {
                 items[i] = Util.parseCQ(items[i])
+            }
+        } else if(runtimeData.tags.msgType == BotMsgType.JSON_OICQ_1) {
+            for (let i = 0; i < msg.data.length; i++) {
+                items[i] = Util.parseOICQ1JSON(items[i])
             }
         }
         runtimeData.messageList = items.concat(runtimeData.messageList)
     }
 }
 
-function saveChatHistoryScroll(list: string[], msg: any) {
-    saveMsg(msg)
-    // 尝试跳转消息
-    const back = Util.scrollToMsg('chat-' + list[1], true)
-    if(!back && Number(list[3]) < Number(list[2])) {
-        Connector.send(
-            'get_chat_history',
-            { 'message_id': msg.data[0].message_id },
-            // 目标 seq 、最大跳转次数、当前已跳转次数
-            'getChatHistoryScroll_' + list[1] + '_' + list[2] + '_' + (Number(list[3]) + 1)
-        )
-    }
-}
 
 function saveForwardMsg(data: any) {
     // gocqhttp 在 message 里，消息为 content，并且直接进行一个 CQCode 的转
@@ -269,9 +261,12 @@ function saveForwardMsg(data: any) {
 }
 
 function showSendedMsg(msg: any) {
-    if (msg.error !== undefined) {
+    if (msg.error !== null && msg.error !== undefined) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_send_msg_err', { code: msg.error }))
     } else {
+        if(msg.message_id == undefined) {
+            msg.message_id = msg.data.message_id
+        }
         if (msg.message_id !== undefined && Option.get('send_reget') !== true) {
             // 请求消息内容
             Connector.send(
@@ -289,7 +284,18 @@ function saveSendedMsg(echoList: string[], msg: any) {
     if (Number(echoList[2]) <= 5) {
         // // 防止重试过程中切换聊天
         if(msgIdInfo.gid == runtimeData.chatInfo.show.id || msgIdInfo.uid == runtimeData.chatInfo.show.id) {
+            // oicq1：返回的消息格式兼容
+            if(msg.message_id == undefined) {
+                msg = msg.data
+            }
+            // 对消息进行转换
+            if (runtimeData.tags.msgType === BotMsgType.CQCode) {
+                msg = Util.parseCQ(msg)
+            } else if(runtimeData.tags.msgType == BotMsgType.JSON_OICQ_1) {
+                msg = Util.parseOICQ1JSON(msg)
+            }
             if (echoList[1] !== msg.message_id) {
+                console.log(msg)
                 // 返回的不是这条消息，重新请求
                 popInfo.add(PopType.ERR, 
                     app.config.globalProperties.$t('pop_chat_get_msg_err') + ' ( ' + echoList[2] + ' )')
@@ -483,11 +489,15 @@ function newMsg(data: any) {
     if(data.message_type == 'guild') {
         return
     }
-    // 对 CQCode 消息进行转换
+    // 对消息进行转换
     if (runtimeData.tags.msgType === BotMsgType.CQCode) {
         data = Util.parseCQ(data)
+    } else if (runtimeData.tags.msgType == BotMsgType.JSON_OICQ_1) {
+        data = Util.parseOICQ1JSON(data)
     }
-    const id = data.from_id ? data.from_id : data.group_id
+    let id = data.from_id ? data.from_id : data.group_id
+    // oicq1：消息格式兼容
+    id = id ? id : (data.group_id ? data.group_id : data.user_id)
     const sender = data.sender.user_id
     // 消息回调检查
     // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复
