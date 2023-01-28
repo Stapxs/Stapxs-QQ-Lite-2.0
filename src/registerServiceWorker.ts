@@ -21,8 +21,9 @@ if (process.env.NODE_ENV === 'production') {
     updatefound () {
       console.log(app.config.globalProperties.$t('sw_update'))
     },
-    updated () {
+    updated (registration) {
       console.log(app.config.globalProperties.$t('sw_updated'))
+      registration.waiting?.postMessage({ type: "SKIP_WAITING" })
     },
     offline () {
       console.log(app.config.globalProperties.$t('sw_offline'))

@@ -249,7 +249,7 @@ export default defineComponent({
             let html = '<div class="debug-info">'
             html += `<span>1 - ${packageInfo.version}</span>`
             html += `<span>2 - ${process.env.NODE_ENV}</span>`
-            html += `<span style="width: 100%">3 - ${document.domain}</span>`
+            html += `<span style="width: 100%">3 - ${window.location.host}</span>`
             html += `<span>4 - ${browser.name}</span>`
             html += `<span>5 - ${browser.version}</span>`
             html += `<span>6 - ${browser.os}</span>`

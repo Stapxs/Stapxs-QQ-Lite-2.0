@@ -21,6 +21,7 @@ import { PopInfo, PopType, Logger, LogType } from './base'
 import { Connector, login } from './connect'
 import { GroupMemberInfoElem, UserFriendElem, UserGroupElem, MsgItemElem, RunTimeDataElem, BotMsgType } from './elements/information'
 import { NotificationElem } from './elements/system'
+import xss from 'xss'
 
 const popInfo = new PopInfo()
 
@@ -465,10 +466,12 @@ function saveDirFile(msg: any) {
 }
 
 function saveFileList(data: any) {
+    const div = document.createElement('div')
+    div.innerHTML = data.em
     if (data.ec !== 0) {
         popInfo.add(
             PopType.ERR,
-            app.config.globalProperties.$t('pop_chat_chat_info_load_file_err', { code: data.ec })
+            app.config.globalProperties.$t('pop_chat_chat_info_load_file_err', { code: xss(div.innerHTML) })
         )
     } else {
         runtimeData.chatInfo.info.group_files = data

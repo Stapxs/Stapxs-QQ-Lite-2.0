@@ -9,3 +9,7 @@ declare module '*.txt' {
   const str: string
   export default str
 }
+
+declare interface Window {
+  moYu: any;
+}

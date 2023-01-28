@@ -451,6 +451,13 @@ export function gitmojiToEmoji (name: string) {
  * @param process 下载中回调
  */
 export function downloadFile (url: string, name: string, onprocess: (event: ProgressEvent) => undefined) {
+    if(document.location.protocol == 'https:') {
+        // 判断下载文件 URL 的协议
+        // PS：Chrome 不会对 http 下载的文件进行协议升级
+        if(url.toLowerCase().startsWith('http:')) {
+            url = 'https' + url.substring(url.indexOf('://'))
+        }
+    }
     new FileDownloader({
         url: url,
         autoStart: true,
