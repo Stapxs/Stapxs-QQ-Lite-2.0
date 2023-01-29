@@ -14,6 +14,7 @@ import app from '@/main'
 
 import { i18n } from '@/main'
 import { markRaw, defineAsyncComponent } from 'vue'
+import { Logger, LogType } from './base'
 import { runtimeData } from './msg'
 import { initUITest } from './util'
 
@@ -31,6 +32,7 @@ const optDefault: { [key: string]: any } = {
 const configFunction: { [key: string]: (value: any) => void } = {
     language: setLanguage,
     opt_dark: setDarkMode,
+    opt_auto_dark: setAutoDark,
     theme_color: changeTheme,
     ui_test: changeUiTest,
     chatview_name: changeChatView
@@ -65,11 +67,46 @@ function setLanguage(name: string) {
  * 设置暗黑模式
  * @param value 是否启用暗黑模式
  */
-function setDarkMode(value: boolean) {
+function setDarkMode(value = true) {
     if (value === true) {
         changeColorMode('dark')
     } else {
         changeColorMode('light')
+    }
+}
+
+/**
+ * 设置自动暗黑模式
+ * @param value 是否启用自动暗黑模式
+ */
+function setAutoDark(value: boolean) {
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const opt = document.getElementById('opt_view_dark')
+    if(value == true) {
+        // 刷新一次颜色模式
+        if (media.matches) {
+            setDarkMode()
+        } else {
+            setDarkMode(false)
+        }
+        // 创建颜色模式变化监听
+        if (typeof media.addEventListener === 'function') {
+            media.addEventListener('change', (e) => {
+                if (value) {
+                    const prefersDarkMode = e.matches
+                    new Logger().add(LogType.UI, '正在自动切换颜色模式为：' + prefersDarkMode)
+                    if (prefersDarkMode) {
+                        setDarkMode()
+                    } else {
+                        setDarkMode(false)
+                    }
+                }
+            })
+        }
+        // 将颜色模式设置项移除
+        if(opt) opt.style.display = 'none'
+    } else {
+        if(opt) opt.style.display = 'flex'
     }
 }
 

@@ -165,7 +165,7 @@
   "pop_log_con_fail": "连接失败",
   "pop_log_con_closed": "连接关闭",
   "pop_chat_forward_toooomany": "合并消息层级过多，解析失败。",
-  "pop_chat_chat_info_load_file_err": "加载群文件失败（{code}），可能是由于对象无效（冻结、解散）",
+  "pop_chat_chat_info_load_file_err": "加载群文件失败（{code}）",
   "pop_chat_load_msg_err": "加载消息失败（{code}）",
   "pop_chat_send_msg_err": "发送消息失败（{code}），可能是由于禁言或者对象无效（冻结、解散）",
   "pop_chat_get_msg_err": "获取消息失败，正在重试",
@@ -232,5 +232,6 @@
   "btn_pass": "跳过",
   "wel_home_tip": "下面是一点点简单的使用引导 …… 如果不想看可以直接戳跳过（小声），但是也没多长啦",
   "wel_select_language": "选择语言",
-  "wel_finish": "该说的都说了 —— 那么就可以愉快的用啦（大声），如果遇到什么奇怪的问题，尽管来 GitHub 仓库问哦。"
+  "wel_finish": "该说的都说了 —— 那么就可以愉快的用啦（大声），如果遇到什么奇怪的问题，尽管来 GitHub 仓库问哦。",
+  "chat_msg_menu_at": "提及"
 }

@@ -385,7 +385,7 @@ export default defineComponent({
     },
     mounted () {
         const logger = new Logger()
-        
+        window.moYu = () => { return 'undefined' }
         // 页面加载完成后
         window.onload = () => {
             app.config.globalProperties.$viewer = this.viewerBody
@@ -400,8 +400,10 @@ export default defineComponent({
             // 加载设置项
             runtimeData.sysConfig = Option.load()
             runtimeData.sysConfig.top_info = $cookies.get('top')
-            // PS：重新再应用一次暗黑模式，因为需要在页面加载完成后处理
+            // PS：重新再应用一次颜色模式设置模式，因为需要在页面加载完成后处理
+            // 自动暗黑模式需要在暗黑模式之后应用保证可以覆盖它
             Option.runAS('opt_dark', Option.get('opt_dark'))
+            Option.runAS('opt_auto_dark', Option.get('opt_auto_dark'))
             // 加载密码保存和自动连接
             if(runtimeData.sysConfig.save_password && runtimeData.sysConfig.save_password != true) {
                 loginInfo.token = runtimeData.sysConfig.save_password
