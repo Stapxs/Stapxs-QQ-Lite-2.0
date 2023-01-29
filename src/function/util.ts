@@ -303,7 +303,7 @@ export function parseCQ(data: any) {
                     kv.push(a.innerText)
                     info[kv[0]] = kv[1]
                 })
-                // TODO: 对回复消息进行特殊处理
+                // 对回复消息进行特殊处理
                 if(info.type == 'reply') {
                     data.source = {
                         user_id: info.user_id,

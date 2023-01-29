@@ -177,6 +177,7 @@
                         v-model="msg"
                         :disabled="runtimeData.tags.openSideBar"
                         @paste="addImg"
+                        @keydown="mainKey"
                         @keyup="mainKeyUp"
                         @click="selectSQ(), selectSQIn()">
                     </textarea>
@@ -363,7 +364,6 @@ export default defineComponent({
             msgMenus: [],
             NewMsgNum: 0,
             msg: '',
-            msgCache: '',
             imgCache: [] as string[],
             sendCache: [] as MsgItemElem[],
             selectedMsg: null as { [key: string]: any } | null,
@@ -467,12 +467,11 @@ export default defineComponent({
          * 发送框按键事件
          * @param event 事件
          */
-        mainKeyUp (event: KeyboardEvent) {
+        mainKey (event: KeyboardEvent) {
             const logger = new Logger()
             // console.log(event.keyCode)
             if (!event.shiftKey && event.keyCode == 13) {
                 // enter 发送消息
-                this.msg = this.msgCache
                 if(this.msg != '') {
                     this.sendMsg()
                 }
@@ -506,6 +505,11 @@ export default defineComponent({
                         }
                     }
                 }
+            }
+        },
+        mainKeyUp(event: KeyboardEvent) {
+            if (!event.shiftKey && event.keyCode == 13) {
+                this.msg = ''
             }
         },
 
@@ -1226,9 +1230,6 @@ export default defineComponent({
             this.sendCache = []
             this.imgCache = [] as string[]
             this.initMenuDisplay()
-        },
-        msg (newVal, oldVal) {
-            this.msgCache = oldVal
         }
     },
     mounted() {
