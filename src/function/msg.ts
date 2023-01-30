@@ -61,6 +61,7 @@ export function parse(str: string) {
                 case 'downloadGroupFile'    : downloadGroupFile(msg); break
                 case 'getVideoUrl'          : getVideoUrl(msg); break
                 case 'getGroupDirFiles'     : saveDirFile(msg); break
+                case 'readMemberMessage'    : readMemberMessage(msg.data[0]); break
             }
         }
     } else {
@@ -338,18 +339,21 @@ function revokeMsg(msg: any) {
             }
         })
         if (msgGet !== null && msgIndex !== -1) {
-          runtimeData.messageList[msgIndex].revoke = true
-          if(msgGet.sender.user_id !== runtimeData.loginInfo.uin) {
-              // 显示撤回提示
-              const list = runtimeData.messageList
-              if (msgIndex !== -1) {
-                list.splice((msgIndex + 1), 0, msg)
-              } else {
-                list.push(msg)
+              runtimeData.messageList[msgIndex].revoke = true
+              if(runtimeData.messageList[msgIndex].sender.user_id != runtimeData.loginInfo.uin) {
+                runtimeData.messageList.splice(msgIndex, 1)
               }
-          }
+            if (msgGet.sender.user_id !== runtimeData.loginInfo.uin) {
+                // 显示撤回提示
+                const list = runtimeData.messageList
+                if (msgIndex !== -1) {
+                    list.splice((msgIndex + 1), 0, msg)
+                } else {
+                    list.push(msg)
+                }
+            }
         } else {
-          new Logger().error(app.config.globalProperties.$t('log_revoke_miss'))
+            new Logger().error(app.config.globalProperties.$t('log_revoke_miss'))
         }
     }
     // // 尝试撤回通知
@@ -532,6 +536,7 @@ function newMsg(data: any) {
     // PS：在消息列表内的永远会刷新，不需要被提及
     const get = runtimeData.onMsgList.filter((item, index) => {
         if(Number(id) === item.user_id || Number(id) === item.group_id) {
+            runtimeData.onMsgList[index].message_id = data.message_id
             if(data.message_type === 'group') {
                 const name = (data.sender.card && data.sender.card !== '') ? data.sender.card : data.sender.nickname
                 runtimeData.onMsgList[index].raw_msg = name + ': ' + data.raw_message
@@ -680,6 +685,16 @@ function saveJin (data: any) {
                 runtimeData.chatInfo.info.jin_info.data.is_end = data.data.is_end
         }
     }
+}
+
+/**
+ * 将这条消息以上的所有消息标记为已读
+ * @param data 消息
+ */
+function readMemberMessage(data: any) {
+    Connector.send('set_message_read', {
+        message_id: data.message_id
+    }, 'setMessageRead')
 }
 
 // ==============================================================

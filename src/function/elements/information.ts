@@ -82,7 +82,8 @@ export interface UserFriendElem {
     new_msg?: boolean,
     raw_msg?: string,
     time?: number,
-    always_top?: boolean
+    always_top?: boolean,
+    message_id?: string
 }
 
 export interface UserGroupElem {
@@ -94,6 +95,7 @@ export interface UserGroupElem {
     raw_msg?: string,
     time?: number,
     always_top?: boolean
+    message_id?: string
 }
 
 export interface GroupMemberInfoElem {

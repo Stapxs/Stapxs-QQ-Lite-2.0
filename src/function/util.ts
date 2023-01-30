@@ -349,7 +349,7 @@ export function loadHistory(info: BaseChatInfoElem) {
         new PopInfo().add(PopType.ERR, app.config.globalProperties.$t('pop_load_history_fail'), false)
     }
 }
-function loadHistoryMessage(id: number, type: string) {
+export function loadHistoryMessage(id: number, type: string, count = 20, echo = 'getChatHistoryFist') {
     // 加载历史消息
     // Note: https://github.com/takayama-lily/oicq/wiki/93.%E8%A7%A3%E6%9E%90%E6%B6%88%E6%81%AFID
     let msgid = null
@@ -389,15 +389,16 @@ function loadHistoryMessage(id: number, type: string) {
                 {
                     'message_id': '0',
                     'target_id': id,
-                    'group': type == 'group'
+                    'group': type == 'group',
+                    count: count
                 },
-                'getChatHistoryFist'
+                echo
             )
         } else {
             Connector.send(
                 'get_chat_history',
-                { 'message_id': msgid },
-                'getChatHistoryFist'
+                { 'message_id': msgid, count: count },
+                echo
             )
         }
         return true

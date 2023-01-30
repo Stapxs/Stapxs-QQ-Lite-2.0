@@ -24,7 +24,8 @@ let cacheConfigs: { [key: string]: any }
 const optDefault: { [key: string]: any } = {
     language: 'zh-CN',
     log_level: 'err',
-    open_ga_bot: true
+    open_ga_bot: true,
+    initial_scale: 0.85
 }
 
 // =============== 设置项事件 ===============
@@ -35,7 +36,8 @@ const configFunction: { [key: string]: (value: any) => void } = {
     opt_auto_dark: setAutoDark,
     theme_color: changeTheme,
     ui_test: changeUiTest,
-    chatview_name: changeChatView
+    chatview_name: changeChatView,
+    initial_scale: changeInitialScale
 }
 
 /**
@@ -45,6 +47,17 @@ const configFunction: { [key: string]: (value: any) => void } = {
 function changeUiTest(value: boolean) {
     if (value === true) {
         initUITest()
+    }
+}
+
+/**
+ * 修改移动端缩放比例
+ * @param value 数值（0.1 - 5）
+ */
+function changeInitialScale(value: number) {
+    const viewport = document.getElementById("viewport")
+    if(viewport && value && value >= 0.1 && value <= 5) {
+        (viewport as any).content = `width=device-width, initial-scale=${value}, maximum-scale=5, user-scalable=0`
     }
 }
 
@@ -92,7 +105,7 @@ function setAutoDark(value: boolean) {
         // 创建颜色模式变化监听
         if (typeof media.addEventListener === 'function') {
             media.addEventListener('change', (e) => {
-                if (value) {
+                if (get('opt_auto_dark')) {
                     const prefersDarkMode = e.matches
                     new Logger().add(LogType.UI, '正在自动切换颜色模式为：' + prefersDarkMode)
                     if (prefersDarkMode) {
@@ -223,10 +236,12 @@ export function run(name: string, value: any) {
  * @returns 设置项值（如果没有则为 null）
  */
 export function get(name: string): any {
-    const names = Object.keys(cacheConfigs)
-    for (let i = 0; i < names.length; i++) {
-        if (names[i] === name) {
-            return cacheConfigs[names[i]]
+    if(cacheConfigs) {
+        const names = Object.keys(cacheConfigs)
+        for (let i = 0; i < names.length; i++) {
+            if (names[i] === name) {
+                return cacheConfigs[names[i]]
+            }
         }
     }
     return null
@@ -313,6 +328,7 @@ export function runASWEvent(event: Event) {
                         value = sender.dataset.id
                         break
                     }
+                    case 'number':
                     case 'text': {
                         value = (sender as HTMLInputElement).value
                         break

@@ -262,6 +262,7 @@ html, body {
 }
 
 .friend-body {
+    user-select: none;
     cursor: pointer;
     display: flex;
     flex-direction: row;
@@ -284,6 +285,7 @@ html, body {
 }
 .friend-body img {
     border: 2px solid var(--color-card-2);
+    pointer-events: none;
     border-radius: 7px;
     height: 50px;
     width: 50px;
@@ -291,6 +293,7 @@ html, body {
 .friend-body > svg {
     background: var(--color-main);
     fill: var(--color-font-1-r);
+    pointer-events: none;
     border-radius: 7px;
     padding: 10px;
     height: 30px;

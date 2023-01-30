@@ -44,21 +44,23 @@
                 <hr>
                 <a>{{ $t('chat_no_more_msg') }}</a>
             </div>
-            <template v-for="(msg, index) in list">
-                <NoticeBody v-if="isShowTime((list[index - 1] ? list[index - 1].time : undefined), msg.time)" :key="'notice-time-' + index" :data="{sub_type: 'time', time: msg.time}"></NoticeBody>
-                <MsgBody
-                    v-if="msg.post_type === 'message'"
-                    :key="msg.message_id"
-                    :data="msg"
-                    @scrollToMsg="scrollToMsg"
-                    @contextmenu.prevent="showMsgMeun($event, msg)"
-                    @scrollButtom="imgLoadedScroll"
-                    @touchstart="msgStartMove($event, msg)"
-                    @touchmove="msgOnMove"
-                    @touchend="msgMoveEnd($event, msg)">
-                </MsgBody>
-                <NoticeBody v-if="msg.post_type === 'notice'" :key="'notice-' + index" :data="msg"></NoticeBody>
-            </template> 
+            <TransitionGroup name="msglist" tag="div">
+                <template v-for="(msg, index) in list">
+                    <NoticeBody v-if="isShowTime((list[index - 1] ? list[index - 1].time : undefined), msg.time)" :key="'notice-time-' + index" :data="{sub_type: 'time', time: msg.time}"></NoticeBody>
+                    <MsgBody
+                        v-if="msg.post_type === 'message'"
+                        :key="msg.message_id"
+                        :data="msg"
+                        @scrollToMsg="scrollToMsg"
+                        @contextmenu.prevent="showMsgMeun($event, msg)"
+                        @scrollButtom="imgLoadedScroll"
+                        @touchstart="msgStartMove($event, msg)"
+                        @touchmove="msgOnMove"
+                        @touchend="msgMoveEnd($event, msg)">
+                    </MsgBody>
+                    <NoticeBody v-if="msg.post_type === 'notice'" :key="'notice-' + index" :data="msg"></NoticeBody>
+                </template> 
+            </TransitionGroup>
         </div>
         <!-- 滚动到底部悬浮标志 -->
         <div class="new-msg" v-show="tags.showBottomButton" @click="scrollBottom(true)">
@@ -508,7 +510,8 @@ export default defineComponent({
             }
         },
         mainKeyUp(event: KeyboardEvent) {
-            if (!event.shiftKey && event.keyCode == 13) {
+            // 发送完成后输入框会遗留一个换行，把它删掉 ……
+            if (!event.shiftKey && event.keyCode == 13 && this.msg == '\n') {
                 this.msg = ''
             }
         },
@@ -1244,3 +1247,13 @@ export default defineComponent({
     }
 })
 </script>
+
+<style scoped>
+.msglist-move {
+    transition: all .5s;
+}
+
+.msglist-leave-active {
+    display: none;
+}
+</style>

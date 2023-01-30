@@ -127,7 +127,7 @@
           :chat="runtimeData.chatInfo"
           @userClick="changeChat">
         </component>
-        <TransitionGroup class="app-msg" name="ViewNotices" tag="div">
+        <TransitionGroup class="app-msg" name="appmsg" tag="div">
           <div v-for="msg in appMsgs" :key="'appmsg-' + msg.id">
             <div v-html="msg.svg"></div>
             <a>{{ msg.text }}</a>
@@ -619,12 +619,27 @@ export default defineComponent({
                         }
                     })
                 })
+
+
+            const popInfo = {
+                title: 'test',
+                html: `<span style='color:var(--color-font)'>${Math.floor(window.outerWidth / window.innerWidth * 100) / 100}</span>`,
+                button: [
+                    {
+                        text: app.config.globalProperties.$t('btn_yes'),
+                        master: true,
+                        fun: () => { runtimeData.popBoxList.shift() }
+                    }
+                ]
+            }
+            // runtimeData.popBoxList.push(popInfo)
+
         }
     }
 })
 </script>
 
-<style>
+<style scoped>
   .appmsg-move,
   .appmsg-enter-active,
   .appmsg-leave-active {
