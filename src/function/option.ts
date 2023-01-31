@@ -22,6 +22,7 @@ let cacheConfigs: { [key: string]: any }
 
 // 下拉菜单设置项的初始值，防止选项为空
 const optDefault: { [key: string]: any } = {
+    opt_dark: false,
     language: 'zh-CN',
     log_level: 'err',
     open_ga_bot: true,
@@ -120,6 +121,7 @@ function setAutoDark(value: boolean) {
         if(opt) opt.style.display = 'none'
     } else {
         if(opt) opt.style.display = 'flex'
+        setDarkMode(Boolean(get('opt_dark')))
     }
 }
 
@@ -164,6 +166,11 @@ function changeColorMode(mode: string) {
  */
 function changeTheme(id: number) {
     document.documentElement.style.setProperty('--color-main', 'var(--color-main-' + id + ')')
+    const meta = document.getElementsByName('theme-color')[0]
+    if(meta) {
+        (meta as HTMLMetaElement).content = getComputedStyle(document.documentElement)
+            .getPropertyValue('--color-main-' + id)
+    }
 }
 
 /**

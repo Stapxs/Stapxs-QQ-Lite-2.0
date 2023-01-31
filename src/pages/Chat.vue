@@ -78,45 +78,49 @@
             <div>
                 <div>
                     <!-- 表情面板 -->
-                    <FacePan v-show="details[1].open" @addSpecialMsg="addSpecialMsg"></FacePan>
+                    <Transition name="pan">
+                        <FacePan v-show="details[1].open" @addSpecialMsg="addSpecialMsg"></FacePan>
+                    </Transition>
                     <!-- 精华消息 -->
-                    <div v-show="details[2].open && runtimeData.chatInfo.info.jin_info && runtimeData.chatInfo.info.jin_info.data.msg_list" class="ss-card jin-pan">
-                        <div>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="margin-top: 5px;"><path d="M511.1 63.1v287.1c0 35.25-28.75 63.1-64 63.1h-144l-124.9 93.68c-7.875 5.75-19.12 .0497-19.12-9.7v-83.98h-96c-35.25 0-64-28.75-64-63.1V63.1c0-35.25 28.75-63.1 64-63.1h384C483.2 0 511.1 28.75 511.1 63.1z"></path></svg>
-                            <span>{{ $t('chat_fun_menu_jin') }}</span>
-                            <svg @click="details[2].open = !details[2].open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path></svg>
-                        </div>
-                        <div class="jin-pan-body" @scroll="jinScroll">
-                            <div v-for="(item, index) in runtimeData.chatInfo.info.jin_info ? 
-                                    runtimeData.chatInfo.info.jin_info.data.msg_list : []"
-                                :key="'jin-' + index">
-                                <div>
-                                    <img :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.sender_uin}`">
+                    <Transition name="pan">
+                        <div v-show="details[2].open && runtimeData.chatInfo.info.jin_info && runtimeData.chatInfo.info.jin_info.data.msg_list" class="ss-card jin-pan">
+                            <div>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="margin-top: 5px;"><path d="M511.1 63.1v287.1c0 35.25-28.75 63.1-64 63.1h-144l-124.9 93.68c-7.875 5.75-19.12 .0497-19.12-9.7v-83.98h-96c-35.25 0-64-28.75-64-63.1V63.1c0-35.25 28.75-63.1 64-63.1h384C483.2 0 511.1 28.75 511.1 63.1z"></path></svg>
+                                <span>{{ $t('chat_fun_menu_jin') }}</span>
+                                <svg @click="details[2].open = !details[2].open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path></svg>
+                            </div>
+                            <div class="jin-pan-body" @scroll="jinScroll">
+                                <div v-for="(item, index) in runtimeData.chatInfo.info.jin_info ? 
+                                        runtimeData.chatInfo.info.jin_info.data.msg_list : []"
+                                    :key="'jin-' + index">
                                     <div>
-                                        <a>{{ item.sender_nick }}</a>
-                                        <span>{{ Intl.DateTimeFormat(trueLang,
-                                            { hour: "numeric", minute: "numeric" })
-                                            .format(new Date(item.sender_time * 1000)) }} {{ $t('chat_send') }}</span>
+                                        <img :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.sender_uin}`">
+                                        <div>
+                                            <a>{{ item.sender_nick }}</a>
+                                            <span>{{ Intl.DateTimeFormat(trueLang,
+                                                { hour: "numeric", minute: "numeric" })
+                                                .format(new Date(item.sender_time * 1000)) }} {{ $t('chat_send') }}</span>
+                                        </div>
                                     </div>
+                                    <div class="context">
+                                        <template v-for="(context, indexc) in item.msg_content"
+                                            :key="'jinc-' + index + '-' + indexc">
+                                            <span v-if="context.msg_type === 1">{{ context.text }}</span>
+                                            <img v-if="context.msg_type === 2" class="face" :src="require('./../assets/img/qq-face/' + context.face_index + '.gif')">
+                                            <img v-if="context.msg_type === 3" :src="context.image_url">
+                                        </template>
+                                    </div>
+                                    <span>{{ $t('chat_fun_menu_jin_sender',
+                                     { time: Intl.DateTimeFormat(trueLang,
+                                                { hour: "numeric", minute: "numeric" })
+                                                .format(new Date(item.add_digest_time * 1000)),name: item.add_digest_nick }) }}</span>
                                 </div>
-                                <div class="context">
-                                    <template v-for="(context, indexc) in item.msg_content"
-                                        :key="'jinc-' + index + '-' + indexc">
-                                        <span v-if="context.msg_type === 1">{{ context.text }}</span>
-                                        <img v-if="context.msg_type === 2" class="face" :src="require('./../assets/img/qq-face/' + context.face_index + '.gif')">
-                                        <img v-if="context.msg_type === 3" :src="context.image_url">
-                                    </template>
+                                <div class="jin-pan-load" v-show="tags.isJinLoading">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M120 256c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm160 0c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm104 56c-30.9 0-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56s-25.1 56-56 56z"></path></svg>
                                 </div>
-                                <span>{{ $t('chat_fun_menu_jin_sender',
-                                 { time: Intl.DateTimeFormat(trueLang,
-                                            { hour: "numeric", minute: "numeric" })
-                                            .format(new Date(item.add_digest_time * 1000)),name: item.add_digest_nick }) }}</span>
-                            </div>
-                            <div class="jin-pan-load" v-show="tags.isJinLoading">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M120 256c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm160 0c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm104 56c-30.9 0-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56s-25.1 56-56 56z"></path></svg>
                             </div>
                         </div>
-                    </div>
+                    </Transition>
                 </div>
                 <!-- 回复指示器 -->
                 <div :class="tags.isReply ? 'replay-tag show' : 'replay-tag'">
@@ -282,31 +286,36 @@
             </div>
         </div>
         <!-- 群 / 好友信息弹窗 -->
-        <Info :chat="chat" :tags="tags" @close="openChatInfoPan" @loadFile="fileLoad"></Info>
+        <Transition>
+            <Info :chat="chat" :tags="tags" @close="openChatInfoPan" @loadFile="fileLoad"></Info>
+        </Transition>
         <!-- 图片发送器 -->
-        <div class="img-sender" v-show="imgCache.length > 0">
-            <div class="card ss-card">
-                <div class="hander">
-                    <span>{{ $t('chat_send_pic_title') }}</span>
-                    <button @click="sendMsg" class="ss-button">{{ $t('chat_send') }}</button>
-                </div>
-                <div class="imgs">
-                    <div v-for="(img64, index) in imgCache" :key="'sendImg-' + index">
-                        <div @click="deleteImg(index)">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
-                                <path
-                                    d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3 265.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256 310.6 150.6z" />
-                            </svg>
+        <Transition>
+            <div class="img-sender" v-show="imgCache.length > 0">
+                <div class="card ss-card">
+                    <div class="hander">
+                        <span>{{ $t('chat_send_pic_title') }}</span>
+                        <button @click="sendMsg" class="ss-button">{{ $t('chat_send') }}</button>
+                    </div>
+                    <div class="imgs">
+                        <div v-for="(img64, index) in imgCache" :key="'sendImg-' + index">
+                            <div @click="deleteImg(index)">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
+                                    <path
+                                        d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3 265.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256 310.6 150.6z" />
+                                </svg>
+                            </div>
+                            <img :src="img64">
                         </div>
-                        <img :src="img64">
+                    </div>
+                    <div class="sender">
+                        <svg @click="runSelectImg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-v-658eb408=""><path d="M0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM323.8 202.5c-4.5-6.6-11.9-10.5-19.8-10.5s-15.4 3.9-19.8 10.5l-87 127.6L170.7 297c-4.6-5.7-11.5-9-18.7-9s-14.2 3.3-18.7 9l-64 80c-5.8 7.2-6.9 17.1-2.9 25.4s12.4 13.6 21.6 13.6h96 32H424c8.9 0 17.1-4.9 21.2-12.8s3.6-17.4-1.4-24.7l-120-176zM112 192c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48z" data-v-658eb408=""></path></svg>
+                        <input type="text" @paste="addImg" :disabled="runtimeData.tags.openSideBar" @click="toMainInput" v-model="msg">
                     </div>
                 </div>
-                <div class="sender">
-                    <input type="text" @paste="addImg" :disabled="runtimeData.tags.openSideBar" @click="toMainInput" v-model="msg">
-                </div>
+                <div class="bg" @click="imgCache = []"></div>
             </div>
-            <div class="bg" @click="imgCache = []"></div>
-        </div>
+        </Transition>
     </div>
 </template>
 
@@ -967,6 +976,11 @@ export default defineComponent({
             this.imgCache = []
             this.scrollBottom()
             this.cancelReply()
+            // 移除输入框的焦点来关闭键盘
+            // const main = document.getElementById('main-input')
+            // if(main) {
+            //     main.blur()
+            // }
         },
 
         updateList(newLength: number, oldLength: number) {
@@ -1249,11 +1263,26 @@ export default defineComponent({
 </script>
 
 <style scoped>
+/* 消息移除动画 */
 .msglist-move {
     transition: all .5s;
 }
 
 .msglist-leave-active {
     display: none;
+}
+
+/* 更多功能面板动画 */
+.pan-enter-active,
+.pan-leave-active {
+    transition: opacity 0.3s;
+}
+
+.pan-enter-from {
+    transform: translateX(20px);
+    opacity: 0;
+}
+.pan-leave-to {
+    opacity: 0;
 }
 </style>

@@ -136,44 +136,45 @@
             </div>
           </div>
         </TransitionGroup>
-
-        <div class="pop-box" v-if="runtimeData.popBoxList.length > 0">
-            <div class="pop-box-body ss-card"
-                :style="'transform: translate(-50%, calc(-50% - ' + ((runtimeData.popBoxList.length > 3 ? 3 : runtimeData.popBoxList.length) * 10) + 'px))'">
-                <header v-show="runtimeData.popBoxList[0].title != undefined">
-                    <div
-                        v-if="runtimeData.popBoxList[0].svg != undefined"
-                        v-html="runtimeData.popBoxList[0].svg">
+        <Transition>
+            <div class="pop-box" v-if="runtimeData.popBoxList.length > 0">
+                <div class="pop-box-body ss-card"
+                    :style="'transform: translate(-50%, calc(-50% - ' + ((runtimeData.popBoxList.length > 3 ? 3 : runtimeData.popBoxList.length) * 10) + 'px))'">
+                    <header v-show="runtimeData.popBoxList[0].title != undefined">
+                        <div
+                            v-if="runtimeData.popBoxList[0].svg != undefined"
+                            v-html="runtimeData.popBoxList[0].svg">
+                        </div>
+                        <a>{{ runtimeData.popBoxList[0].title }}</a>
+                        <svg @click="removePopBox" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path></svg>
+                    </header>
+                    <div v-if="runtimeData.popBoxList[0].html" v-html="runtimeData.popBoxList[0].html"></div>
+                    <component v-else
+                        :data="runtimeData.popBoxList[0].data"
+                        :is="runtimeData.popBoxList[0].template">
+                    </component>
+                    <div class="button" v-show="runtimeData.popBoxList[0].button">
+                        <button
+                            v-for="(button, index) in runtimeData.popBoxList[0].button"
+                            :class="'ss-button' + (button.master == true ? ' master' : '')"
+                            :key="'pop-box-btn' + index"
+                            @click="button.fun">
+                            {{ button.text }}
+                        </button>
                     </div>
-                    <a>{{ runtimeData.popBoxList[0].title }}</a>
-                    <svg @click="removePopBox" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path></svg>
-                </header>
-                <div v-if="runtimeData.popBoxList[0].html" v-html="runtimeData.popBoxList[0].html"></div>
-                <component v-else
-                    :data="runtimeData.popBoxList[0].data"
-                    :is="runtimeData.popBoxList[0].template">
-                </component>
-                <div class="button" v-show="runtimeData.popBoxList[0].button">
-                    <button
-                        v-for="(button, index) in runtimeData.popBoxList[0].button"
-                        :class="'ss-button' + (button.master == true ? ' master' : '')"
-                        :key="'pop-box-btn' + index"
-                        @click="button.fun">
-                        {{ button.text }}
-                    </button>
-                </div>
-                <div class="pop-box-more">
-                    <div
-                        v-for="index in runtimeData.popBoxList.length"
-                        :data-id="index"
-                        :key="'pop-more-' + index"
-                        :class="index > runtimeData.popBoxList.length - 1 ? 'hid' : ''"
-                        :style="'margin:-' + (2*(index-1)) + 'px ' + ((20*index-1)-(2*(index-1))) + 'px 0 ' + ((20*index-1)-(2*(index-1))) + 'px;'">
+                    <div class="pop-box-more">
+                        <div
+                            v-for="index in runtimeData.popBoxList.length"
+                            :data-id="index"
+                            :key="'pop-more-' + index"
+                            :class="index > runtimeData.popBoxList.length - 1 ? 'hid' : ''"
+                            :style="'margin:-' + (2*(index-1)) + 'px ' + ((20*index-1)-(2*(index-1))) + 'px 0 ' + ((20*index-1)-(2*(index-1))) + 'px;'">
+                        </div>
                     </div>
                 </div>
+                <div></div>
             </div>
-            <div></div>
-        </div>
+        </Transition>
         <viewer
             class="viewer" ref="viewer"
             :options="viewerOpt"
@@ -308,8 +309,6 @@ export default defineComponent({
             }
             runtimeData.mergeMessageList = []           // 清空合并转发缓存
             runtimeData.tags.canLoadHistory = true      // 重置终止加载标志
-            // 重置图片预览器状态
-            // Object.assign(this.$data.imgView, this.$options.data().imgView)
             if (data.type == 'group') {
                 // 获取自己在群内的资料
                 Connector.send('get_group_member_info', { group_id: data.id, user_id: this.runtimeData.loginInfo.uin }, 'getUserInfoInGroup')
@@ -404,6 +403,7 @@ export default defineComponent({
             // 自动暗黑模式需要在暗黑模式之后应用保证可以覆盖它
             Option.runAS('opt_dark', Option.get('opt_dark'))
             Option.runAS('opt_auto_dark', Option.get('opt_auto_dark'))
+            Option.runAS('theme_color', Option.get('theme_color'))
             // 加载密码保存和自动连接
             if(runtimeData.sysConfig.save_password && runtimeData.sysConfig.save_password != true) {
                 loginInfo.token = runtimeData.sysConfig.save_password
@@ -640,18 +640,20 @@ export default defineComponent({
 </script>
 
 <style scoped>
-  .appmsg-move,
-  .appmsg-enter-active,
-  .appmsg-leave-active {
+/* 应用通知动画 */ 
+.appmsg-move,
+.appmsg-enter-active,
+.appmsg-leave-active {
     transition: all 0.2s;
-  }
-  .appmsg-leave-active {
-    position: absolute;
-  }
+}
 
-  .appmsg-enter-from,
-  .appmsg-leave-to {
-    opacity: 0;
+.appmsg-leave-active {
+    position: absolute;
+}
+
+.appmsg-enter-from,
+.appmsg-leave-to {
     transform: translateX(-20px);
-  }
+    opacity: 0;
+}
 </style>

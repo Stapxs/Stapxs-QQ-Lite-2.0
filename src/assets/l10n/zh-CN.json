@@ -234,7 +234,7 @@
   "wel_select_language": "选择语言",
   "wel_finish": "该说的都说了 —— 那么就可以愉快的用啦（大声），如果遇到什么奇怪的问题，尽管来 GitHub 仓库问哦。",
   "chat_msg_menu_at": "提及",
-  "option_view_view": "页面和无障碍",
+  "option_view_view": "页面",
   "option_view_initial_scale": "缩放比例",
   "option_view_initial_scale_tip": "调整页面在移动端的缩放比例",
   "chat_readed": "已标记为已读"

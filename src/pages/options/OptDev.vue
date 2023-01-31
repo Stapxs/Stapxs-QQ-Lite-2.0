@@ -231,7 +231,7 @@ export default defineComponent({
         },
         sendTestAppmsg (event: KeyboardEvent) {
             if (event.keyCode === 13 && this.appmsg_text !== '') {
-                new PopInfo().add(PopType.INFO, this.appmsg_text, false)
+                new PopInfo().add(PopType.INFO, this.appmsg_text)
                 this.appmsg_text = ''
             }
         },

@@ -532,6 +532,10 @@ textarea {
     padding: 5px;
     border: 0;
 }
+.chat-info-tab > li {
+    min-width: unset;
+    width: 50px;
+}
 .chat-info-tab-member {
     padding: 0 20px;
 }
@@ -590,6 +594,16 @@ textarea {
 }
 .bulletins > div.base {
     cursor: pointer;
+}
+.bulletins > div.base > span {
+    background: var(--color-card-1);
+    margin-top: calc(-1rem - 5px);
+    border-radius: 7px;
+    text-align: center;
+    font-size: 0.8rem;
+    margin-top: 10px;
+    display: block;
+    padding: 5px;
 }
 .bulletins > div.base > header {
     align-items: center;
@@ -690,7 +704,8 @@ textarea {
 }
 .group-files > div > div > div.download > svg {
     fill: var(--color-font);
-    margin: 8px;
+    height: 0.8rem;
+    margin: 10px;
 }
 .group-files > div > div > div > div > span {
     color: var(--color-font-1);
@@ -778,11 +793,12 @@ textarea {
     width: 100%;
 }
 .img-sender > div.card {
-    margin: calc(50vh - 20px) 0 0 50%;
+    margin: calc(100% - 75px) 0 0 50%;
     transform: translate(-50%, -50%);
     flex-direction: column;
     position: absolute;
     display: flex;
+    height: 50%;
     width: 50%;
     z-index: 1;
 }
@@ -799,10 +815,12 @@ textarea {
     width: 100px;
 }
 .img-sender > div.card > div.imgs {
+    margin-bottom: 20px;
     overflow-y: scroll;
     overflow-x: hidden;
     margin-right: -7px;
-    height: 50vh;
+    margin-top: 10px;
+    height: 100%;
 }
 .img-sender > div.card > div.imgs::-webkit-scrollbar {
     display: none;
@@ -844,16 +862,27 @@ textarea {
     fill: var(--color-font);
     height: 1rem;
 }
-/* .img-sender > div.card > div.sender {
-    margin-top: 10px;
-} */
+.img-sender > div.card > div.sender {
+    display: flex;
+}
 .img-sender > div.card > div.sender > input {
     background: var(--color-card-1);
     width: calc(100% - 20px);
     border-radius: 7px;
     padding: 0 10px;
-    height: 40px;
+    height: 50px;
     border: 0;
+    flex: 1;
+}
+.img-sender > div.card > div.sender > svg {
+    background: var(--color-card-1);
+    fill: var(--color-font-1);
+    border-radius: 7px;
+    margin-right: 20px;
+    padding: 15px;
+    cursor: pointer;
+    height: 20px;
+    width: 20px;
 }
 
 .face-pan {
@@ -1151,5 +1180,56 @@ textarea {
     /* 发送图片面板 */
     .img-sender > div.card {
         width: calc(100% - 80px);
+    }
+}
+
+@media (max-width: 500px) {
+    /* 群信息面板 */
+    .chat-info {
+        height: calc(100% - 115px);
+        width: calc(100% - 40px);
+        max-height: unset;
+        border-radius: 0;
+        margin: 0;
+    }
+    .chat-info:hover{
+        box-shadow: none;
+    }
+    /* 表情面板 */
+    .face-pan {
+        width: calc(100% - 40px);
+        height: 330px;
+    }
+    .base-face,
+    .face-stickers {
+        height: calc(330px - 90px);
+    }
+    .base-face > div {
+        height: 50px;
+        width: 50px;
+    }
+    .base-face > div > img {
+        height: 30px;
+        width: 30px;
+    }
+    .face-stickers > img {
+        height: 60px;
+        width: 60px;
+    }
+    /* 合并转发消息面板 */
+    .merge-pan.show > div:last-child {
+        width: 100%;
+    }
+    .merge-pan.show > div:last-child:hover {
+        box-shadow: none;
+    }
+    /* 图片发送器 */
+    .img-sender > div.card {
+        height: calc(100% - 40px);
+        width: calc(100% - 40px);
+        border-radius: 0;
+        transform: unset;
+        box-shadow: none;
+        margin: 0;
     }
 }

@@ -958,7 +958,7 @@ html, body {
 }
 
 /* 全局通用弹窗 */
-@media (max-width: 400px) {
+@media (max-width: 500px) {
     .pop-box-body {
         width: calc(100% - 80px);
         transform: unset !important;
@@ -975,3 +975,26 @@ html, body {
 .layui-tab-bar {
     display: none;
 }
+
+/* 全局淡入淡出动画 */
+.v-enter-active,
+.v-leave-active {
+    transition: all 0.4s ease;
+}
+/* .v-enter-active>div.ss-card,
+.v-leave-active>div.ss-card {
+    transition: all 0.2s ease;
+} */
+
+.v-enter-from,
+.v-leave-to {
+    opacity: 0;
+}
+/* 如果里面有卡片，触发卡片浮入浮出动画 */
+/* TODO: 对于本来就使用 translate 定位的卡片会失效（或者出问题） */
+/* .v-enter-from > div.ss-card {
+    transform: translateY(-20px);
+}
+.v-leave-to > div.ss-card {
+    transform: translateY(20px);
+} */

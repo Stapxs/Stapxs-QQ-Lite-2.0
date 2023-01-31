@@ -113,10 +113,8 @@
                 style="overflow: hidden; display: flex;flex-direction: column;height: 100%;margin: 0;">
                 <ul class="layui-tab-title chat-info-tab">
                     <li class="layui-this">{{ $t('chat_chat_info_member') }}</li>
-                    <li>{{ $t('chat_chat_info_notice') }}</li>
-                    <li>{{ $t('chat_chat_info_file') + `(${chat.info.group_files.total_cnt === undefined ? 0 :
-                            chat.info.group_files.total_cnt})`
-                    }}</li>
+                    <li v-show="chat.info.group_notices.feeds && chat.info.group_notices.feeds.length > 0">{{ $t('chat_chat_info_notice') }}</li>
+                    <li v-show="chat.info.group_files.total_cnt && chat.info.group_files.total_cnt > 0">{{ $t('chat_chat_info_file') }}</li>
                     <li>{{ $t('chat_chat_info_config') }}</li>
                 </ul>
                 <div class="chat-info-tab-body layui-tab-content">
