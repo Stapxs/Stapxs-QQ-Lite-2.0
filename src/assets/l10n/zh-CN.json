@@ -237,5 +237,9 @@
   "option_view_view": "页面",
   "option_view_initial_scale": "缩放比例",
   "option_view_initial_scale_tip": "调整页面在移动端的缩放比例",
-  "chat_readed": "已标记为已读"
+  "chat_readed": "已标记为已读",
+  "chat_type_group": "群组",
+  "chat_type_user": "好友",
+  "chat_chat_forward_success": "消息已转发",
+  "chat_msg_forward_pan": "转发消息"
 }

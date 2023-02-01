@@ -151,7 +151,8 @@
                     <div v-if="runtimeData.popBoxList[0].html" v-html="runtimeData.popBoxList[0].html"></div>
                     <component v-else
                         :data="runtimeData.popBoxList[0].data"
-                        :is="runtimeData.popBoxList[0].template">
+                        :is="runtimeData.popBoxList[0].template"
+                        v-bind="runtimeData.popBoxList[0].templateValue">
                     </component>
                     <div class="button" v-show="runtimeData.popBoxList[0].button">
                         <button
@@ -619,20 +620,6 @@ export default defineComponent({
                         }
                     })
                 })
-
-
-            const popInfo = {
-                title: 'test',
-                html: `<span style='color:var(--color-font)'>${Math.floor(window.outerWidth / window.innerWidth * 100) / 100}</span>`,
-                button: [
-                    {
-                        text: app.config.globalProperties.$t('btn_yes'),
-                        master: true,
-                        fun: () => { runtimeData.popBoxList.shift() }
-                    }
-                ]
-            }
-            // runtimeData.popBoxList.push(popInfo)
 
         }
     }

@@ -158,6 +158,12 @@ function changeColorMode(mode: string) {
             }
         })
     }
+    // 刷新页面主题色
+    const meta = document.getElementsByName('theme-color')[0]
+    if(meta) {
+        (meta as HTMLMetaElement).content = getComputedStyle(document.documentElement)
+            .getPropertyValue('--color-main')
+    }
 }
 
 /**

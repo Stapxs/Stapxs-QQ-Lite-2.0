@@ -46,7 +46,7 @@ export function parse(str: string) {
                 case 'getChatHistoryFist'   : saveMsgFist(msg); break
                 case 'getChatHistory'       : saveMsg(msg); break
                 case 'getForwardMsg'        : saveForwardMsg(msg.data); break
-                case 'sendMsgBack'          : showSendedMsg(msg); break
+                case 'sendMsgBack'          : showSendedMsg(msg, echoList); break
                 case 'getRoamingStamp'      : runtimeData.stickerCache = msg.data.reverse(); break
                 case 'getMoreGroupInfo'     : runtimeData.chatInfo.info.group_info = msg.data.data; break
                 case 'getMoreUserInfo'      : runtimeData.chatInfo.info.user_info = msg.data.data.result.buddy.info_list[0]; break
@@ -262,7 +262,7 @@ function saveForwardMsg(data: any) {
     runtimeData.mergeMessageList = data
 }
 
-function showSendedMsg(msg: any) {
+function showSendedMsg(msg: any, echoList: string[]) {
     if (msg.error !== null && msg.error !== undefined) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_send_msg_err', { code: msg.error }))
     } else {
@@ -276,6 +276,10 @@ function showSendedMsg(msg: any) {
                 { 'message_id': msg.message_id },
                 'getSendMsg_' + msg.message_id + '_0'
             )
+        }
+        if(echoList[1] == 'forward') {
+            // PS：这儿写是写了e转发成功，事实上不确定消息有没有真的发送出去（
+            popInfo.add(PopType.INFO, app.config.globalProperties.$t('chat_chat_forward_success'))
         }
     }
 }
