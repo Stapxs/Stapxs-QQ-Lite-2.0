@@ -14,10 +14,10 @@
             </svg>
             <span>{{ data.msg.title }}</span>
         </header>
-        <div :class="'body' + (!showAll ? '' : ' all')">
+        <div :id="'bulletins-msg-' + index" :class="'body' + (!showAll ? '' : ' all')">
             <span v-html="Xss(data.msg.text_face).replaceAll('\r', '\n').replaceAll('\n\n', '\n')"></span>
         </div>
-        <span v-show="!showAll">点击展开</span>
+        <span v-show="needShow && !showAll">{{ $t('bulletin_show_tip') }}</span>
         <div class="info">
             <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.u">
             <a>{{ (runtimeData.chatInfo.info.group_members.filter((item) => {
@@ -42,13 +42,29 @@ import { runtimeData } from '@/function/msg'
 
 export default defineComponent({
     name: 'BulletinBody',
-    props: ['data'],
+    props: ['data', 'index'],
     data() {
         return {
             Xss: Xss,
             runtimeData: runtimeData,
-            showAll: false
+            showAll: false,
+            needShow: true
         }
+    },
+    mounted() {
+        this.$nextTick(() => {
+            const tab1 = document.getElementById('info-pan-notices')
+            const tab2 = document.getElementById('info-pan-mumber')
+            const pan = document.getElementById('bulletins-msg-' + this.index)
+            if(pan && tab1 && tab2) {
+                // PS：display none 不渲染无法获取实际高度
+                tab1.click()
+                let maxHeight = Number(getComputedStyle(pan).maxHeight.replace('px', ''))
+                const height = pan.offsetHeight
+                tab2.click()
+                this.needShow = height == maxHeight
+            }
+        })
     }
 })
 </script>

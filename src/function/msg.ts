@@ -278,7 +278,7 @@ function showSendedMsg(msg: any, echoList: string[]) {
             )
         }
         if(echoList[1] == 'forward') {
-            // PS：这儿写是写了e转发成功，事实上不确定消息有没有真的发送出去（
+            // PS：这儿写是写了转发成功，事实上不确定消息有没有真的发送出去（
             popInfo.add(PopType.INFO, app.config.globalProperties.$t('chat_chat_forward_success'))
         }
     }
