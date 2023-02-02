@@ -133,7 +133,16 @@ textarea {
     height: 50px;
     flex: 1;
 }
-.chat-pan > div.more > div:nth-child(2) > div > textarea {
+.chat-pan > div.more > div:nth-child(2) > div > form {
+    width: 100%;
+}
+.chat-pan > div.more > div:nth-child(2) > div > form > input {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    height: 100% !important;
+}
+.chat-pan > div.more > div:nth-child(2) > div > form > input,
+.chat-pan > div.more > div:nth-child(2) > div > form > textarea {
     padding: 14px 20px 0 20px;
     color: var(--color-font);
     background: transparent;

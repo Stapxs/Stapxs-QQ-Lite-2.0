@@ -177,16 +177,28 @@
                     </svg>
                 </div>
                 <div>
-                    <textarea
-                        id="main-input"
-                        type="text"
-                        v-model="msg"
-                        :disabled="runtimeData.tags.openSideBar"
-                        @paste="addImg"
-                        @keydown="mainKey"
-                        @keyup="mainKeyUp"
-                        @click="selectSQ(), selectSQIn()">
-                    </textarea>
+                    <form @submit.prevent="mainSubmit">
+                        <input
+                            v-if="!Option.get('use_breakline')"
+                            id="main-input"
+                            type="text"
+                            v-model="msg"
+                            :disabled="runtimeData.tags.openSideBar"
+                            @paste="addImg"
+                            @keyup="mainKeyUp"
+                            @click="selectSQIn()">
+                        <textarea
+                            v-else
+                            id="main-input"
+                            type="text"
+                            v-model="msg"
+                            :disabled="runtimeData.tags.openSideBar"
+                            @paste="addImg"
+                            @keydown="mainKey"
+                            @keyup="mainKeyUp"
+                            @click="selectSQIn()">
+                        </textarea>
+                    </form>
                     <div @click="sendMsg">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512">
                             <path
@@ -351,7 +363,6 @@ import app from '@/main'
 import SendUtil from '@/function/sender'
 import Option from '@/function/option'
 import Util from '@/function/util'
-
 import Info from '@/pages/Info.vue'
 import MsgBody from '@/components/MsgBody.vue'
 import NoticeBody from '@/components/NoticeBody.vue'
@@ -363,7 +374,6 @@ import { Logger, LogType, PopInfo, PopType } from '@/function/base'
 import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem, MsgItemElem, SQCodeElem, GroupMemberInfoElem, UserFriendElem, UserGroupElem } from '@/function/elements/information'
-import xss from 'xss'
 
 export default defineComponent({
     name: 'ViewChat',
@@ -371,6 +381,7 @@ export default defineComponent({
     components: { Info, MsgBody, NoticeBody, FacePan },
     data () {
         return {
+            Option: Option,
             runtimeData: runtimeData,
             forwardList: runtimeData.userList,
             trueLang: getTrueLang(),
@@ -509,16 +520,18 @@ export default defineComponent({
          * @param event 事件
          */
         mainKey (event: KeyboardEvent) {
-            const logger = new Logger()
-            // console.log(event.keyCode)
             if (!event.shiftKey && event.keyCode == 13) {
                 // enter 发送消息
                 if(this.msg != '') {
                     this.sendMsg()
                 }
-            } else if (event.keyCode == 8) {
-                // backspace 删除内容
-                this.selectSQ()
+            }
+        },
+        mainKeyUp(event: KeyboardEvent) {
+            const logger = new Logger()
+            // 发送完成后输入框会遗留一个换行，把它删掉 ……
+            if (!event.shiftKey && event.keyCode == 13 && this.msg == '\n') {
+                this.msg = ''
             }
             if(event.keyCode != 13) {
                 // 获取最后一个输入的符号用于判定 at
@@ -548,10 +561,14 @@ export default defineComponent({
                 }
             }
         },
-        mainKeyUp(event: KeyboardEvent) {
-            // 发送完成后输入框会遗留一个换行，把它删掉 ……
-            if (!event.shiftKey && event.keyCode == 13 && this.msg == '\n') {
-                this.msg = ''
+
+        /**
+         * 通过表单提交方式发送消息
+         * PS：主要用来解决一些奇奇怪怪的回车判定导致的问题
+         */
+        mainSubmit() {
+            if (this.msg != '') {
+                this.sendMsg()
             }
         },
 
@@ -569,33 +586,6 @@ export default defineComponent({
             document.getElementById('main-input')?.focus()
             this.tags.onAtFind = false
             this.atFindList = null
-        },
-
-        /**
-         * 选中当前输入框光标位置前面的一个 SQCode
-         */
-        selectSQ () {
-            var input = document.getElementById('main-input') as HTMLInputElement
-            // 如果文本框里本来就选中着什么东西就不触发了
-            if (input !== null && input.selectionStart === input.selectionEnd) {
-                // PS：这儿用来对删除前方是否有 [SQ:n] 特殊结构进行判断以便自动选中
-                var cursurPosition = -1
-                if (typeof input.selectionStart === 'number') {
-                    cursurPosition = input.selectionStart
-                }
-                // PS：只取光标前面的部分消息
-                const getSQCode = SendUtil.getSQList(this.msg.substring(0, cursurPosition))
-                if (getSQCode !== null) {
-                    const selectionStart = (this.msg.substring(0, cursurPosition)).lastIndexOf(getSQCode[getSQCode.length - 1])
-                    if (selectionStart !== -1 &&
-                        selectionStart + getSQCode[getSQCode.length - 1].length === this.msg.substring(0, cursurPosition).length) {
-                        this.$nextTick(() => {
-                            input.selectionStart = selectionStart
-                            input.selectionEnd = this.msg.substring(0, cursurPosition).length
-                        })
-                    }
-                }
-            }
         },
 
         /**
