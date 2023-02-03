@@ -288,7 +288,7 @@ export default defineComponent({
          */
         getSeq (id: string) {
             const seq = Util.parseMsgId(id).seqid
-            return seq ? seq : ''
+            return seq ? seq : id
         },
 
         /**

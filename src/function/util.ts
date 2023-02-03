@@ -272,6 +272,7 @@ export function initUITest() {
  */
 export function parseCQ(data: any) {
     let msg = data.message as string
+    console.log(msg)
     // 将纯文本也处理为 CQCode 格式
     // PS：这儿不用担心方括号本身，go-cqhttp 会把它转义掉
     let reg = /^[^\]]+?\[|\].+\[|\][^[]+$|^[^[\]]+$/g
@@ -279,12 +280,15 @@ export function parseCQ(data: any) {
     if (textList !== null) {
         textList.forEach((item) => {
             // PS：顺便把被转义的方括号转回来
+            item = item.replace(']', '').replace('[', '')
             msg = msg.replace(item, `[CQ:text,text=${item}]`)
         })
     }
+    console.log(msg)
+    console.log(textList)
     // 拆分 CQCode
     reg = /\[.+?\]/g
-    msg = msg.replace('\n', '\\n')
+    msg = msg.replaceAll('\n', '\\n')
     const list = msg.match(reg)
     console.log(list)
     // 处理为 object
@@ -294,6 +298,7 @@ export function parseCQ(data: any) {
         list.forEach((item) => {
             if (item.match(reg) !== null) {
                 const info: {[key: string]: any} = { type: RegExp.$1 }
+                console.log(RegExp.$2)
                 RegExp.$2.split(',').forEach((key) => {
                     const kv = []
                     kv.push(key.substring(0, key.indexOf('=')))
@@ -301,8 +306,13 @@ export function parseCQ(data: any) {
                     const a = document.createElement('a')
                     a.innerHTML = key.substring(key.indexOf('=') + 1)
                     kv.push(a.innerText)
-                    info[kv[0]] = kv[1].replace('\\n', '\n')
+                    info[kv[0]] = kv[1]
                 })
+                // 对文本消息特殊处理
+                if(info.type == 'text') {
+                    info.text = RegExp.$2.substring(RegExp.$2.lastIndexOf('=') + 1)
+                        .replaceAll('\\n', '\n')
+                }
                 // 对回复消息进行特殊处理
                 if(info.type == 'reply') {
                     data.source = {
@@ -316,6 +326,7 @@ export function parseCQ(data: any) {
             }
         })
     }
+    console.log('================')
     logger.debug(app.config.globalProperties.$t('log_cq_msg_parsed') + ': ' + JSON.stringify(back))
     data.message = back
     return data

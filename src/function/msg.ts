@@ -232,6 +232,10 @@ function saveMsg(msg: any) {
             runtimeData.tags.canLoadHistory = false
             return
         }
+        // go-cqhttp：返回的列表是倒的
+        if(runtimeData.botInfo.app_name == 'go-cqhttp') {
+            msg.data.reverse()
+        }
         // 对消息进行转换
         if (runtimeData.tags.msgType === BotMsgType.CQCode) {
             for (let i = 0; i < items.length; i++) {
@@ -518,11 +522,11 @@ function newMsg(data: any) {
         data = Util.parseOICQ1JSON(data)
     }
     let id = data.from_id ? data.from_id : data.group_id
+    const sender = data.sender.user_id
     // oicq1：消息格式兼容
     id = id ? id : (data.group_id ? data.group_id : data.user_id)
-    const sender = data.sender.user_id
     // go-cqhttp：消息格式兼容
-    id = data.target_id ? data.target_id : data.group_id
+    id = id ? id : (data.target_id ? data.target_id : data.group_id)
     // 消息回调检查
     // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复
     if (Option.get('send_reget') !== true && sender === runtimeData.loginInfo.uin) {
