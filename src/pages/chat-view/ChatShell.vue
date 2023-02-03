@@ -269,7 +269,7 @@ export default defineComponent({
                     const pre = document.getElementById(id)
                     if(pre) {
                         let out = ''
-                        text.forEach((line) => {
+                        text.forEach((line: string) => {
                             out += line + '\n'
                         })
                         // 修正宽度
@@ -479,9 +479,16 @@ export default defineComponent({
                             const firstMsgId = runtimeData.messageList[0].message_id
                             if (firstMsgId) {
                                 // 发起获取历史消息请求
+                                let name = 'get_chat_history'
+                                if(runtimeData.botInfo['go-cqhttp'] === true)
+                                    name = 'get_msg_history'
                                 Connector.send(
-                                    'get_chat_history',
-                                    { 'message_id': firstMsgId },
+                                    name,
+                                    {
+                                        'message_id': firstMsgId,
+                                        'target_id': runtimeData.chatInfo.show.id,
+                                        'group': runtimeData.chatInfo.show.type
+                                    },
                                     'getChatHistory'
                                 )
                             } else {

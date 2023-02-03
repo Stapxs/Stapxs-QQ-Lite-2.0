@@ -17,7 +17,7 @@ export interface RunTimeDataElem {
     },
     tags: {
         firstLoad: boolean
-        msgType?: BotMsgType
+        msgType: BotMsgType
         canLoadHistory: boolean
         openSideBar: boolean,
         viewer: {

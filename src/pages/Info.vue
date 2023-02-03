@@ -38,7 +38,7 @@
                         </svg>
                     </div>
                 </div>
-                <div v-if="chat.show.type === 'group'">
+                <div v-if="chat.show.type === 'group'" v-show="Object.keys(chat.info.group_info).length > 0">
                     <header>
                         <span>{{ $t('chat_chat_info_introduction') }}</span>
                     </header>

@@ -15,13 +15,14 @@
             </div>
         </div>
         <div class="note-time note-base" v-if="data.sub_type === 'time'">
-            <a>{{ Intl.DateTimeFormat(trueLang, 
-                { hour: "numeric", minute: "numeric", second: "numeric" })
-                    .format(new Date(data.time * 1000)) }}</a>
+            <a>{{
+                Intl.DateTimeFormat(trueLang, getTimeConfig(new Date(data.time * 1000)))
+                    .format(new Date(data.time * 1000))
+            }}</a>
         </div>
     </div>
 </template>
-  
+
 <script lang="ts">
 import { defineComponent, ref } from 'vue'
 import { runtimeData } from '@/function/msg'
@@ -30,13 +31,34 @@ import { getTrueLang } from '@/function/util'
 export default defineComponent({
     name: 'NoticeBody',
     props: ['data'],
-    data () {
+    data() {
         return {
             trueLang: getTrueLang(),
             info: ref(this.data) as { [key: string]: any }
         }
     },
-    mounted () {
+    methods: {
+        getTimeConfig(date: Date) {
+            let base = { hour: "numeric", minute: "numeric", second: "numeric" } as Intl.DateTimeFormatOptions
+            const nowDate = new Date()
+            const todayDate = new Date().setHours(0, 0, 0, 0)
+            const paramsDate = date.setHours(0, 0, 0, 0)
+            if(todayDate != paramsDate) {
+                if (nowDate.getFullYear() == date.getFullYear() && nowDate.getMonth() == date.getMonth()) {
+                    base.weekday = 'short'
+                } else if(nowDate.getFullYear() == date.getFullYear()) {
+                    base.day = 'numeric'
+                    base.month = 'short'
+                } else {
+                    base.day = 'numeric'
+                    base.month = 'short'
+                    base.year = 'numeric'
+                }
+            }
+            return base
+        }
+    },
+    mounted() {
         if (this.info.sub_type === 'recall') {
             // 补全撤回者信息
             if (runtimeData.chatInfo.show.type === 'group') {
@@ -61,4 +83,3 @@ export default defineComponent({
     }
 })
 </script>
-  

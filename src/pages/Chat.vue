@@ -44,9 +44,13 @@
                 <hr>
                 <a>{{ $t('chat_no_more_msg') }}</a>
             </div>
+            <!-- 时间戳，在下滑加载的时候会显示，方便在大段的相连消息上让用户知道消息时间 -->
+            <NoticeBody v-if="tags.nowGetHistroy" :data="{sub_type: 'time', time: list[0].time}"></NoticeBody>
             <TransitionGroup name="msglist" tag="div">
                 <template v-for="(msg, index) in list">
+                    <!-- 时间戳 -->
                     <NoticeBody v-if="isShowTime((list[index - 1] ? list[index - 1].time : undefined), msg.time)" :key="'notice-time-' + index" :data="{sub_type: 'time', time: msg.time}"></NoticeBody>
+                    <!-- 消息体 -->
                     <MsgBody
                         v-if="msg.post_type === 'message'"
                         :key="msg.message_id"
@@ -58,6 +62,7 @@
                         @touchmove="msgOnMove"
                         @touchend="msgMoveEnd($event, msg)">
                     </MsgBody>
+                    <!-- 其他通知消息 -->
                     <NoticeBody v-if="msg.post_type === 'notice'" :key="'notice-' + index" :data="msg"></NoticeBody>
                 </template> 
             </TransitionGroup>
@@ -373,7 +378,7 @@ import { parseMsgId, getTrueLang, loadHistory as loadHistoryFirst } from '@/func
 import { Logger, LogType, PopInfo, PopType } from '@/function/base'
 import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
-import { BaseChatInfoElem, MsgItemElem, SQCodeElem, GroupMemberInfoElem, UserFriendElem, UserGroupElem } from '@/function/elements/information'
+import { BaseChatInfoElem, MsgItemElem, SQCodeElem, GroupMemberInfoElem, UserFriendElem, UserGroupElem, BotMsgType } from '@/function/elements/information'
 
 export default defineComponent({
     name: 'ViewChat',
@@ -469,9 +474,16 @@ export default defineComponent({
                 // 锁定加载防止反复触发
                 this.tags.nowGetHistroy = true
                 // 发起获取历史消息请求
+                let name = 'get_chat_history'
+                if(runtimeData.botInfo['go-cqhttp'] === true)
+                    name = 'get_msg_history'
                 Connector.send(
-                    'get_chat_history',
-                    { 'message_id': firstMsgId },
+                    name,
+                    {
+                        'message_id': firstMsgId,
+                        'target_id': runtimeData.chatInfo.show.id,
+                        'group': runtimeData.chatInfo.show.type
+                    },
                     'getChatHistory'
                 )
             }
@@ -793,9 +805,13 @@ export default defineComponent({
                             text: this.$t('btn_yes'),
                             master: true,
                             fun: () => {
+                                let msgSend = msg.message
+                                if(runtimeData.tags.msgType == BotMsgType.CQCode) {
+                                    msgSend = Util.parseJSONCQCode(msgSend)
+                                }
                                 switch (type) {
-                                    case 'group': Connector.send('send_group_msg', { 'group_id': id, 'message': msg.message }, 'sendMsgBack_forward'); break
-                                    case 'user': Connector.send('send_private_msg', { 'user_id': id, 'message': msg.message }, 'sendMsgBack_forward'); break
+                                    case 'group': Connector.send('send_group_msg', { 'group_id': id, 'message': msgSend }, 'sendMsgBack_forward'); break
+                                    case 'user': Connector.send('send_private_msg', { 'user_id': id, 'message': msgSend }, 'sendMsgBack_forward'); break
                                 }
                                 runtimeData.popBoxList.shift()
                             }
@@ -1091,6 +1107,12 @@ export default defineComponent({
                 // 设置最后一条消息以上都为已读
                 Connector.send(
                     'set_message_read',
+                    { message_id: this.list[this.list.length - 1].message_id },
+                    'setMessageRead'
+                )
+                // go-cqhttp：他们名字不一样
+                Connector.send(
+                    'mark_msg_as_read',
                     { message_id: this.list[this.list.length - 1].message_id },
                     'setMessageRead'
                 )

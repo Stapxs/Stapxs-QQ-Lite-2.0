@@ -66,6 +66,8 @@ export function parse(str: string) {
         }
     } else {
         switch (msg.post_type) {
+            // 心跳包
+            case 'meta_event'           : livePackage(msg); break
             // gocqhttp 自动发送的消息回调和其他消息有区分
             case 'message_sent'         : msg.post_type = 'message'
             // eslint-disable-next-line
@@ -101,17 +103,19 @@ function saveBotInfo(data: { [key: string]: any }) {
     }
     // 加载切换兼容功能
     switch (data.app_name) {
-        // go-cqhttp 兼容， CQCode <-> JSON
+        // go-cqhttp：消息格式 CQCode <-> JSON
         case 'go-cqhttp': {
             runtimeData.tags.msgType = BotMsgType.CQCode
             break
         }
-        // oicq1 兼容，JSON_OICQ_1 <-> JSON
+        // oicq1：消息格式 JSON_OICQ_1 <-> JSON
         case 'oicq': {
             runtimeData.tags.msgType = BotMsgType.JSON_OICQ_1
             break
         }
     }
+    // 加载设置项内的兼容功能，覆盖此处的设置（如果有的话）
+    Option.runAS('msg_type', Number(Option.get('msg_type')))
 }
 
 /**
@@ -204,10 +208,17 @@ function saveMsgFist(msg: any) {
                 msg.data[i] = Util.parseOICQ1JSON(msg.data[i])
             }
         }
+        // go-cqhttp：返回的列表是倒的
+        if(runtimeData.botInfo.app_name == 'go-cqhttp') {
+            msg.data.reverse()
+        }
+        // 检查必要字段
+        msg.data.forEach((item: any) => {
+            if(!item.post_type) {
+                item.post_type = 'message'
+            }
+        })
         runtimeData.messageList = msg.data
-        // setTimeout(() => {
-        //   this.$refs.chat.scrollBottom()
-        // }, 500)
     }
 }
 
@@ -510,6 +521,8 @@ function newMsg(data: any) {
     // oicq1：消息格式兼容
     id = id ? id : (data.group_id ? data.group_id : data.user_id)
     const sender = data.sender.user_id
+    // go-cqhttp：消息格式兼容
+    id = data.target_id ? data.target_id : data.group_id
     // 消息回调检查
     // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复
     if (Option.get('send_reget') !== true && sender === runtimeData.loginInfo.uin) {
@@ -699,6 +712,18 @@ function readMemberMessage(data: any) {
     Connector.send('set_message_read', {
         message_id: data.message_id
     }, 'setMessageRead')
+    // go-cqhttp：他们名字不一样
+    Connector.send('mark_msg_as_read', {
+        message_id: data.message_id
+    }, 'setMessageRead')
+}
+
+/**
+ * 心跳包处理
+ * @param msg 
+ */
+function livePackage(msg: any) {
+    //
 }
 
 // ==============================================================
@@ -710,7 +735,8 @@ const baseRuntime = {
         firstLoad: false,
         canLoadHistory: true,
         openSideBar: false,
-        viewer: { index: 0 }
+        viewer: { index: 0 },
+        msgType: BotMsgType.JSON
     },
     chatInfo: {
         show: { type: '', id: 0, name: '', avatar: '' },

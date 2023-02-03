@@ -11,22 +11,24 @@
 */
 
 import app from '@/main'
+import languageConfig from '@/assets/l10n/_l10nconfig.json'
 
 import { i18n } from '@/main'
 import { markRaw, defineAsyncComponent } from 'vue'
 import { Logger, LogType } from './base'
 import { runtimeData } from './msg'
-import { initUITest } from './util'
+import { initUITest, getTrueLang } from './util'
 
 let cacheConfigs: { [key: string]: any }
 
-// 下拉菜单设置项的初始值，防止选项为空
+// 设置项的初始值，防止下拉菜单选项为空或者首次使用初始错误
 const optDefault: { [key: string]: any } = {
     opt_dark: false,
     language: 'zh-CN',
     log_level: 'err',
     open_ga_bot: true,
-    initial_scale: 0.85
+    initial_scale: 0.85,
+    theme_color: 0
 }
 
 // =============== 设置项事件 ===============
@@ -38,7 +40,14 @@ const configFunction: { [key: string]: (value: any) => void } = {
     theme_color: changeTheme,
     ui_test: changeUiTest,
     chatview_name: changeChatView,
-    initial_scale: changeInitialScale
+    initial_scale: changeInitialScale,
+    msg_type: setMsgType
+}
+
+function setMsgType(value: any) {
+    if(value && typeof value == 'number') {
+        runtimeData.tags.msgType = value
+    }
 }
 
 /**
@@ -67,13 +76,31 @@ function changeInitialScale(value: number) {
  * @param name 语言文件名（不是实际语言代码）
  */
 function setLanguage(name: string) {
+    // 加载主语言
     import(`../assets/l10n/${name}.json`).then(lang => {
         i18n.global.setLocaleMessage(name, lang)
     })
     app.config.globalProperties.$i18n.locale = name
+    // 检查是否设置了备选语言
+    let get = false
+    for(let i=0; i<languageConfig.length; i++) {
+        if(languageConfig[i].value == name && (languageConfig[i] as any).fallback) {
+            const fbname = (languageConfig[i] as any).fallback
+            import(`../assets/l10n/${fbname}.json`).then(lang => {
+                i18n.global.setLocaleMessage(fbname, lang)
+            })
+            get = true
+            app.config.globalProperties.$i18n.fallbackLocale = fbname
+            break
+        }
+    }
+    if(!get) {
+        app.config.globalProperties.$i18n.fallbackLocale = 'zh-CN'
+    }
+    // 刷新 html 语言标签
     const htmlBody = document.querySelector('html')
     if (htmlBody !== null) {
-        htmlBody.setAttribute('lang', name)
+        htmlBody.setAttribute('lang', getTrueLang())
     }
 }
 

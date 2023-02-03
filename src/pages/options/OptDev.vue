@@ -91,6 +91,21 @@
                 <input class="ss-input" style="width:150px" type="text" v-model="chatview_name"
                     @keyup="saveWName($event, 'chatview_name')">
             </div>
+            <div class="opt-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+                    <path
+                        d="M192 0c-41.8 0-77.4 26.7-90.5 64H64C28.7 64 0 92.7 0 128V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V128c0-35.3-28.7-64-64-64H282.5C269.4 26.7 233.8 0 192 0zm0 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64zM72 272a24 24 0 1 1 48 0 24 24 0 1 1 -48 0zm104-16H304c8.8 0 16 7.2 16 16s-7.2 16-16 16H176c-8.8 0-16-7.2-16-16s7.2-16 16-16zM72 368a24 24 0 1 1 48 0 24 24 0 1 1 -48 0zm88 0c0-8.8 7.2-16 16-16H304c8.8 0 16 7.2 16 16s-7.2 16-16 16H176c-8.8 0-16-7.2-16-16z" />
+                </svg>
+                <div>
+                    <span>{{ $t('option_dev_msg_type') }}</span>
+                    <span>{{ $t('option_dev_msg_type_tip') }}</span>
+                </div>
+                <select @change="save" name="msg_type" v-model="runtimeData.tags.msgType">
+                    <option value="">{{ $t('option_dev_msg_type_auto') }}</option>
+                    <option v-for="item in BotMsgType" v-show="(typeof item == 'number')" :value="item" :key="item">{{
+                        BotMsgType[item] }}</option>
+                </select>
+            </div>
         </div>
         <div class="ss-card">
             <header>{{ $t('option_dev_test') }}</header>
@@ -201,11 +216,13 @@ import { runtimeData } from '@/function/msg'
 import app from '@/main'
 import { BrowserInfo, detect } from 'detect-browser'
 import packageInfo from '../../../package.json'
+import { BotMsgType } from '@/function/elements/information'
 
 export default defineComponent({
     name: 'ViewOptDev',
     data () {
         return {
+            BotMsgType: BotMsgType,
             runtimeData: runtimeData,
             save: save,
             ws_text: '',

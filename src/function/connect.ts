@@ -54,7 +54,10 @@ export class Connector {
             getBaseInfo()
         }
         websocket.onmessage = (e) => {
-            logger.add(LogType.WS, 'GET：' + e.data)
+            // 心跳包输出到日志里太烦人了
+            if (!e.data.startsWith("{\"post_type\":\"meta_event\",\"meta_event_type\":\"heartbeat\"")) {
+                logger.add(LogType.WS, 'GET：' + e.data)
+            }
             parse(e.data)
         }
         websocket.onclose = (e) => {

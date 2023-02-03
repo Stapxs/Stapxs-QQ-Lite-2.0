@@ -191,6 +191,7 @@
 </template>
 
 <script lang="ts">
+import Spacing from 'spacingjs/src/spacing'
 import cmp from 'semver-compare'
 import appInfo from '../package.json'
 import app from '@/main'
@@ -416,6 +417,10 @@ export default defineComponent({
             // 初始化完成
             logger.debug(this.$t('log_welcome'))
             logger.debug(this.$t('log_runtime') + ': ' + process.env.NODE_ENV)
+            // 加载布局检查工具
+            if (process.env.NODE_ENV == 'development') {
+                Spacing.start()
+            }
             // GA：加载谷歌分析功能
             if (!Option.get('close_ga') && process.env.NODE_ENV == 'production') {
                 const { property } = useState()

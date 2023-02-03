@@ -134,7 +134,7 @@ export default defineComponent({
       },
 
       /**
-       *  标记群组消息为已读）
+       *  标记群组消息为已读
        */
       readMsg(data: (UserFriendElem & UserGroupElem)) {
           const index = runtimeData.onMsgList.indexOf(data)

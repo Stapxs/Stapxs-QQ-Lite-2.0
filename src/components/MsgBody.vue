@@ -16,10 +16,12 @@
         <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id" v-show="!isMe || type == 'merge'">
         <div class="message-space" v-if="isMe && type != 'merge'"></div>
         <div :class="isMe ? (type == 'merge' ? 'message-body' : 'message-body me') : 'message-body'">
-            <a v-show="!isMe || type == 'merge'">{{ data.sender.card ? data.sender.card : data.sender.nickname }}{{
-                    runtimeData.chatInfo.show.type !== 'group' && type != 'forawrd' ? (isMe ? runtimeData.loginInfo.nickname : runtimeData.chatInfo.show.name)
-                        : ''
-            }}</a>
+            <a v-if="data.sender.card || data.sender.nickname" v-show="!isMe || type == 'merge'">
+                {{ data.sender.card ? data.sender.card : data.sender.nickname }}
+            </a>
+            <a v-else v-show="!isMe || type == 'merge'">
+                {{ isMe ? runtimeData.loginInfo.nickname : runtimeData.chatInfo.show.name }}
+            </a>
             <div>
                 <!-- 回复指示框 -->
                 <div v-if="data.source && data.source.seq" :class="isMe ? (type == 'merge' ? 'msg-replay' : 'msg-replay me') : 'msg-replay'"
