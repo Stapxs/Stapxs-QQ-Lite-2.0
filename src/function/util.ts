@@ -279,14 +279,14 @@ export function parseCQ(data: any) {
     if (textList !== null) {
         textList.forEach((item) => {
             // PS：顺便把被转义的方括号转回来
-            const trueText = item.replace('[', '').replace(']', '')
-                .replace('&#91;', '[').replace('&#93;', ']')
-            msg = msg.replace(trueText, `[CQ:text,text=${trueText}]`)
+            msg = msg.replace(item, `[CQ:text,text=${item}]`)
         })
     }
     // 拆分 CQCode
     reg = /\[.+?\]/g
+    msg = msg.replace('\n', '\\n')
     const list = msg.match(reg)
+    console.log(list)
     // 处理为 object
     const back: { [ket: string]: any }[] = []
     reg = /\[CQ:([^,]+),(.*)\]/g
@@ -301,7 +301,7 @@ export function parseCQ(data: any) {
                     const a = document.createElement('a')
                     a.innerHTML = key.substring(key.indexOf('=') + 1)
                     kv.push(a.innerText)
-                    info[kv[0]] = kv[1]
+                    info[kv[0]] = kv[1].replace('\\n', '\n')
                 })
                 // 对回复消息进行特殊处理
                 if(info.type == 'reply') {
@@ -340,6 +340,28 @@ export function parseOICQ1JSON(data: any) {
 }
 
 /**
+ * 将消息对象转换为 CQCode
+ * @param data 
+ * @returns CQCode 字符串
+ */
+export function parseJSONCQCode(data: any) {
+    let back = ''
+    data.forEach((item: any) => {
+        if(item.type != 'text') {
+            let body = '[CQ:' + item.type +','
+            Object.keys(item).forEach((key: any) => {
+                body += `${key}=${item[key]},`
+            })
+            body = body.substring(0, body.length - 1) + ']'
+            back += body
+        } else {
+            back += item.text
+        }
+    })
+    return back
+}
+
+/**
  * 加载历史消息
  * @param info 聊天基本信息
  */
@@ -349,7 +371,7 @@ export function loadHistory(info: BaseChatInfoElem) {
         new PopInfo().add(PopType.ERR, app.config.globalProperties.$t('pop_load_history_fail'), false)
     }
 }
-function loadHistoryMessage(id: number, type: string) {
+export function loadHistoryMessage(id: number, type: string, count = 20, echo = 'getChatHistoryFist') {
     // 加载历史消息
     // Note: https://github.com/takayama-lily/oicq/wiki/93.%E8%A7%A3%E6%9E%90%E6%B6%88%E6%81%AFID
     let msgid = null
@@ -382,24 +404,19 @@ function loadHistoryMessage(id: number, type: string) {
     }
     if (msgid != null) {
         // 发送请求
-        if(runtimeData.botInfo['go-cqhttp'] === true) {
-            // go-cqhttp： 获取历史消息内容不同
-            Connector.send(
-                'get_msg_history',
-                {
-                    'message_id': '0',
-                    'target_id': id,
-                    'group': type == 'group'
-                },
-                'getChatHistoryFist'
-            )
-        } else {
-            Connector.send(
-                'get_chat_history',
-                { 'message_id': msgid },
-                'getChatHistoryFist'
-            )
-        }
+        let name = 'get_chat_history'
+        if(runtimeData.botInfo['go-cqhttp'] === true)
+            name = 'get_msg_history'
+        Connector.send(
+            name,
+            {
+                message_id: msgid,
+                target_id: id,
+                group: type == 'group',
+                count: count
+            },
+            echo
+        )
         return true
     } else {
         return false
@@ -480,6 +497,7 @@ export default {
     htmlDecodeByRegExp,
     parseCQ,
     parseOICQ1JSON,
+    parseJSONCQCode,
     loadHistory,
     scrollToMsg,
     gitmojiToEmoji,

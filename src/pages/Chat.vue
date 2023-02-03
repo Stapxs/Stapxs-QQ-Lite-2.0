@@ -44,21 +44,28 @@
                 <hr>
                 <a>{{ $t('chat_no_more_msg') }}</a>
             </div>
-            <template v-for="(msg, index) in list">
-                <NoticeBody v-if="isShowTime((list[index - 1] ? list[index - 1].time : undefined), msg.time)" :key="'notice-time-' + index" :data="{sub_type: 'time', time: msg.time}"></NoticeBody>
-                <MsgBody
-                    v-if="msg.post_type === 'message'"
-                    :key="msg.message_id"
-                    :data="msg"
-                    @scrollToMsg="scrollToMsg"
-                    @contextmenu.prevent="showMsgMeun($event, msg)"
-                    @scrollButtom="imgLoadedScroll"
-                    @touchstart="msgStartMove($event, msg)"
-                    @touchmove="msgOnMove"
-                    @touchend="msgMoveEnd($event, msg)">
-                </MsgBody>
-                <NoticeBody v-if="msg.post_type === 'notice'" :key="'notice-' + index" :data="msg"></NoticeBody>
-            </template> 
+            <!-- 时间戳，在下滑加载的时候会显示，方便在大段的相连消息上让用户知道消息时间 -->
+            <NoticeBody v-if="tags.nowGetHistroy" :data="{sub_type: 'time', time: list[0].time}"></NoticeBody>
+            <TransitionGroup name="msglist" tag="div">
+                <template v-for="(msg, index) in list">
+                    <!-- 时间戳 -->
+                    <NoticeBody v-if="isShowTime((list[index - 1] ? list[index - 1].time : undefined), msg.time)" :key="'notice-time-' + index" :data="{sub_type: 'time', time: msg.time}"></NoticeBody>
+                    <!-- 消息体 -->
+                    <MsgBody
+                        v-if="msg.post_type === 'message'"
+                        :key="msg.message_id"
+                        :data="msg"
+                        @scrollToMsg="scrollToMsg"
+                        @contextmenu.prevent="showMsgMeun($event, msg)"
+                        @scrollButtom="imgLoadedScroll"
+                        @touchstart="msgStartMove($event, msg)"
+                        @touchmove="msgOnMove"
+                        @touchend="msgMoveEnd($event, msg)">
+                    </MsgBody>
+                    <!-- 其他通知消息 -->
+                    <NoticeBody v-if="msg.post_type === 'notice'" :key="'notice-' + index" :data="msg"></NoticeBody>
+                </template> 
+            </TransitionGroup>
         </div>
         <!-- 滚动到底部悬浮标志 -->
         <div class="new-msg" v-show="tags.showBottomButton" @click="scrollBottom(true)">
@@ -76,45 +83,49 @@
             <div>
                 <div>
                     <!-- 表情面板 -->
-                    <FacePan v-show="details[1].open" @addSpecialMsg="addSpecialMsg"></FacePan>
+                    <Transition name="pan">
+                        <FacePan v-show="details[1].open" @addSpecialMsg="addSpecialMsg"></FacePan>
+                    </Transition>
                     <!-- 精华消息 -->
-                    <div v-show="details[2].open && runtimeData.chatInfo.info.jin_info && runtimeData.chatInfo.info.jin_info.data.msg_list" class="ss-card jin-pan">
-                        <div>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="margin-top: 5px;"><path d="M511.1 63.1v287.1c0 35.25-28.75 63.1-64 63.1h-144l-124.9 93.68c-7.875 5.75-19.12 .0497-19.12-9.7v-83.98h-96c-35.25 0-64-28.75-64-63.1V63.1c0-35.25 28.75-63.1 64-63.1h384C483.2 0 511.1 28.75 511.1 63.1z"></path></svg>
-                            <span>{{ $t('chat_fun_menu_jin') }}</span>
-                            <svg @click="details[2].open = !details[2].open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path></svg>
-                        </div>
-                        <div class="jin-pan-body" @scroll="jinScroll">
-                            <div v-for="(item, index) in runtimeData.chatInfo.info.jin_info ? 
-                                    runtimeData.chatInfo.info.jin_info.data.msg_list : []"
-                                :key="'jin-' + index">
-                                <div>
-                                    <img :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.sender_uin}`">
+                    <Transition name="pan">
+                        <div v-show="details[2].open && runtimeData.chatInfo.info.jin_info && runtimeData.chatInfo.info.jin_info.data.msg_list" class="ss-card jin-pan">
+                            <div>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="margin-top: 5px;"><path d="M511.1 63.1v287.1c0 35.25-28.75 63.1-64 63.1h-144l-124.9 93.68c-7.875 5.75-19.12 .0497-19.12-9.7v-83.98h-96c-35.25 0-64-28.75-64-63.1V63.1c0-35.25 28.75-63.1 64-63.1h384C483.2 0 511.1 28.75 511.1 63.1z"></path></svg>
+                                <span>{{ $t('chat_fun_menu_jin') }}</span>
+                                <svg @click="details[2].open = !details[2].open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"></path></svg>
+                            </div>
+                            <div class="jin-pan-body" @scroll="jinScroll">
+                                <div v-for="(item, index) in runtimeData.chatInfo.info.jin_info ? 
+                                        runtimeData.chatInfo.info.jin_info.data.msg_list : []"
+                                    :key="'jin-' + index">
                                     <div>
-                                        <a>{{ item.sender_nick }}</a>
-                                        <span>{{ Intl.DateTimeFormat(trueLang,
-                                            { hour: "numeric", minute: "numeric" })
-                                            .format(new Date(item.sender_time * 1000)) }} {{ $t('chat_send') }}</span>
+                                        <img :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.sender_uin}`">
+                                        <div>
+                                            <a>{{ item.sender_nick }}</a>
+                                            <span>{{ Intl.DateTimeFormat(trueLang,
+                                                { hour: "numeric", minute: "numeric" })
+                                                .format(new Date(item.sender_time * 1000)) }} {{ $t('chat_send') }}</span>
+                                        </div>
                                     </div>
+                                    <div class="context">
+                                        <template v-for="(context, indexc) in item.msg_content"
+                                            :key="'jinc-' + index + '-' + indexc">
+                                            <span v-if="context.msg_type === 1">{{ context.text }}</span>
+                                            <img v-if="context.msg_type === 2" class="face" :src="require('./../assets/img/qq-face/' + context.face_index + '.gif')">
+                                            <img v-if="context.msg_type === 3" :src="context.image_url">
+                                        </template>
+                                    </div>
+                                    <span>{{ $t('chat_fun_menu_jin_sender',
+                                     { time: Intl.DateTimeFormat(trueLang,
+                                                { hour: "numeric", minute: "numeric" })
+                                                .format(new Date(item.add_digest_time * 1000)),name: item.add_digest_nick }) }}</span>
                                 </div>
-                                <div class="context">
-                                    <template v-for="(context, indexc) in item.msg_content"
-                                        :key="'jinc-' + index + '-' + indexc">
-                                        <span v-if="context.msg_type === 1">{{ context.text }}</span>
-                                        <img v-if="context.msg_type === 2" class="face" :src="require('./../assets/img/qq-face/' + context.face_index + '.gif')">
-                                        <img v-if="context.msg_type === 3" :src="context.image_url">
-                                    </template>
+                                <div class="jin-pan-load" v-show="tags.isJinLoading">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M120 256c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm160 0c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm104 56c-30.9 0-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56s-25.1 56-56 56z"></path></svg>
                                 </div>
-                                <span>{{ $t('chat_fun_menu_jin_sender',
-                                 { time: Intl.DateTimeFormat(trueLang,
-                                            { hour: "numeric", minute: "numeric" })
-                                            .format(new Date(item.add_digest_time * 1000)),name: item.add_digest_nick }) }}</span>
-                            </div>
-                            <div class="jin-pan-load" v-show="tags.isJinLoading">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M120 256c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm160 0c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm104 56c-30.9 0-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56s-25.1 56-56 56z"></path></svg>
                             </div>
                         </div>
-                    </div>
+                    </Transition>
                 </div>
                 <!-- 回复指示器 -->
                 <div :class="tags.isReply ? 'replay-tag show' : 'replay-tag'">
@@ -171,16 +182,28 @@
                     </svg>
                 </div>
                 <div>
-                    <textarea
-                        id="main-input"
-                        type="text"
-                        v-model="msg"
-                        :disabled="runtimeData.tags.openSideBar"
-                        @paste="addImg"
-                        @keydown="mainKey"
-                        @keyup="mainKeyUp"
-                        @click="selectSQ(), selectSQIn()">
-                    </textarea>
+                    <form @submit.prevent="mainSubmit">
+                        <input
+                            v-if="!Option.get('use_breakline')"
+                            id="main-input"
+                            type="text"
+                            v-model="msg"
+                            :disabled="runtimeData.tags.openSideBar"
+                            @paste="addImg"
+                            @keyup="mainKeyUp"
+                            @click="selectSQIn()">
+                        <textarea
+                            v-else
+                            id="main-input"
+                            type="text"
+                            v-model="msg"
+                            :disabled="runtimeData.tags.openSideBar"
+                            @paste="addImg"
+                            @keydown="mainKey"
+                            @keyup="mainKeyUp"
+                            @click="selectSQIn()">
+                        </textarea>
+                    </form>
                     <div @click="sendMsg">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512">
                             <path
@@ -215,7 +238,7 @@
                             :data="{sub_type: 'time', time: msg.time}">
                         </NoticeBody>
                         <!-- 合并转发消息忽略是不是自己的判定 -->
-                        <MsgBody :data="msg" :isMerge="true"></MsgBody>
+                        <MsgBody :data="msg" :type="'merge'"></MsgBody>
                     </template>
                 </div>
             </div>
@@ -253,10 +276,10 @@
                     <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M511.1 63.1v287.1c0 35.25-28.75 63.1-64 63.1h-144l-124.9 93.68c-7.875 5.75-19.12 .0497-19.12-9.7v-83.98h-96c-35.25 0-64-28.75-64-63.1V63.1c0-35.25 28.75-63.1 64-63.1h384C483.2 0 511.1 28.75 511.1 63.1z"/></svg></div>
                     <a>{{ $t('chat_msg_menu_reply') }}</a>
                 </div>
-                <!-- <div v-show="tags.menuDisplay.forward">
-           <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M503.7 226.2l-176 151.1c-15.38 13.3-39.69 2.545-39.69-18.16V272.1C132.9 274.3 66.06 312.8 111.4 457.8c5.031 16.09-14.41 28.56-28.06 18.62C39.59 444.6 0 383.8 0 322.3c0-152.2 127.4-184.4 288-186.3V56.02c0-20.67 24.28-31.46 39.69-18.16l176 151.1C514.8 199.4 514.8 216.6 503.7 226.2z"/></svg></div>
-           <a>{{ $t('chat_msg_menu_forward') }}</a>
-        </div> -->
+                <div @click="tags.showForwardPan = true" v-show="tags.menuDisplay.forward">
+                   <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M503.7 226.2l-176 151.1c-15.38 13.3-39.69 2.545-39.69-18.16V272.1C132.9 274.3 66.06 312.8 111.4 457.8c5.031 16.09-14.41 28.56-28.06 18.62C39.59 444.6 0 383.8 0 322.3c0-152.2 127.4-184.4 288-186.3V56.02c0-20.67 24.28-31.46 39.69-18.16l176 151.1C514.8 199.4 514.8 216.6 503.7 226.2z"/></svg></div>
+                   <a>{{ $t('chat_msg_menu_forward') }}</a>
+                </div>
                 <!-- <div v-show="tags.menuDisplay.select">
            <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M23.19 32C28.86 32 34.34 34.08 38.59 37.86L312.6 281.4C317.3 285.6 320 291.6 320 297.9C320 310.1 310.1 320 297.9 320H179.8L236.6 433.7C244.5 449.5 238.1 468.7 222.3 476.6C206.5 484.5 187.3 478.1 179.4 462.3L121.2 346L38.58 440.5C34.4 445.3 28.36 448 22.01 448C9.855 448 0 438.1 0 425.1V55.18C0 42.38 10.38 32 23.18 32H23.19z"/></svg></div>
            <a>{{ $t('chat_msg_menu_multiple_choice') }}</a>
@@ -280,51 +303,82 @@
             </div>
         </div>
         <!-- 群 / 好友信息弹窗 -->
-        <Info :chat="chat" :tags="tags" @close="openChatInfoPan" @loadFile="fileLoad"></Info>
+        <Transition>
+            <Info :chat="chat" :tags="tags" @close="openChatInfoPan" @loadFile="fileLoad"></Info>
+        </Transition>
         <!-- 图片发送器 -->
-        <div class="img-sender" v-show="imgCache.length > 0">
-            <div class="card ss-card">
-                <div class="hander">
-                    <span>{{ $t('chat_send_pic_title') }}</span>
-                    <button @click="sendMsg" class="ss-button">{{ $t('chat_send') }}</button>
-                </div>
-                <div class="imgs">
-                    <div v-for="(img64, index) in imgCache" :key="'sendImg-' + index">
-                        <div @click="deleteImg(index)">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
-                                <path
-                                    d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3 265.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256 310.6 150.6z" />
-                            </svg>
+        <Transition>
+            <div class="img-sender" v-show="imgCache.length > 0">
+                <div class="card ss-card">
+                    <div class="hander">
+                        <span>{{ $t('chat_send_pic_title') }}</span>
+                        <button @click="sendMsg" class="ss-button">{{ $t('chat_send') }}</button>
+                    </div>
+                    <div class="imgs">
+                        <div v-for="(img64, index) in imgCache" :key="'sendImg-' + index">
+                            <div @click="deleteImg(index)">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
+                                    <path
+                                        d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3 265.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256 310.6 150.6z" />
+                                </svg>
+                            </div>
+                            <img :src="img64">
                         </div>
-                        <img :src="img64">
+                    </div>
+                    <div class="sender">
+                        <svg @click="runSelectImg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-v-658eb408=""><path d="M0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM323.8 202.5c-4.5-6.6-11.9-10.5-19.8-10.5s-15.4 3.9-19.8 10.5l-87 127.6L170.7 297c-4.6-5.7-11.5-9-18.7-9s-14.2 3.3-18.7 9l-64 80c-5.8 7.2-6.9 17.1-2.9 25.4s12.4 13.6 21.6 13.6h96 32H424c8.9 0 17.1-4.9 21.2-12.8s3.6-17.4-1.4-24.7l-120-176zM112 192c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48z" data-v-658eb408=""></path></svg>
+                        <input type="text" @paste="addImg" :disabled="runtimeData.tags.openSideBar" @click="toMainInput" v-model="msg">
                     </div>
                 </div>
-                <div class="sender">
-                    <input type="text" @paste="addImg" :disabled="runtimeData.tags.openSideBar" @click="toMainInput" v-model="msg">
-                </div>
+                <div class="bg" @click="imgCache = []"></div>
             </div>
-            <div class="bg" @click="imgCache = []"></div>
-        </div>
+        </Transition>
+        <!-- 转发面板 -->
+        <Transition>
+            <div class="forward-pan" v-if="tags.showForwardPan">
+                <div class="ss-card card">
+                    <header>
+                        <span>{{ $t('chat_msg_forward_pan') }}</span>
+                        <svg @click="cancelForward" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-v-658eb408=""><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z" data-v-658eb408=""></path></svg>
+                    </header>
+                    <input @input="searchForward" :placeholder="$t('base_search')">
+                    <div>
+                        <div @click="forwardMsg(data)" v-for="data in forwardList" :key="'forwardList-' + data.user_id ? data.user_id : data.group_id">
+                            <img loading="lazy" :title="data.group_name ? data.group_name :
+                                data.remark === data.nickname ? data.nickname : data.remark + '（' + data.nickname + '）'" :src="data.user_id ?
+                                'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id :
+                                'https://p.qlogo.cn/gh/' + data.group_id + '/' + data.group_id + '/0'">
+                            <div>
+                                <p>{{ data.group_name ? data.group_name :
+                                        data.remark === data.nickname ? data.nickname : data.remark + '（' + data.nickname + '）'
+                                }}</p>
+                                <span>{{ data.group_id ? $t('chat_type_group')  : $t('chat_type_user')}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg" @click="cancelForward"></div>
+            </div>
+        </Transition>
     </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
 import app from '@/main'
 import SendUtil from '@/function/sender'
 import Option from '@/function/option'
 import Util from '@/function/util'
-
 import Info from '@/pages/Info.vue'
 import MsgBody from '@/components/MsgBody.vue'
 import NoticeBody from '@/components/NoticeBody.vue'
 import FacePan from '@/components/FacePan.vue'
 
+import { defineComponent, markRaw } from 'vue'
 import { parseMsgId, getTrueLang, loadHistory as loadHistoryFirst } from '@/function/util'
 import { Logger, LogType, PopInfo, PopType } from '@/function/base'
 import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
-import { BaseChatInfoElem, MsgItemElem, SQCodeElem, GroupMemberInfoElem } from '@/function/elements/information'
+import { BaseChatInfoElem, MsgItemElem, SQCodeElem, GroupMemberInfoElem, UserFriendElem, UserGroupElem, BotMsgType } from '@/function/elements/information'
 
 export default defineComponent({
     name: 'ViewChat',
@@ -332,13 +386,16 @@ export default defineComponent({
     components: { Info, MsgBody, NoticeBody, FacePan },
     data () {
         return {
+            Option: Option,
             runtimeData: runtimeData,
+            forwardList: runtimeData.userList,
             trueLang: getTrueLang(),
             tags: {
                 nowGetHistroy: false,
                 showBottomButton: true,
                 showMoreDetail: false,
                 showMsgMenu: false,
+                showForwardPan: false,
                 openedMenuMsg: {} as HTMLDivElement,
                 openChatInfo: false,
                 isReply: false,
@@ -417,9 +474,16 @@ export default defineComponent({
                 // 锁定加载防止反复触发
                 this.tags.nowGetHistroy = true
                 // 发起获取历史消息请求
+                let name = 'get_chat_history'
+                if(runtimeData.botInfo['go-cqhttp'] === true)
+                    name = 'get_msg_history'
                 Connector.send(
-                    'get_chat_history',
-                    { 'message_id': firstMsgId },
+                    name,
+                    {
+                        'message_id': firstMsgId,
+                        'target_id': runtimeData.chatInfo.show.id,
+                        'group': runtimeData.chatInfo.show.type
+                    },
                     'getChatHistory'
                 )
             }
@@ -468,16 +532,18 @@ export default defineComponent({
          * @param event 事件
          */
         mainKey (event: KeyboardEvent) {
-            const logger = new Logger()
-            // console.log(event.keyCode)
             if (!event.shiftKey && event.keyCode == 13) {
                 // enter 发送消息
                 if(this.msg != '') {
                     this.sendMsg()
                 }
-            } else if (event.keyCode == 8) {
-                // backspace 删除内容
-                this.selectSQ()
+            }
+        },
+        mainKeyUp(event: KeyboardEvent) {
+            const logger = new Logger()
+            // 发送完成后输入框会遗留一个换行，把它删掉 ……
+            if (!event.shiftKey && event.keyCode == 13 && this.msg == '\n') {
+                this.msg = ''
             }
             if(event.keyCode != 13) {
                 // 获取最后一个输入的符号用于判定 at
@@ -507,9 +573,14 @@ export default defineComponent({
                 }
             }
         },
-        mainKeyUp(event: KeyboardEvent) {
-            if (!event.shiftKey && event.keyCode == 13) {
-                this.msg = ''
+
+        /**
+         * 通过表单提交方式发送消息
+         * PS：主要用来解决一些奇奇怪怪的回车判定导致的问题
+         */
+        mainSubmit() {
+            if (this.msg != '') {
+                this.sendMsg()
             }
         },
 
@@ -527,33 +598,6 @@ export default defineComponent({
             document.getElementById('main-input')?.focus()
             this.tags.onAtFind = false
             this.atFindList = null
-        },
-
-        /**
-         * 选中当前输入框光标位置前面的一个 SQCode
-         */
-        selectSQ () {
-            var input = document.getElementById('main-input') as HTMLInputElement
-            // 如果文本框里本来就选中着什么东西就不触发了
-            if (input !== null && input.selectionStart === input.selectionEnd) {
-                // PS：这儿用来对删除前方是否有 [SQ:n] 特殊结构进行判断以便自动选中
-                var cursurPosition = -1
-                if (typeof input.selectionStart === 'number') {
-                    cursurPosition = input.selectionStart
-                }
-                // PS：只取光标前面的部分消息
-                const getSQCode = SendUtil.getSQList(this.msg.substring(0, cursurPosition))
-                if (getSQCode !== null) {
-                    const selectionStart = (this.msg.substring(0, cursurPosition)).lastIndexOf(getSQCode[getSQCode.length - 1])
-                    if (selectionStart !== -1 &&
-                        selectionStart + getSQCode[getSQCode.length - 1].length === this.msg.substring(0, cursurPosition).length) {
-                        this.$nextTick(() => {
-                            input.selectionStart = selectionStart
-                            input.selectionEnd = this.msg.substring(0, cursurPosition).length
-                        })
-                    }
-                }
-            }
         },
 
         /**
@@ -599,6 +643,10 @@ export default defineComponent({
             const msg = event.currentTarget as HTMLDivElement
             if(menu !== null && msg !== null) {
                 // 检查消息，确认菜单显示状态
+                if (data.sender.user_id === runtimeData.loginInfo.uin) {
+                    // 自己不显示提及
+                    this.tags.menuDisplay.at = false
+                }
                 if (data.sender.user_id === runtimeData.loginInfo.uin ||
                     runtimeData.chatInfo.info.me_info.role === 'admin' ||
                     runtimeData.chatInfo.info.me_info.role === 'owner') {
@@ -618,6 +666,13 @@ export default defineComponent({
                     this.tags.menuDisplay.copySelect = true
                     this.selectCache = selection.toString()
                 }
+                const nList = ['xml', 'json']
+                data.message.forEach((item: any) => {
+                    if(nList.indexOf(item.type as string) > 0) {
+                        // 如果包含以上消息类型，不能转发
+                        this.tags.menuDisplay.forward = false
+                    }
+                })
                 // 鼠标位置
                 const pointEvent = event as PointerEvent || window.event as PointerEvent
                 const pointX = pointEvent.offsetX
@@ -667,7 +722,7 @@ export default defineComponent({
             if (msg !== null) {
                 const msgId = msg.message_id
                 // 添加回复内容
-                // PS：这儿还是用就的方式 …… 因为新的调用不友好。回复消息不会被加入文本行，在消息发送器内有特殊判定。
+                // PS：这儿还是用旧的方式 …… 因为新的调用不友好。回复消息不会被加入文本行，在消息发送器内有特殊判定。
                 this.addSpecialMsg({ msgObj: { type: 'reply', id: msgId }, addText: false, addTop: true })
                 // 显示回复指示器
                 this.tags.isReply = true
@@ -692,6 +747,79 @@ export default defineComponent({
                 return item.type !== 'reply'
             })
             this.tags.isReply = false
+        },
+
+        /**
+         * 取消转发
+         */
+        cancelForward () {
+            this.forwardList = runtimeData.userList
+            this.tags.showForwardPan = false
+            this.closeMsgMenu()
+        },
+
+        /**
+         * 搜索转发列表
+         * @param value 搜索内容
+         */
+        searchForward (event: Event) {
+            const value = (event.target as HTMLInputElement).value
+            this.forwardList = runtimeData.userList.filter((item: UserFriendElem & UserGroupElem) => {
+                const name = (item.user_id ? (item.nickname + item.remark) : item.group_name).toLowerCase()
+                const id = item.user_id ? item.user_id : item.group_id
+                return name.indexOf(value.toLowerCase()) !== -1 || id.toString() === value
+            })
+        },
+
+        /**
+         * 转发消息
+         */
+        forwardMsg (data: UserFriendElem & UserGroupElem) {
+            if (this.selectedMsg) {
+                const msg = this.selectedMsg
+                const type = data.group_id ? 'group' : 'user'
+                const id = data.group_id ? data.group_id : data.user_id
+                // 关闭转发窗口
+                this.cancelForward()
+                // 将接收目标加入消息列表并跳转过去
+                if (runtimeData.onMsgList.indexOf(data) < 0) {
+                    runtimeData.onMsgList.push(data)
+                }
+                this.$nextTick(() => {
+                    const user = document.getElementById('user-' + id)
+                    if(user) {
+                        user.click()
+                    }
+                })
+                // 二次确认转发
+                const popInfo = {
+                    title: this.$t('chat_msg_forward_pan'),
+                    template: MsgBody,
+                    templateValue: markRaw({data: msg, type: 'forward'}),
+                    button: [
+                        {
+                            text: this.$t('btn_no'),
+                            fun: () => { runtimeData.popBoxList.shift() }
+                        },
+                        {
+                            text: this.$t('btn_yes'),
+                            master: true,
+                            fun: () => {
+                                let msgSend = msg.message
+                                if(runtimeData.tags.msgType == BotMsgType.CQCode) {
+                                    msgSend = Util.parseJSONCQCode(msgSend)
+                                }
+                                switch (type) {
+                                    case 'group': Connector.send('send_group_msg', { 'group_id': id, 'message': msgSend }, 'sendMsgBack_forward'); break
+                                    case 'user': Connector.send('send_private_msg', { 'user_id': id, 'message': msgSend }, 'sendMsgBack_forward'); break
+                                }
+                                runtimeData.popBoxList.shift()
+                            }
+                        }
+                    ]
+                }
+                runtimeData.popBoxList.push(popInfo)
+            }
         },
 
         /**
@@ -964,6 +1092,11 @@ export default defineComponent({
             this.imgCache = []
             this.scrollBottom()
             this.cancelReply()
+            // 移除输入框的焦点来关闭键盘
+            // const main = document.getElementById('main-input')
+            // if(main) {
+            //     main.blur()
+            // }
         },
 
         updateList(newLength: number, oldLength: number) {
@@ -974,6 +1107,12 @@ export default defineComponent({
                 // 设置最后一条消息以上都为已读
                 Connector.send(
                     'set_message_read',
+                    { message_id: this.list[this.list.length - 1].message_id },
+                    'setMessageRead'
+                )
+                // go-cqhttp：他们名字不一样
+                Connector.send(
+                    'mark_msg_as_read',
                     { message_id: this.list[this.list.length - 1].message_id },
                     'setMessageRead'
                 )
@@ -1244,3 +1383,28 @@ export default defineComponent({
     }
 })
 </script>
+
+<style scoped>
+/* 消息移除动画 */
+.msglist-move {
+    transition: all .5s;
+}
+
+.msglist-leave-active {
+    display: none;
+}
+
+/* 更多功能面板动画 */
+.pan-enter-active,
+.pan-leave-active {
+    transition: opacity 0.3s;
+}
+
+.pan-enter-from {
+    transform: translateX(20px);
+    opacity: 0;
+}
+.pan-leave-to {
+    opacity: 0;
+}
+</style>

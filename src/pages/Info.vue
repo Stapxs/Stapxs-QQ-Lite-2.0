@@ -38,7 +38,7 @@
                         </svg>
                     </div>
                 </div>
-                <div v-if="chat.show.type === 'group'">
+                <div v-if="chat.show.type === 'group'" v-show="Object.keys(chat.info.group_info).length > 0">
                     <header>
                         <span>{{ $t('chat_chat_info_introduction') }}</span>
                     </header>
@@ -112,11 +112,9 @@
             <div v-if="chat.show.type === 'group'" class="layui-tab layui-tab-brief"
                 style="overflow: hidden; display: flex;flex-direction: column;height: 100%;margin: 0;">
                 <ul class="layui-tab-title chat-info-tab">
-                    <li class="layui-this">{{ $t('chat_chat_info_member') }}</li>
-                    <li>{{ $t('chat_chat_info_notice') }}</li>
-                    <li>{{ $t('chat_chat_info_file') + `(${chat.info.group_files.total_cnt === undefined ? 0 :
-                            chat.info.group_files.total_cnt})`
-                    }}</li>
+                    <li id="info-pan-mumber" class="layui-this">{{ $t('chat_chat_info_member') }}</li>
+                    <li id="info-pan-notices" v-show="chat.info.group_notices && chat.info.group_notices.feeds && chat.info.group_notices.feeds.length > 0">{{ $t('chat_chat_info_notice') }}</li>
+                    <li v-show="chat.info.group_files.total_cnt && chat.info.group_files.total_cnt > 0">{{ $t('chat_chat_info_file') }}</li>
                     <li>{{ $t('chat_chat_info_config') }}</li>
                 </ul>
                 <div class="chat-info-tab-body layui-tab-content">
@@ -141,8 +139,11 @@
                     </div>
                     <div class="layui-tab-item bulletins">
                         <BulletinBody
-                            v-for="(item, index) in chat.info.group_notices === undefined ? [] : chat.info.group_notices.feeds"
-                            :data="item" :key="'bulletins-' + index"></BulletinBody>
+                            v-for="(item, index) in !chat.info.group_notices ? [] : chat.info.group_notices.feeds"
+                            :data="item"
+                            :key="'bulletins-' + index"
+                            :index="index">
+                        </BulletinBody>
                     </div>
                     <div class="layui-tab-item group-files" @scroll="fileLoad">
                         <div v-for="item in chat.info.group_files.file_list" :key="'file-' + item.id">

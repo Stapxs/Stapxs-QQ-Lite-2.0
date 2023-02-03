@@ -520,7 +520,8 @@
     }
     
     .opt-item select,
-    .opt-item input[type="text"] {
+    .opt-item input[type="text"],
+    .opt-item input[type="number"] {
         margin-left: calc(1.1rem + 20px);
         width: 100% !important;
         margin-top: 10px;

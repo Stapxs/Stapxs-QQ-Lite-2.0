@@ -12,6 +12,13 @@
     margin: 5px 0;
     font-size: 1rem;
 }
+.message.forward {
+    border: 2px solid var(--color-card-2);
+    width: calc(100% - 45px);
+    margin-bottom: 20px;
+    overflow-y: scroll;
+    max-height: 40vh;
+}
 .message > img {
     width: 35px;
     height: 35px;

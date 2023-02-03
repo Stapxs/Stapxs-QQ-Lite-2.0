@@ -6744,6 +6744,11 @@ sourcemap-codec@^1.4.8:
   resolved "https://registry.npmmirror.com/sourcemap-codec/-/sourcemap-codec-1.4.8.tgz#ea804bd94857402e6992d05a38ef1ae35a9ab4c4"
   integrity sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==
 
+spacingjs@^1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/spacingjs/-/spacingjs-1.0.7.tgz#549a26c201136d4d187f9861dbe02796b9a861a9"
+  integrity sha512-iQmfvdsrvpExLE0SgjVDC6sh/xIWJA2ilbZbRAKkY0n9MfbpSm+KnKHgplkFWsia4TIN+HgbdnA9B/aEu1vAHA==
+
 spdx-correct@^3.0.0:
   version "3.1.1"
   resolved "https://registry.npmmirror.com/spdx-correct/-/spdx-correct-3.1.1.tgz#dece81ac9c1e6713e5f7d1b6f17d468fa53d89a9"

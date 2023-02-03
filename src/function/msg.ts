@@ -46,7 +46,7 @@ export function parse(str: string) {
                 case 'getChatHistoryFist'   : saveMsgFist(msg); break
                 case 'getChatHistory'       : saveMsg(msg); break
                 case 'getForwardMsg'        : saveForwardMsg(msg.data); break
-                case 'sendMsgBack'          : showSendedMsg(msg); break
+                case 'sendMsgBack'          : showSendedMsg(msg, echoList); break
                 case 'getRoamingStamp'      : runtimeData.stickerCache = msg.data.reverse(); break
                 case 'getMoreGroupInfo'     : runtimeData.chatInfo.info.group_info = msg.data.data; break
                 case 'getMoreUserInfo'      : runtimeData.chatInfo.info.user_info = msg.data.data.result.buddy.info_list[0]; break
@@ -61,10 +61,13 @@ export function parse(str: string) {
                 case 'downloadGroupFile'    : downloadGroupFile(msg); break
                 case 'getVideoUrl'          : getVideoUrl(msg); break
                 case 'getGroupDirFiles'     : saveDirFile(msg); break
+                case 'readMemberMessage'    : readMemberMessage(msg.data[0]); break
             }
         }
     } else {
         switch (msg.post_type) {
+            // 心跳包
+            case 'meta_event'           : livePackage(msg); break
             // gocqhttp 自动发送的消息回调和其他消息有区分
             case 'message_sent'         : msg.post_type = 'message'
             // eslint-disable-next-line
@@ -100,17 +103,19 @@ function saveBotInfo(data: { [key: string]: any }) {
     }
     // 加载切换兼容功能
     switch (data.app_name) {
-        // go-cqhttp 兼容， CQCode <-> JSON
+        // go-cqhttp：消息格式 CQCode <-> JSON
         case 'go-cqhttp': {
             runtimeData.tags.msgType = BotMsgType.CQCode
             break
         }
-        // oicq1 兼容，JSON_OICQ_1 <-> JSON
+        // oicq1：消息格式 JSON_OICQ_1 <-> JSON
         case 'oicq': {
             runtimeData.tags.msgType = BotMsgType.JSON_OICQ_1
             break
         }
     }
+    // 加载设置项内的兼容功能，覆盖此处的设置（如果有的话）
+    Option.runAS('msg_type', Number(Option.get('msg_type')))
 }
 
 /**
@@ -203,10 +208,17 @@ function saveMsgFist(msg: any) {
                 msg.data[i] = Util.parseOICQ1JSON(msg.data[i])
             }
         }
+        // go-cqhttp：返回的列表是倒的
+        if(runtimeData.botInfo.app_name == 'go-cqhttp') {
+            msg.data.reverse()
+        }
+        // 检查必要字段
+        msg.data.forEach((item: any) => {
+            if(!item.post_type) {
+                item.post_type = 'message'
+            }
+        })
         runtimeData.messageList = msg.data
-        // setTimeout(() => {
-        //   this.$refs.chat.scrollBottom()
-        // }, 500)
     }
 }
 
@@ -261,7 +273,7 @@ function saveForwardMsg(data: any) {
     runtimeData.mergeMessageList = data
 }
 
-function showSendedMsg(msg: any) {
+function showSendedMsg(msg: any, echoList: string[]) {
     if (msg.error !== null && msg.error !== undefined) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_send_msg_err', { code: msg.error }))
     } else {
@@ -275,6 +287,10 @@ function showSendedMsg(msg: any) {
                 { 'message_id': msg.message_id },
                 'getSendMsg_' + msg.message_id + '_0'
             )
+        }
+        if(echoList[1] == 'forward') {
+            // PS：这儿写是写了转发成功，事实上不确定消息有没有真的发送出去（
+            popInfo.add(PopType.INFO, app.config.globalProperties.$t('chat_chat_forward_success'))
         }
     }
 }
@@ -338,18 +354,21 @@ function revokeMsg(msg: any) {
             }
         })
         if (msgGet !== null && msgIndex !== -1) {
-          runtimeData.messageList[msgIndex].revoke = true
-          if(msgGet.sender.user_id !== runtimeData.loginInfo.uin) {
-              // 显示撤回提示
-              const list = runtimeData.messageList
-              if (msgIndex !== -1) {
-                list.splice((msgIndex + 1), 0, msg)
-              } else {
-                list.push(msg)
+              runtimeData.messageList[msgIndex].revoke = true
+              if(runtimeData.messageList[msgIndex].sender.user_id != runtimeData.loginInfo.uin) {
+                runtimeData.messageList.splice(msgIndex, 1)
               }
-          }
+            if (msgGet.sender.user_id !== runtimeData.loginInfo.uin) {
+                // 显示撤回提示
+                const list = runtimeData.messageList
+                if (msgIndex !== -1) {
+                    list.splice((msgIndex + 1), 0, msg)
+                } else {
+                    list.push(msg)
+                }
+            }
         } else {
-          new Logger().error(app.config.globalProperties.$t('log_revoke_miss'))
+            new Logger().error(app.config.globalProperties.$t('log_revoke_miss'))
         }
     }
     // // 尝试撤回通知
@@ -502,6 +521,8 @@ function newMsg(data: any) {
     // oicq1：消息格式兼容
     id = id ? id : (data.group_id ? data.group_id : data.user_id)
     const sender = data.sender.user_id
+    // go-cqhttp：消息格式兼容
+    id = data.target_id ? data.target_id : data.group_id
     // 消息回调检查
     // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复
     if (Option.get('send_reget') !== true && sender === runtimeData.loginInfo.uin) {
@@ -532,6 +553,7 @@ function newMsg(data: any) {
     // PS：在消息列表内的永远会刷新，不需要被提及
     const get = runtimeData.onMsgList.filter((item, index) => {
         if(Number(id) === item.user_id || Number(id) === item.group_id) {
+            runtimeData.onMsgList[index].message_id = data.message_id
             if(data.message_type === 'group') {
                 const name = (data.sender.card && data.sender.card !== '') ? data.sender.card : data.sender.nickname
                 runtimeData.onMsgList[index].raw_msg = name + ': ' + data.raw_message
@@ -682,6 +704,28 @@ function saveJin (data: any) {
     }
 }
 
+/**
+ * 将这条消息以上的所有消息标记为已读
+ * @param data 消息
+ */
+function readMemberMessage(data: any) {
+    Connector.send('set_message_read', {
+        message_id: data.message_id
+    }, 'setMessageRead')
+    // go-cqhttp：他们名字不一样
+    Connector.send('mark_msg_as_read', {
+        message_id: data.message_id
+    }, 'setMessageRead')
+}
+
+/**
+ * 心跳包处理
+ * @param msg 
+ */
+function livePackage(msg: any) {
+    //
+}
+
 // ==============================================================
 
 const notificationList: Notification[] = []
@@ -691,7 +735,8 @@ const baseRuntime = {
         firstLoad: false,
         canLoadHistory: true,
         openSideBar: false,
-        viewer: { index: 0 }
+        viewer: { index: 0 },
+        msgType: BotMsgType.JSON
     },
     chatInfo: {
         show: { type: '', id: 0, name: '', avatar: '' },

@@ -10,19 +10,21 @@
  -->
 
 <template>
-    <div :class="'message' + (isMerge ? ' merge' : '') + (data.revoke ? ' revoke' : '') + (isMe ? ' me': '')" :data-raw="getMsgRawTxt(data.message)"
+    <div :class="'message' + (type ? ' ' + type : '') + (data.revoke ? ' revoke' : '') + (isMe ? ' me': '')" :data-raw="getMsgRawTxt(data.message)"
         :id="'chat-' + getSeq(data.message_id)" :data-sender="data.sender.user_id" :data-time="data.time"
         @mouseleave="hiddenUserInfo">
-        <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id" v-show="!isMe || isMerge">
-        <div class="message-space" v-if="isMe && !isMerge"></div>
-        <div :class="isMe ? (isMerge ? 'message-body' : 'message-body me') : 'message-body'">
-            <a v-show="!isMe || isMerge">{{ data.sender.card ? data.sender.card : data.sender.nickname }}{{
-                    runtimeData.chatInfo.show.type !== 'group' ? (isMe ? runtimeData.loginInfo.nickname : runtimeData.chatInfo.show.name)
-                        : ''
-            }}</a>
+        <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id" v-show="!isMe || type == 'merge'">
+        <div class="message-space" v-if="isMe && type != 'merge'"></div>
+        <div :class="isMe ? (type == 'merge' ? 'message-body' : 'message-body me') : 'message-body'">
+            <a v-if="data.sender.card || data.sender.nickname" v-show="!isMe || type == 'merge'">
+                {{ data.sender.card ? data.sender.card : data.sender.nickname }}
+            </a>
+            <a v-else v-show="!isMe || type == 'merge'">
+                {{ isMe ? runtimeData.loginInfo.nickname : runtimeData.chatInfo.show.name }}
+            </a>
             <div>
                 <!-- 回复指示框 -->
-                <div v-if="data.source && data.source.seq" :class="isMe ? (isMerge ? 'msg-replay' : 'msg-replay me') : 'msg-replay'"
+                <div v-if="data.source && data.source.seq" :class="isMe ? (type == 'merge' ? 'msg-replay' : 'msg-replay me') : 'msg-replay'"
                     @click="scrollToMsg(data.source.seq)">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                         <path
@@ -64,7 +66,7 @@
                     </div>
 
                     <span v-else-if="item.type == 'forward'" class="msg-unknown" @click="View.getForwardMsg(item.id)">{{ $t('chat_show_forward') }}</span>
-                    <div :data-seq="getSeq(item.id).toString()" @click="scrollToMsg(getSeq(item.id).toString())" v-else-if="item.type == 'reply'" :class="isMe ? (isMerge ? 'msg-replay' : 'msg-replay me') : 'msg-replay'">
+                    <div :data-seq="getSeq(item.id).toString()" @click="scrollToMsg(getSeq(item.id).toString())" v-else-if="item.type == 'reply'" :class="isMe ? (type == 'merge' ? 'msg-replay' : 'msg-replay me') : 'msg-replay'">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                         <path
                             d="M8.31 189.9l176-151.1c15.41-13.3 39.69-2.509 39.69 18.16v80.05C384.6 137.9 512 170.1 512 322.3c0 61.44-39.59 122.3-83.34 154.1c-13.66 9.938-33.09-2.531-28.06-18.62c45.34-145-21.5-183.5-176.6-185.8v87.92c0 20.7-24.31 31.45-39.69 18.16l-176-151.1C-2.753 216.6-2.784 199.4 8.31 189.9z">
@@ -110,7 +112,7 @@ import app from '@/main'
 
 export default defineComponent({
     name: 'MsgBody',
-    props: ['data', 'isMerge'],
+    props: ['data', 'type'],
     data () {
         return {
             getSizeFromBytes: Util.getSizeFromBytes,
@@ -151,7 +153,7 @@ export default defineComponent({
          */
         getAtClass (who: number | string) {
             let back = 'msg-at'
-            if (this.isMe && !(this.isMerge)) {
+            if (this.isMe && this.type != 'merge') {
                 back += ' me'
             }
             if (runtimeData.loginInfo.uin == who || who == 'all') {

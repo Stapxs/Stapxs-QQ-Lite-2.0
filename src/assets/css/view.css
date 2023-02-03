@@ -262,6 +262,7 @@ html, body {
 }
 
 .friend-body {
+    user-select: none;
     cursor: pointer;
     display: flex;
     flex-direction: row;
@@ -284,6 +285,7 @@ html, body {
 }
 .friend-body img {
     border: 2px solid var(--color-card-2);
+    pointer-events: none;
     border-radius: 7px;
     height: 50px;
     width: 50px;
@@ -291,6 +293,7 @@ html, body {
 .friend-body > svg {
     background: var(--color-main);
     fill: var(--color-font-1-r);
+    pointer-events: none;
     border-radius: 7px;
     padding: 10px;
     height: 30px;
@@ -830,7 +833,7 @@ html, body {
         flex-direction: row;
         height: 75px;
         width: 100%;
-        z-index: 10;
+        z-index: 20;
     }
     .main-body > ul > li {
         padding-top: 15px !important;
@@ -955,7 +958,7 @@ html, body {
 }
 
 /* 全局通用弹窗 */
-@media (max-width: 400px) {
+@media (max-width: 500px) {
     .pop-box-body {
         width: calc(100% - 80px);
         transform: unset !important;
@@ -971,4 +974,27 @@ html, body {
 /* 其他覆盖样式 */
 .layui-tab-bar {
     display: none;
+}
+
+/* 全局淡入淡出动画 */
+.v-enter-active,
+.v-leave-active {
+    transition: all 0.4s ease;
+}
+.v-enter-active>div.ss-card,
+.v-leave-active>div.ss-card {
+    transition: all 0.2s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+    opacity: 0;
+}
+/* 如果里面有卡片，触发卡片浮入浮出动画 */
+/* TODO: 对于本来就使用 translate 定位的卡片会失效（或者出问题） */
+.v-enter-from > div.ss-card {
+    transform: translateY(-20px);
+}
+.v-leave-to > div.ss-card {
+    transform: translateY(20px);
 }

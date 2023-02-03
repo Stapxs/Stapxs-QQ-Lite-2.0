@@ -233,5 +233,20 @@
   "wel_home_tip": "下面是一点点简单的使用引导 …… 如果不想看可以直接戳跳过（小声），但是也没多长啦",
   "wel_select_language": "选择语言",
   "wel_finish": "该说的都说了 —— 那么就可以愉快的用啦（大声），如果遇到什么奇怪的问题，尽管来 GitHub 仓库问哦。",
-  "chat_msg_menu_at": "提及"
+  "chat_msg_menu_at": "提及",
+  "option_view_view": "页面",
+  "option_view_initial_scale": "缩放比例",
+  "option_view_initial_scale_tip": "调整页面在移动端的缩放比例",
+  "chat_readed": "已标记为已读",
+  "chat_type_group": "群组",
+  "chat_type_user": "好友",
+  "chat_chat_forward_success": "消息已转发",
+  "chat_msg_forward_pan": "转发消息",
+  "option_dev_chat_use_breakline": "使用 shift enter 换行",
+  "option_dev_chat_use_breakline_tip": "I have a shift, I have a enter ...",
+  "option_dev_chat_use_breakline_tip_1": "开启 shift enter 换行可能会在一些拥有特殊选词模式的输入法上出现问题，如 微软注音2003、新注音2003 和 绝大部分很早期的拼音输入法；如果在使用的时候遇到问题可以尝试关闭此功能。（或者换个更现代的输入法）",
+  "bulletin_show_tip": "点击展开",
+  "option_dev_msg_type": "消息类型",
+  "option_dev_msg_type_tip": "[CQ:face,id=1]你好啊👋，这个选项将会强制覆盖自动检测",
+  "option_dev_msg_type_auto": "自动检测"
 }
