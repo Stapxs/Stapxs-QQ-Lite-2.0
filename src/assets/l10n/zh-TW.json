@@ -69,7 +69,7 @@
   "home_card_save_pwd": "儲存密碼",
   "home_card_title": "連線到 OICQ HTTP",
   "home_title": "主頁",
-  "l10n_author": "Doodle Huang，kuohuanhuan",
+  "l10n_author": "Doodle Huang, kuohuanhuan",
   "l10n_description": "你好！這是 Stapxs QQ Lite 內建的繁體中文（台灣）語系。",
   "l10n_name": "繁體中文（台灣）",
   "l10n_version": "2.1.10",
@@ -244,10 +244,10 @@
   "chat_chat_forward_success": "訊息已轉傳",
   "chat_msg_forward_pan": "轉傳到",
   "option_dev_chat_use_breakline": "啟用 Shift + Enter 換行",
-  "option_dev_chat_use_breakline_tip": "I have a shift, I have a enter ...",
-  "option_dev_chat_use_breakline_tip_1": "啟用 Shift + Enter 換行後可能會在使用一些具有特殊選詞方式的輸入法時遇到问题，如 微軟注音2003、新注音2003 以及 絕大部分很早期的拼音輸入法；如果在使用的時候遇到問題，可以嘗試關閉此功能。（或者改用更現代的輸入法）",
+  "option_dev_chat_use_breakline_tip": "I have a shift, I have an enter ...",
+  "option_dev_chat_use_breakline_tip_1": "啟用 Shift + Enter 換行後可能會在使用一些具有特殊選詞方式的輸入法時遇到问题，如「微軟注音 2003」、「新注音 2003」以及絕大部分較為早期的拼音輸入法；如果在使用的時候遇到問題，可以嘗試關閉此功能（或者改用更現代的輸入法）。",
   "bulletin_show_tip": "點選以展開",
   "option_dev_msg_type": "訊息類型",
-  "option_dev_msg_type_tip": "[CQ:face,id=1]你好啊👋，這個選項將會強制取代預設設定",
+  "option_dev_msg_type_tip": "[CQ:face,id=1] 嗨👋，這個選項將會強制取代預設設定",
   "option_dev_msg_type_auto": "自動偵測"
 }
