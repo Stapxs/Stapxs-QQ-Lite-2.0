@@ -480,9 +480,10 @@ export default defineComponent({
                 Connector.send(
                     name,
                     {
-                        'message_id': firstMsgId,
-                        'target_id': runtimeData.chatInfo.show.id,
-                        'group': runtimeData.chatInfo.show.type
+                        message_id: firstMsgId,
+                        target_id: runtimeData.chatInfo.show.id,
+                        group: runtimeData.chatInfo.show.type == 'group',
+                        count: 20
                     },
                     'getChatHistory'
                 )
@@ -661,8 +662,9 @@ export default defineComponent({
                 }
                 const selection = document.getSelection()
                 const textBody = selection?.anchorNode?.parentElement
-                if(textBody && textBody.className.indexOf('msg-text') > -1) {
-                    // 用于判定是否选中了 msg-text
+                if(textBody && textBody.className.indexOf('msg-text') > -1 &&
+                    selection.focusNode == selection.anchorNode) {
+                    // 用于判定是否选中了 msg-text 且开始和结束是同一个 Node（防止跨消息复制）
                     this.tags.menuDisplay.copySelect = true
                     this.selectCache = selection.toString()
                 }
@@ -828,15 +830,19 @@ export default defineComponent({
         copyMsg () {
             const msg = this.selectedMsg
             if (msg !== null) {
+                // 如果消息体没有简述消息的话 ……
+                if(!msg.raw_message) {
+                    msg.raw_message = Util.getMsgRawTxt(msg.message)
+                }
                 const popInfo = new PopInfo()
                 app.config.globalProperties.$copyText(msg.raw_message).then(() => {
                     popInfo.add(PopType.INFO, this.$t('pop_chat_msg_menu_copy_success'), true)
-                    this.closeMsgMenu()
                 }, (e: any) => {
-                    new Logger().error('复制消息失败：' + e)
+                    console.log(e)
                     popInfo.add(PopType.ERR, this.$t('pop_chat_msg_menu_copy_err'), true)
                 })
             }
+            this.closeMsgMenu()
         },
 
         /**
@@ -847,12 +853,12 @@ export default defineComponent({
                 const popInfo = new PopInfo()
                 app.config.globalProperties.$copyText(this.selectCache).then(() => {
                     popInfo.add(PopType.INFO, this.$t('pop_chat_msg_menu_copy_success'), true)
-                    this.closeMsgMenu()
                 }, (e: any) => {
-                    new Logger().error('复制消息失败：' + e)
+                    console.log(e)
                     popInfo.add(PopType.ERR, this.$t('pop_chat_msg_menu_copy_err'), true)
                 })
             }
+            this.closeMsgMenu()
         },
 
         /**
@@ -1092,11 +1098,6 @@ export default defineComponent({
             this.imgCache = []
             this.scrollBottom()
             this.cancelReply()
-            // 移除输入框的焦点来关闭键盘
-            // const main = document.getElementById('main-input')
-            // if(main) {
-            //     main.blur()
-            // }
         },
 
         updateList(newLength: number, oldLength: number) {

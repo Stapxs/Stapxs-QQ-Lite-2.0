@@ -278,15 +278,14 @@ export function parseCQ(data: any) {
     const textList = msg.match(reg)
     if (textList !== null) {
         textList.forEach((item) => {
-            // PS：顺便把被转义的方括号转回来
+            item = item.replace(']', '').replace('[', '')
             msg = msg.replace(item, `[CQ:text,text=${item}]`)
         })
     }
     // 拆分 CQCode
     reg = /\[.+?\]/g
-    msg = msg.replace('\n', '\\n')
+    msg = msg.replaceAll('\n', '\\n')
     const list = msg.match(reg)
-    console.log(list)
     // 处理为 object
     const back: { [ket: string]: any }[] = []
     reg = /\[CQ:([^,]+),(.*)\]/g
@@ -301,8 +300,18 @@ export function parseCQ(data: any) {
                     const a = document.createElement('a')
                     a.innerHTML = key.substring(key.indexOf('=') + 1)
                     kv.push(a.innerText)
-                    info[kv[0]] = kv[1].replace('\\n', '\n')
+                    info[kv[0]] = kv[1]
                 })
+                // 对文本消息特殊处理
+                if(info.type == 'text') {
+                    info.text = RegExp.$2
+                        .substring(RegExp.$2.lastIndexOf('=') + 1)
+                        .replaceAll('\\n', '\n')
+                    // 对 html 转义字符进行反转义
+                    const a = document.createElement('a')
+                    a.innerHTML = info.text
+                    info.text = a.innerText
+                }
                 // 对回复消息进行特殊处理
                 if(info.type == 'reply') {
                     data.source = {

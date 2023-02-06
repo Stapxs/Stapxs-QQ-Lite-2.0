@@ -69,14 +69,25 @@ export function parse(str: string) {
             // 心跳包
             case 'meta_event'           : livePackage(msg); break
             // gocqhttp 自动发送的消息回调和其他消息有区分
-            case 'message_sent'         : msg.post_type = 'message'
-            // eslint-disable-next-line
+            case 'message_sent'         :
             case 'message'              : newMsg(msg); break
             case 'notice'               : {
-                switch (msg.sub_type) {
-                    case 'recall'           : revokeMsg(msg); break
+                if(runtimeData.botInfo.app_name == 'go-cqhttp') {
+                    // go-cqhttp：通知消息子类别是 notice_type
+                    switch (msg.notice_type) {
+                        case 'group_recall'     : msg.notice_type = 'group'
+                        // eslint-disable-next-line
+                        case 'friend_recall'    : msg.notice_type = 'friend'
+                        // eslint-disable-next-line
+                        case 'recall'           : revokeMsg(msg); break
+                    }
+                    break
+                } else {
+                    switch (msg.sub_type) {
+                        case 'recall'           : revokeMsg(msg); break
+                    }
+                    break
                 }
-                break
             }
         }
     }
@@ -194,10 +205,14 @@ function saveGroupMember(data: GroupMemberInfoElem[]) {
 }
 
 function saveMsgFist(msg: any) {
+    runtimeData.messageList = []
     if (msg.error !== null && (msg.error !== undefined || msg.status === 'failed')) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error | msg.retcode }))
-        runtimeData.messageList = []
     } else {
+        // go-cqhttp：返回的列表是倒的
+        if(runtimeData.botInfo.app_name == 'go-cqhttp') {
+            msg.data.reverse()
+        }
         // 对消息进行转换
         if (runtimeData.tags.msgType === BotMsgType.CQCode) {
             for (let i = 0; i < msg.data.length; i++) {
@@ -207,10 +222,6 @@ function saveMsgFist(msg: any) {
             for (let i = 0; i < msg.data.length; i++) {
                 msg.data[i] = Util.parseOICQ1JSON(msg.data[i])
             }
-        }
-        // go-cqhttp：返回的列表是倒的
-        if(runtimeData.botInfo.app_name == 'go-cqhttp') {
-            msg.data.reverse()
         }
         // 检查必要字段
         msg.data.forEach((item: any) => {
@@ -227,6 +238,10 @@ function saveMsg(msg: any) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error | msg.retcode }))
     } else {
         const items = msg.data
+        // go-cqhttp：返回的列表是倒的
+        if(runtimeData.botInfo.app_name == 'go-cqhttp') {
+            items.reverse()
+        }
         items.pop() // 去除最后一条重复的消息，获取历史消息会返回当前消息 **以及** 之前的 N-1 条
         if (items.length < 1) {
             runtimeData.tags.canLoadHistory = false
@@ -242,6 +257,12 @@ function saveMsg(msg: any) {
                 items[i] = Util.parseOICQ1JSON(items[i])
             }
         }
+        // 检查必要字段
+        msg.data.forEach((item: any) => {
+            if(!item.post_type) {
+                item.post_type = 'message'
+            }
+        })
         runtimeData.messageList = items.concat(runtimeData.messageList)
     }
 }
@@ -253,7 +274,6 @@ function saveForwardMsg(data: any) {
         data = data.messages
     }
 
-    console.log(data)
     // 格式化不规范消息格式
     for (let i = 0; i < data.length; i++) {
         if(!data[i].sender) {
@@ -268,7 +288,6 @@ function saveForwardMsg(data: any) {
             data[i] = Util.parseCQ(data[i])
         }
     }
-    console.log(data)
     // 处理
     runtimeData.mergeMessageList = data
 }
@@ -518,11 +537,20 @@ function newMsg(data: any) {
         data = Util.parseOICQ1JSON(data)
     }
     let id = data.from_id ? data.from_id : data.group_id
-    // oicq1：消息格式兼容
-    id = id ? id : (data.group_id ? data.group_id : data.user_id)
     const sender = data.sender.user_id
+    // oicq1：消息格式兼容
+    if(runtimeData.botInfo.app_name == 'oicq') {
+        id = data.group_id ? data.group_id : data.user_id
+    }
     // go-cqhttp：消息格式兼容
-    id = data.target_id ? data.target_id : data.group_id
+    if(runtimeData.botInfo.app_name == 'go-cqhttp') {
+        if(data.post_type == 'message_sent') {
+            id = data.group_id ? data.group_id : data.target_id
+            data.post_type = 'message'
+        } else {
+            id = data.group_id ? data.group_id : data.user_id
+        }
+    }
     // 消息回调检查
     // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复
     if (Option.get('send_reget') !== true && sender === runtimeData.loginInfo.uin) {
@@ -565,6 +593,14 @@ function newMsg(data: any) {
         }
         return false
     })
+    // 对于其他不在消息里标记 atme、atall 的处理
+    if(data.atme == undefined || data.atall == undefined) {
+        data.message.forEach((item: any) => {
+            if(item.type == 'at' && item.qq == runtimeData.loginInfo.uin) {
+                data.atme = true
+            }
+        })
+    }
     // (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息) 这些情况需要进行新消息处理
     if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
         // (发送者没有被打开 || 窗口被最小化) 这些情况需要进行消息通知
