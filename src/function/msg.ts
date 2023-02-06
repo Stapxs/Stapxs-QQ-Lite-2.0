@@ -232,7 +232,7 @@ function saveMsg(msg: any) {
             runtimeData.tags.canLoadHistory = false
             return
         }
-        // go-cqhttp：返回的列表是倒的
+        // go-cqhttp：返回的列表是倒的而且不用去重
         if(runtimeData.botInfo.app_name == 'go-cqhttp') {
             msg.data.reverse()
         }
@@ -246,6 +246,12 @@ function saveMsg(msg: any) {
                 items[i] = Util.parseOICQ1JSON(items[i])
             }
         }
+        // 检查必要字段
+        msg.data.forEach((item: any) => {
+            if(!item.post_type) {
+                item.post_type = 'message'
+            }
+        })
         runtimeData.messageList = items.concat(runtimeData.messageList)
     }
 }
@@ -257,7 +263,6 @@ function saveForwardMsg(data: any) {
         data = data.messages
     }
 
-    console.log(data)
     // 格式化不规范消息格式
     for (let i = 0; i < data.length; i++) {
         if(!data[i].sender) {
@@ -272,7 +277,6 @@ function saveForwardMsg(data: any) {
             data[i] = Util.parseCQ(data[i])
         }
     }
-    console.log(data)
     // 处理
     runtimeData.mergeMessageList = data
 }
@@ -522,11 +526,14 @@ function newMsg(data: any) {
         data = Util.parseOICQ1JSON(data)
     }
     let id = data.from_id ? data.from_id : data.group_id
-    const sender = data.sender.user_id
+    let sender = data.sender.user_id
     // oicq1：消息格式兼容
     id = id ? id : (data.group_id ? data.group_id : data.user_id)
     // go-cqhttp：消息格式兼容
-    id = id ? id : (data.target_id ? data.target_id : data.group_id)
+    if(runtimeData.botInfo.app_name == 'go-cqhttp') {
+        sender = data.target_id
+        id = data.target_id ? data.target_id : data.group_id
+    }
     // 消息回调检查
     // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复
     if (Option.get('send_reget') !== true && sender === runtimeData.loginInfo.uin) {
@@ -569,6 +576,14 @@ function newMsg(data: any) {
         }
         return false
     })
+    // 对于其他不在消息里标记 atme、atall 的处理
+    if(data.atme == undefined || data.atall == undefined) {
+        data.message.forEach((item: any) => {
+            if(item.type == 'at' && item.qq == runtimeData.loginInfo.uin) {
+                data.atme = true
+            }
+        })
+    }
     // (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息) 这些情况需要进行新消息处理
     if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
         // (发送者没有被打开 || 窗口被最小化) 这些情况需要进行消息通知

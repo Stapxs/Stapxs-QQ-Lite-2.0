@@ -480,9 +480,10 @@ export default defineComponent({
                 Connector.send(
                     name,
                     {
-                        'message_id': firstMsgId,
-                        'target_id': runtimeData.chatInfo.show.id,
-                        'group': runtimeData.chatInfo.show.type
+                        message_id: firstMsgId,
+                        target_id: runtimeData.chatInfo.show.id,
+                        group: runtimeData.chatInfo.show.type == 'group',
+                        count: 20
                     },
                     'getChatHistory'
                 )
@@ -833,7 +834,7 @@ export default defineComponent({
                     popInfo.add(PopType.INFO, this.$t('pop_chat_msg_menu_copy_success'), true)
                     this.closeMsgMenu()
                 }, (e: any) => {
-                    new Logger().error('复制消息失败：' + e)
+                    console.log(e)
                     popInfo.add(PopType.ERR, this.$t('pop_chat_msg_menu_copy_err'), true)
                 })
             }
@@ -849,7 +850,7 @@ export default defineComponent({
                     popInfo.add(PopType.INFO, this.$t('pop_chat_msg_menu_copy_success'), true)
                     this.closeMsgMenu()
                 }, (e: any) => {
-                    new Logger().error('复制消息失败：' + e)
+                    console.log(e)
                     popInfo.add(PopType.ERR, this.$t('pop_chat_msg_menu_copy_err'), true)
                 })
             }
@@ -1092,11 +1093,6 @@ export default defineComponent({
             this.imgCache = []
             this.scrollBottom()
             this.cancelReply()
-            // 移除输入框的焦点来关闭键盘
-            // const main = document.getElementById('main-input')
-            // if(main) {
-            //     main.blur()
-            // }
         },
 
         updateList(newLength: number, oldLength: number) {

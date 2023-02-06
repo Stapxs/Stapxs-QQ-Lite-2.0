@@ -485,9 +485,10 @@ export default defineComponent({
                                 Connector.send(
                                     name,
                                     {
-                                        'message_id': firstMsgId,
-                                        'target_id': runtimeData.chatInfo.show.id,
-                                        'group': runtimeData.chatInfo.show.type
+                                        message_id: firstMsgId,
+                                        target_id: runtimeData.chatInfo.show.id,
+                                        group: runtimeData.chatInfo.show.type == 'group',
+                                        count: 20
                                     },
                                     'getChatHistory'
                                 )
