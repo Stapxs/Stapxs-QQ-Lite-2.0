@@ -69,14 +69,25 @@ export function parse(str: string) {
             // 心跳包
             case 'meta_event'           : livePackage(msg); break
             // gocqhttp 自动发送的消息回调和其他消息有区分
-            case 'message_sent'         : msg.post_type = 'message'
-            // eslint-disable-next-line
+            case 'message_sent'         :
             case 'message'              : newMsg(msg); break
             case 'notice'               : {
-                switch (msg.sub_type) {
-                    case 'recall'           : revokeMsg(msg); break
+                if(runtimeData.botInfo.app_name == 'go-cqhttp') {
+                    // go-cqhttp：通知消息子类别是 notice_type
+                    switch (msg.notice_type) {
+                        case 'group_recall'     : msg.notice_type = 'group'
+                        // eslint-disable-next-line
+                        case 'friend_recall'    : msg.notice_type = 'friend'
+                        // eslint-disable-next-line
+                        case 'recall'           : revokeMsg(msg); break
+                    }
+                    break
+                } else {
+                    switch (msg.sub_type) {
+                        case 'recall'           : revokeMsg(msg); break
+                    }
+                    break
                 }
-                break
             }
         }
     }
@@ -194,10 +205,14 @@ function saveGroupMember(data: GroupMemberInfoElem[]) {
 }
 
 function saveMsgFist(msg: any) {
+    runtimeData.messageList = []
     if (msg.error !== null && (msg.error !== undefined || msg.status === 'failed')) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error | msg.retcode }))
-        runtimeData.messageList = []
     } else {
+        // go-cqhttp：返回的列表是倒的
+        if(runtimeData.botInfo.app_name == 'go-cqhttp') {
+            msg.data.reverse()
+        }
         // 对消息进行转换
         if (runtimeData.tags.msgType === BotMsgType.CQCode) {
             for (let i = 0; i < msg.data.length; i++) {
@@ -207,10 +222,6 @@ function saveMsgFist(msg: any) {
             for (let i = 0; i < msg.data.length; i++) {
                 msg.data[i] = Util.parseOICQ1JSON(msg.data[i])
             }
-        }
-        // go-cqhttp：返回的列表是倒的
-        if(runtimeData.botInfo.app_name == 'go-cqhttp') {
-            msg.data.reverse()
         }
         // 检查必要字段
         msg.data.forEach((item: any) => {
@@ -227,14 +238,14 @@ function saveMsg(msg: any) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error | msg.retcode }))
     } else {
         const items = msg.data
+        // go-cqhttp：返回的列表是倒的
+        if(runtimeData.botInfo.app_name == 'go-cqhttp') {
+            items.reverse()
+        }
         items.pop() // 去除最后一条重复的消息，获取历史消息会返回当前消息 **以及** 之前的 N-1 条
         if (items.length < 1) {
             runtimeData.tags.canLoadHistory = false
             return
-        }
-        // go-cqhttp：返回的列表是倒的而且不用去重
-        if(runtimeData.botInfo.app_name == 'go-cqhttp') {
-            msg.data.reverse()
         }
         // 对消息进行转换
         if (runtimeData.tags.msgType === BotMsgType.CQCode) {
@@ -526,13 +537,19 @@ function newMsg(data: any) {
         data = Util.parseOICQ1JSON(data)
     }
     let id = data.from_id ? data.from_id : data.group_id
-    let sender = data.sender.user_id
+    const sender = data.sender.user_id
     // oicq1：消息格式兼容
-    id = id ? id : (data.group_id ? data.group_id : data.user_id)
+    if(runtimeData.botInfo.app_name == 'oicq') {
+        id = data.group_id ? data.group_id : data.user_id
+    }
     // go-cqhttp：消息格式兼容
     if(runtimeData.botInfo.app_name == 'go-cqhttp') {
-        sender = data.target_id
-        id = data.target_id ? data.target_id : data.group_id
+        if(data.post_type == 'message_sent') {
+            id = data.group_id ? data.group_id : data.target_id
+            data.post_type = 'message'
+        } else {
+            id = data.group_id ? data.group_id : data.user_id
+        }
     }
     // 消息回调检查
     // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复

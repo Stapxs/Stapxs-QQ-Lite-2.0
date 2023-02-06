@@ -299,7 +299,6 @@ export function parseCQ(data: any) {
                     // 对 html 转义字符进行反转义
                     const a = document.createElement('a')
                     a.innerHTML = key.substring(key.indexOf('=') + 1)
-                    console.log(a.innerText)
                     kv.push(a.innerText)
                     info[kv[0]] = kv[1]
                 })
