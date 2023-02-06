@@ -1,6 +1,12 @@
-const { defineConfig } = require('@vue/cli-service')
+/**
+ * @type {import('@vue/cli-service').ProjectOptions}
+ */
 
-module.exports = defineConfig({
+module.exports = {
+    publicPath: process.env.NODEJS_ENV === 'github-actions'
+        ? '/Stapxs-QQ-Lite-2.0/'
+        : undefined
+    ,
     transpileDependencies: true,
     configureWebpack: {
         module: {
@@ -8,8 +14,8 @@ module.exports = defineConfig({
                 {
                     test: /\.txt$/i,
                     use: 'raw-loader',
-                },
-            ],
+                }
+            ]
         }
     },
     pwa: {
@@ -33,8 +39,7 @@ module.exports = defineConfig({
                     "src": "img/icons/icon.png",
                     "type": "image/png",
                     "sizes": "512x512"
-                }
-                ,
+                },
                 {
                     "src": "img/icons/icon-maskable.png",
                     "sizes": "1024x1024",
@@ -55,4 +60,4 @@ module.exports = defineConfig({
             ]
         }     
     }
-})
+}

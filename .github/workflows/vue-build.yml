@@ -19,21 +19,20 @@ jobs:
     - name: Load Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 16.x
+        node-version: 18.x
     # 更新依赖
     - name: Install
       run: yarn
-    # 替换构建配置
-    - name: Replace config
-      run: rm vue.config.js && mv vue.config.action.js vue.config.js && cat vue.config.js
     # 构建
     - name: Build
       run: yarn build
+      env:
+        NODEJS_ENV: github-actions
 
     # 部署
     - name: Deploy
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-        BRANCH: gh-pages
-        FOLDER: dist
+        token: ${{ secrets.ACCESS_TOKEN }}
+        branch: gh-pages
+        folder: dist

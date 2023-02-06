@@ -248,7 +248,7 @@
   "chat_chat_forward_success": "Message forwarded",
   "chat_msg_forward_pan": "Forward to",
   "option_dev_chat_use_breakline": "Use Shift + Enter to create new lines",
-  "option_dev_chat_use_breakline_tip": "I have a shift, I have a enter ...",
+  "option_dev_chat_use_breakline_tip": "I have a shift, I have an enter ...",
   "option_dev_chat_use_breakline_tip_1": "Enable multi-line editing for messages (Problems may occur if you use an IME).",
   "bulletin_show_tip": "Click to view",
   "option_dev_msg_type": "Message type",
