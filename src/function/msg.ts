@@ -70,7 +70,7 @@ export function parse(str: string) {
         switch (msg.post_type) {
             // 心跳包
             case 'meta_event'           : livePackage(msg); break
-            // gocqhttp 自动发送的消息回调和其他消息有区分
+            // go-cqhttp：自动发送的消息回调和其他消息有区分
             case 'message_sent'         :
             case 'message'              : newMsg(msg); break
             case 'notice'               : {

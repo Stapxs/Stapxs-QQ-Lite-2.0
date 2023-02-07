@@ -743,7 +743,7 @@ export default defineComponent({
                 copy: true,
                 copySelect: false,
                 revoke: false,
-                at: true,
+                at: false,
                 remove: false
             }
         },

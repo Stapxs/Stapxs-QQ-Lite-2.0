@@ -96,7 +96,16 @@ export default defineComponent({
          * @param event 按键事件
          */
         setGroupName(event: KeyboardEvent) {
-            //
+            if (event.key === 'Enter' && runtimeData.chatInfo.show.name != '') {
+                Connector.send(
+                    'set_group_name', 
+                    {
+                        group_id: this.chat.show.id,
+                        group_name: runtimeData.chatInfo.show.name
+                    },
+                    'setGroupName'
+                )
+            }
         },
 
         /**
@@ -179,3 +188,10 @@ export default defineComponent({
     }
 })
 </script>
+
+<style scoped>
+.opt-item:hover input[type="text"] {
+    background: var(--color-card-2);
+    transition: background .2s;
+}
+</style>
