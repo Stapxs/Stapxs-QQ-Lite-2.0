@@ -216,7 +216,7 @@ textarea {
     align-items: center;
     border-radius: 7px;
     display: flex;
-    padding: 20px;
+    padding: 10px 20px;
 }
 .sys-not-pan > div:first-child > svg {
     fill: var(--color-font);
@@ -232,7 +232,7 @@ textarea {
     background: var(--color-card-1);
     border-radius: 7px;
     margin-top: 10px;
-    padding: 20px;
+    padding: 10px;
 }
 
 .more-detail {

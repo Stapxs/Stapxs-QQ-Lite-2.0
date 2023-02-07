@@ -25,11 +25,11 @@
           </div>
           <div id="message-list-body" :class="(runtimeData.tags.openSideBar ? 'open' : '')">
               <!-- 系统信息 -->
-              <!-- <FriendBody key="inMessage--10000"
+              <FriendBody key="inMessage--10000"
                   v-if="runtimeData.systemNoticesList && Object.keys(runtimeData.systemNoticesList).length > 0"
                   :select="chat.show.id === -10000"
                   :data="{user_id:-10000, always_top: true, nickname: $t('list_system_notice'), remark: $t('list_system_notice')}"
-                  @click="systemNoticeClick"></FriendBody> -->
+                  @click="systemNoticeClick"></FriendBody>
               <!-- 其他消息 -->
               <FriendBody
                   v-for="item in runtimeData.onMsgList"

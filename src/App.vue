@@ -318,6 +318,8 @@ export default defineComponent({
                 // PS：部分功能不返回用户名需要进来查找所以提前获取
                 Connector.send('get_group_member_list', { group_id: data.id }, 'getGroupMemberList')
             }
+            // 刷新系统消息
+            Connector.send('get_system_msg', {}, 'getSystemMsg')
         },
 
         /**

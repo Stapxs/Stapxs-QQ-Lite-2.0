@@ -295,9 +295,9 @@ html, body {
     fill: var(--color-font-1-r);
     pointer-events: none;
     border-radius: 7px;
-    padding: 10px;
-    height: 30px;
-    width: 30px;
+    padding: 15px;
+    height: 25px;
+    width: 25px;
 }
 .friend-body > div {
     flex: 1;
@@ -920,8 +920,8 @@ html, body {
         width: 45px;
     }
     .friend-body > svg {
-        height: 25px;
-        width: 25px;
+        height: 20px;
+        width: 20px;
     }
     .friend-body.active:hover {
         background: var(--color-card-2) !important;

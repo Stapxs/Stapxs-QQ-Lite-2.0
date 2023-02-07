@@ -62,6 +62,8 @@ export function parse(str: string) {
                 case 'getVideoUrl'          : getVideoUrl(msg); break
                 case 'getGroupDirFiles'     : saveDirFile(msg); break
                 case 'readMemberMessage'    : readMemberMessage(msg.data[0]); break
+                case 'setFriendAdd'         : 
+                case 'setGroupAdd'          : updateSysInfo(head); break
             }
         }
     } else {
@@ -89,6 +91,7 @@ export function parse(str: string) {
                     break
                 }
             }
+            case 'request'              : addSystemNotice(msg); break
         }
     }
 }
@@ -760,6 +763,29 @@ function readMemberMessage(data: any) {
  */
 function livePackage(msg: any) {
     //
+}
+
+/**
+ * 刷新系统通知和其他内容，给系统通知响应用的
+ */
+function updateSysInfo(type: string) {
+    Connector.send('get_system_msg', {}, 'getSystemMsg')
+    switch(type) {
+        case 'setFriendAdd': 
+            Connector.send('get_friend_list', {}, 'getFriendList'); break
+    }
+}
+
+/**
+ * 添加获取到的系统通知消息
+ * @param msg 系统通知
+ */
+function addSystemNotice(msg: any) {
+    if(runtimeData.systemNoticesList) {
+        runtimeData.systemNoticesList.push(msg)
+    } else {
+        runtimeData.systemNoticesList = [msg]
+    }
 }
 
 // ==============================================================
