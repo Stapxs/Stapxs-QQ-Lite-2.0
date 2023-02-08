@@ -798,7 +798,8 @@ const baseRuntime = {
         canLoadHistory: true,
         openSideBar: false,
         viewer: { index: 0 },
-        msgType: BotMsgType.JSON
+        msgType: BotMsgType.JSON,
+        isElectron: false
     },
     chatInfo: {
         show: { type: '', id: 0, name: '', avatar: '' },

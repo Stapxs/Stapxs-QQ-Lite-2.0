@@ -24,7 +24,8 @@ export interface RunTimeDataElem {
             show?: boolean,
             index: number
         },
-        loginWaveTimer?: any
+        loginWaveTimer?: any,
+        isElectron: boolean
     },
     messageList: any[]
     mergeMessageList?: [],

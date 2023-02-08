@@ -17,7 +17,7 @@ import { i18n } from '@/main'
 import { markRaw, defineAsyncComponent } from 'vue'
 import { Logger, LogType } from './base'
 import { runtimeData } from './msg'
-import { initUITest, getTrueLang } from './util'
+import { initUITest, getTrueLang, loadSystemThemeColor } from './util'
 
 let cacheConfigs: { [key: string]: any }
 
@@ -41,7 +41,14 @@ const configFunction: { [key: string]: (value: any) => void } = {
     ui_test: changeUiTest,
     chatview_name: changeChatView,
     initial_scale: changeInitialScale,
-    msg_type: setMsgType
+    msg_type: setMsgType,
+    opt_auto_gtk: updateGTKColor
+}
+
+function updateGTKColor(value: boolean) {
+    if(value == true) {
+        loadSystemThemeColor()
+    }
 }
 
 function setMsgType(value: any) {

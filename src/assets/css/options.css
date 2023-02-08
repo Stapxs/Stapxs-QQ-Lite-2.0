@@ -192,6 +192,9 @@
     padding: 0;
     flex: 1;
 }
+.opt-body::-webkit-scrollbar {
+    display: none;
+}
 
 .opt-body > div {
     height: 100%;

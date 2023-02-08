@@ -202,7 +202,7 @@ import { Connector, login as loginInfo } from '@/function/connect'
 import { Logger, popList, PopInfo } from '@/function/base'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem } from '@/function/elements/information'
-import { loadHistory, getTrueLang, gitmojiToEmoji, openLink } from '@/function/util'
+import { loadHistory, getTrueLang, gitmojiToEmoji, openLink, loadSystemThemeColor } from '@/function/util'
 import { DomainConfig, useState } from 'vue-gtag-next'
 
 import Options from '@/pages/Options.vue'
@@ -416,6 +416,9 @@ export default defineComponent({
             if(runtimeData.sysConfig.auto_connect == true) {
                 this.connect()
             }
+            // 加载其他内容
+            runtimeData.tags.isElectron = (process.env.IS_ELECTRON as unknown) as boolean
+            Option.runAS('opt_auto_gtk', Option.get('opt_auto_gtk'))
             // 初始化完成
             logger.debug(this.$t('log_welcome'))
             logger.debug(this.$t('log_runtime') + ': ' + process.env.NODE_ENV)

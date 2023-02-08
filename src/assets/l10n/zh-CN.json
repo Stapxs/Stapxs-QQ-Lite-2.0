@@ -262,5 +262,7 @@
   "chat_msg_menu_remove": "移出群聊",
   "sys_notice_new_group_nmember": "入群申请",
   "sys_notice_new_group_nmember_add": "申请加入：",
-  "sys_notice_new_group_nmember_no_comment": "(没有个人介绍)"
+  "sys_notice_new_group_nmember_no_comment": "(没有个人介绍)",
+  "option_view_auto_gtk": "自动跟随 GTK 主题",
+  "option_view_auto_gtk_tip": "（实验性）自动从 GTK 配置获取主题配色"
 }

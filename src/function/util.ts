@@ -15,12 +15,13 @@ import l10nConfig from '@/assets/l10n/_l10nconfig.json'
 import zh from '@/assets/l10n/zh-CN.json'
 import FileDownloader from 'js-file-downloader'
 
+import { Rule, Stylesheet, Declaration } from 'css'
 import { Logger, PopInfo, PopType } from './base'
-
 import { MsgIdInfoElem } from './elements/system'
 import { runtimeData } from './msg'
 import { BaseChatInfoElem } from './elements/information'
 import { Connector } from './connect'
+import option from './option'
 
 const logger = new Logger()
 const popInfo = new PopInfo()
@@ -498,6 +499,95 @@ export function downloadFile (url: string, name: string, onprocess: (event: Prog
     })
 }
 
+/**
+ * 使用 gtk CSS 更新 Border Card UI 配色表
+ * @param cssStr css 字符串
+ */
+function updateGTKTheme(cssStr: string) {
+    if(option.get('log_level') == 'debug') {
+        console.log(cssStr)
+    }
+    const css = window.require('css')
+    let cssObj = undefined
+    let color = '#000'
+    // color-main
+    color = cssStr.substring(cssStr.indexOf('@define-color theme_fg_color') + 29)
+    color = color.substring(0, color.indexOf(';'))
+    document.documentElement.style.setProperty('--color-main', color)
+    // color-bg
+    color = cssStr.substring(cssStr.indexOf('@define-color theme_bg_color') + 29)
+    color = color.substring(0, color.indexOf(';'))
+    document.documentElement.style.setProperty('--color-bg', color)
+    // color-card
+    color = cssStr.substring(cssStr.indexOf('.context-menu {'))
+    color = color.substring(0, color.indexOf('}') + 1)
+    cssObj = css.parse(color, {silent: true}) as Stylesheet
+    if(cssObj.stylesheet) {
+        const colorGet = ((cssObj.stylesheet.rules[0] as Rule).declarations?.filter((item: Declaration) => {
+            return item.property == 'background-color'
+        })[0] as Declaration).value
+        if(colorGet) {
+            document.documentElement.style
+                .setProperty('--color-card', colorGet)
+        }
+    }
+    // color-card-1
+    color = cssStr.substring(cssStr.indexOf('.context-menu .view:selected {'))
+    color = color.substring(0, color.indexOf('}') + 1)
+    cssObj = css.parse(color, {silent: true}) as Stylesheet
+    if(cssObj.stylesheet) {
+        const colorGet = ((cssObj.stylesheet.rules[0] as Rule).declarations?.filter((item: Declaration) => {
+            return item.property == 'background-color'
+        })[0] as Declaration).value
+        if(colorGet) {
+            document.documentElement.style
+                .setProperty('--color-card-1', colorGet)
+        }
+    }
+    // color-card-2
+    color = cssStr.substring(cssStr.indexOf('.context-menu menuitem:hover {'))
+    color = color.substring(0, color.indexOf('}') + 1)
+    cssObj = css.parse(color, {silent: true}) as Stylesheet
+    if(cssObj.stylesheet) {
+        const colorGet = ((cssObj.stylesheet.rules[0] as Rule).declarations?.filter((item: Declaration) => {
+            return item.property == 'background-color'
+        })[0] as Declaration).value
+        if(colorGet) {
+            document.documentElement.style
+                .setProperty('--color-card-2', colorGet)
+        }
+    }
+    // color-font
+    color = cssStr.substring(cssStr.indexOf('@define-color theme_text_color') + 31)
+    color = color.substring(0, color.indexOf(';'))
+    document.documentElement.style.setProperty('--color-font', color)
+    // color-font-1
+    color = cssStr.substring(cssStr.indexOf('@define-color theme_unfocused_text_color') + 41)
+    color = color.substring(0, color.indexOf(';'))
+    document.documentElement.style.setProperty('--color-font-1', color)
+    document.documentElement.style.setProperty('--color-font-2', color)
+}
+
+/**
+ * electron：加载系统u主题适配
+ */
+export async function loadSystemThemeColor() {
+    // 加载 GTK 主题适配（以及主题更新回调监听）
+    const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+    const reader = electron ? electron.ipcRenderer : null
+    if (reader) {
+        // 主题更新回调
+        reader.on('sys:updateGTKTheme', (event, params) => {
+            if(option.get('opt_auto_gtk') == true) {
+                console.log('GTK 主题已更新：' + params.name)
+                updateGTKTheme(params.css)
+            }
+        })
+        updateGTKTheme(await reader.invoke('sys:getGTKTheme'))
+        
+    }
+}
+
 export default {
     openLink,
     getTrueLang,
@@ -512,5 +602,6 @@ export default {
     gitmojiToEmoji,
     randomNum,
     downloadFile,
-    getSizeFromBytes
+    getSizeFromBytes,
+    loadSystemThemeColor
 }

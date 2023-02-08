@@ -38,58 +38,79 @@
         </div>
         <div class="ss-card">
             <header>{{ $t('option_view_theme') }}</header>
-            <div class="opt-item" id="opt_view_dark">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-                    <path
-                        d="M223.5 32C100 32 0 132.3 0 256S100 480 223.5 480c60.6 0 115.5-24.2 155.8-63.4c5-4.9 6.3-12.5 3.1-18.7s-10.1-9.7-17-8.5c-9.8 1.7-19.8 2.6-30.1 2.6c-96.9 0-175.5-78.8-175.5-176c0-65.8 36-123.1 89.3-153.3c6.1-3.5 9.2-10.5 7.7-17.3s-7.3-11.9-14.3-12.5c-6.3-.5-12.6-.8-19-.8z" />
-                </svg>
-                <div>
-                    <span>{{ $t('option_view_dark_mode') }}</span>
-                    <span>{{ $t('option_view_dark_mode_tip') }}</span>
-                </div>
-                <label class="ss-switch">
-                    <input type="checkbox" @change="save" name="opt_dark" v-model="runtimeData.sysConfig.opt_dark">
+            <template v-if="!runtimeData.sysConfig.opt_auto_gtk">
+                <div class="opt-item" id="opt_view_dark">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+                        <path
+                            d="M223.5 32C100 32 0 132.3 0 256S100 480 223.5 480c60.6 0 115.5-24.2 155.8-63.4c5-4.9 6.3-12.5 3.1-18.7s-10.1-9.7-17-8.5c-9.8 1.7-19.8 2.6-30.1 2.6c-96.9 0-175.5-78.8-175.5-176c0-65.8 36-123.1 89.3-153.3c6.1-3.5 9.2-10.5 7.7-17.3s-7.3-11.9-14.3-12.5c-6.3-.5-12.6-.8-19-.8z" />
+                    </svg>
                     <div>
-                        <div></div>
+                        <span>{{ $t('option_view_dark_mode') }}</span>
+                        <span>{{ $t('option_view_dark_mode_tip') }}</span>
                     </div>
-                </label>
-            </div>
-            <div class="opt-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
-                    <path
-                        d="M192 64C86 64 0 150 0 256S86 448 192 448H384c106 0 192-86 192-192s-86-192-192-192H192zM384 352c-53 0-96-43-96-96s43-96 96-96s96 43 96 96s-43 96-96 96z" />
-                </svg>
-                <div>
-                    <span>{{ $t('option_view_auto_dark') }}</span>
-                    <span>{{ $t('option_view_auto_dark_tip') }}</span>
-                </div>
-                <label class="ss-switch">
-                    <input type="checkbox" @change="save" name="opt_auto_dark"
-                        v-model="runtimeData.sysConfig.opt_auto_dark">
-                    <div>
-                        <div></div>
-                    </div>
-                </label>
-            </div>
-            <div class="opt-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-                    <path
-                        d="M192 64L160 0H128L96 64 64 0H48C21.5 0 0 21.5 0 48V256H384V48c0-26.5-21.5-48-48-48H224L192 64zM0 288v32c0 35.3 28.7 64 64 64h64v64c0 35.3 28.7 64 64 64s64-28.7 64-64V384h64c35.3 0 64-28.7 64-64V288H0zM192 464c-8.8 0-16-7.2-16-16s7.2-16 16-16s16 7.2 16 16s-7.2 16-16 16z" />
-                </svg>
-                <div>
-                    <span>{{ $t('option_view_theme_color') }}</span>
-                    <span>{{ $t('option_view_theme_color_tip') }}</span>
-                </div>
-                <div class="theme-color-col">
-                    <label v-for="(name, index) in colors" :title="name" :key="'color_id_' + index" class="ss-radio">
-                        <input type="radio" name="theme_color" @change="save" :data-id="index"
-                            :checked="runtimeData.sysConfig.theme_color === undefined ? index === 0 : Number(runtimeData.sysConfig.theme_color) === index">
-                        <div :style="'background: var(--color-main-' + index + ');'">
+                    <label class="ss-switch">
+                        <input type="checkbox" @change="save" name="opt_dark" v-model="runtimeData.sysConfig.opt_dark">
+                        <div>
                             <div></div>
                         </div>
                     </label>
                 </div>
-            </div>
+                <div class="opt-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
+                        <path
+                            d="M192 64C86 64 0 150 0 256S86 448 192 448H384c106 0 192-86 192-192s-86-192-192-192H192zM384 352c-53 0-96-43-96-96s43-96 96-96s96 43 96 96s-43 96-96 96z" />
+                    </svg>
+                    <div>
+                        <span>{{ $t('option_view_auto_dark') }}</span>
+                        <span>{{ $t('option_view_auto_dark_tip') }}</span>
+                    </div>
+                    <label class="ss-switch">
+                        <input type="checkbox" @change="save" name="opt_auto_dark"
+                            v-model="runtimeData.sysConfig.opt_auto_dark">
+                        <div>
+                            <div></div>
+                        </div>
+                    </label>
+                </div>
+                <div class="opt-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+                        <path
+                            d="M192 64L160 0H128L96 64 64 0H48C21.5 0 0 21.5 0 48V256H384V48c0-26.5-21.5-48-48-48H224L192 64zM0 288v32c0 35.3 28.7 64 64 64h64v64c0 35.3 28.7 64 64 64s64-28.7 64-64V384h64c35.3 0 64-28.7 64-64V288H0zM192 464c-8.8 0-16-7.2-16-16s7.2-16 16-16s16 7.2 16 16s-7.2 16-16 16z" />
+                    </svg>
+                    <div>
+                        <span>{{ $t('option_view_theme_color') }}</span>
+                        <span>{{ $t('option_view_theme_color_tip') }}</span>
+                    </div>
+                    <div class="theme-color-col">
+                        <label v-for="(name, index) in colors" :title="name" :key="'color_id_' + index" class="ss-radio">
+                            <input type="radio" name="theme_color" @change="save" :data-id="index"
+                                :checked="runtimeData.sysConfig.theme_color === undefined ? index === 0 : Number(runtimeData.sysConfig.theme_color) === index">
+                            <div :style="'background: var(--color-main-' + index + ');'">
+                                <div></div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </template>
+            <template v-if="process.env.IS_ELECTRON">
+                <div class="opt-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
+                        <path
+                            d="M192 64C86 64 0 150 0 256S86 448 192 448H384c106 0 192-86 192-192s-86-192-192-192H192zM384 352c-53 0-96-43-96-96s43-96 96-96s96 43 96 96s-43 96-96 96z" />
+                    </svg>
+                    <div>
+                        <span>{{ $t('option_view_auto_gtk') }}</span>
+                        <span>{{ $t('option_view_auto_gtk_tip') }}</span>
+                    </div>
+                    <label class="ss-switch">
+                        <input type="checkbox" @change="save" name="opt_auto_gtk"
+                            v-model="runtimeData.sysConfig.opt_auto_gtk">
+                        <div>
+                            <div></div>
+                        </div>
+                    </label>
+                </div>
+            </template>
         </div>
         <div class="ss-card">
             <header>{{ $t('option_view_view') }}</header>
@@ -122,6 +143,7 @@ export default defineComponent({
     name: 'ViewOptTheme',
     data() {
         return {
+            process: process,
             get: get,
             runtimeData: runtimeData,
             save: save,
