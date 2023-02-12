@@ -38,7 +38,7 @@
         </div>
         <div class="ss-card">
             <header>{{ $t('option_view_theme') }}</header>
-            <template v-if="!runtimeData.sysConfig.opt_auto_gtk">
+            <template v-if="runtimeData.sysConfig.opt_auto_gtk != true">
                 <div class="opt-item" id="opt_view_dark">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
                         <path
@@ -72,27 +72,29 @@
                         </div>
                     </label>
                 </div>
-                <div class="opt-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-                        <path
-                            d="M192 64L160 0H128L96 64 64 0H48C21.5 0 0 21.5 0 48V256H384V48c0-26.5-21.5-48-48-48H224L192 64zM0 288v32c0 35.3 28.7 64 64 64h64v64c0 35.3 28.7 64 64 64s64-28.7 64-64V384h64c35.3 0 64-28.7 64-64V288H0zM192 464c-8.8 0-16-7.2-16-16s7.2-16 16-16s16 7.2 16 16s-7.2 16-16 16z" />
-                    </svg>
-                    <div>
-                        <span>{{ $t('option_view_theme_color') }}</span>
-                        <span>{{ $t('option_view_theme_color_tip') }}</span>
+                <template v-if="runtimeData.sysConfig.opt_auto_win_color != true">
+                    <div class="opt-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+                            <path
+                                d="M192 64L160 0H128L96 64 64 0H48C21.5 0 0 21.5 0 48V256H384V48c0-26.5-21.5-48-48-48H224L192 64zM0 288v32c0 35.3 28.7 64 64 64h64v64c0 35.3 28.7 64 64 64s64-28.7 64-64V384h64c35.3 0 64-28.7 64-64V288H0zM192 464c-8.8 0-16-7.2-16-16s7.2-16 16-16s16 7.2 16 16s-7.2 16-16 16z" />
+                        </svg>
+                        <div>
+                            <span>{{ $t('option_view_theme_color') }}</span>
+                            <span>{{ $t('option_view_theme_color_tip') }}</span>
+                        </div>
+                        <div class="theme-color-col">
+                            <label v-for="(name, index) in colors" :title="name" :key="'color_id_' + index" class="ss-radio">
+                                <input type="radio" name="theme_color" @change="save" :data-id="index"
+                                    :checked="runtimeData.sysConfig.theme_color === undefined ? index === 0 : Number(runtimeData.sysConfig.theme_color) === index">
+                                <div :style="'background: var(--color-main-' + index + ');'">
+                                    <div></div>
+                                </div>
+                            </label>
+                        </div>
                     </div>
-                    <div class="theme-color-col">
-                        <label v-for="(name, index) in colors" :title="name" :key="'color_id_' + index" class="ss-radio">
-                            <input type="radio" name="theme_color" @change="save" :data-id="index"
-                                :checked="runtimeData.sysConfig.theme_color === undefined ? index === 0 : Number(runtimeData.sysConfig.theme_color) === index">
-                            <div :style="'background: var(--color-main-' + index + ');'">
-                                <div></div>
-                            </div>
-                        </label>
-                    </div>
-                </div>
+                </template>
             </template>
-            <template v-if="process.env.IS_ELECTRON">
+            <template v-if="runtimeData.tags.isElectron && browser.os == 'Linux'">
                 <div class="opt-item">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
                         <path
@@ -105,6 +107,25 @@
                     <label class="ss-switch">
                         <input type="checkbox" @change="save" name="opt_auto_gtk"
                             v-model="runtimeData.sysConfig.opt_auto_gtk">
+                        <div>
+                            <div></div>
+                        </div>
+                    </label>
+                </div>
+            </template>
+            <template v-if="runtimeData.tags.isElectron && browser.os == 'Windows 10'">
+                <div class="opt-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                        <path
+                            d="M512 256c0 .9 0 1.8 0 2.7c-.4 36.5-33.6 61.3-70.1 61.3H344c-26.5 0-48 21.5-48 48c0 3.4 .4 6.7 1 9.9c2.1 10.2 6.5 20 10.8 29.9c6.1 13.8 12.1 27.5 12.1 42c0 31.8-21.6 60.7-53.4 62c-3.5 .1-7 .2-10.6 .2C114.6 512 0 397.4 0 256S114.6 0 256 0S512 114.6 512 256zM128 288a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zm0-96a32 32 0 1 0 0-64 32 32 0 1 0 0 64zM288 96a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zm96 96a32 32 0 1 0 0-64 32 32 0 1 0 0 64z" />
+                    </svg>
+                    <div>
+                        <span>{{ $t('option_view_auto_win_color') }}</span>
+                        <span>{{ $t('option_view_auto_win_color_tip') }}</span>
+                    </div>
+                    <label class="ss-switch">
+                        <input type="checkbox" @change="save" name="opt_auto_win_color"
+                            v-model="runtimeData.sysConfig.opt_auto_win_color">
                         <div>
                             <div></div>
                         </div>
@@ -130,11 +151,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import cmp from 'semver-compare'
 
+import { defineComponent } from 'vue'
 import { runtimeData } from '../../function/msg'
 import { runASWEvent as save, get } from '../../function/option'
-import cmp from 'semver-compare'
+import { BrowserInfo, detect } from 'detect-browser'
 
 import appInfo from '../../../package.json'
 import languages from '../../assets/l10n/_l10nconfig.json'
@@ -143,13 +165,13 @@ export default defineComponent({
     name: 'ViewOptTheme',
     data() {
         return {
-            process: process,
             get: get,
             runtimeData: runtimeData,
             save: save,
             languages: languages,
             // 别问我为什么微软是紫色的
-            colors: ['林槐蓝', '墨竹青', '少女粉', '微软紫', '坏猫黄', '玄素黑']
+            colors: ['林槐蓝', '墨竹青', '少女粉', '微软紫', '坏猫黄', '玄素黑'],
+            browser: detect() as BrowserInfo
         }
     },
     methods: {

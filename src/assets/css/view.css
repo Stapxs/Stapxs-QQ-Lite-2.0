@@ -910,7 +910,7 @@ html, body {
         background: transparent !important;
         justify-content: center;
         padding: 10px 0;
-        margin: 0 5px 0 0;
+        margin: 0;
     }
     .friend-body > div {
         display: none;

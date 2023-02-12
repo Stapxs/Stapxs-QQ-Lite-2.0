@@ -202,7 +202,7 @@ import { Connector, login as loginInfo } from '@/function/connect'
 import { Logger, popList, PopInfo } from '@/function/base'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem } from '@/function/elements/information'
-import { loadHistory, getTrueLang, gitmojiToEmoji, openLink, loadSystemThemeColor } from '@/function/util'
+import { loadHistory, getTrueLang, gitmojiToEmoji, openLink } from '@/function/util'
 import { DomainConfig, useState } from 'vue-gtag-next'
 
 import Options from '@/pages/Options.vue'
@@ -408,6 +408,7 @@ export default defineComponent({
             Option.runAS('opt_dark', Option.get('opt_dark'))
             Option.runAS('opt_auto_dark', Option.get('opt_auto_dark'))
             Option.runAS('theme_color', Option.get('theme_color'))
+            Option.runAS('opt_auto_win_color', Option.get('opt_auto_win_color'))
             // 加载密码保存和自动连接
             if(runtimeData.sysConfig.save_password && runtimeData.sysConfig.save_password != true) {
                 loginInfo.token = runtimeData.sysConfig.save_password

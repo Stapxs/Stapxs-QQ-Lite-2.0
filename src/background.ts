@@ -1,13 +1,12 @@
 'use strict'
 
 import windowStateKeeper from 'electron-window-state'
-import os from 'os'
+import regIpcListener from './function/electron/ipc'
 
-import { ipcMain, Menu } from 'electron'
+import { Menu, nativeImage, Tray } from 'electron'
 import { app, protocol, BrowserWindow } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
-import { GtkTheme, GtkData } from '@jakejarrett/gtk-theme'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
@@ -15,36 +14,13 @@ protocol.registerSchemesAsPrivileged([
     { scheme: 'app', privileges: { secure: true, standard: true } }
 ])
 
-let win = undefined as BrowserWindow | undefined
+export let win = undefined as BrowserWindow | undefined
 
 async function createWindow() {
-
-    ipcMain.handle('opt:getSystemInfo', () => {
-        const systemInfo = {} as { [key: string]: any }
-        systemInfo.electron = process.versions.electron
-        systemInfo.os = os.homedir()
-        return systemInfo
-    })
-    ipcMain.handle('sys:getGTKTheme', () => {
-        const gtkTheme = new GtkTheme({events: {
-            themeChange: (data: GtkData) => {
-                console.log('GTK 主题修改：' + data.name)
-                const info = {} as {[key:string]:any}
-                info.name = data.name
-                info.css = data.gtk.css
-                if(win) {
-                    win.webContents.send('sys:updateGTKTheme', info)
-                }
-            }
-        }})
-        return gtkTheme.getTheme().gtk.css
-    })
-    ipcMain.on('win:openDevTools', () => {
-        if(win) {
-            win.webContents.openDevTools()
-        }
-    })
-    
+    // 窗口创建前事务
+    Menu.setApplicationMenu(null)
+    regIpcListener()
+    // 创建窗口
     let mainWindowState = windowStateKeeper({
         defaultWidth: 1200,
         defaultHeight: 800
@@ -60,7 +36,9 @@ async function createWindow() {
             contextIsolation: false
         }
     })
-
+    win.once('focus', () => {if(win)win.flashFrame(false)})
+    mainWindowState.manage(win)     // 窗口状态管理器
+    // 加载应用
     if (process.env.WEBPACK_DEV_SERVER_URL) {
         await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string)
         if (!process.env.IS_TEST) win.webContents.openDevTools()
@@ -68,8 +46,6 @@ async function createWindow() {
         createProtocol('app')
         win.loadURL('app://./index.html')
     }
-
-    mainWindowState.manage(win)
 }
 
 app.on('window-all-closed', () => {
@@ -86,11 +62,15 @@ app.on('ready', async () => {
     if (isDevelopment && !process.env.IS_TEST) {
         try {
             await installExtension(VUEJS3_DEVTOOLS)
+            // 这是个谷歌分析调试工具，好像用不了？？
+            // await installExtension({
+            //     id: 'ilnpmccnfdjdjjikgkefkcegefikecdc',
+            //     electron: '>=1.2.1'
+            // })
         } catch (e: any) {
             console.error('Vue Devtools failed to install:', e.toString())
         }
     }
-    Menu.setApplicationMenu(null)
     createWindow()
 })
 

@@ -17,7 +17,7 @@ import { i18n } from '@/main'
 import { markRaw, defineAsyncComponent } from 'vue'
 import { Logger, LogType } from './base'
 import { runtimeData } from './msg'
-import { initUITest, getTrueLang, loadSystemThemeColor } from './util'
+import { initUITest, getTrueLang, loadSystemThemeColor, loadWinColor, updateWinColor } from './util'
 
 let cacheConfigs: { [key: string]: any }
 
@@ -42,7 +42,21 @@ const configFunction: { [key: string]: (value: any) => void } = {
     chatview_name: changeChatView,
     initial_scale: changeInitialScale,
     msg_type: setMsgType,
-    opt_auto_gtk: updateGTKColor
+    opt_auto_gtk: updateGTKColor,
+    opt_auto_win_color: updateWinColorOpt
+}
+
+function updateWinColorOpt(value: boolean) {
+    if(value == true) {
+        const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+        const reader = electron ? electron.ipcRenderer : null
+        if (reader) {
+            reader.on('sys:WinColorChanged', (event, params) => {
+                updateWinColor(params)
+            })
+        }
+        loadWinColor()
+    }
 }
 
 function updateGTKColor(value: boolean) {
@@ -148,6 +162,8 @@ function setAutoDark(value: boolean) {
                     } else {
                         setDarkMode(false)
                     }
+                    // 刷新主题色
+                    runAS('opt_auto_win_color', get('opt_auto_win_color'))
                 }
             })
         }

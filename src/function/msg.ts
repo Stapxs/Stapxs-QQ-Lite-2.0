@@ -616,6 +616,14 @@ function newMsg(data: any) {
             } else if (Notification.permission !== 'denied') {
                 sendNotice(data)
             }
+            // electron：在 windows 下对任务栏图标进行闪烁
+            if(runtimeData.tags.isElectron) {
+                const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+                const reader = electron ? electron.ipcRenderer : null
+                if (reader) {
+                    reader.send('win:flashWindow')
+                }
+            }
         }
         // 如果发送者不在消息列表里，将它添加到消息列表里
         if (get.length !== 1) {
