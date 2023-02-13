@@ -159,8 +159,6 @@ import FileBody from '@/components/FileBody.vue'
 
 import { getTrueLang } from '@/function/util'
 import { runtimeData } from '@/function/msg'
-import app from '@/main'
-import { UserFriendElem, UserGroupElem } from '@/function/elements/information'
 import OptInfo from './options/OptInfo.vue'
 
 export default defineComponent({

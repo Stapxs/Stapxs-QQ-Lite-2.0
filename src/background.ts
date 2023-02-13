@@ -2,8 +2,9 @@
 
 import windowStateKeeper from 'electron-window-state'
 import regIpcListener from './function/electron/ipc'
+import path from 'path'
 
-import { Menu, nativeImage, Tray } from 'electron'
+import { Menu } from 'electron'
 import { app, protocol, BrowserWindow } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
@@ -30,6 +31,7 @@ async function createWindow() {
         y: mainWindowState.y,
         width: mainWindowState.width,
         height: mainWindowState.height,
+        icon: path.join(__dirname,'./public/img/icons/icon.png'),
         // frame: false,
         webPreferences: {
             nodeIntegration: true,

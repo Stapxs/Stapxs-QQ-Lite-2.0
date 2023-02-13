@@ -433,7 +433,6 @@ function downloadGroupFile(msg: any) {
     // 基本信息
     const info = msg.echo.split('_')
     const id = info[1]
-    const json = JSON.parse(msg.data.data.substring(msg.data.data.indexOf('(') + 1, msg.data.data.lastIndexOf(')')))
     // 文件信息
     let fileName = 'new-file'
     let fileIndex = -1
@@ -473,7 +472,7 @@ function downloadGroupFile(msg: any) {
     }
 
     // 下载文件
-    Util.downloadFile(json.data.url, fileName, onProcess)
+    Util.downloadFile(msg.data.url, fileName, onProcess)
 }
 
 function getVideoUrl(msg: any) {
@@ -694,6 +693,14 @@ function sendNotice(msg: any) {
 
                 // 跳转到这条消息的发送者页面
                 window.focus()
+                // electron：需要让 electron 拉起页面
+                if(runtimeData.tags.isElectron) {
+                    const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+                    const reader = electron ? electron.ipcRenderer : null
+                    if (reader) {
+                        reader.send('win:fouesWindow')
+                    }
+                }
                 const body = document.getElementById('user-' + userId)
                 if (body === null) {
                     // 从缓存列表里寻找这个 ID

@@ -485,7 +485,7 @@ export function downloadFile (url: string, name: string, onprocess: (event: Prog
             url = 'https' + url.substring(url.indexOf('://'))
         }
     }
-    if(!runtimeData.tags.isElectron) {
+    if(!process.env.IS_ELECTRON) {
         new FileDownloader({
             url: url,
             autoStart: true,
@@ -502,7 +502,7 @@ export function downloadFile (url: string, name: string, onprocess: (event: Prog
         const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
         const reader = electron ? electron.ipcRenderer : null
         if (reader) {
-            reader.on('sys:download', (event, params) => {
+            reader.on('sys:downloadBack', (event, params) => {
                 onprocess(params)
             })
             reader.send('sys:download', {
