@@ -416,6 +416,44 @@ html, body {
     color: var(--color-font-r);
 }
 
+/* TODO: BCUI - 这段 css 将在将来迁移到 Border Card UI 中合并 */
+.ss-range {
+    --range-dot-height: 26px;
+    --range-height: 26px;
+    flex-direction: row !important;
+    display: flex !important;
+}
+.ss-range input {
+    -webkit-appearance: none;
+
+    background-image: linear-gradient(var(--color-main), var(--color-main));
+    background-color: var(--color-card-1);
+    background-repeat: no-repeat;
+    height: var(--range-height);
+    background-size: 0% 100%;
+    border-radius: 7px;
+    min-width: 100%;
+}
+.ss-range input::-webkit-slider-thumb,
+.ss-range input::-moz-range-thumb {
+    -webkit-appearance: none;
+
+    height: calc(var(--range-dot-height) - 16px);
+    width: calc(var(--range-dot-height) - 16px);
+    box-shadow:0 0 5px var(--color-shader);
+    background:var(--color-main);
+    border: 5px solid #FFF;
+    border-radius: 100%;
+    cursor: pointer;
+}
+.ss-range span {
+    line-height: var(--range-height);
+    transform: translateX(-50%);
+    color: var(--color-font);
+    pointer-events: none;
+    margin-left: -50%;
+}
+
 .app-msg {
     flex-direction: column-reverse;
     justify-content: flex-start;
@@ -909,8 +947,8 @@ html, body {
     .friend-body {
         background: transparent !important;
         justify-content: center;
+        margin: 0 5px 0 0;
         padding: 10px 0;
-        margin: 0;
     }
     .friend-body > div {
         display: none;

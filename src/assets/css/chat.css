@@ -4,6 +4,8 @@ textarea {
 
 .chat-pan {
     background-color: var(--color-card);
+    background-position: center;
+    background-size: auto 100%;
     color: var(--color-font);
     flex-direction: column;
     pointer-events: none;
@@ -21,8 +23,20 @@ textarea {
     bottom: 0;
     left: 0;
 }
+.chat-pan > div {
+    z-index: 2;
+}
+.chat-pan > div.bg {
+    background: rgba(var(--color-card-rgb), 0.6);
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    z-index: 0;
+}
 .chat-pan > div.info {
-    background: var(--color-card-1);
+    background: rgba(var(--color-card-1-rgb), 0.9);
+    box-shadow:0 0 1px var(--color-shader);
+    backdrop-filter: blur(50px);
     width: calc(100% - 60px);
     pointer-events: all;
     align-items: center;
@@ -72,18 +86,21 @@ textarea {
     overflow-y: scroll;
     overflow-x: hidden;
     margin-left: 20px;
+    margin-top: -90px;
+    z-index: 1;
     flex: 1;
     
 }
 
 .chat-pan > div.new-msg {
-    border-right: 7px solid var(--color-card);
+    /* border-right: 7px solid var(--color-card); */
+    border-right: 7px solid transparent;
     border-radius: 50px 0 0 50px;
     margin: -50px 20px 0 auto;
     pointer-events: all;
     cursor: pointer;
     height: 50px;
-    z-index: 0;
+    z-index: 2;
 }
 .chat-pan > div.new-msg > div {
     background: var(--color-card-1);
@@ -106,7 +123,12 @@ textarea {
     margin-left: -5px;
 }
 .chat-pan > div.more {
+    background: rgba(var(--color-card-rgb), 0.1);
+    transition: background .3s;
     pointer-events: all;
+}
+.chat-pan > div.more.btn {
+    background: transparent;
 }
 .chat-pan > div.more > div:nth-child(2) {
     display: flex;
@@ -802,7 +824,7 @@ textarea {
     width: 100%;
 }
 .img-sender > div.card {
-    margin: calc(100% - 75px) 0 0 50%;
+    margin: calc(50vh - 75px) 0 0 50%;
     transform: translate(-50%, -50%);
     flex-direction: column;
     position: absolute;

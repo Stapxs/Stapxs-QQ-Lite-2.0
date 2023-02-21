@@ -10,7 +10,10 @@
 -->
 
 <template>
-    <div :class="'chat-pan' + (runtimeData.tags.openSideBar ? ' open': '')" id="chat-pan">
+    <div
+        :style="`background-image: url(${runtimeData.sysConfig.chat_background})`"
+        :class="'chat-pan' + (runtimeData.tags.openSideBar ? ' open': '')"
+        id="chat-pan">        
         <!-- 聊天基本信息 -->
         <div class="info">
             <img :src="chat.show.avatar">
@@ -78,7 +81,7 @@
             </div>
         </div>
         <!-- 底部区域 -->
-        <div class="more">
+        <div class="more" id="send-more">
             <!-- 功能附加 -->
             <div>
                 <div>
@@ -364,6 +367,7 @@
                 <div class="bg" @click="cancelForward"></div>
             </div>
         </Transition>
+        <div class="bg" :style="`backdrop-filter: blur(${runtimeData.sysConfig.chat_background_blur}px);`"></div>
     </div>
 </template>
 
@@ -383,6 +387,7 @@ import { Logger, LogType, PopInfo, PopType } from '@/function/base'
 import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem, MsgItemElem, SQCodeElem, GroupMemberInfoElem, UserFriendElem, UserGroupElem, BotMsgType } from '@/function/elements/information'
+import { baseCompile } from '@vue/compiler-core'
 
 export default defineComponent({
     name: 'ViewChat',
@@ -455,6 +460,7 @@ export default defineComponent({
          */
         chatScroll (event: Event) {
             const body = event.target as HTMLDivElement
+            const bar = document.getElementById('send-more')
             // 顶部
             if (body.scrollTop === 0 && this.list.length > 0) {
                 this.loadMoreHistory()
@@ -463,10 +469,22 @@ export default defineComponent({
             if (body.scrollTop + body.clientHeight === body.scrollHeight) {
                 this.NewMsgNum = 0
                 this.tags.showBottomButton = false
+                // 去除阴影
+                if(bar) {
+                    bar.style.transition = 'background .3s'
+                    bar.classList.add('btn')
+                }
             }
             // 显示回到底部
             if (body.scrollTop < body.scrollHeight - body.clientHeight * 2 && this.tags.showBottomButton !== true) {
                 this.tags.showBottomButton = true
+            }
+            // 添加阴影
+            if (body.scrollTop < body.scrollHeight - body.clientHeight - 10) {
+                if(bar) {
+                    bar.style.transition = 'background 1s'
+                    bar.classList.remove('btn')
+                }
             }
         },
 

@@ -267,5 +267,9 @@
   "option_view_auto_gtk_tip": "（实验性）自动从 GTK 配置获取主题配色",
   "option_view_auto_win_color": "自动跟随 Windows 主题色",
   "option_view_auto_win_color_tip": "自动获取 Windows 的主题色设置并应用",
-  "option_view_auto_win_color_tip_1": "获取 Windows 主题色失败："
+  "option_view_auto_win_color_tip_1": "获取 Windows 主题色失败：",
+  "option_view_background": "背景图片",
+  "option_view_background_tip": "嘿嘿嘿（痴呆",
+  "option_view_background_blur": "背景模糊",
+  "option_view_background_blur_tip": "什么都看不见了（恼"
 }

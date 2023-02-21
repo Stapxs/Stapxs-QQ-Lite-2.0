@@ -15,8 +15,7 @@
                         d="M0 128C0 92.7 28.7 64 64 64H256h48 16H576c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H320 304 256 64c-35.3 0-64-28.7-64-64V128zm320 0V384H576V128H320zM178.3 175.9c-3.2-7.2-10.4-11.9-18.3-11.9s-15.1 4.7-18.3 11.9l-64 144c-4.5 10.1 .1 21.9 10.2 26.4s21.9-.1 26.4-10.2l8.9-20.1h73.6l8.9 20.1c4.5 10.1 16.3 14.6 26.4 10.2s14.6-16.3 10.2-26.4l-64-144zM160 233.2L179 276H141l19-42.8zM448 164c11 0 20 9 20 20v4h44 16c11 0 20 9 20 20s-9 20-20 20h-2l-1.6 4.5c-8.9 24.4-22.4 46.6-39.6 65.4c.9 .6 1.8 1.1 2.7 1.6l18.9 11.3c9.5 5.7 12.5 18 6.9 27.4s-18 12.5-27.4 6.9l-18.9-11.3c-4.5-2.7-8.8-5.5-13.1-8.5c-10.6 7.5-21.9 14-34 19.4l-3.6 1.6c-10.1 4.5-21.9-.1-26.4-10.2s.1-21.9 10.2-26.4l3.6-1.6c6.4-2.9 12.6-6.1 18.5-9.8l-12.2-12.2c-7.8-7.8-7.8-20.5 0-28.3s20.5-7.8 28.3 0l14.6 14.6 .5 .5c12.4-13.1 22.5-28.3 29.8-45H448 376c-11 0-20-9-20-20s9-20 20-20h52v-4c0-11 9-20 20-20z" />
                 </svg>
                 <div>
-                    <span>{{ $t('l10n_name') }}<a>{{ isI10nExpired($t('l10n_version')) ? $t('option_view_l10n_expired')
-                    : '' }}</a></span>
+                    <span>{{ $t('l10n_name') }}</span>
                     <span class="author">{{ $t('l10n_author_title') }}{{ $t('l10n_author') }}</span>
                     <span>{{ $t('l10n_description') }}</span>
                 </div>
@@ -132,6 +131,26 @@
                     </label>
                 </div>
             </template>
+            <div class="opt-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM323.8 202.5c-4.5-6.6-11.9-10.5-19.8-10.5s-15.4 3.9-19.8 10.5l-87 127.6L170.7 297c-4.6-5.7-11.5-9-18.7-9s-14.2 3.3-18.7 9l-64 80c-5.8 7.2-6.9 17.1-2.9 25.4s12.4 13.6 21.6 13.6h96 32H424c8.9 0 17.1-4.9 21.2-12.8s3.6-17.4-1.4-24.7l-120-176zM112 192a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"/></svg>
+                <div>
+                    <span>{{ $t('option_view_background') }}</span>
+                    <span>{{ $t('option_view_background_tip') }}</span>
+                </div>
+                <input class="ss-input" style="width:150px" type="text" name="chat_background" @keyup="save"
+                    v-model="runtimeData.sysConfig.chat_background">
+            </div>
+            <div class="opt-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M448 256A192 192 0 1 0 64 256a192 192 0 1 0 384 0zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm256 80a80 80 0 1 0 0-160 80 80 0 1 0 0 160zm0-224a144 144 0 1 1 0 288 144 144 0 1 1 0-288zM224 256a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z"/></svg>
+                <div>
+                    <span>{{ $t('option_view_background_blur') }}</span>
+                    <span>{{ $t('option_view_background_blur_tip') }}</span>
+                </div>
+                <div class="ss-range">
+                    <input :style="`width:150px;background-size: ${runtimeData.sysConfig.chat_background_blur}% 100%;`" type="range" v-model="runtimeData.sysConfig.chat_background_blur" name="chat_background_blur" @input="rangeInput($event);save($event)">
+                    <span :style="`color: var(--color-font${runtimeData.sysConfig.chat_background_blur > 50 ? '-r' : ''})`">{{ runtimeData.sysConfig.chat_background_blur }} px</span>
+                </div>
+            </div>
         </div>
         <div class="ss-card">
             <header>{{ $t('option_view_view') }}</header>
@@ -191,6 +210,28 @@ export default defineComponent({
             const sender = event.target as HTMLInputElement
             // GA：上传语言选择
             this.$gtag.event('use_language', { name: sender.value })
+        },
+
+        rangeInput(event: Event) {
+            // const sender = event.target as HTMLInputElement
+            // let max = Number(sender.getAttribute('max'))
+            // let min = Number(sender.getAttribute('min'))
+            // if(!max) max = 100
+            // if(!min) min = 0
+            // const value = Number(sender.value)
+            // const percent = (value - min) / (max - min) * 100
+            // sender.style.backgroundSize = percent + '% 100%'
+            // if(sender.parentElement) {
+            //     (sender.parentElement.childNodes[1] as HTMLSpanElement).
+            //             innerText = String(value) + 'px'
+            //     if(percent >= 50) {
+            //         (sender.parentElement.childNodes[1] as HTMLSpanElement).
+            //             style.color = 'var(--color-font-r)'
+            //     } else {
+            //         (sender.parentElement.childNodes[1] as HTMLSpanElement).
+            //             style.color = 'var(--color-font)'
+            //     }
+            // }
         }
     }
 })

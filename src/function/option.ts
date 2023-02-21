@@ -28,7 +28,8 @@ const optDefault: { [key: string]: any } = {
     log_level: 'err',
     open_ga_bot: true,
     initial_scale: 0.85,
-    theme_color: 0
+    theme_color: 0,
+    chat_background_blur: 0
 }
 
 // =============== 设置项事件 ===============
@@ -263,7 +264,7 @@ export function load(): { [key: string]: any } {
                     if (opt[1] === 'true' || opt[1] === 'false') {
                         options[opt[0]] = (opt[1] === 'true')
                     } else {
-                        options[opt[0]] = opt[1]
+                        options[opt[0]] = decodeURIComponent(opt[1])
                     }
                     // 执行设置项操作
                     run(opt[0], opt[1])
@@ -348,7 +349,7 @@ export function saveAll(config = {} as {[key: string]: any}) {
     }
     let str = ''
     Object.keys(config).forEach(key => {
-        str += key + ':' + config[key] + '&'
+        str += key + ':' + encodeURIComponent(config[key]) + '&'
     })
     str = str.substring(0, str.length - 1)
     app.config.globalProperties.$cookies.set('options', str, '1m')
@@ -391,6 +392,7 @@ export function runASWEvent(event: Event) {
                         value = sender.dataset.id
                         break
                     }
+                    case 'range':
                     case 'number':
                     case 'text': {
                         value = (sender as HTMLInputElement).value
