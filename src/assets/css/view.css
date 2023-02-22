@@ -370,8 +370,9 @@ html, body {
 
 /* TODO: BCUI - 这段 css 将在将来迁移到 Border Card UI 中合并 */
 .menu {
+    background: rgba(var(--color-bg-rgb), 0.7);
     box-shadow: 0 0 5px var(--color-shader);
-    background: var(--color-bg);
+    backdrop-filter: blur(50px);
     transition: transform .1s;
     transform-origin: top;
     transform: scaleY(0);
