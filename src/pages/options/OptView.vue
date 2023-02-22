@@ -147,7 +147,7 @@
                     <span>{{ $t('option_view_background_blur_tip') }}</span>
                 </div>
                 <div class="ss-range">
-                    <input :style="`width:150px;background-size: ${runtimeData.sysConfig.chat_background_blur}% 100%;`" type="range" v-model="runtimeData.sysConfig.chat_background_blur" name="chat_background_blur" @input="rangeInput($event);save($event)">
+                    <input :style="`width:150px;background-size: ${runtimeData.sysConfig.chat_background_blur}% 100%;`" type="range" v-model="runtimeData.sysConfig.chat_background_blur" name="chat_background_blur" @input="save">
                     <span :style="`color: var(--color-font${runtimeData.sysConfig.chat_background_blur > 50 ? '-r' : ''})`">{{ runtimeData.sysConfig.chat_background_blur }} px</span>
                 </div>
             </div>
@@ -163,21 +163,21 @@
                     <span>{{ $t('option_view_initial_scale') }}</span>
                     <span>{{ $t('option_view_initial_scale_tip') }}</span>
                 </div>
-                <input class="ss-input" style="width:150px" type="number" min="0.1" max="5" step="0.05" name="initial_scale" @keyup="save" v-model="runtimeData.sysConfig.initial_scale">
+                <div class="ss-range">
+                    <input :style="`width:150px;background-size: ${initialScaleShow / 0.05}% 100%;`" type="range" min="0.1" max="5" step="0.05" v-model="runtimeData.sysConfig.initial_scale" name="initial_scale" @change="save" @input="setInitialScaleShow">
+                    <span :style="`color: var(--color-font${initialScaleShow / 0.05 > 50 ? '-r' : ''})`">{{ initialScaleShow }}</span>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <script lang="ts">
-import cmp from 'semver-compare'
-
-import { defineComponent } from 'vue'
+import { defineComponent, toRaw } from 'vue'
 import { runtimeData } from '../../function/msg'
 import { runASWEvent as save, get } from '../../function/option'
 import { BrowserInfo, detect } from 'detect-browser'
 
-import appInfo from '../../../package.json'
 import languages from '../../assets/l10n/_l10nconfig.json'
 
 export default defineComponent({
@@ -190,49 +190,31 @@ export default defineComponent({
             languages: languages,
             // 别问我为什么微软是紫色的
             colors: ['林槐蓝', '墨竹青', '少女粉', '微软紫', '坏猫黄', '玄素黑'],
-            browser: detect() as BrowserInfo
+            browser: detect() as BrowserInfo,
+            initialScaleShow: 0.1
         }
     },
     methods: {
-        /**
-         * 判断当前加载的语言是否是最新版本
-         * @param version 
-         */
-        isI10nExpired(version: string) {
-            const appVersion = appInfo.version
-            if (cmp(appVersion, version) === 1) {
-                return true
-            }
-            return false
-        },
-
         gaLanguage(event: Event) {
             const sender = event.target as HTMLInputElement
             // GA：上传语言选择
             this.$gtag.event('use_language', { name: sender.value })
         },
 
-        rangeInput(event: Event) {
-            // const sender = event.target as HTMLInputElement
-            // let max = Number(sender.getAttribute('max'))
-            // let min = Number(sender.getAttribute('min'))
-            // if(!max) max = 100
-            // if(!min) min = 0
-            // const value = Number(sender.value)
-            // const percent = (value - min) / (max - min) * 100
-            // sender.style.backgroundSize = percent + '% 100%'
-            // if(sender.parentElement) {
-            //     (sender.parentElement.childNodes[1] as HTMLSpanElement).
-            //             innerText = String(value) + 'px'
-            //     if(percent >= 50) {
-            //         (sender.parentElement.childNodes[1] as HTMLSpanElement).
-            //             style.color = 'var(--color-font-r)'
-            //     } else {
-            //         (sender.parentElement.childNodes[1] as HTMLSpanElement).
-            //             style.color = 'var(--color-font)'
-            //     }
-            // }
+        setInitialScaleShow(event: Event) {
+            const sender = event.target as HTMLInputElement
+            this.initialScaleShow = Number(sender.value)
         }
+    },
+    mounted() {
+        // 一次性初始化一次缩放级别
+        const watch = this.$watch(
+            () => runtimeData.sysConfig,
+            () => {
+                this.initialScaleShow = toRaw(runtimeData.sysConfig.initial_scale)
+                watch()
+            }
+        )
     }
 })
 </script>

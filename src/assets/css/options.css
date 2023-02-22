@@ -311,6 +311,9 @@
 }
 .opt-item div.ss-range input::-webkit-slider-thumb,
 .opt-item div.ss-range input::-moz-range-thumb {
+    display: none;
+}
+.opt-item div.ss-range input::-webkit-slider-runnable-track {
     opacity: 0;
 }
 

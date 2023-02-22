@@ -34,7 +34,7 @@ textarea {
     z-index: 0;
 }
 .chat-pan > div.info {
-    background: rgba(var(--color-card-1-rgb), 0.9);
+    background: rgba(var(--color-card-1-rgb), 0.8);
     box-shadow:0 0 1px var(--color-shader);
     backdrop-filter: blur(50px);
     width: calc(100% - 60px);
@@ -89,7 +89,9 @@ textarea {
     margin-top: -90px;
     z-index: 1;
     flex: 1;
-    
+}
+.chat-pan > div.chat::-webkit-scrollbar {
+    background: transparent;
 }
 
 .chat-pan > div.new-msg {
@@ -103,7 +105,8 @@ textarea {
     z-index: 2;
 }
 .chat-pan > div.new-msg > div {
-    background: var(--color-card-1);
+    background: rgba(var(--color-card-1-rgb), 0.7);
+    backdrop-filter: blur(50px);
     border-radius: 40px;
     align-items: center;
     margin-right: -7px;

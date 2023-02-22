@@ -56,7 +56,7 @@
     "@vue/eslint-config-typescript": "^9.1.0",
     "child_process": "^1.0.2",
     "css": "^3.0.0",
-    "electron": "^13.0.0",
+    "electron": "^20.0.0",
     "electron-devtools-installer": "^3.1.0",
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^8.0.3",

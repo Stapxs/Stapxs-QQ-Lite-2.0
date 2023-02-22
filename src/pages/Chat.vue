@@ -191,6 +191,7 @@
                             id="main-input"
                             type="text"
                             v-model="msg"
+                            autocomplete="off"
                             :disabled="runtimeData.tags.openSideBar"
                             @paste="addImg"
                             @keyup="mainKeyUp"
