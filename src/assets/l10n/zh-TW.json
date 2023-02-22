@@ -258,15 +258,19 @@
   "chat_chat_info_silence_all_tip": "禁止群組所有者和管理員以外的群組成員在群組內傳送訊息",
   "btn_accept": "同意",
   "btn_reject": "拒絕",
-  "sys_notice_new_friend": "新的聯絡人",
+  "sys_notice_new_friend": "新的聯絡人請求",
   "sys_notice": "系統訊息",
   "chat_msg_menu_remove": "移出群組",
   "sys_notice_new_group_nmember": "入群請求",
   "sys_notice_new_group_nmember_add": "請求加入：",
-  "sys_notice_new_group_nmember_no_comment": "(沒有個人簡介)",
+  "sys_notice_new_group_nmember_no_comment": "（沒有個人簡介）",
   "option_view_auto_gtk": "從 GTK 主題取得主題色",
   "option_view_auto_gtk_tip": "（實驗設定）自動從 GTK 設定取得主題色",
   "option_view_auto_win_color": "自動跟隨 Windows 主題色",
-  "option_view_auto_win_color_tip": "使主題色與 Windows 的設定一致",
-  "option_view_auto_win_color_tip_1": "無法取得 Windows 主題色："
+  "option_view_auto_win_color_tip": "使本程式的主題色與 Windows 的設定一致",
+  "option_view_auto_win_color_tip_1": "無法取得 Windows 主題色：",
+  "option_view_background": "背景圖片",
+  "option_view_background_tip": "SS：「嘿嘿嘿（痴呆」",
+  "option_view_background_blur": "背景模糊",
+  "option_view_background_blur_tip": "調整背景圖片的模糊程度，以免內容受到遮擋。"
 }
