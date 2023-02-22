@@ -5,7 +5,7 @@
 }
 .sys_not_new_friend > span {
     background: var(--color-card-2);
-    margin: -20px -20px 20px -20px;
+    margin: -10px -10px 20px -10px;
     border-radius: 7px 7px 0 0;
     padding: 10px 20px;
     font-weight: bold;
@@ -13,32 +13,50 @@
 .sys_not_new_friend > div {
     display: flex;
 }
-.sys_not_new_friend > div > img {
+.sys_not_new_friend > div > div:first-child {
+    flex: 1;
+}
+.sys_not_new_friend > div > div:last-child {
+    flex-direction: column;
+    margin-top: -10px;
+}
+.sys_not_new_friend > div > div {
+    display: flex;
+}
+.sys_not_new_friend > div > div > img {
     border-radius: 7px;
     margin-right: 10px;
     height: 45px;
     width: 45px;
 }
-.sys_not_new_friend > div > div {
+.sys_not_new_friend > div > div > div {
     flex-direction: column;
     display: flex;
 }
-.sys_not_new_friend > div > div > span {
+.sys_not_new_friend > div > div > div > span {
     margin-bottom: 5px;
     font-size: 1rem;
 }
-.sys_not_new_friend > div > div > span:last-child {
+.sys_not_new_friend > div > div > div > span:last-child {
     color: var(--color-font-2);
     font-size: 0.8rem;
     margin-top: 5px;
 }
-.sys_not_new_friend > div > div > div > span:nth-child(1) {
+.sys_not_new_friend > div > div > div > div > span:nth-child(1) {
     background: var(--color-card-2);
     padding: 7px 10px 3px 10px;
     border-radius: 1.5rem;
     font-size: 0.8rem;
 }
-.sys_not_new_friend > div > div > div > span:nth-child(2) {
+.sys_not_new_friend > div > div > div > div > span:nth-child(2) {
     font-size: 0.8rem;
     margin-left: 10px;
+}
+.sys_not_new_friend > div > div > button {
+    margin: 5px 0;
+    width: 100px;
+}
+.sys_not_new_friend > div > div > button:first-child {
+    background: var(--color-card-2);
+    color: var(--color-font);
 }

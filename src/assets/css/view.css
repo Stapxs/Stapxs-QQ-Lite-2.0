@@ -295,9 +295,9 @@ html, body {
     fill: var(--color-font-1-r);
     pointer-events: none;
     border-radius: 7px;
-    padding: 10px;
-    height: 30px;
-    width: 30px;
+    padding: 15px;
+    height: 25px;
+    width: 25px;
 }
 .friend-body > div {
     flex: 1;
@@ -370,8 +370,9 @@ html, body {
 
 /* TODO: BCUI - 这段 css 将在将来迁移到 Border Card UI 中合并 */
 .menu {
+    background: rgba(var(--color-bg-rgb), 0.7);
     box-shadow: 0 0 5px var(--color-shader);
-    background: var(--color-bg);
+    backdrop-filter: blur(50px);
     transition: transform .1s;
     transform-origin: top;
     transform: scaleY(0);
@@ -414,6 +415,44 @@ html, body {
 }
 .menu > div:hover > a {
     color: var(--color-font-r);
+}
+
+/* TODO: BCUI - 这段 css 将在将来迁移到 Border Card UI 中合并 */
+.ss-range {
+    --range-dot-height: 26px;
+    --range-height: 26px;
+    flex-direction: row !important;
+    display: flex !important;
+}
+.ss-range input {
+    -webkit-appearance: none;
+
+    background-image: linear-gradient(var(--color-main), var(--color-main));
+    background-color: var(--color-card-1);
+    background-repeat: no-repeat;
+    height: var(--range-height);
+    background-size: 0% 100%;
+    border-radius: 7px;
+    min-width: 100%;
+}
+.ss-range input::-webkit-slider-thumb,
+.ss-range input::-moz-range-thumb {
+    -webkit-appearance: none;
+
+    height: calc(var(--range-dot-height) - 16px);
+    width: calc(var(--range-dot-height) - 16px);
+    box-shadow:0 0 5px var(--color-shader);
+    background:var(--color-main);
+    border: 5px solid #FFF;
+    border-radius: 100%;
+    cursor: pointer;
+}
+.ss-range span {
+    line-height: var(--range-height);
+    transform: translateX(-50%);
+    color: var(--color-font);
+    pointer-events: none;
+    margin-left: -50%;
 }
 
 .app-msg {
@@ -909,8 +948,8 @@ html, body {
     .friend-body {
         background: transparent !important;
         justify-content: center;
-        padding: 10px 0;
         margin: 0 5px 0 0;
+        padding: 10px 0;
     }
     .friend-body > div {
         display: none;
@@ -920,8 +959,8 @@ html, body {
         width: 45px;
     }
     .friend-body > svg {
-        height: 25px;
-        width: 25px;
+        height: 20px;
+        width: 20px;
     }
     .friend-body.active:hover {
         background: var(--color-card-2) !important;

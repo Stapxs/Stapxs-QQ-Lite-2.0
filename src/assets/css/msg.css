@@ -421,7 +421,7 @@
     display: block;
 }
 .note-nomsg {
-    margin: 10px auto 40px auto;
+    margin: 100px auto 40px auto;
     color: var(--color-font-2);
     text-align: center;
     display: block;

@@ -103,7 +103,7 @@ export default defineComponent({
             }
             this.isSearch = false
             this.searchInfo = ''
-            runtimeData.showList = this.list.slice(0, 10)
+            runtimeData.showList = this.list.slice(0, 15)
             this.listPage = 1
             const back = {
                 type: data.user_id ? 'user' : 'group',
@@ -158,7 +158,7 @@ export default defineComponent({
                 })
             } else {
                 this.isSearch = false
-                runtimeData.showList = this.list.slice(0, 10)
+                runtimeData.showList = this.list.slice(0, 15)
                 this.listPage = 1
             }
         },
@@ -189,7 +189,7 @@ export default defineComponent({
             handler (val) {
                 if(!this.isSearch) {
                     // 只在非搜索状态刷新以防止意外刷新
-                    runtimeData.showList = val.slice(0, 10)
+                    runtimeData.showList = val.slice(0, 15)
                     this.listPage = 1
                 }
             }

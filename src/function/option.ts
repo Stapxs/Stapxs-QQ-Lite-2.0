@@ -17,7 +17,7 @@ import { i18n } from '@/main'
 import { markRaw, defineAsyncComponent } from 'vue'
 import { Logger, LogType } from './base'
 import { runtimeData } from './msg'
-import { initUITest, getTrueLang } from './util'
+import { initUITest, getTrueLang, loadSystemThemeColor, loadWinColor, updateWinColor } from './util'
 
 let cacheConfigs: { [key: string]: any }
 
@@ -28,7 +28,8 @@ const optDefault: { [key: string]: any } = {
     log_level: 'err',
     open_ga_bot: true,
     initial_scale: 0.85,
-    theme_color: 0
+    theme_color: 0,
+    chat_background_blur: 0
 }
 
 // =============== 设置项事件 ===============
@@ -41,7 +42,28 @@ const configFunction: { [key: string]: (value: any) => void } = {
     ui_test: changeUiTest,
     chatview_name: changeChatView,
     initial_scale: changeInitialScale,
-    msg_type: setMsgType
+    msg_type: setMsgType,
+    opt_auto_gtk: updateGTKColor,
+    opt_auto_win_color: updateWinColorOpt
+}
+
+function updateWinColorOpt(value: boolean) {
+    if(value == true) {
+        const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+        const reader = electron ? electron.ipcRenderer : null
+        if (reader) {
+            reader.on('sys:WinColorChanged', (event, params) => {
+                updateWinColor(params)
+            })
+        }
+        loadWinColor()
+    }
+}
+
+function updateGTKColor(value: boolean) {
+    if(value == true) {
+        loadSystemThemeColor()
+    }
 }
 
 function setMsgType(value: any) {
@@ -141,6 +163,8 @@ function setAutoDark(value: boolean) {
                     } else {
                         setDarkMode(false)
                     }
+                    // 刷新主题色
+                    runAS('opt_auto_win_color', get('opt_auto_win_color'))
                 }
             })
         }
@@ -240,7 +264,7 @@ export function load(): { [key: string]: any } {
                     if (opt[1] === 'true' || opt[1] === 'false') {
                         options[opt[0]] = (opt[1] === 'true')
                     } else {
-                        options[opt[0]] = opt[1]
+                        options[opt[0]] = decodeURIComponent(opt[1])
                     }
                     // 执行设置项操作
                     run(opt[0], opt[1])
@@ -325,7 +349,7 @@ export function saveAll(config = {} as {[key: string]: any}) {
     }
     let str = ''
     Object.keys(config).forEach(key => {
-        str += key + ':' + config[key] + '&'
+        str += key + ':' + encodeURIComponent(config[key]) + '&'
     })
     str = str.substring(0, str.length - 1)
     app.config.globalProperties.$cookies.set('options', str, '1m')
@@ -368,6 +392,7 @@ export function runASWEvent(event: Event) {
                         value = sender.dataset.id
                         break
                     }
+                    case 'range':
                     case 'number':
                     case 'text': {
                         value = (sender as HTMLInputElement).value

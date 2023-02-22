@@ -89,24 +89,7 @@
                     <header>
                         <span>{{ $t('chat_chat_info_config') }}</span>
                     </header>
-                    <div class="info-pan-set" style="padding:0">
-                        <div class="opt-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-                                <path
-                                    d="M32 32C32 14.3 46.3 0 64 0H320c17.7 0 32 14.3 32 32s-14.3 32-32 32H290.5l11.4 148.2c36.7 19.9 65.7 53.2 79.5 94.7l1 3c3.3 9.8 1.6 20.5-4.4 28.8s-15.7 13.3-26 13.3H32c-10.3 0-19.9-4.9-26-13.3s-7.7-19.1-4.4-28.8l1-3c13.8-41.5 42.8-74.8 79.5-94.7L93.5 64H64C46.3 64 32 49.7 32 32zM160 384h64v96c0 17.7-14.3 32-32 32s-32-14.3-32-32V384z" />
-                            </svg>
-                            <div>
-                                <span>{{ $t('chat_chat_info_option_top') }}</span>
-                                <span>{{ $t('chat_chat_info_option_top_tip') }}</span>
-                            </div>
-                            <label class="ss-switch">
-                                <input type="checkbox" @change="saveTop" v-model="isTop">
-                                <div>
-                                    <div></div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
+                    <OptInfo :type="'number'" :chat="chat"></OptInfo>
                 </div>
             </div>
             <div v-if="chat.show.type === 'group'" class="layui-tab layui-tab-brief"
@@ -158,23 +141,8 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="layui-tab-item info-pan-set">
-                        <div class="opt-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-                                <path
-                                    d="M32 32C32 14.3 46.3 0 64 0H320c17.7 0 32 14.3 32 32s-14.3 32-32 32H290.5l11.4 148.2c36.7 19.9 65.7 53.2 79.5 94.7l1 3c3.3 9.8 1.6 20.5-4.4 28.8s-15.7 13.3-26 13.3H32c-10.3 0-19.9-4.9-26-13.3s-7.7-19.1-4.4-28.8l1-3c13.8-41.5 42.8-74.8 79.5-94.7L93.5 64H64C46.3 64 32 49.7 32 32zM160 384h64v96c0 17.7-14.3 32-32 32s-32-14.3-32-32V384z" />
-                            </svg>
-                            <div>
-                                <span>{{ $t('chat_chat_info_option_top') }}</span>
-                                <span>{{ $t('chat_chat_info_option_top_tip') }}</span>
-                            </div>
-                            <label class="ss-switch">
-                                <input type="checkbox" @change="saveTop" v-model="isTop">
-                                <div>
-                                    <div></div>
-                                </div>
-                            </label>
-                        </div>
+                    <div class="layui-tab-item" style="padding: 0 20px;">
+                        <OptInfo :type="'group'" :chat="chat"></OptInfo>
                     </div>
                 </div>
             </div>
@@ -191,13 +159,12 @@ import FileBody from '@/components/FileBody.vue'
 
 import { getTrueLang } from '@/function/util'
 import { runtimeData } from '@/function/msg'
-import app from '@/main'
-import { UserFriendElem, UserGroupElem } from '@/function/elements/information'
+import OptInfo from './options/OptInfo.vue'
 
 export default defineComponent({
     name: 'ViewInfo',
     props: ['tags', 'chat'],
-    components: { BulletinBody, FileBody },
+    components: { BulletinBody, FileBody, OptInfo },
     data() {
         return {
             runtimeData: runtimeData,
@@ -219,85 +186,7 @@ export default defineComponent({
          */
         fileLoad(event: Event) {
             this.$emit('loadFile', event)
-        },
-
-        /**
-         * 保存置顶信息
-         * @param event 点击事件
-         */
-        saveTop(event: Event) {
-            const id = runtimeData.loginInfo.uin
-            // 完整的 cookie JSON
-            let topInfo = runtimeData.sysConfig.top_info as { [key: string]: number[] }
-            if(topInfo == null) {
-                topInfo = {}
-            }
-            // 本人的置顶信息
-            let topList = topInfo[id]
-            // 数据
-            const sender = event.currentTarget as HTMLInputElement
-            const value = sender.checked
-            // 操作
-            if(value) {
-                if(topList) {
-                    if(topList.indexOf(this.chat.show.id) < 0) {
-                        topList.push(this.chat.show.id)
-                    }
-                } else {
-                    topList = [this.chat.show.id]
-                }
-            }else {
-                if(topList) {
-                    topList.splice(topList.indexOf(this.chat.show.id), 1)
-                }
-            }
-            // 刷新 cookie
-            if(topList) {
-                topInfo[id] = topList
-                runtimeData.sysConfig.top_info = topInfo
-                console.log(topInfo)
-                app.config.globalProperties.$cookies.set('top', JSON.stringify(topInfo), '1m')
-            }
-            // 为消息列表内的对象刷新置顶标志
-            for(let i=0; i<runtimeData.onMsgList.length; i++) {
-                const item = runtimeData.onMsgList[i]
-                if(item.user_id == this.chat.show.id || item.group_id == this.chat.show.id) {
-                    runtimeData.onMsgList[i].always_top = value
-                    break
-                }
-            }
-            // 重新排序列表
-            const newList = [] as (UserFriendElem & UserGroupElem)[]
-            let topNum = 1
-            runtimeData.onMsgList.forEach((item) => {
-                // 排序操作
-                if (item.always_top === true) {
-                    newList.unshift(item)
-                    topNum++
-                } else if (item.new_msg === true) {
-                    newList.splice(topNum - 1, 0, item)
-                } else {
-                    newList.push(item)
-                }
-            })
-            runtimeData.onMsgList = newList
-        },
-        
-        /**
-         * 检查并修改 isTop
-         */
-        updateIsTop() {
-            if (runtimeData.sysConfig.top_info != undefined) {
-                let topList = runtimeData.sysConfig.top_info[runtimeData.loginInfo.uin]
-                if (topList != undefined) {
-                    this.isTop = topList.indexOf(this.chat.show.id) >= 0
-                }
-            }
         }
-    },
-    mounted() {
-        this.updateIsTop()
-        this.$watch(() => runtimeData.chatInfo.show.id, () => { this.$nextTick(this.updateIsTop) })
     }
 })
 </script>

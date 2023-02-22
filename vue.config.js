@@ -59,5 +59,21 @@ module.exports = {
                 }
             ]
         }     
+    },
+    pluginOptions: {
+        electronBuilder: {
+            builderOptions: {
+                nsis: {
+                    allowToChangeInstallationDirectory: true,
+                    oneClick: false,
+                    installerIcon: "./public/favicon.ico",
+                    installerHeaderIcon: "./public/favicon.ico"
+                },
+                win: {
+                    icon: './public/favicon.ico'
+                },
+                productName: 'Stapxs QQ Lite'
+            }
+        }
     }
 }

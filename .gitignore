@@ -24,3 +24,6 @@ pnpm-debug.log*
 
 # Others
 src/pages/chat-view/ChatTest.vue
+
+#Electron-builder output
+/dist_electron

@@ -10,7 +10,10 @@
 -->
 
 <template>
-    <div :class="'chat-pan' + (runtimeData.tags.openSideBar ? ' open': '')" id="chat-pan">
+    <div
+        :style="`background-image: url(${runtimeData.sysConfig.chat_background})`"
+        :class="'chat-pan' + (runtimeData.tags.openSideBar ? ' open': '')"
+        id="chat-pan">        
         <!-- 聊天基本信息 -->
         <div class="info">
             <img :src="chat.show.avatar">
@@ -78,7 +81,7 @@
             </div>
         </div>
         <!-- 底部区域 -->
-        <div class="more">
+        <div class="more" id="send-more">
             <!-- 功能附加 -->
             <div>
                 <div>
@@ -188,6 +191,7 @@
                             id="main-input"
                             type="text"
                             v-model="msg"
+                            autocomplete="off"
                             :disabled="runtimeData.tags.openSideBar"
                             @paste="addImg"
                             @keyup="mainKeyUp"
@@ -300,6 +304,10 @@
                     <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 64C150 64 64 150 64 256s86 192 192 192c17.7 0 32 14.3 32 32s-14.3 32-32 32C114.6 512 0 397.4 0 256S114.6 0 256 0S512 114.6 512 256v32c0 53-43 96-96 96c-29.3 0-55.6-13.2-73.2-33.9C320 371.1 289.5 384 256 384c-70.7 0-128-57.3-128-128s57.3-128 128-128c27.9 0 53.7 8.9 74.7 24.1c5.7-5 13.1-8.1 21.3-8.1c17.7 0 32 14.3 32 32v80 32c0 17.7 14.3 32 32 32s32-14.3 32-32V256c0-106-86-192-192-192zm64 192c0-35.3-28.7-64-64-64s-64 28.7-64 64s28.7 64 64 64s64-28.7 64-64z"/></svg></div>
                     <a>{{ $t('chat_msg_menu_at') }}</a>
                 </div>
+                <div @click="(selectedMsg ? Connector.send('set_group_kick', {group_id: runtimeData.chatInfo.show.id, user_id: selectedMsg.sender.user_id}, 'setGroupKick') : '');closeMsgMenu();" v-show="tags.menuDisplay.remove">
+                    <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L353.3 251.6C407.9 237 448 187.2 448 128C448 57.3 390.7 0 320 0C250.2 0 193.5 55.8 192 125.2L38.8 5.1zM264.3 304.3C170.5 309.4 96 387.2 96 482.3c0 16.4 13.3 29.7 29.7 29.7H514.3c3.9 0 7.6-.7 11-2.1l-261-205.6z"/></svg></div>
+                    <a>{{ $t('chat_msg_menu_remove') }}</a>
+                </div>
             </div>
         </div>
         <!-- 群 / 好友信息弹窗 -->
@@ -360,6 +368,7 @@
                 <div class="bg" @click="cancelForward"></div>
             </div>
         </Transition>
+        <div class="bg" :style="`backdrop-filter: blur(${runtimeData.sysConfig.chat_background_blur}px);`"></div>
     </div>
 </template>
 
@@ -379,6 +388,7 @@ import { Logger, LogType, PopInfo, PopType } from '@/function/base'
 import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem, MsgItemElem, SQCodeElem, GroupMemberInfoElem, UserFriendElem, UserGroupElem, BotMsgType } from '@/function/elements/information'
+import { baseCompile } from '@vue/compiler-core'
 
 export default defineComponent({
     name: 'ViewChat',
@@ -387,6 +397,7 @@ export default defineComponent({
     data () {
         return {
             Option: Option,
+            Connector: Connector,
             runtimeData: runtimeData,
             forwardList: runtimeData.userList,
             trueLang: getTrueLang(),
@@ -408,7 +419,8 @@ export default defineComponent({
                     copy: true,
                     copySelect: false,
                     revoke: false,
-                    at: true
+                    at: true,
+                    remove: false
                 },
                 msgTouch: {
                     x: -1,
@@ -449,6 +461,7 @@ export default defineComponent({
          */
         chatScroll (event: Event) {
             const body = event.target as HTMLDivElement
+            const bar = document.getElementById('send-more')
             // 顶部
             if (body.scrollTop === 0 && this.list.length > 0) {
                 this.loadMoreHistory()
@@ -457,10 +470,22 @@ export default defineComponent({
             if (body.scrollTop + body.clientHeight === body.scrollHeight) {
                 this.NewMsgNum = 0
                 this.tags.showBottomButton = false
+                // 去除阴影
+                if(bar) {
+                    bar.style.transition = 'background .3s'
+                    bar.classList.add('btn')
+                }
             }
             // 显示回到底部
             if (body.scrollTop < body.scrollHeight - body.clientHeight * 2 && this.tags.showBottomButton !== true) {
                 this.tags.showBottomButton = true
+            }
+            // 添加阴影
+            if (body.scrollTop < body.scrollHeight - body.clientHeight - 10) {
+                if(bar) {
+                    bar.style.transition = 'background 1s'
+                    bar.classList.remove('btn')
+                }
             }
         },
 
@@ -642,39 +667,64 @@ export default defineComponent({
             }
             const menu = document.getElementById('msgMenu')
             const msg = event.currentTarget as HTMLDivElement
-            if(menu !== null && msg !== null) {
-                // 检查消息，确认菜单显示状态
-                if (data.sender.user_id === runtimeData.loginInfo.uin) {
-                    // 自己不显示提及
-                    this.tags.menuDisplay.at = false
-                }
-                if (data.sender.user_id === runtimeData.loginInfo.uin ||
-                    runtimeData.chatInfo.info.me_info.role === 'admin' ||
-                    runtimeData.chatInfo.info.me_info.role === 'owner') {
-                    // 自己的消息、管理员和群主会显示撤回
-                    this.tags.menuDisplay.revoke = true
-                }
-                if(data.revoke === true) {
-                    // 已被撤回的自己的消息只显示复制
-                    this.tags.menuDisplay.relpy = false
-                    this.tags.menuDisplay.forward = false
-                    this.tags.menuDisplay.revoke = false
-                }
-                const selection = document.getSelection()
-                const textBody = selection?.anchorNode?.parentElement
-                if(textBody && textBody.className.indexOf('msg-text') > -1 &&
-                    selection.focusNode == selection.anchorNode) {
-                    // 用于判定是否选中了 msg-text 且开始和结束是同一个 Node（防止跨消息复制）
-                    this.tags.menuDisplay.copySelect = true
-                    this.selectCache = selection.toString()
-                }
-                const nList = ['xml', 'json']
-                data.message.forEach((item: any) => {
-                    if(nList.indexOf(item.type as string) > 0) {
-                        // 如果包含以上消息类型，不能转发
-                        this.tags.menuDisplay.forward = false
+            const select = event.target as HTMLElement
+            let selectUserType = 'member'
+            if(runtimeData.chatInfo.show.type == 'group' && runtimeData.chatInfo.info.group_members) {
+                runtimeData.chatInfo.info.group_members.forEach((item: any) => {
+                    if(item.user_id == data.sender.user_id) {
+                        selectUserType = item.role
                     }
                 })
+            }
+            if(menu !== null && msg !== null) {
+                if(select.nodeName == 'IMG' && (select as HTMLImageElement).name == 'avatar') {
+                    // 右击头像需要显示的内容
+                    Object.keys(this.tags.menuDisplay).forEach((name: string) => {
+                        (this.tags.menuDisplay as any)[name] = false
+                    })
+                    this.tags.menuDisplay.at = true
+                    this.tags.menuDisplay.remove = true
+                    if(runtimeData.chatInfo.show.type != 'group' ||
+                        data.sender.user_id === runtimeData.loginInfo.uin ||
+                        runtimeData.chatInfo.info.me_info.role === 'member' ||
+                        selectUserType == 'owner' || selectUserType == 'admin') {
+                            // 自己、私聊或者没有权限的时候不显示移除
+                            this.tags.menuDisplay.remove = false
+                    }
+                    if (data.sender.user_id === runtimeData.loginInfo.uin) {
+                        // 自己不显示提及
+                        this.tags.menuDisplay.at = false
+                    }
+                } else {
+                    // 检查消息，确认菜单显示状态
+                    if (data.sender.user_id === runtimeData.loginInfo.uin ||
+                        runtimeData.chatInfo.info.me_info.role === 'admin' ||
+                        runtimeData.chatInfo.info.me_info.role === 'owner') {
+                        // 自己的消息、管理员和群主会显示撤回
+                        this.tags.menuDisplay.revoke = true
+                    }
+                    if(data.revoke === true) {
+                        // 已被撤回的自己的消息只显示复制
+                        this.tags.menuDisplay.relpy = false
+                        this.tags.menuDisplay.forward = false
+                        this.tags.menuDisplay.revoke = false
+                    }
+                    const selection = document.getSelection()
+                    const textBody = selection?.anchorNode?.parentElement
+                    if(textBody && textBody.className.indexOf('msg-text') > -1 &&
+                        selection.focusNode == selection.anchorNode) {
+                        // 用于判定是否选中了 msg-text 且开始和结束是同一个 Node（防止跨消息复制）
+                        this.tags.menuDisplay.copySelect = true
+                        this.selectCache = selection.toString()
+                    }
+                    const nList = ['xml', 'json']
+                    data.message.forEach((item: any) => {
+                        if(nList.indexOf(item.type as string) > 0) {
+                            // 如果包含以上消息类型，不能转发
+                            this.tags.menuDisplay.forward = false
+                        }
+                    })
+                }
                 // 鼠标位置
                 const pointEvent = event as PointerEvent || window.event as PointerEvent
                 const pointX = pointEvent.offsetX
@@ -712,7 +762,8 @@ export default defineComponent({
                 copy: true,
                 copySelect: false,
                 revoke: false,
-                at: true
+                at: false,
+                remove: false
             }
         },
 
@@ -891,8 +942,10 @@ export default defineComponent({
             this.tags.showMsgMenu = false
             // 清理消息背景
             this.tags.openedMenuMsg.style.background = 'unset'
-            // 重置菜单显示状态
-            this.initMenuDisplay()
+            setTimeout(() => {
+                // 重置菜单显示状态
+                this.initMenuDisplay()
+            }, 300)
         },
 
         /**

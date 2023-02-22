@@ -14,9 +14,10 @@ import app from '@/main'
 import l10nConfig from '@/assets/l10n/_l10nconfig.json'
 import zh from '@/assets/l10n/zh-CN.json'
 import FileDownloader from 'js-file-downloader'
+import option from './option'
 
+import { Rule, Stylesheet, Declaration } from 'css'
 import { Logger, PopInfo, PopType } from './base'
-
 import { MsgIdInfoElem } from './elements/system'
 import { runtimeData } from './msg'
 import { BaseChatInfoElem } from './elements/information'
@@ -476,7 +477,7 @@ export function gitmojiToEmoji (name: string) {
  * @param url 文件链接
  * @param process 下载中回调
  */
-export function downloadFile (url: string, name: string, onprocess: (event: ProgressEvent) => undefined) {
+export function downloadFile (url: string, name: string, onprocess: (event: ProgressEvent & {[key: string]: any}) => undefined) {
     if(document.location.protocol == 'https:') {
         // 判断下载文件 URL 的协议
         // PS：Chrome 不会对 http 下载的文件进行协议升级
@@ -484,18 +485,221 @@ export function downloadFile (url: string, name: string, onprocess: (event: Prog
             url = 'https' + url.substring(url.indexOf('://'))
         }
     }
-    new FileDownloader({
-        url: url,
-        autoStart: true,
-        process: onprocess,
-        nameCallback: function () {
-            return name
+    if(!process.env.IS_ELECTRON) {
+        new FileDownloader({
+            url: url,
+            autoStart: true,
+            process: onprocess,
+            nameCallback: function () {
+                return name
+            }
+        }).catch(function (error) {
+            if (error) {
+                console.log(error)
+            }
+        })
+    } else {
+        const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+        const reader = electron ? electron.ipcRenderer : null
+        if (reader) {
+            reader.on('sys:downloadBack', (event, params) => {
+                onprocess(params)
+            })
+            reader.send('sys:download', {
+                downloadPath: url,
+                fileName: name
+            })
         }
-    }).catch(function (error) {
-        if (error) {
-            console.log(error)
+    }
+}
+
+/**
+ * 使用 gtk CSS 更新 Border Card UI 配色表
+ * @param cssStr css 字符串
+ */
+function updateGTKTheme(cssStr: string) {
+    if(option.get('log_level') == 'debug') {
+        console.log(cssStr)
+    }
+    const css = window.require('css')
+    let cssObj = undefined
+    let color = '#000'
+    // color-main
+    color = cssStr.substring(cssStr.indexOf('@define-color theme_fg_color') + 29)
+    color = color.substring(0, color.indexOf(';'))
+    document.documentElement.style.setProperty('--color-main', color)
+    // color-bg
+    color = cssStr.substring(cssStr.indexOf('@define-color theme_bg_color') + 29)
+    color = color.substring(0, color.indexOf(';'))
+    document.documentElement.style.setProperty('--color-bg', color)
+    document.documentElement.style.setProperty('--color-card', color)
+    // color-card
+    color = cssStr.substring(cssStr.indexOf('.context-menu {'))
+    color = color.substring(0, color.indexOf('}') + 1)
+    cssObj = css.parse(color, {silent: true}) as Stylesheet
+    if(cssObj.stylesheet) {
+        const colorGet = ((cssObj.stylesheet.rules[0] as Rule).declarations?.filter((item: Declaration) => {
+            return item.property == 'background-color'
+        })[0] as Declaration).value
+        if(colorGet) {
+            document.documentElement.style
+                .setProperty('--color-card-1', colorGet)
         }
-    })
+    }
+    // color-card-1
+    color = cssStr.substring(cssStr.indexOf('.context-menu .view:selected {'))
+    color = color.substring(0, color.indexOf('}') + 1)
+    cssObj = css.parse(color, {silent: true}) as Stylesheet
+    if(cssObj.stylesheet) {
+        const colorGet = ((cssObj.stylesheet.rules[0] as Rule).declarations?.filter((item: Declaration) => {
+            return item.property == 'background-color'
+        })[0] as Declaration).value
+        if(colorGet) {
+            document.documentElement.style
+                .setProperty('--color-card-2', colorGet)
+        }
+    }
+    // color-card-2
+    // color = cssStr.substring(cssStr.indexOf('.context-menu menuitem:hover {'))
+    // color = color.substring(0, color.indexOf('}') + 1)
+    // cssObj = css.parse(color, {silent: true}) as Stylesheet
+    // if(cssObj.stylesheet) {
+    //     const colorGet = ((cssObj.stylesheet.rules[0] as Rule).declarations?.filter((item: Declaration) => {
+    //         return item.property == 'background-color'
+    //     })[0] as Declaration).value
+    //     if(colorGet) {
+    //         document.documentElement.style
+    //             .setProperty('--color-card-2', colorGet)
+    //     }
+    // }
+    // color-font
+    color = cssStr.substring(cssStr.indexOf('@define-color theme_text_color') + 31)
+    color = color.substring(0, color.indexOf(';'))
+    document.documentElement.style.setProperty('--color-font', color)
+    // color-font-1
+    color = cssStr.substring(cssStr.indexOf('@define-color theme_unfocused_text_color') + 41)
+    color = color.substring(0, color.indexOf(';'))
+    document.documentElement.style.setProperty('--color-font-1', color)
+    document.documentElement.style.setProperty('--color-font-2', color)
+}
+
+/**
+ * electron：加载系统主题适配
+ */
+export async function loadSystemThemeColor() {
+    // 加载 GTK 主题适配（以及主题更新回调监听）
+    const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+    const reader = electron ? electron.ipcRenderer : null
+    if (reader) {
+        // 主题更新回调
+        reader.on('sys:updateGTKTheme', (event, params) => {
+            if(option.get('opt_auto_gtk') == true) {
+                console.log('GTK 主题已更新：' + params.name)
+                updateGTKTheme(params.css)
+            }
+        })
+        updateGTKTheme(await reader.invoke('sys:getGTKTheme'))
+        
+    }
+}
+
+export async function loadWinColor() {
+    const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+    const reader = electron ? electron.ipcRenderer : null
+    if (reader) {
+        // 获取系统主题色
+        updateWinColor(await reader.invoke('sys:getWinColor'))
+        
+    }
+}
+
+export function updateWinColor(info: any) {
+    if(!info.err) {
+        // 平衡颜色亮度
+        const hsl = rgbToHsl(info.color[0], info.color[1], info.color[2])
+        const media = window.matchMedia('(prefers-color-scheme: dark)')
+        const autodark = option.get('opt_auto_dark')
+        const dark = option.get('opt_dark')
+        if((autodark == true && media.matches) || (autodark != true && dark == true)) {
+            hsl[2] = 0.8
+        } else {
+            hsl[2] = 0.3
+        }
+        info.color = hslToRgb(hsl[0], hsl[1], hsl[2])
+        document.documentElement.style.setProperty('--color-main', 'rgb(' + info.color[0] + ',' + info.color[1] + ',' + info.color[2] + ')')
+    } else {
+        runtimeData.sysConfig['opt_auto_win_color'] = false
+        new PopInfo().add(PopType.ERR, app.config.globalProperties.$t('option_view_auto_win_color_tip_1') + info.err)
+    }
+}
+
+/**
+ * RGB 颜色值转换为 HSL.
+ * 转换公式参考自 http://en.wikipedia.org/wiki/HSL_color_space.
+ * r, g, 和 b 需要在 [0, 255] 范围内
+ * 返回的 h, s, 和 l 在 [0, 1] 之间
+ *
+ * @param r 红色色值
+ * @param g 绿色色值
+ * @param b 蓝色色值
+ * @return HSL各值数组
+ */
+export function rgbToHsl(r: number, g: number, b: number) {
+    r /= 255, g /= 255, b /= 255
+    const max = Math.max(r, g, b), min = Math.min(r, g, b)
+    let h = 0, s
+    const l = (max + min) / 2
+ 
+    if (max == min){ 
+        h = s = 0
+    } else {
+        const d = max - min
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+        switch(max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break
+            case g: h = (b - r) / d + 2; break
+            case b: h = (r - g) / d + 4; break
+        }
+        h /= 6
+    }
+ 
+    return [h, s, l]
+}
+
+/**
+ * HSL颜色值转换为RGB. 
+ * 换算公式改编自 http://en.wikipedia.org/wiki/HSL_color_space.
+ * h, s, 和 l 设定在 [0, 1] 之间
+ * 返回的 r, g, 和 b 在 [0, 255]之间
+ *
+ * @param h 色相
+ * @param s 饱和度
+ * @param l 亮度
+ * @return RGB色值数值
+ */
+export function hslToRgb(h: number, s: number, l: number) {
+    let r, g, b
+ 
+    if(s == 0) {
+        r = g = b = l
+    } else {
+        const hue2rgb = function hue2rgb(p: number, q: number, t: number) {
+            if(t < 0) t += 1
+            if(t > 1) t -= 1
+            if(t < 1/6) return p + (q - p) * 6 * t
+            if(t < 1/2) return q
+            if(t < 2/3) return p + (q - p) * (2/3 - t) * 6
+            return p
+        }
+ 
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s
+        const p = 2 * l - q
+        r = hue2rgb(p, q, h + 1/3)
+        g = hue2rgb(p, q, h)
+        b = hue2rgb(p, q, h - 1/3)
+    }
+ 
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)]
 }
 
 export default {

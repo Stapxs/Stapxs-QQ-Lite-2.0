@@ -13,7 +13,7 @@
     <div :class="'message' + (type ? ' ' + type : '') + (data.revoke ? ' revoke' : '') + (isMe ? ' me': '')" :data-raw="getMsgRawTxt(data.message)"
         :id="'chat-' + getSeq(data.message_id)" :data-sender="data.sender.user_id" :data-time="data.time"
         @mouseleave="hiddenUserInfo">
-        <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id" v-show="!isMe || type == 'merge'">
+        <img name="avatar" :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id" v-show="!isMe || type == 'merge'">
         <div class="message-space" v-if="isMe && type != 'merge'"></div>
         <div :class="isMe ? (type == 'merge' ? 'message-body' : 'message-body me') : 'message-body'">
             <a v-if="data.sender.card || data.sender.nickname" v-show="!isMe || type == 'merge'">

@@ -50,7 +50,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 
-import { getTrueLang, getSizeFromBytes, htmlDecodeByRegExp, getRandom } from '@/function/util'
+import { getTrueLang, getSizeFromBytes, htmlDecodeByRegExp } from '@/function/util'
 import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
 
@@ -69,12 +69,19 @@ export default defineComponent({
          * 下载文件（获取文件下载地址并下载）
          */
         getFile (item: { [key: string]: any }) {
-            const url = `https://pan.qun.qq.com/cgi-bin/group_share_get_downurl?uin=${runtimeData.loginInfo.uin}&groupid=${this.chat.show.id}&pa=/${item.bus_id}${item.id}&r=${getRandom(true, false, false, 16)}&charset=utf-8&g_tk=${runtimeData.loginInfo.bkn}`
             if (this.parent === undefined) {
-                Connector.send('http_proxy', { 'url': url }, 'downloadGroupFile_' + item.id)
+                Connector.send('get_file_url', {
+                    id: runtimeData.chatInfo.show.id,
+                    message_id: runtimeData.messageList[0].message_id,
+                    fid: item.id
+                }, 'downloadGroupFile_' + item.id)
             } else {
                 // 对于文件夹里的文件需要再找一次 ……
-                Connector.send('http_proxy', { 'url': url }, 'downloadGroupFile_' + this.parent + '_' + item.id)
+                Connector.send('http_proxy', {
+                    id: runtimeData.chatInfo.show.id,
+                    message_id: runtimeData.messageList[0].message_id,
+                    fid: item.id
+                }, 'downloadGroupFile_' + this.parent + '_' + item.id)
             }
             // PS：在发起下载后就要将百分比设置好 …… 因为下载部分不一定立刻会开始
             // 这时候如果用户疑惑为什么点了没反应会多次操作的（用户竟是我自己）

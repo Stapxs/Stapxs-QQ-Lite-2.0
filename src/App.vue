@@ -318,6 +318,8 @@ export default defineComponent({
                 // PS：部分功能不返回用户名需要进来查找所以提前获取
                 Connector.send('get_group_member_list', { group_id: data.id }, 'getGroupMemberList')
             }
+            // 刷新系统消息
+            Connector.send('get_system_msg', {}, 'getSystemMsg')
         },
 
         /**
@@ -406,6 +408,7 @@ export default defineComponent({
             Option.runAS('opt_dark', Option.get('opt_dark'))
             Option.runAS('opt_auto_dark', Option.get('opt_auto_dark'))
             Option.runAS('theme_color', Option.get('theme_color'))
+            Option.runAS('opt_auto_win_color', Option.get('opt_auto_win_color'))
             // 加载密码保存和自动连接
             if(runtimeData.sysConfig.save_password && runtimeData.sysConfig.save_password != true) {
                 loginInfo.token = runtimeData.sysConfig.save_password
@@ -414,6 +417,9 @@ export default defineComponent({
             if(runtimeData.sysConfig.auto_connect == true) {
                 this.connect()
             }
+            // 加载其他内容
+            runtimeData.tags.isElectron = (process.env.IS_ELECTRON as unknown) as boolean
+            Option.runAS('opt_auto_gtk', Option.get('opt_auto_gtk'))
             // 初始化完成
             logger.debug(this.$t('log_welcome'))
             logger.debug(this.$t('log_runtime') + ': ' + process.env.NODE_ENV)

@@ -62,13 +62,15 @@ export function parse(str: string) {
                 case 'getVideoUrl'          : getVideoUrl(msg); break
                 case 'getGroupDirFiles'     : saveDirFile(msg); break
                 case 'readMemberMessage'    : readMemberMessage(msg.data[0]); break
+                case 'setFriendAdd'         : 
+                case 'setGroupAdd'          : updateSysInfo(head); break
             }
         }
     } else {
         switch (msg.post_type) {
             // 心跳包
             case 'meta_event'           : livePackage(msg); break
-            // gocqhttp 自动发送的消息回调和其他消息有区分
+            // go-cqhttp：自动发送的消息回调和其他消息有区分
             case 'message_sent'         :
             case 'message'              : newMsg(msg); break
             case 'notice'               : {
@@ -89,6 +91,7 @@ export function parse(str: string) {
                     break
                 }
             }
+            case 'request'              : addSystemNotice(msg); break
         }
     }
 }
@@ -430,7 +433,6 @@ function downloadGroupFile(msg: any) {
     // 基本信息
     const info = msg.echo.split('_')
     const id = info[1]
-    const json = JSON.parse(msg.data.data.substring(msg.data.data.indexOf('(') + 1, msg.data.data.lastIndexOf(')')))
     // 文件信息
     let fileName = 'new-file'
     let fileIndex = -1
@@ -470,7 +472,7 @@ function downloadGroupFile(msg: any) {
     }
 
     // 下载文件
-    Util.downloadFile(json.data.url, fileName, onProcess)
+    Util.downloadFile(msg.data.url, fileName, onProcess)
 }
 
 function getVideoUrl(msg: any) {
@@ -613,6 +615,14 @@ function newMsg(data: any) {
             } else if (Notification.permission !== 'denied') {
                 sendNotice(data)
             }
+            // electron：在 windows 下对任务栏图标进行闪烁
+            if(runtimeData.tags.isElectron) {
+                const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+                const reader = electron ? electron.ipcRenderer : null
+                if (reader) {
+                    reader.send('win:flashWindow')
+                }
+            }
         }
         // 如果发送者不在消息列表里，将它添加到消息列表里
         if (get.length !== 1) {
@@ -683,6 +693,14 @@ function sendNotice(msg: any) {
 
                 // 跳转到这条消息的发送者页面
                 window.focus()
+                // electron：需要让 electron 拉起页面
+                if(runtimeData.tags.isElectron) {
+                    const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+                    const reader = electron ? electron.ipcRenderer : null
+                    if (reader) {
+                        reader.send('win:fouesWindow')
+                    }
+                }
                 const body = document.getElementById('user-' + userId)
                 if (body === null) {
                     // 从缓存列表里寻找这个 ID
@@ -762,6 +780,29 @@ function livePackage(msg: any) {
     //
 }
 
+/**
+ * 刷新系统通知和其他内容，给系统通知响应用的
+ */
+function updateSysInfo(type: string) {
+    Connector.send('get_system_msg', {}, 'getSystemMsg')
+    switch(type) {
+        case 'setFriendAdd': 
+            Connector.send('get_friend_list', {}, 'getFriendList'); break
+    }
+}
+
+/**
+ * 添加获取到的系统通知消息
+ * @param msg 系统通知
+ */
+function addSystemNotice(msg: any) {
+    if(runtimeData.systemNoticesList) {
+        runtimeData.systemNoticesList.push(msg)
+    } else {
+        runtimeData.systemNoticesList = [msg]
+    }
+}
+
 // ==============================================================
 
 const notificationList: Notification[] = []
@@ -772,7 +813,8 @@ const baseRuntime = {
         canLoadHistory: true,
         openSideBar: false,
         viewer: { index: 0 },
-        msgType: BotMsgType.JSON
+        msgType: BotMsgType.JSON,
+        isElectron: false
     },
     chatInfo: {
         show: { type: '', id: 0, name: '', avatar: '' },

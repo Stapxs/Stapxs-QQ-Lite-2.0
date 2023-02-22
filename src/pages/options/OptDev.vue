@@ -259,8 +259,22 @@ export default defineComponent({
             console.log('=========================')
             console.log(runtimeData)
             console.log('=========================')
+            const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+            const reader = electron ? electron.ipcRenderer : null
+            if (reader) {
+                reader.send('win:openDevTools')
+            }
         },
-        printVersionInfo() {
+        async printVersionInfo() {
+
+            // electron：索要 electron 信息
+            let addInfo = undefined
+            const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+            const reader = electron ? electron.ipcRenderer : null
+            if(reader) {
+                addInfo = await reader.invoke('opt:getSystemInfo')
+            }
+
             const browser = detect() as BrowserInfo
 
             let html = '<div class="debug-info">'
@@ -273,6 +287,13 @@ export default defineComponent({
             html += `<span>7 - ${runtimeData.botInfo.app_name}</span>`
             html += `<span>8 - ${runtimeData.botInfo.app_version !== undefined ? runtimeData.botInfo.app_version : runtimeData.botInfo.version}</span>`
             html += `<span>9 - ${document.getElementById('app')?.offsetWidth} px</span>`
+            const lastIndex = 9
+            if(addInfo) {
+                const info = addInfo as {[key: string]: any}
+                Object.keys(info).forEach((name: string, index) => {
+                    html += `<span>${lastIndex + index + 1} - ${info[name]}</span>`
+                })
+            }
             html += '</div>'
             // 构建 popBox 内容
             const popInfo = {
