@@ -43,7 +43,7 @@
   "chat_group_pic": "群組圖片",
   "chat_join_time": "於 {time} 加入群組",
   "chat_last_msg": "最新訊息 - {time}",
-  "member_type_admin": "管理員",
+  "chat_member_type_admin": "管理員",
   "chat_member_type_owner": "群組擁有者",
   "chat_merge_msg": "合併訊息",
   "chat_msg_menu_copy": "複製",
