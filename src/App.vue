@@ -578,7 +578,9 @@ export default defineComponent({
             }
             // 获取公告通知
             const url = 'https://lib.stapxs.cn/download/stapxs-qq-lite/notice-config.json'
-            const fetchData = {} as Record<string, string>
+            const fetchData = {
+                time: new Date().getTime().toString()
+            } as Record<string, string>
             fetch(url + '?' + new URLSearchParams(fetchData).toString())
                 .then(response => response.json())
                 .then(data => {

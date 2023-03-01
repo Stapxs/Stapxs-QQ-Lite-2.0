@@ -439,8 +439,8 @@ html, body {
 .ss-range input::-moz-range-thumb {
     -webkit-appearance: none;
 
-    height: calc(var(--range-dot-height) - 16px);
-    width: calc(var(--range-dot-height) - 16px);
+    height: calc(var(--range-dot-height) - 8px);
+    width: calc(var(--range-dot-height) - 8px);
     box-shadow:0 0 5px var(--color-shader);
     background:var(--color-main);
     border: 5px solid #FFF;

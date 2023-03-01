@@ -17,6 +17,7 @@
   "dependencies": {
     "@jakejarrett/gtk-theme": "^2.0.1",
     "@types/semver-compare": "^1.0.1",
+    "browser-image-compression": "^2.0.0",
     "char-dust": "^0.1.0",
     "core-js": "^3.8.3",
     "date-format": "^4.0.13",

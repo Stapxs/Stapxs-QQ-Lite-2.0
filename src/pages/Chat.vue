@@ -381,6 +381,7 @@ import Info from '@/pages/Info.vue'
 import MsgBody from '@/components/MsgBody.vue'
 import NoticeBody from '@/components/NoticeBody.vue'
 import FacePan from '@/components/FacePan.vue'
+import imageCompression from 'browser-image-compression'
 
 import { defineComponent, markRaw } from 'vue'
 import { parseMsgId, getTrueLang, loadHistory as loadHistoryFirst } from '@/function/util'
@@ -388,7 +389,6 @@ import { Logger, LogType, PopInfo, PopType } from '@/function/base'
 import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem, MsgItemElem, SQCodeElem, GroupMemberInfoElem, UserFriendElem, UserGroupElem, BotMsgType } from '@/function/elements/information'
-import { baseCompile } from '@vue/compiler-core'
 
 export default defineComponent({
     name: 'ViewChat',
@@ -1084,7 +1084,7 @@ export default defineComponent({
          * 将图片转换为 base64 并缓存
          * @param blob 文件对象
          */
-        setImg(blob: File | null) {
+        async setImg(blob: File | null) {
             const popInfo = new PopInfo()
             if (blob !== null && blob.type.indexOf('image/') >= 0 && blob.size !== 0) {
                 if (blob.size < 3145728) {
@@ -1112,7 +1112,16 @@ export default defineComponent({
                         }
                     }
                 } else {
-                    popInfo.add(PopType.INFO, this.$t('pop_chat_image_toooo_big'))
+                    // 压缩图片
+                    const options = { maxSizeMB: 3,useWebWorker: true }
+                    try {
+                        popInfo.add(PopType.INFO, this.$t('pop_chat_image_compression'))
+                        const compressedFile = await imageCompression(blob, options)
+                        new Logger().add(LogType.INFO, '图片压缩成功，原大小：' + blob.size / 1024 / 1024 + ' MB，压缩后大小：' + compressedFile.size / 1024 / 1024 + ' MB')
+                        this.setImg(compressedFile)
+                    } catch (error) {
+                        popInfo.add(PopType.INFO, this.$t('pop_chat_image_compression_fail'))
+                    }
                 }
             }
         },
@@ -1251,9 +1260,11 @@ export default defineComponent({
                         if(runtimeData.tags.viewer.show) {
                             // 重新显示新的图片位置
                             if(num >= 0 && viewer) {
-                                viewer.view(num + getImgList.length - (runtimeData.chatInfo.info.image_list ? runtimeData.chatInfo.info.image_list.length : 0))
+                                const viewIndex = num + getImgList.length - (runtimeData.chatInfo.info.image_list ? runtimeData.chatInfo.info.image_list.length : 0)
+                                viewer.view(viewIndex)
                                 viewer.show()
-                                runtimeData.tags.viewer.index = num + getImgList.length - (runtimeData.chatInfo.info.image_list ? runtimeData.chatInfo.info.image_list.length : 0)
+                                runtimeData.tags.viewer.index = viewIndex
+                                new Logger().add(LogType.UI, '重新显示图片位置：' + viewIndex)
                             }
                         }
                     }

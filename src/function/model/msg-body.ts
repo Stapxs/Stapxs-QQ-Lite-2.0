@@ -88,18 +88,21 @@ export class MsgBodyFuns {
             }
         }
         if (sourceBody !== undefined) {
-            const source = sourceBody.dataset.name
-            switch (source) {
-                case '聊天记录': {
-                    // 合并转发消息
-                    div.dataset.type = 'forward'
-                    div.dataset.id = (header.children[0] as HTMLElement).dataset.resid
-                    div.style.cursor = 'pointer'
-                    break
-                }
-                case '群投票': {
-                    // 群投票
-                    return '<a class="msg-unknow">（' + app.config.globalProperties.$t('chat_xml_unsupport') + '：' + source + '）</a>'
+            let source = sourceBody.dataset.name
+            if(source) {
+                if(source.indexOf('聊天记录') >= 0) source = '聊天记录'
+                switch (source) {
+                    case '聊天记录': {
+                        // 合并转发消息
+                        div.dataset.type = 'forward'
+                        div.dataset.id = (header.children[0] as HTMLElement).dataset.resid
+                        div.style.cursor = 'pointer'
+                        break
+                    }
+                    case '群投票': {
+                        // 群投票
+                        return '<a class="msg-unknow">（' + app.config.globalProperties.$t('chat_xml_unsupport') + '：' + source + '）</a>'
+                    }
                 }
             }
         }

@@ -271,5 +271,7 @@
   "option_view_background": "背景图片",
   "option_view_background_tip": "嘿嘿嘿（痴呆",
   "option_view_background_blur": "背景模糊",
-  "option_view_background_blur_tip": "什么都看不见了（恼"
+  "option_view_background_blur_tip": "什么都看不见了（恼",
+  "pop_chat_image_compression_fail": "压缩图片失败",
+  "pop_chat_image_compression": "正在压缩图片 ……"
 }

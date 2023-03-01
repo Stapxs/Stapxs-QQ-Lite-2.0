@@ -38,4 +38,5 @@ export interface NotificationElem {
     tag: string,
     icon: string,
     image?: string
+    requireInteraction: boolean
 }
