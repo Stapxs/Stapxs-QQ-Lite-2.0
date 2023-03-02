@@ -307,7 +307,7 @@
     opacity: 0;
 }
 .opt-item div.ss-range input::-webkit-slider-runnable-track {
-    display: none;
+    opacity: 0;
 }
 
 .l10n-info {

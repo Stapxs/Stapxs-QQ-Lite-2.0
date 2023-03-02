@@ -19,6 +19,10 @@ textarea {
     right: 0;
     top: 0;
 }
+.chat-pan.withBar {
+    height: calc(100% - 40px);
+    top: 40px;
+}
 .chat-pan.full {
     height: 100%;
     z-index: 20;
@@ -1269,6 +1273,10 @@ textarea {
     .chat-pan {
         height: calc(100% - 75px);
         left: 80px;
+    }
+    .chat-pan.withBar {
+        height: calc(100% - 115px);
+        top: 40px;
     }
     .chat-pan.open {
         transform: translateX(220px);

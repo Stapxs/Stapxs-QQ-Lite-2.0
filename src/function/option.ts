@@ -44,7 +44,16 @@ const configFunction: { [key: string]: (value: any) => void } = {
     initial_scale: changeInitialScale,
     msg_type: setMsgType,
     opt_auto_gtk: updateGTKColor,
-    opt_auto_win_color: updateWinColorOpt
+    opt_auto_win_color: updateWinColorOpt,
+    opt_no_window: changeNoWindow
+}
+
+function changeNoWindow(value: boolean) {
+    const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+    const reader = electron ? electron.ipcRenderer : null
+    if(reader) {
+        reader.send('opt:saveNoWindow', value)
+    }
 }
 
 function updateWinColorOpt(value: boolean) {
@@ -269,17 +278,24 @@ function changeChatView(name: string | undefined) {
  */
 export function load(): { [key: string]: any } {
     const options: { [key: string]: any } = {}
-    // 解析拆分 cookie 并执行各个设置项的初始化方法
-    const str: string = app.config.globalProperties.$cookies.get('options')
+    const str = localStorage.getItem('options')
     if (str != null) {
         const list = str.split('&')
         for (let i = 0; i <= list.length; i++) {
             if (list[i] !== undefined) {
                 const opt: string[] = list[i].split(':')
                 if (opt.length === 2) {
-                    // 特殊处理被字符串化的布尔值
                     if (opt[1] === 'true' || opt[1] === 'false') {
+                        // 特殊处理被字符串化的布尔值
                         options[opt[0]] = (opt[1] === 'true')
+                    } else if(opt[0] == 'top_info') {
+                        // 特殊处理 top_info
+                        try {
+                            options[opt[0]] = JSON.parse(decodeURIComponent(opt[1]))
+                        } catch (e) {
+                            // 无法解析的数据，初始化为空对象
+                            options[opt[0]] = {}
+                        }
                     } else {
                         options[opt[0]] = decodeURIComponent(opt[1])
                     }
@@ -335,7 +351,7 @@ export function get(name: string): any {
  */
 export function getRaw(name: string) {
     // 解析拆分 cookie 并执行各个设置项的初始化方法
-    const str: string = app.config.globalProperties.$cookies.get('options')
+    const str = localStorage.getItem('options')
     if (str != null) {
         const list = str.split('&')
         for (let i = 0; i <= list.length; i++) {
@@ -366,10 +382,12 @@ export function saveAll(config = {} as {[key: string]: any}) {
     }
     let str = ''
     Object.keys(config).forEach(key => {
-        str += key + ':' + encodeURIComponent(config[key]) + '&'
+        const isObject = typeof config[key] == 'object'
+        str += key + ':' + 
+            encodeURIComponent(isObject ? JSON.stringify(config[key]) : config[key]) + '&'
     })
     str = str.substring(0, str.length - 1)
-    app.config.globalProperties.$cookies.set('options', str, '1m')
+    localStorage.setItem('options', str)
 }
 
 /**

@@ -12,7 +12,7 @@
 <template>
     <div
         :style="`background-image: url(${runtimeData.sysConfig.chat_background})`"
-        :class="'chat-pan' + (runtimeData.tags.openSideBar ? ' open': '')"
+        :class="'chat-pan' + (runtimeData.tags.openSideBar ? ' open': '') + (runtimeData.sysConfig.opt_no_window ? ' withBar': '')"
         id="chat-pan">        
         <!-- 聊天基本信息 -->
         <div class="info">
@@ -300,11 +300,11 @@
                     <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg></div>
                     <a>{{ $t('chat_msg_menu_withdraw') }}</a>
                 </div>
-                <div @click="(selectedMsg ? addSpecialMsg({ msgObj: { type: 'at', qq: selectedMsg.sender.user_id }, addText: true }) : '');closeMsgMenu();" v-show="tags.menuDisplay.at">
+                <div @click="(selectedMsg ? addSpecialMsg({ msgObj: { type: 'at', qq: selectedMsg.sender.user_id }, addText: true }) : '');toMainInput();closeMsgMenu();" v-show="tags.menuDisplay.at">
                     <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 64C150 64 64 150 64 256s86 192 192 192c17.7 0 32 14.3 32 32s-14.3 32-32 32C114.6 512 0 397.4 0 256S114.6 0 256 0S512 114.6 512 256v32c0 53-43 96-96 96c-29.3 0-55.6-13.2-73.2-33.9C320 371.1 289.5 384 256 384c-70.7 0-128-57.3-128-128s57.3-128 128-128c27.9 0 53.7 8.9 74.7 24.1c5.7-5 13.1-8.1 21.3-8.1c17.7 0 32 14.3 32 32v80 32c0 17.7 14.3 32 32 32s32-14.3 32-32V256c0-106-86-192-192-192zm64 192c0-35.3-28.7-64-64-64s-64 28.7-64 64s28.7 64 64 64s64-28.7 64-64z"/></svg></div>
                     <a>{{ $t('chat_msg_menu_at') }}</a>
                 </div>
-                <div @click="(selectedMsg ? Connector.send('set_group_kick', {group_id: runtimeData.chatInfo.show.id, user_id: selectedMsg.sender.user_id}, 'setGroupKick') : '');closeMsgMenu();" v-show="tags.menuDisplay.remove">
+                <div @click="removeUser" v-show="tags.menuDisplay.remove">
                     <div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L353.3 251.6C407.9 237 448 187.2 448 128C448 57.3 390.7 0 320 0C250.2 0 193.5 55.8 192 125.2L38.8 5.1zM264.3 304.3C170.5 309.4 96 387.2 96 482.3c0 16.4 13.3 29.7 29.7 29.7H514.3c3.9 0 7.6-.7 11-2.1l-261-205.6z"/></svg></div>
                     <a>{{ $t('chat_msg_menu_remove') }}</a>
                 </div>
@@ -621,7 +621,7 @@ export default defineComponent({
                 // 添加 at 信息
                 this.addSpecialMsg({ msgObj: { type: 'at', qq: id }, addText: true })
             }
-            document.getElementById('main-input')?.focus()
+            this.toMainInput()
             this.tags.onAtFind = false
             this.atFindList = null
         },
@@ -711,11 +711,30 @@ export default defineComponent({
                     }
                     const selection = document.getSelection()
                     const textBody = selection?.anchorNode?.parentElement
+                    let textMsg = null as HTMLElement | null
+                    // 向外寻找含有 message class 的父元素，直到遇到 chat class
+                    let msgParent = textBody
+                    if(msgParent) {
+                        while(msgParent.className != 'chat') {
+                            if(msgParent.className.startsWith('message') &&
+                                msgParent.className.indexOf('-') < 0) {
+                                textMsg = msgParent
+                                break
+                            }
+                            msgParent = msgParent.parentElement as HTMLDivElement
+                            if(!msgParent) {
+                                break
+                            }
+                        }
+                    }
                     if(textBody && textBody.className.indexOf('msg-text') > -1 &&
-                        selection.focusNode == selection.anchorNode) {
+                        selection.focusNode == selection.anchorNode &&
+                        textMsg && textMsg.id == msg.id) {
                         // 用于判定是否选中了 msg-text 且开始和结束是同一个 Node（防止跨消息复制）
-                        this.tags.menuDisplay.copySelect = true
                         this.selectCache = selection.toString()
+                        if(this.selectCache.length > 0) {
+                            this.tags.menuDisplay.copySelect = true
+                        }
                     }
                     const nList = ['xml', 'json']
                     data.message.forEach((item: any) => {
@@ -727,24 +746,30 @@ export default defineComponent({
                 }
                 // 鼠标位置
                 const pointEvent = event as PointerEvent || window.event as PointerEvent
-                const pointX = pointEvent.offsetX
+                const pointX = pointEvent.clientX - msg.getBoundingClientRect().left + 20
                 const pointY = pointEvent.clientY
                 // 移动菜单位置
                 menu.style.marginLeft = pointX + 'px'
                 menu.style.marginTop = pointY + 'px'
                 // 出界判定
                 const menuWidth = menu.clientWidth
-                const menuHeight = menu.clientHeight
                 const msgWidth = msg.offsetWidth
-                const bodyHeight = document.body.clientHeight
                 if (pointX + menuWidth > msgWidth + 27) {
                     menu.style.marginLeft = (msgWidth + 27 - menuWidth) + 'px'
                 }
-                if (pointY + menuHeight > bodyHeight - 10) {
-                    menu.style.marginTop = (bodyHeight - menuHeight - 10) + 'px'
-                }
                 // 显示菜单
                 this.tags.showMsgMenu = true
+                // PS：在菜单完全显示出来之前获取不到正确的高度，所以延迟一下
+                setTimeout(() => {
+                    // 出界判定
+                    const menuHeight = menu.clientHeight
+                    const bodyHeight = document.body.clientHeight
+                    if (pointY + menuHeight > bodyHeight + 10) {
+                        menu.classList.add('topOut')
+                        menu.style.marginTop = (bodyHeight - menuHeight - 10) + 'px'
+                        // menu.classList.remove('topOut')
+                    }
+                }, 90)
                 // 设置消息背景
                 this.tags.openedMenuMsg = msg
                 msg.style.background = '#00000008'
@@ -780,10 +805,7 @@ export default defineComponent({
                 // 显示回复指示器
                 this.tags.isReply = true
                 // 聚焦输入框
-                const mainInput = document.getElementById('main-input')
-                if(mainInput !== null) {
-                    mainInput.focus()
-                }
+                this.toMainInput()
                 // 关闭消息菜单
                 if(closeMenu) {
                     this.closeMsgMenu()
@@ -922,6 +944,41 @@ export default defineComponent({
                 Connector.send('delete_msg', { 'message_id': msgId })
                 // 关闭消息菜单
                 this.closeMsgMenu()
+            }
+        },
+
+        /**
+         * 移出群聊
+         */
+        removeUser() {
+            const msg = this.selectedMsg
+            if (msg !== null) {
+                const popInfo = {
+                    title: this.$t('popbox_tip'),
+                    html: `<span>${this.$t('chat_msg_menu_remove_tip', { user: msg.sender.nickname })}</span>`,
+                    button: [
+                        {
+                            text: app.config.globalProperties.$t('btn_yes'),
+                            fun: () => {
+                                if(msg) {
+                                    Connector.send('set_group_kick', 
+                                    {
+                                        group_id: runtimeData.chatInfo.show.id,
+                                        user_id: msg.sender.user_id
+                                    }, 'setGroupKick')
+                                    this.closeMsgMenu()
+                                    runtimeData.popBoxList.shift()
+                                }
+                            }
+                        },
+                        {
+                            text: app.config.globalProperties.$t('btn_no'),
+                            master: true,
+                            fun: () => { runtimeData.popBoxList.shift() }
+                        }
+                    ]
+                }
+                runtimeData.popBoxList.push(popInfo)
             }
         },
 

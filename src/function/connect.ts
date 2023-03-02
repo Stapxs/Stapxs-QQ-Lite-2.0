@@ -28,7 +28,6 @@ export class Connector {
      */
     static create(address: string, token?: string) {
         const $t = app.config.globalProperties.$t
-        const $cookies = app.config.globalProperties.$cookies
         
         logger.debug($t('log_ws_log_debug'))
         logger.add(LogType.WS, $t('log_we_log_all'))
@@ -44,7 +43,7 @@ export class Connector {
         websocket.onopen = () => {
             logger.add(LogType.WS, $t('log_con_success'))
             // 保存登录信息（一个月）
-            $cookies.set('address', address, '1m')
+            Option.save('address', address)
             // 保存密钥
             if(runtimeData.sysConfig.save_password == true) {
                 Option.save('save_password', token)
