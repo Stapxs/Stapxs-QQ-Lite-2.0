@@ -196,6 +196,7 @@ export default defineComponent({
             let style = 'msg-img'
             // 处理样式
             // if(isFace) { style += ' face' }
+            if(isFace) { style += ' ' }
             if(length === 1) { return style += ' alone' }
             if(at === 0) { return style += ' top' }
             if(at === length - 1) { return style += ' button' }

@@ -273,5 +273,10 @@
   "option_view_background_blur": "背景模糊",
   "option_view_background_blur_tip": "什么都看不见了（恼",
   "pop_chat_image_compression_fail": "压缩图片失败",
-  "pop_chat_image_compression": "正在压缩图片 ……"
+  "pop_chat_image_compression": "正在压缩图片 ……",
+  "chat_msg_menu_remove_tip": "真的要将 {user} 移出群聊吗",
+  "option_view_no_window": "去除窗口框架",
+  "option_view_no_window_tip": "沉浸式没圆角体验（无端",
+  "option_dev_restart": "重启应用",
+  "option_dev_restart_tip": "99% 的特性都能通过重启解决！"
 }

@@ -1,13 +1,33 @@
+import Store from 'electron-store'
 import path from 'path'
 import os from 'os'
 
-import { dialog, DownloadItem, ipcMain, shell, systemPreferences } from "electron"
+import { ipcMain, shell, systemPreferences, app } from "electron"
 import { GtkTheme, GtkData } from '@jakejarrett/gtk-theme'
 import { Exception } from 'vue-gtag-next'
 import { queryKeys } from './util'
 import { win } from '@/background'
 
 export default function regIpcListener() {
+    // 关闭窗口
+    ipcMain.on('win:close', () => {
+        if(win) win.close()
+    })
+    // 最小化
+    ipcMain.on('win:minimize', () => {
+        if(win) win.minimize()
+    })
+    // 重启应用
+    ipcMain.on('win:relaunch', () => {
+        app.relaunch()
+        app.exit()
+    })
+    // 单独用于保存窗口框架是否显示的设置
+    // PS：因为改变窗口框架需要在窗口创建前设置，所以单独保存设置便于获取
+    ipcMain.on('opt:saveNoWindow', (event, arg) => {
+        const store = new Store()
+        store.set('opt_no_window', Boolean(arg))
+    })
     // 获取补充的调试信息
     ipcMain.handle('opt:getSystemInfo', () => {
         const systemInfo = {} as { [key: string]: any }

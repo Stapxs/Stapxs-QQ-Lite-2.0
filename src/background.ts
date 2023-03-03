@@ -1,13 +1,15 @@
 'use strict'
 
+import Store from 'electron-store'
 import windowStateKeeper from 'electron-window-state'
 import regIpcListener from './function/electron/ipc'
 import path from 'path'
 
+import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
+
 import { Menu } from 'electron'
 import { app, protocol, BrowserWindow } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
-import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
@@ -18,6 +20,7 @@ protocol.registerSchemesAsPrivileged([
 export let win = undefined as BrowserWindow | undefined
 
 async function createWindow() {
+    console.log('开始创建窗口 ……')
     // 窗口创建前事务
     Menu.setApplicationMenu(null)
     regIpcListener()
@@ -26,13 +29,16 @@ async function createWindow() {
         defaultWidth: 1200,
         defaultHeight: 800
     })
+    const store = new Store()
+    const noWindow = await store.get('opt_no_window')
+    console.log('窗口框架状态：' + noWindow)
     win = new BrowserWindow({
         x: mainWindowState.x,
         y: mainWindowState.y,
         width: mainWindowState.width,
         height: mainWindowState.height,
         icon: path.join(__dirname,'./public/img/icons/icon.png'),
-        // frame: false,
+        frame: noWindow === true ? false : true,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
@@ -40,6 +46,7 @@ async function createWindow() {
     })
     win.once('focus', () => {if(win)win.flashFrame(false)})
     mainWindowState.manage(win)     // 窗口状态管理器
+    console.log('窗口创建完成')
     // 加载应用
     if (process.env.WEBPACK_DEV_SERVER_URL) {
         await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string)
@@ -48,6 +55,7 @@ async function createWindow() {
         createProtocol('app')
         win.loadURL('app://./index.html')
     }
+    console.log('应用加载完成')
 }
 
 app.on('window-all-closed', () => {

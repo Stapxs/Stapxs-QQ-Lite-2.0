@@ -95,10 +95,7 @@
             </template>
             <template v-if="runtimeData.tags.isElectron && browser.os == 'Linux'">
                 <div class="opt-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
-                        <path
-                            d="M192 64C86 64 0 150 0 256S86 448 192 448H384c106 0 192-86 192-192s-86-192-192-192H192zM384 352c-53 0-96-43-96-96s43-96 96-96s96 43 96 96s-43 96-96 96z" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M84.6 9.4C72.1-3.1 51.9-3.1 39.4 9.4s-12.5 32.8 0 45.3L120.7 136 28.6 228.1c-37.5 37.5-37.5 98.3 0 135.8L146.1 481.4c37.5 37.5 98.3 37.5 135.8 0L472.3 290.9c28.1-28.1 28.1-73.7 0-101.8L320.9 37.7c-28.1-28.1-73.7-28.1-101.8 0L166 90.7 84.6 9.4zM166 181.3l49.4 49.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L211.3 136l53.1-53.1c3.1-3.1 8.2-3.1 11.3 0L427.1 234.3c3.1 3.1 3.1 8.2 0 11.3L384.7 288H65.5c1.4-5.4 4.2-10.4 8.4-14.6L166 181.3z"/></svg>
                     <div>
                         <span>{{ $t('option_view_auto_gtk') }}</span>
                         <span>{{ $t('option_view_auto_gtk_tip') }}</span>
@@ -168,6 +165,22 @@
                     <span :style="`color: var(--color-font${initialScaleShow / 0.05 > 50 ? '-r' : ''})`">{{ initialScaleShow }}</span>
                 </div>
             </div>
+            <template v-if="runtimeData.tags.isElectron">
+                <div class="opt-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M384 32C419.3 32 448 60.65 448 96V416C448 451.3 419.3 480 384 480H64C28.65 480 0 451.3 0 416V96C0 60.65 28.65 32 64 32H384zM384 80H64C55.16 80 48 87.16 48 96V416C48 424.8 55.16 432 64 432H384C392.8 432 400 424.8 400 416V96C400 87.16 392.8 80 384 80z"/></svg>
+                    <div>
+                        <span>{{ $t('option_view_no_window') }}</span>
+                        <span>{{ $t('option_view_no_window_tip') }}</span>
+                    </div>
+                    <label class="ss-switch">
+                        <input type="checkbox" @change="save" name="opt_no_window"
+                            v-model="runtimeData.sysConfig.opt_no_window">
+                        <div>
+                            <div></div>
+                        </div>
+                    </label>
+                </div>
+            </template>
         </div>
     </div>
 </template>
