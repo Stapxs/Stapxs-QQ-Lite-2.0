@@ -278,5 +278,10 @@
   "option_view_background_blur": "Background blur",
   "option_view_background_blur_tip": "Raise its percentage if you're using a furry image (uwu) or something too colorful.",
   "pop_chat_image_compression_fail": "Failed to compress image",
-  "pop_chat_image_compression": "Compressing image ..."
+  "pop_chat_image_compression": "Compressing image ...",
+  "chat_msg_menu_remove_tip": "Are you sure you want to remove {user} from the group?",
+  "option_view_no_window": "No window borders",
+  "option_view_no_window_tip": "◯→▢",
+  "option_dev_restart": "Restart app",
+  "option_dev_restart_tip": "Should solve most problems :D"
 }

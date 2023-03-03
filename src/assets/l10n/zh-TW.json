@@ -274,5 +274,10 @@
   "option_view_background_blur": "背景模糊度",
   "option_view_background_blur_tip": "調整背景圖片的模糊程度，以免內容受到遮擋。",
   "pop_chat_image_compression_fail": "圖片壓縮失敗",
-  "pop_chat_image_compression": "正在壓縮圖片……"
+  "pop_chat_image_compression": "正在壓縮圖片……",
+  "chat_msg_menu_remove_tip": "真的要將 {user} 移出群組嗎？",
+  "option_view_no_window": "關閉視窗邊框",
+  "option_view_no_window_tip": "無框行動？",
+  "option_dev_restart": "重新啟動應用程式",
+  "option_dev_restart_tip": "SS：「99% 的特性都能透過重啟解決！」"
 }
