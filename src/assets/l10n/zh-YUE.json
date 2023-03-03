@@ -276,5 +276,7 @@
   "option_view_background": "背景圖片",
   "option_view_background_tip": "SS：嘿嘿嘿（cs",
   "option_view_background_blur": "背景模糊",
-  "option_view_background_blur_tip": "調較背景圖片的模糊程度，以防內容被遮擋。"
+  "option_view_background_blur_tip": "調較背景圖片的模糊程度，以防內容被遮擋。",
+  "pop_chat_image_compression_fail": "圖片壓縮失敗",
+  "pop_chat_image_compression": "正在壓縮圖片……"
 }
