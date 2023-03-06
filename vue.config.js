@@ -75,6 +75,28 @@ module.exports = {
                 directories: {
                     output: 'dist_electron/out'
                 },
+
+                afterAllArtifactBuild: async (context) => {
+                    // 如果环境参数中有 `github-actions`，则删除 `dist_electron/out` 目录下所有的
+                    //  `*-unpacked` 目录和 `build` 开头的文件，便于 GitHub Actions 上传构建结果
+                    if (process.env.NODEJS_ENV === 'github-actions') {
+                        const fs = require('fs')
+                        const path = require('path')
+                        // 寻找所有需要删除的文件和目录
+                        const delList = fs.readdirSync(context.outDir).filter((dir) => {
+                            return dir.endsWith('-unpacked') || file.startsWith('build')
+                        })
+                        console.log('删除的目录和文件：', dirs)
+                        for (const item of delList) {
+                            // 判断是文件还是目录
+                            if (fs.statSync(path.join(context.outDir, item)).isDirectory()) {
+                                fs.rmSync(path.join(context.outDir, item), { recursive: true })
+                            } else {
+                                fs.rmSync(path.join(context.outDir, item))
+                            }
+                        }
+                    }
+                },
                 
                 linux: {
                     target: ['AppImage', 'pacman', 'tar.gz'],

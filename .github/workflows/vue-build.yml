@@ -1,36 +1,53 @@
-# 在主分支上构建 Vue 页面
-name: build-vue
+# 在主分支上构建
+name: build
 on:
   push: # push 触发
     branches:
       - main
 
 jobs:
-  main:
-    runs-on: ubuntu-latest
-    steps:
 
+  build-pages:
+    name: Build Pages
+    runs-on: ubuntu-latest
+
+    steps:
+    # 判断是否需要构建 web 版本，检查 push message 中最后一行是否不包含 [not-build-web]（默认构建）
+    - name: Check Web Tag
+      id: check_electron
+      run: |
+        if [[ $(git log -1 --pretty=%B) != *"[not-build-web]"* ]]; then
+          echo 'NEED_BULID=true' >> $GITHUB_ENV
+        else
+          echo 'NEED_BULID=false' >> $GITHUB_ENV
+        fi
+    
     # 拉取代码
     - name: Checkout
+      if: env.NEED_BULID == 'true'
       uses: actions/checkout@v3
       with:
         persist-credentials: false
     # 设置 Node.js 版本
     - name: Load Node.js
+      if: env.NEED_BULID == 'true'
       uses: actions/setup-node@v3
       with:
-        node-version: 17.x
+        node-version: 14.x
     # 更新依赖
     - name: Install
+      if: env.NEED_BULID == 'true'
       run: yarn
     # 构建
     - name: Build
+      if: env.NEED_BULID == 'true'
       run: yarn build
       env:
         NODEJS_ENV: github-actions
 
-    # 部署
+    # 部署 Web 版本
     - name: Deploy
+      if: env.NEED_BULID == 'true'
       uses: JamesIves/github-pages-deploy-action@v4
       with:
         token: ${{ secrets.ACCESS_TOKEN }}

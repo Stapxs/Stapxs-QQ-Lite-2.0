@@ -466,12 +466,16 @@ export default defineComponent({
                 const url = 'https://api.github.com/repos/stapxs/stapxs-qq-lite-2.0/commits'
                 const fetchData = {
                     sha: process.env.NODE_ENV == 'development' ? 'dev' : 'main',
-                    per_page: '5'
+                    per_page: '10'
                 } as Record<string, string>
                 fetch(url + '?' + new URLSearchParams(fetchData).toString())
                     .then(response => response.json())
                     .then(data => {
-                        const json =data[0]
+                        // 正式版本的更新记录必须是 # 开头的 commit
+                        if (process.env.NODE_ENV == 'production') {
+                            data = data.filter((item: any) => item.commit.message.startsWith('#'))
+                        }
+                        const json = data[0]
                         // 动态生成更新记录部分
                         const div = document.createElement('div')
                         div.className = 'update-info'
