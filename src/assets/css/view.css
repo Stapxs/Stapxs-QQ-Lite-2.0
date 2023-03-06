@@ -17,6 +17,7 @@ html, body {
     width: 100%;
     z-index: 99;
 }
+.top-bar > svg,
 .top-bar > img {
     margin: 10px 15px;
     height: 20px;
@@ -58,6 +59,9 @@ html, body {
 .top-bar > div.controller > div > svg {
     fill: var(--color-font);
     height: 16px;
+}
+.top-bar > div.controller > div.close:hover > svg {
+    fill: #fff;
 }
 
 #app, #base-app {

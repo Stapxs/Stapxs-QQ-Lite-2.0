@@ -304,6 +304,10 @@ textarea {
     width: 100%;
     z-index: 10;
 }
+.msg-menu.withBar {
+    height: calc(100% + 40px);
+    margin-top: -40px;
+}
 .msg-menu-bg {
     pointer-events: all;
     position: absolute;

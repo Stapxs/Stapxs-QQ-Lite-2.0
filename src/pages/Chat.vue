@@ -273,7 +273,7 @@
             </div>
         </div>
         <!-- 消息右击菜单 -->
-        <div class="msg-menu">
+        <div :class="'msg-menu' + (runtimeData.sysConfig.opt_no_window ? ' withBar': '')">
             <div v-show="tags.showMsgMenu" class="msg-menu-bg" @click="closeMsgMenu"></div>
             <div :class="tags.showMsgMenu ? 'ss-card menu show' : 'ss-card menu'" id="msgMenu">
                 <div @click="replyMsg(true)" v-show="tags.menuDisplay.relpy">
