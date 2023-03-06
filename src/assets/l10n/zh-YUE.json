@@ -182,7 +182,7 @@
   "pop_print_all_pop": "即將喺五秒內輸出所有 app 訊息 ……",
   "log_cq_msg_parsed": "記錄 CQ 訊息解析結果",
   "chat_chat_info_option_top": "釘選",
-  "chat_chat_info_option_top_tip": "將 group 或者 friend 置於列表頂部",
+  "chat_chat_info_option_top_tip": "將個 group 或者 friend 置於列表頂部",
   "log_com_err": "未能建立連線",
   "sw_ready": "App 已經通過 service worker 從 cache 中加載，更多資訊請參閱 https://goo.gl/AFskqB。",
   "sw_registered": "Service worker 註冊成功。",
@@ -276,5 +276,12 @@
   "option_view_background": "背景圖片",
   "option_view_background_tip": "SS：嘿嘿嘿（cs",
   "option_view_background_blur": "背景模糊",
-  "option_view_background_blur_tip": "調較背景圖片的模糊程度，以防內容被遮擋。"
+  "option_view_background_blur_tip": "調較背景圖片的模糊程度，以防內容被遮擋。",
+  "pop_chat_image_compression_fail": "圖片壓縮失敗",
+  "pop_chat_image_compression": "正在壓縮圖片……",
+  "chat_msg_menu_remove_tip": "真喺要將 {user} 踢出個 group？",
+  "option_view_no_window": "關閉視窗邊框",
+  "option_view_no_window_tip": "◯→▢",
+  "option_dev_restart": "重新啟動 App",
+  "option_dev_restart_tip": "Restart app and you have no 茶煲"
 }

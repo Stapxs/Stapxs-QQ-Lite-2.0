@@ -662,6 +662,7 @@ function sendNotice(msg: any) {
         // 构建通知
         let notificationTile = ''
         const notificationBody = {} as NotificationElem
+        notificationBody.requireInteraction = true
         if (msg.message_type === 'group') {
             notificationTile = msg.group_name
             notificationBody.body = msg.sender.nickname + ':' + raw
@@ -679,18 +680,29 @@ function sendNotice(msg: any) {
                 notificationBody.image = item.url
             }
         })
+        // 检查这个用户是否有通知，有的话删除旧的
+        // PS：这个处理逻辑主要用于防止大量消息刷大量的通知
+        const index = notificationList.findIndex((item) => {
+            const tag = item.tag
+            const userId = Number(tag.split('/')[0])
+            return userId === msg.user_id || userId === msg.group_id
+        })
+        if (index !== -1) {
+            notificationList.splice(index, 1)
+            notificationList[index].close()
+        }
         // 发起通知
         const notification = new Notification(notificationTile, notificationBody)
-        notificationList[msg.message_id] = notification
         notification.onclick = (event: Event) => {
             const info = event.target as NotificationOptions
             if(info.tag !== undefined) {
                 const userId = info.tag.split('/')[0]
                 const msgId = Number(info.tag.substring(userId.length + 1, info.tag.length))
-                if (notificationList[msgId] !== undefined) {
-                    delete notificationList[msgId]
+                // 在通知列表中删除这条消息
+                const index = notificationList.findIndex((item) => { return item.tag === info.tag })
+                if (index !== -1) {
+                    notificationList.splice(index, 1)
                 }
-
                 // 跳转到这条消息的发送者页面
                 window.focus()
                 // electron：需要让 electron 拉起页面
@@ -731,12 +743,14 @@ function sendNotice(msg: any) {
         notification.onclose = (event: Event) => {
             const info = event.target as NotificationOptions
             if(info.tag !== undefined) {
-                const msgId = Number(info.tag.split('/')[1])
-                if (notificationList[msgId] !== undefined) {
-                    delete notificationList[msgId]
+                // 在通知列表中删除这条消息
+                const index = notificationList.findIndex((item) => { return item.tag === info.tag })
+                if (index !== -1) {
+                    notificationList.splice(index, 1)
                 }
             }
         }
+        notificationList.push(notification)
     }
 }
 
@@ -777,7 +791,8 @@ function readMemberMessage(data: any) {
  * @param msg 
  */
 function livePackage(msg: any) {
-    //
+    // TODO: 还没写这个功能
+    msg
 }
 
 /**
@@ -804,8 +819,6 @@ function addSystemNotice(msg: any) {
 }
 
 // ==============================================================
-
-const notificationList: Notification[] = []
 
 const baseRuntime = {
     tags: {
@@ -844,3 +857,4 @@ const baseRuntime = {
 
 export const runtimeData: RunTimeDataElem = reactive(baseRuntime)
 export const appendMsg: { [ key: string ]: (msg: any) => void } = reactive({})
+export const notificationList: Notification[] = reactive([])

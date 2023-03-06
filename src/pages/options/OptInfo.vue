@@ -57,6 +57,7 @@
 
 <script lang="ts">
 import app from '@/main'
+import Option from '@/function/option'
 
 import { defineComponent } from 'vue'
 import { runtimeData } from '@/function/msg'
@@ -141,9 +142,7 @@ export default defineComponent({
             // 刷新 cookie
             if (topList) {
                 topInfo[id] = topList
-                runtimeData.sysConfig.top_info = topInfo
-                console.log(topInfo)
-                app.config.globalProperties.$cookies.set('top', JSON.stringify(topInfo), '1m')
+                Option.save('top_info', topInfo)
             }
             // 为消息列表内的对象刷新置顶标志
             for (let i = 0; i < runtimeData.onMsgList.length; i++) {

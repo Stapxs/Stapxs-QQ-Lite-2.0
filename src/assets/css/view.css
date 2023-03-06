@@ -5,9 +5,72 @@ html, body {
     margin: 0;
 }
 
-#app {
+.top-bar {
+    -webkit-app-region: drag;
+    box-shadow: 0 0 10px 0 rgb(0 0 0 / 28%);
+    background: var(--color-card-2);
+    margin-bottom: 10px;
+    flex-direction: row;
+    position: absolute;
+    display: flex;
+    height: 40px;
+    width: 100%;
+    z-index: 99;
+}
+.top-bar > svg,
+.top-bar > img {
+    margin: 10px 15px;
+    height: 20px;
+}
+.top-bar > span {
+    color: var(--color-font);
+    font-weight: bold;
+    font-size: 0.9rem;
+    line-height: 40px;
+}
+.top-bar > div.space {
+    flex: 1;
+}
+.top-bar > div.controller {
+    -webkit-app-region: no-drag;
+    display: flex;
+}
+.top-bar > div.controller > div {
+    transition: background .2s;
+    justify-content: center;
+    border-radius: 7px;
+    display: flex;
+    margin: 4px 1px;
+    padding: 9px;
+    width: 26px;
+}
+.top-bar > div.controller > div.min > svg {
+    transform: scale(0.9);
+}
+.top-bar > div.controller > div.close {
+    margin-right: 4px;
+}
+.top-bar > div.controller > div:hover {
+    background: var(--color-card-1);
+}
+.top-bar > div.controller > div.close:hover {
+    background: #f20000dd;
+}
+.top-bar > div.controller > div > svg {
+    fill: var(--color-font);
+    height: 16px;
+}
+.top-bar > div.controller > div.close:hover > svg {
+    fill: #fff;
+}
+
+#app, #base-app {
     background-color: var(--color-bg);
     height: 100%;
+}
+#base-app.withBar {
+    height: calc(100% - 40px);
+    padding-top: 40px;
 }
 
 .main-body {
@@ -383,6 +446,9 @@ html, body {
     padding: 10px;
     width: 20%;
 }
+.menu.topOut {
+    transition: transform .1s, margin-top .1s;
+}
 .menu.show {
     transform: scaleY(1);
 }
@@ -425,8 +491,6 @@ html, body {
     display: flex !important;
 }
 .ss-range input {
-    -webkit-appearance: none;
-
     background-image: linear-gradient(var(--color-main), var(--color-main));
     background-color: var(--color-card-1);
     background-repeat: no-repeat;
@@ -434,13 +498,15 @@ html, body {
     background-size: 0% 100%;
     border-radius: 7px;
     min-width: 100%;
+
+    -webkit-appearance: none;
 }
 .ss-range input::-webkit-slider-thumb,
 .ss-range input::-moz-range-thumb {
     -webkit-appearance: none;
 
-    height: calc(var(--range-dot-height) - 16px);
-    width: calc(var(--range-dot-height) - 16px);
+    height: calc(var(--range-dot-height) - 8px);
+    width: calc(var(--range-dot-height) - 8px);
     box-shadow:0 0 5px var(--color-shader);
     background:var(--color-main);
     border: 5px solid #FFF;
@@ -754,6 +820,7 @@ html, body {
 
 .hiden-home {
     margin-top: calc(-100% + 5px);
+    transform: translateY(-100%);
 }
 
 .qq-err-card {
@@ -882,6 +949,7 @@ html, body {
     }
     .hiden-home {
         margin-top: calc(100% + 5px);
+        transform: translateY(0);
         margin-left: -70px;
     }
     /* 二级侧栏 */

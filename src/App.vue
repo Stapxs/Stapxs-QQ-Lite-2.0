@@ -1,5 +1,14 @@
 <template>
-    <div id="app">
+    <div class="top-bar" v-if="runtimeData.sysConfig.opt_no_window">
+        <img src="img/icons/icon.svg">
+        <span>Stapxs QQ Lite</span>
+        <div class="space"></div>
+        <div class="controller">
+            <div @click="controllWin('minimize')" class="min"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M416 256c0 17.7-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l352 0c17.7 0 32 14.3 32 32z"/></svg></div>
+            <div @click="controllWin('close')" class="close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3 265.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256 310.6 150.6z"/></svg></div>
+        </div>
+    </div>
+    <div id="base-app">
         <div class="layui-tab layui-tab-brief main-body">
             <ul class="layui-tab-title">
                 <li @click="changeTab('主页', 'Home', true)" :class="loginInfo.status ? 'hiden-home' : 'layui-this'">
@@ -240,6 +249,17 @@ export default defineComponent({
     },
     methods: {
         /**
+         * electron 窗口操作
+         */
+        controllWin (name: string) {
+            const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+            const reader = electron ? electron.ipcRenderer : null
+            if (reader) {
+                reader.send('win:' + name)
+            }
+        },
+        
+        /**
          * 发起连接
          */
         connect () {
@@ -392,24 +412,21 @@ export default defineComponent({
         // 页面加载完成后
         window.onload = () => {
             app.config.globalProperties.$viewer = this.viewerBody
-            const $cookies = app.config.globalProperties.$cookies
             // 初始化波浪动画
             runtimeData.tags.loginWaveTimer = this.waveAnimation(document.getElementById('login-wave'))
-            // 加载 cookie 中的保存登陆信息
-            // TODO: 为啥不把登录信息存进设置里 ……
-            if ($cookies.isKey('address')) {
-                this.loginInfo.address = $cookies.get('address')
-            }
             // 加载设置项
             runtimeData.sysConfig = Option.load()
-            runtimeData.sysConfig.top_info = $cookies.get('top')
-            // PS：重新再应用一次颜色模式设置模式，因为需要在页面加载完成后处理
-            // 自动暗黑模式需要在暗黑模式之后应用保证可以覆盖它
+            // PS：重新再应用部分需要加载完成后才能应用的设置
             Option.runAS('opt_dark', Option.get('opt_dark'))
             Option.runAS('opt_auto_dark', Option.get('opt_auto_dark'))
             Option.runAS('theme_color', Option.get('theme_color'))
             Option.runAS('opt_auto_win_color', Option.get('opt_auto_win_color'))
+            if(Option.get('opt_no_window') == true) {
+                const app = document.getElementById('base-app')
+                if(app) app.classList.add('withBar')
+            }
             // 加载密码保存和自动连接
+            loginInfo.address = runtimeData.sysConfig.address
             if(runtimeData.sysConfig.save_password && runtimeData.sysConfig.save_password != true) {
                 loginInfo.token = runtimeData.sysConfig.save_password
                 this.tags.savePassword = true
@@ -440,10 +457,10 @@ export default defineComponent({
             }
             // 检查版本
             const appVersion = appInfo.version
-            const cacheVersion = app.config.globalProperties.$cookies.get('version')
-            if (!app.config.globalProperties.$cookies.isKey('version') || cmp(appVersion, cacheVersion) == 1) {
+            const cacheVersion = localStorage.getItem('version')
+            if (!cacheVersion || cmp(appVersion, cacheVersion) == 1) {
                 // 更新 cookie 中的版本信息并抓取更新日志
-                app.config.globalProperties.$cookies.set('version', appVersion, '1m')
+                localStorage.setItem('version', appVersion)
                 logger.debug(this.$t('version_updated') + ': ' + cacheVersion + ' -> ' + appVersion)
                 // 从 Github 获取更新日志
                 const url = 'https://api.github.com/repos/stapxs/stapxs-qq-lite-2.0/commits'
@@ -534,9 +551,10 @@ export default defineComponent({
                     })
             }
             // 检查打开次数
-            if ($cookies.isKey('times')) {
-                const getTimes = Number($cookies.get('times')) + 1
-                $cookies.set('times', getTimes, '1m')
+            const times = localStorage.getItem('times')
+            if (times != null) {
+                const getTimes = Number(times) + 1
+                localStorage.setItem('times', getTimes.toString())
                 if (getTimes % 50 == 0) {
                     // 构建 HTML
                     let html = '<div style="display:flex;flex-direction:column;padding:10px 5%;align-items:center;">'
@@ -562,7 +580,7 @@ export default defineComponent({
                     runtimeData.popBoxList.push(popInfo)
                 }
             } else {
-                $cookies.set('times', 1, '1m')
+                localStorage.setItem('times', '1')
                 // 首次打开，显示首次打开引导信息
                 const popInfo = {
                     template: WelPan,
@@ -578,14 +596,17 @@ export default defineComponent({
             }
             // 获取公告通知
             const url = 'https://lib.stapxs.cn/download/stapxs-qq-lite/notice-config.json'
-            const fetchData = {} as Record<string, string>
+            const fetchData = {
+                time: new Date().getTime().toString()
+            } as Record<string, string>
             fetch(url + '?' + new URLSearchParams(fetchData).toString())
                 .then(response => response.json())
                 .then(data => {
                     // 获取已显示过的公告 ID
                     let noticeShow = [] as number[]
-                    if ($cookies.isKey('notice_show')) {
-                        noticeShow = $cookies.get('notice_show').split(',')
+                    const showId = localStorage.getItem('notice_show')
+                    if (showId) {
+                        noticeShow = showId.split(',').map((id: string) => parseInt(id))
                     }
                     // 解析公告列表
                     data.forEach((notice: any) => {
@@ -619,7 +640,7 @@ export default defineComponent({
                                                 if (noticeShow.indexOf(notice.id) < 0) {
                                                     noticeShow.push(notice.id)
                                                 }
-                                                $cookies.set('notice_show', noticeShow, '7d')
+                                                localStorage.setItem('notice_show', noticeShow.toString())
                                                 // 关闭弹窗
                                                 runtimeData.popBoxList.shift()
                                             }

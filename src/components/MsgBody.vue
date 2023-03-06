@@ -38,7 +38,7 @@
                     <div v-if="item.type === undefined" ></div>
                     <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
                     <span v-else-if="item.type == 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
-                    <img v-else-if="item.type == 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @load="scrollButtom" @error="imgLoadFail" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index)" :src="item.url">
+                    <img v-else-if="item.type == 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @load="scrollButtom" @error="imgLoadFail" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index, item.asface)" :src="item.url">
                     <img v-else-if="item.type == 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/img/qq-face/' + item.id + '.gif')" :title="item.text">
                     <span v-else-if="item.type == 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat_fun_menu_pic') }}：{{ item.text }} ]</span>
                     <div v-else-if="item.type == 'at'" v-show="isAtShow(data.source, item.qq)" :class="getAtClass(item.qq)">
@@ -192,12 +192,15 @@ export default defineComponent({
          * @param length 消息段数
          * @param at 图片在消息中的位置
          */
-        imgStyle (length: number, at: number) {
+        imgStyle (length: number, at: number, isFace: boolean) {
+            let style = 'msg-img'
             // 处理样式
-            if (length === 1) { return 'msg-img alone' }
-            if (at === 0) { return 'msg-img top' }
-            if (at === length - 1) { return 'msg-img button' }
-            return 'msg-img'
+            // if(isFace) { style += ' face' }
+            if(isFace) { style += ' ' }
+            if(length === 1) { return style += ' alone' }
+            if(at === 0) { return style += ' top' }
+            if(at === length - 1) { return style += ' button' }
+            return style
         },
 
         /**
@@ -246,6 +249,8 @@ export default defineComponent({
             parent.style.alignItems = 'center'
             parent.style.padding = '20px 50px'
             parent.style.border = '2px dashed var(--color-card-2)'
+            parent.style.borderRadius = '10px'
+            parent.style.margin = '10px 0'
             parent.innerText = ''
             // 新建 svg
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -307,7 +312,7 @@ export default defineComponent({
                 this.gotLink = true
                 const fistLink = linkList[0]
                 // 获取链接预览
-                fetch('https://api.stapxs.cn/Page-Info?address=' + fistLink)
+                fetch('https://api.stapxs.cn/tool/page-info/' + encodeURIComponent(fistLink))
                     .then(res => res.json())
                     .then(res => {
                         if (res.status === undefined && Object.keys(res).length > 0) {

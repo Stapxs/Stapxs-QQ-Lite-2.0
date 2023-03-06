@@ -1,0 +1,35 @@
+# 当发布 release 时自动构建全平台 electron 文件并提交到 release 中
+name: release-published
+on:
+  release:
+    branches:
+      - main
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+
+    # 拉取代码
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        persist-credentials: false
+    # 设置 Node.js 版本
+    - name: Load Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 17.x
+    # 更新依赖
+    - name: Install
+      run: yarn
+    # 构建
+    - name: Build
+      run: yarn electron:build
+      env:
+        NODEJS_ENV: github-actions
+
+    # 从 package.json 中获取版本号
+    - name: Get version
+      id: get_version
+      run: echo ::set-output name=VERSION::$(node -p "require('./package.json').version")

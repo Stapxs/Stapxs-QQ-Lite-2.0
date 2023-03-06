@@ -4,8 +4,10 @@ textarea {
 
 .chat-pan {
     background-color: var(--color-card);
+    background-repeat: no-repeat;
     background-position: center;
-    background-size: auto 100%;
+    background-size: auto;
+    
     color: var(--color-font);
     flex-direction: column;
     pointer-events: none;
@@ -16,6 +18,10 @@ textarea {
     left: 371px;
     right: 0;
     top: 0;
+}
+.chat-pan.withBar {
+    height: calc(100% - 40px);
+    top: 40px;
 }
 .chat-pan.full {
     height: 100%;
@@ -297,6 +303,10 @@ textarea {
     height: 100%;
     width: 100%;
     z-index: 10;
+}
+.msg-menu.withBar {
+    height: calc(100% + 40px);
+    margin-top: -40px;
 }
 .msg-menu-bg {
     pointer-events: all;
@@ -1200,9 +1210,9 @@ textarea {
     width: 100%;
 }
 .forward-pan > div.card {
-    margin: calc(100% - 75px) 0 0 50%;
     transform: translate(-50%, -50%);
     flex-direction: column;
+    margin: 50vh 0 0 50%;
     position: absolute;
     display: flex;
     height: 70%;
@@ -1267,6 +1277,10 @@ textarea {
     .chat-pan {
         height: calc(100% - 75px);
         left: 80px;
+    }
+    .chat-pan.withBar {
+        height: calc(100% - 115px);
+        top: 40px;
     }
     .chat-pan.open {
         transform: translateX(220px);
