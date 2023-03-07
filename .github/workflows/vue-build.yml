@@ -6,50 +6,157 @@ on:
       - main
 
 jobs:
-
-  build-pages:
-    name: Build Pages
+  # ========================= 准备项目 ========================= 
+  init:
+    name: 初始化构建
     runs-on: ubuntu-latest
-
+    outputs:
+      build_web: ${{ steps.step_init.outputs.BUILD_WEB }}
+      build_electron: ${{ steps.step_init.outputs.BUILD_ELECTRON }}
+      version: ${{ steps.step_init.outputs.VERSION }}
     steps:
-    # 判断是否需要构建 web 版本，检查 push message 中最后一行是否不包含 [not-build-web]（默认构建）
-    - name: Check Web Tag
-      id: check_electron
-      run: |
-        if [[ $(git log -1 --pretty=%B) != *"[not-build-web]"* ]]; then
-          echo 'NEED_BULID=true' >> $GITHUB_ENV
-        else
-          echo 'NEED_BULID=false' >> $GITHUB_ENV
-        fi
-    
     # 拉取代码
     - name: Checkout
-      if: env.NEED_BULID == 'true'
+      uses: actions/checkout@v3
+      with:
+        persist-credentials: false
+    # 初始化一些流程需要的环境变量
+    - name: Init Env
+      id: step_init
+      run: |
+        # 判断是否需要构建 web 版本，检查 push message 中最后一行是否不包含 [not-build-web]（默认构建）
+        if [[ $(git log -1 --pretty=%B) != *"[not-build-web]"* ]]; then
+          echo 'BUILD_WEB=true'
+          echo 'BUILD_WEB=true' >> $GITHUB_OUTPUT
+        else
+          echo 'BUILD_WEB=false'
+          echo 'BUILD_WEB=false' >> $GITHUB_OUTPUT
+        fi
+        # 判断是否需要构建 electron 版本，检查 push message 中最后一行是否包含 [build-electron]
+        if [[ $(git log -1 --pretty=%B) == *"[build-electron]"* ]]; then
+          echo 'BUILD_ELECTRON=true'
+          echo 'BUILD_ELECTRON=true' >> $GITHUB_OUTPUT
+        else
+          echo 'BUILD_ELECTRON=false'
+          echo 'BUILD_ELECTRON=false' >> $GITHUB_OUTPUT
+        fi
+        # 获取版本号
+        echo VERSION=$(node -p "require('./package.json').version") >> $GITHUB_OUTPUT
+
+  # ========================= 构建 Web 版本 ========================= 
+  build-pages:
+    name: 构建 Github Pages 版本
+    runs-on: ubuntu-latest
+    needs: init
+    if: needs.init.outputs.build_web == 'true'
+    steps:
+    # 拉取代码
+    - name: Checkout
       uses: actions/checkout@v3
       with:
         persist-credentials: false
     # 设置 Node.js 版本
     - name: Load Node.js
-      if: env.NEED_BULID == 'true'
       uses: actions/setup-node@v3
       with:
         node-version: 14.x
     # 更新依赖
     - name: Install
-      if: env.NEED_BULID == 'true'
       run: yarn
     # 构建
     - name: Build
-      if: env.NEED_BULID == 'true'
       run: yarn build
       env:
         NODEJS_ENV: github-actions
 
     # 部署 Web 版本
     - name: Deploy
-      if: env.NEED_BULID == 'true'
       uses: JamesIves/github-pages-deploy-action@v4
       with:
         token: ${{ secrets.ACCESS_TOKEN }}
         branch: gh-pages
         folder: dist
+        
+  # ========================= 构建 Electron 版本 ========================= 
+  build-electron:
+    name: 构建 Electron 版本
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-2019, ubuntu-latest]
+    outputs:
+      version: ${{ needs.init.outputs.version }}
+
+    needs: init
+    if: needs.init.outputs.build_electron == 'true'
+
+    steps:
+
+    # 拉取代码
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        persist-credentials: false
+    # 设置 Node.js 版本
+    - name: Load Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 14.x
+    # 更新依赖
+    - name: Install
+      run: yarn
+
+    # 构建 electron 版本（Windows）
+    - name: Build Electron (Windows)
+      if: matrix.os == 'windows-2019'
+      run: yarn electron:build --win
+      env:
+        NODEJS_ENV: github-actions
+        GH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+    # 构建 electron 版本（Linux）
+    - name: Build Electron (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: yarn electron:build --linux
+      env:
+        NODEJS_ENV: github-actions
+        GH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+
+    # 上传构建结果
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ needs.init.outputs.version }}
+        path: dist_electron/out
+
+  # ========================= 发布构建结果 ========================= 
+  release:
+    name: 发布构建结果
+    runs-on: ubuntu-latest
+    needs: build-electron
+
+    steps:
+    # 下载构建结果
+    - name: Download Artifacts
+      id: download-artifact
+      uses: actions/download-artifact@v2
+    - name: Artifacts List
+      run: ls -R
+    # 发布构建结果
+    - name: Publish Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ./${{ needs.build-electron.outputs.version }}/*
+        tag_name: v${{ needs.build-electron.outputs.version }}
+        body: |
+          # Release 自动构建
+          `这是一个自动构建版本，由 GitHub Actions 自动构建并发布。`
+          ## 更新内容
+          ${{ github.event.head_commit.message }}
+          ## 自动构建信息
+          - 构建时间：${{ github.event.head_commit.timestamp }}
+          - 构建提交：${{ github.event.head_commit.id }}
+          - 构建分支：${{ github.event.head_commit.branch }}
+        draft: false
+        prerelease: false
+        token: ${{ secrets.ACCESS_TOKEN }}
+          

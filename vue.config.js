@@ -83,10 +83,10 @@ module.exports = {
                         const fs = require('fs')
                         const path = require('path')
                         // 寻找所有需要删除的文件和目录
-                        const delList = fs.readdirSync(context.outDir).filter((dir) => {
-                            return dir.endsWith('-unpacked') || file.startsWith('build')
+                        const delList = fs.readdirSync(context.outDir).filter((item) => {
+                            return item.endsWith('-unpacked') || item.startsWith('build')
                         })
-                        console.log('删除的目录和文件：', dirs)
+                        console.log('删除的目录和文件：', delList)
                         for (const item of delList) {
                             // 判断是文件还是目录
                             if (fs.statSync(path.join(context.outDir, item)).isDirectory()) {
@@ -99,7 +99,7 @@ module.exports = {
                 },
                 
                 linux: {
-                    target: ['AppImage', 'pacman', 'tar.gz'],
+                    target: process.env.NODEJS_ENV === 'github-actions' ? ['AppImage', 'tar.gz'] : 'pacman',
                     maintainer: 'Stapx Steve [林槐]',
                     vendor: 'Stapxs Steve Team',
                     icon: 'public/img/icons/icon.png',
