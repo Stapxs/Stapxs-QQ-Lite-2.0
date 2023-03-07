@@ -345,7 +345,7 @@ textarea {
 .merge-pan.show > div:last-child {
     flex-direction: column;
     display: flex;
-    width: 50%;
+    width: 450px;
 }
 .merge-pan > div:last-child > div:first-child {
     align-items: center;

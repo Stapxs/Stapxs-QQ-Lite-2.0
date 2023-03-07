@@ -37,7 +37,7 @@
                 <div v-for="(item, index) in data.message" :class="View.isMsgInline(item.type) ? 'msg-inline' : ''" :key="data.message_id + '-m-' + index">
                     <div v-if="item.type === undefined" ></div>
                     <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
-                    <span v-else-if="item.type == 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
+                    <span v-else-if="item.type == 'text'" @click="textClick" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
                     <img v-else-if="item.type == 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @load="scrollButtom" @error="imgLoadFail" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index, item.asface)" :src="item.url">
                     <img v-else-if="item.type == 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/img/qq-face/' + item.id + '.gif')" :title="item.text">
                     <span v-else-if="item.type == 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat_fun_menu_pic') }}：{{ item.text }} ]</span>
@@ -306,7 +306,7 @@ export default defineComponent({
             text = ViewFuns.parseText(text)
             // 链接判定
             const reg = /(http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/gi //eslint-disable-line
-            text = text.replaceAll(reg, '<a href="$&" target="_blank">$&</a>')
+            text = text.replaceAll(reg, '<a href="" data-link="$&" onclick="return false">$&</a>')
             let linkList = text.match(reg)
             if (linkList !== null && !this.gotLink) {
                 this.gotLink = true
@@ -444,6 +444,19 @@ export default defineComponent({
                 fid: data.fid,
                 md5: data.md5
             }, 'getVideoUrl_' + message_id)
+        },
+
+        /**
+         * 文本消息被点击
+         * @param event 事件
+         */
+        textClick(event: Event) {
+            const target = event.target as HTMLElement
+            if(target.dataset.link) {
+                // 点击了链接
+                const link = target.dataset.link
+                Util.openLink(link)
+            }
         }
     },
     mounted () {

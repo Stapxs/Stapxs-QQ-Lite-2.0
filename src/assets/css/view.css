@@ -596,9 +596,16 @@ html, body {
     margin-top: calc(50vh - 35px);
     transition: all .3s;
     position: absolute;
+    width: fit-content;
     margin-left: 50%;
-    width: 360px;
+    min-width: 360px;
     z-index: 20;
+}
+.pop-box-body.full {
+    height: calc(100vh - 120px);
+    transform: unset !important;
+    margin: 60px 20px 0 20px;
+    width: calc(100% - 80px);
 }
 .pop-box-body > header {
     align-items: center;

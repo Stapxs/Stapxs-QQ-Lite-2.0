@@ -86,8 +86,8 @@ export default function regIpcListener() {
     ipcMain.on('sys:download', (evt, args) => {
         const downloadPath = args.downloadPath
         const fileName = args.fileName
-        let ext = path.extname(fileName)
-        let filters = [{ name: '全部文件', extensions: ['*'] }]
+        const ext = path.extname(fileName)
+        const filters = [{ name: '全部文件', extensions: ['*'] }]
         if (ext && ext !== '.' && ext != null) {
             const array = ext.match(/[a-zA-Z]+$/)
             if (array) {

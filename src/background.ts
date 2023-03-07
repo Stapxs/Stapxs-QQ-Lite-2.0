@@ -7,7 +7,7 @@ import path from 'path'
 
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 
-import { Menu } from 'electron'
+import { Menu, session } from 'electron'
 import { app, protocol, BrowserWindow } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 
@@ -25,7 +25,7 @@ async function createWindow() {
     Menu.setApplicationMenu(null)
     regIpcListener()
     // 创建窗口
-    let mainWindowState = windowStateKeeper({
+    const mainWindowState = windowStateKeeper({
         defaultWidth: 1200,
         defaultHeight: 800
     })
@@ -56,6 +56,15 @@ async function createWindow() {
         win.loadURL('app://./index.html')
     }
     console.log('应用加载完成')
+
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+        if(details.responseHeaders) {
+            // 绕过 CSP 限制，X-Frame-Options 限制
+            details.responseHeaders['content-security-policy'] = ['*']
+            delete details.responseHeaders['x-frame-options']
+        }
+        callback({ cancel: false, responseHeaders: details.responseHeaders })
+    })
 }
 
 app.on('window-all-closed', () => {

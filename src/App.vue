@@ -147,7 +147,7 @@
         </TransitionGroup>
         <Transition>
             <div class="pop-box" v-if="runtimeData.popBoxList.length > 0">
-                <div class="pop-box-body ss-card"
+                <div :class="'pop-box-body ss-card' + (runtimeData.popBoxList[0].full ? ' full' : '')"
                     :style="'transform: translate(-50%, calc(-50% - ' + ((runtimeData.popBoxList.length > 3 ? 3 : runtimeData.popBoxList.length) * 10) + 'px))'">
                     <header v-show="runtimeData.popBoxList[0].title != undefined">
                         <div

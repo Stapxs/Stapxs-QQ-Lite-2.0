@@ -278,5 +278,7 @@
   "option_view_no_window": "去除窗口框架",
   "option_view_no_window_tip": "沉浸式没圆角体验（无端",
   "option_dev_restart": "重启应用",
-  "option_dev_restart_tip": "99% 的特性都能通过重启解决！"
+  "option_dev_restart_tip": "99% 的特性都能通过重启解决！",
+  "btn_close": "关闭",
+  "btn_open": "打开"
 }
