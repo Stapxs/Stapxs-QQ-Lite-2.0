@@ -279,5 +279,7 @@
   "option_view_no_window": "關閉視窗邊框",
   "option_view_no_window_tip": "無框行動？",
   "option_dev_restart": "重新啟動應用程式",
-  "option_dev_restart_tip": "SS：「99% 的特性都能透過重啟解決！」"
+  "option_dev_restart_tip": "SS：「99% 的特性都能透過重啟解決！」",
+  "btn_close": "關閉",
+  "btn_open": "開啟"
 }

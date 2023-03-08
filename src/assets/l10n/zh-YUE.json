@@ -283,5 +283,7 @@
   "option_view_no_window": "關閉視窗邊框",
   "option_view_no_window_tip": "◯→▢",
   "option_dev_restart": "重新啟動 App",
-  "option_dev_restart_tip": "Restart app and you have no 茶煲"
+  "option_dev_restart_tip": "Restart app and you have no 茶煲",
+  "btn_close": "關閉",
+  "btn_open": "開啟"
 }
