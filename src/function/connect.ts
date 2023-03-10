@@ -35,8 +35,10 @@ export class Connector {
         if(!websocket || websocket.readyState != WebSocket.OPEN) {
             try {
                 websocket = new WebSocket(`ws://${address}?access_token=${token}`)
+                runtimeData.tags.connectSsl = false
             } catch (ex) {
                 websocket = new WebSocket(`wss://${address}?access_token=${token}`)
+                runtimeData.tags.connectSsl = true
             }
         }
 

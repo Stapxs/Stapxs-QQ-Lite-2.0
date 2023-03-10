@@ -93,6 +93,7 @@ textarea {
     overflow-x: hidden;
     margin-left: 20px;
     margin-top: -90px;
+    padding-top: 90px;
     z-index: 1;
     flex: 1;
 }

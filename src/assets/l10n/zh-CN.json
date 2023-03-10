@@ -280,5 +280,10 @@
   "option_dev_restart": "重启应用",
   "option_dev_restart_tip": "99% 的特性都能通过重启解决！",
   "btn_close": "关闭",
-  "btn_open": "打开"
+  "btn_open": "打开",
+  "pop_send_file_fail": "发送文件失败",
+  "pop_send_file_err": "发送文件错误",
+  "pop_send_file": "正在发送文件 ",
+  "chat_fun_menu_file": "文件",
+  "chat_view_file_viewer": "文件预览"
 }

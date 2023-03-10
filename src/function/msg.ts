@@ -64,6 +64,7 @@ export function parse(str: string) {
                 case 'readMemberMessage'    : readMemberMessage(msg.data[0]); break
                 case 'setFriendAdd'         : 
                 case 'setGroupAdd'          : updateSysInfo(head); break
+                case 'loadFileBase'         : loadFileBase(echoList, msg); break
             }
         }
     } else {
@@ -354,6 +355,25 @@ function saveSendedMsg(echoList: string[], msg: any) {
     }
 }
 
+function loadFileBase(echoList: string[], msg: any) {
+    const url = msg.data.url
+    const msgId = echoList[1]
+    const ext = echoList[2]
+    if(url) {
+        // 寻找消息位置
+        let msgIndex = -1
+        runtimeData.messageList.forEach((item, index) => {
+            if (item.message_id === msgId) {
+                msgIndex = index
+            }
+        })
+        if(msgIndex !== -1) {
+            runtimeData.messageList[msgIndex].fileView.url = url
+            runtimeData.messageList[msgIndex].fileView.ext = ext
+        }
+    }
+}
+
 function saveMemberInfo(msg: any) {
     const pointInfo = msg.echo.split('_')
     msg.x = pointInfo[1]
@@ -393,10 +413,20 @@ function revokeMsg(msg: any) {
             new Logger().error(app.config.globalProperties.$t('log_revoke_miss'))
         }
     }
-    // // 尝试撤回通知
-    // if(window.notices != undefined && window.notices[msg.message_id] != undefined) {
-    //     window.notices[msg.message_id].close()
-    // }
+    // 尝试撤回通知
+    const notificationIndex = notificationList.findIndex((item) => {
+        const tag = item.tag
+        const userId = Number(tag.split('/')[0])
+        return userId == chatId
+    })
+    console.log(notificationIndex)
+    if (notificationIndex != -1) {
+        const notification = notificationList[notificationIndex]
+        // PS：使用 close 方法关闭通知也会触发关闭事件，所以这儿需要先移除再关闭
+        // 防止一些判断用户主动关闭通知的逻辑出现问题
+        notificationList.splice(notificationIndex, 1)
+        notification.close()
+    }
 }
 
 function downloadFileChat(msg: any) {
@@ -827,7 +857,8 @@ const baseRuntime = {
         openSideBar: false,
         viewer: { index: 0 },
         msgType: BotMsgType.JSON,
-        isElectron: false
+        isElectron: false,
+        connectSsl: false
     },
     chatInfo: {
         show: { type: '', id: 0, name: '', avatar: '' },

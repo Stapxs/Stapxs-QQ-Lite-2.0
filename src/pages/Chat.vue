@@ -164,6 +164,10 @@
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM323.8 202.5c-4.5-6.6-11.9-10.5-19.8-10.5s-15.4 3.9-19.8 10.5l-87 127.6L170.7 297c-4.6-5.7-11.5-9-18.7-9s-14.2 3.3-18.7 9l-64 80c-5.8 7.2-6.9 17.1-2.9 25.4s12.4 13.6 21.6 13.6h96 32H424c8.9 0 17.1-4.9 21.2-12.8s3.6-17.4-1.4-24.7l-120-176zM112 192c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48z"/></svg>
                         <input id="choice-pic" type="file" style="display: none;" @change="selectImg">
                     </div>
+                    <div :title="$t('chat_fun_menu_file')" @click="runSelectFile">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M64 480H448c35.3 0 64-28.7 64-64V160c0-35.3-28.7-64-64-64H288c-10.1 0-19.6-4.7-25.6-12.8L243.2 57.6C231.1 41.5 212.1 32 192 32H64C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64z"/></svg>
+                        <input id="choice-file" type="file" style="display: none;" @change="selectFile">
+                    </div>
                     <div :title="$t('chat_fun_menu_face')"
                         @click="details[1].open = !details[1].open, tags.showMoreDetail = false">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -386,7 +390,7 @@ import imageCompression from 'browser-image-compression'
 import { defineComponent, markRaw } from 'vue'
 import { parseMsgId, getTrueLang, loadHistory as loadHistoryFirst } from '@/function/util'
 import { Logger, LogType, PopInfo, PopType } from '@/function/base'
-import { Connector } from '@/function/connect'
+import { Connector, login as loginInfo } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
 import { BaseChatInfoElem, MsgItemElem, SQCodeElem, GroupMemberInfoElem, UserFriendElem, UserGroupElem, BotMsgType } from '@/function/elements/information'
 
@@ -1134,6 +1138,57 @@ export default defineComponent({
             const sender = event.target as HTMLInputElement
             if(sender && sender.files) {
                 this.setImg(sender.files[0])
+            }
+        },
+
+        runSelectFile () {
+            const input = document.getElementById('choice-file')
+            if(input) {
+                input.click()
+            }
+        },
+        /**
+         * 选择文件
+         */
+        async selectFile (event: Event) {
+            this.tags.showMoreDetail = false
+            const sender = event.target as HTMLInputElement
+            if(sender.files != null) {
+                // 构建请求参数
+                const formData = new FormData();
+                formData.append('type', runtimeData.chatInfo.show.type)
+                formData.append('id', String(runtimeData.chatInfo.show.id))
+                formData.append('file', sender.files[0])
+                // 请求
+                try {
+                    var onProgress = function (e: ProgressEvent) {
+                       const percent = Math.round(e.loaded / e.total * 100)
+                       if(percent % 10 === 0) {
+                           new PopInfo().add(PopType.INFO, app.config.globalProperties.$t('pop_send_file') + percent + ' %')
+                       }
+                    }
+
+                    const ssl = runtimeData.tags.connectSsl ? 'https://' : 'http://'
+
+                    var url = ssl + loginInfo.address + '/upload_file'
+                    var xhr = new XMLHttpRequest()
+                    xhr.upload.onprogress = onProgress
+                    xhr.open("POST", url, true)
+                    xhr.setRequestHeader("authorization", loginInfo.token)
+                    xhr.send(formData)
+                    xhr.onreadystatechange = function () {
+                        const data = JSON.parse(xhr.responseText)
+                        if(Object.keys(data).length > 0) {
+                            // 发送成功，直接刷新整个历史消息
+                            loadHistoryFirst(runtimeData.chatInfo.show)
+                        } else {
+                            new PopInfo().add(PopType.ERR, app.config.globalProperties.$t('pop_send_file_fail'))
+                        }
+                    }
+                } catch(e) {
+                    console.log(e)
+                    new PopInfo().add(PopType.ERR, app.config.globalProperties.$t('pop_send_file_err'))
+                }
             }
         },
 

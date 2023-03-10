@@ -256,6 +256,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
+    flex-wrap: wrap;
 }
 .msg-file > svg {
     fill: var(--color-font-1);
@@ -472,4 +473,36 @@
         color: var(--color-font-1) !important;
         display: unset !important;
     }
+}
+
+.file-view {
+    background: rgba(var(--color-card-rgb), 0.2);
+    justify-content: center;
+    border-radius: 7px;
+    margin-top: 10px;
+    display: flex;
+    padding: 10px;
+    width: 100%;
+}
+
+.file-view > img,
+.file-view > video {
+    border-radius: 7px;
+    max-height: 30vh;
+    max-width: 100%;
+}
+.file-view > video {
+    margin: -10px;
+    width: 100%;
+}
+.file-view > span.txt {
+    font-family: monospace;
+    white-space: pre-wrap;
+    font-size: 0.9rem;
+    opacity: 0.6;
+    width: 100%;
+}
+.file-view > span.txt > a {
+    display: block;
+    width: 100%;
 }

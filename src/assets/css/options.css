@@ -148,6 +148,7 @@
 
 .bcd-about {
     padding: 5px 20px 10px 20px;
+    margin-bottom: 40px;
     text-align: center;
     cursor: pointer;
     flex: 1;
