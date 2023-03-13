@@ -6,7 +6,7 @@ textarea {
     background-color: var(--color-card);
     background-repeat: no-repeat;
     background-position: center;
-    background-size: auto;
+    background-size: auto 100%;
     
     color: var(--color-font);
     flex-direction: column;
@@ -452,6 +452,7 @@ textarea {
     transform: translate(-50%, -50%);
     flex-direction: column;
     position: absolute;
+    min-width: 450px;
     max-height: 80%;
     display: flex;
     width: 50%;
@@ -1290,6 +1291,7 @@ textarea {
     .chat-info {
         width: calc(100% - 80px);
         transform: unset;
+        min-width: unset;
         margin: 20px;
         bottom: 75px;
     }
@@ -1321,6 +1323,7 @@ textarea {
         width: calc(100% - 40px);
         max-height: unset;
         border-radius: 0;
+        min-width: unset;
         margin: 0;
     }
     .chat-info:hover{

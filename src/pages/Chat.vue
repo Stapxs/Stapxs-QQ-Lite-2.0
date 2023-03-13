@@ -1256,14 +1256,22 @@ export default defineComponent({
             // 为了减少对于复杂图文排版页面显示上的工作量，对于非纯文本的消息依旧处理为纯文本，如：
             // "这是一段话 [SQ:0]，[SQ:1] 你要不要来试试 Stapxs QQ Lite？"
             // 其中 [SQ:n] 结构代表着这是特殊消息以及这个消息具体内容在消息缓存中的 index，像是这样：
-            // const sendCache = [{type:"face",id:1},{type:"at",qq:1007028430}]
-            //                     ^^^^^^ 0 ^^^^^^    ^^^^^^^^^^ 1 ^^^^^^^^^^
+            // const sendCache = [{type:"face",id:11},{type:"at",qq:1007028430}]
+            //                     ^^^^^^^ 0 ^^^^^^^   ^^^^^^^^^^ 1 ^^^^^^^^^^
             // 在发送操作触发之后，将会解析此条字符串排列出最终需要发送的消息结构用于发送。
             let msg = SendUtil.parseMsg(this.msg, this.sendCache, this.imgCache)
             if (msg !== undefined && msg.length > 0) {
                 switch (this.chat.show.type) {
                     case 'group': Connector.send('send_group_msg', { 'group_id': this.chat.show.id, 'message': msg }, 'sendMsgBack'); break
-                    case 'user': Connector.send('send_private_msg', { 'user_id': this.chat.show.id, 'message': msg }, 'sendMsgBack'); break
+                    case 'user': 
+                    {
+                        if(this.chat.show.temp) {
+                            Connector.send('send_temp_msg', { 'user_id': this.chat.show.id, 'group_id': this.chat.show.temp, 'message': msg }, 'sendMsgBack');
+                        } else {
+                            Connector.send('send_private_msg', { 'user_id': this.chat.show.id, 'message': msg }, 'sendMsgBack');
+                        }
+                        break
+                    }
                 }
             }
             // 发送后事务

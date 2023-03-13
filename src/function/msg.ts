@@ -86,6 +86,9 @@ export function parse(str: string) {
                     }
                     break
                 } else {
+                    switch (msg.notice_type) {
+                        case 'friend'           : friendNotice(msg); break
+                    }
                     switch (msg.sub_type) {
                         case 'recall'           : revokeMsg(msg); break
                     }
@@ -178,6 +181,7 @@ function saveUser(list: (UserFriendElem & UserGroupElem)[]) {
     runtimeData.userList = runtimeData.userList.concat(list)
     // 刷新置顶列表
     const info = runtimeData.sysConfig.top_info as { [key: string]: number[] } | null
+    runtimeData.onMsgList = []
     if (info != null) {
         const topList = info[runtimeData.loginInfo.uin]
         if (topList !== undefined) {
@@ -312,7 +316,7 @@ function showSendedMsg(msg: any, echoList: string[]) {
             )
         }
         if(echoList[1] == 'forward') {
-            // PS：这儿写是写了转发成功，事实上不确定消息有没有真的发送出去（
+            // PS：这儿写是写了转发成功，事实上不确定消息有没有真的发送出去（x
             popInfo.add(PopType.INFO, app.config.globalProperties.$t('chat_chat_forward_success'))
         }
     }
@@ -633,6 +637,10 @@ function newMsg(data: any) {
             }
         })
     }
+    // 临时会话名字的特殊处理
+    if (data.sub_type === 'group') {
+        data.sender.nickname = app.config.globalProperties.$t('chat_temp')  + '(' + data.sender.user_id + ')'
+    }
     // (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息) 这些情况需要进行新消息处理
     if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
         // (发送者没有被打开 || 窗口被最小化) 这些情况需要进行消息通知
@@ -660,6 +668,23 @@ function newMsg(data: any) {
             if (getList.length === 1) {
                 runtimeData.onMsgList.push(getList[0])
             }
+        }
+        // 如果消息子类是 group，,那么是临时消息，需要进行特殊处理
+        if (data.sub_type === 'group') {
+            // 手动创建一个用户信息，因为临时消息的用户不在用户列表里
+            const user = {
+                user_id: data.user_id,
+                // 因为临时消息没有返回昵称
+                nickname: data.sender.user_id,
+                remark: app.config.globalProperties.$t('chat_temp'),
+                new_msg: true,
+                message_id: data.message_id,
+                raw_msg: data.raw_message,
+                time: data.time,
+                group_id: data.sender.group_id,
+                group_name: ''
+            } as UserFriendElem & UserGroupElem
+            runtimeData.onMsgList.push(user)
         }
         runtimeData.onMsgList.forEach((item) => {
             // 刷新新消息标签
@@ -845,6 +870,31 @@ function addSystemNotice(msg: any) {
         runtimeData.systemNoticesList.push(msg)
     } else {
         runtimeData.systemNoticesList = [msg]
+    }
+}
+
+/**
+ * 添加/删除好友的通知
+ * @param msg 消息
+ */
+function friendNotice(msg: any) {
+    switch(msg.sub_type) {
+        case 'increase': {
+            // 重新加载联系人列表
+            Connector.send('get_friend_list', {}, 'getFriendList')
+            Connector.send('get_group_list', {}, 'getGroupList')
+            // 添加系统通知
+            new PopInfo().add(PopType.INFO, app.config.globalProperties.$t('pop_friend_added', { name: msg.nickname }))
+            break
+        }
+        case 'decrease': {
+            // 重新加载联系人列表
+            Connector.send('get_friend_list', {}, 'getFriendList')
+            Connector.send('get_group_list', {}, 'getGroupList')
+            // 输出日志（显示为红色字体）
+            console.log('%c消失了一个好友：' + msg.nickname + '（' + msg.user_id + '）', 'color:red;')
+            break
+        }
     }
 }
 

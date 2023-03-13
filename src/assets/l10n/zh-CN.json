@@ -285,5 +285,7 @@
   "pop_send_file_err": "发送文件错误",
   "pop_send_file": "正在发送文件 ",
   "chat_fun_menu_file": "文件",
-  "chat_view_file_viewer": "文件预览"
+  "chat_view_file_viewer": "文件预览",
+  "chat_temp": "临时会话",
+  "pop_friend_added": "添加好友 {name} 成功！"
 }

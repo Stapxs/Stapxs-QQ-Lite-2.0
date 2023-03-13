@@ -87,6 +87,8 @@ export default defineComponent({
                 }
                 const index = runtimeData.onMsgList.indexOf(data)
                 const back = {
+                    // 临时会话标志
+                    temp: data.group_name == '' ? data.group_id : undefined,
                     type: data.user_id ? 'user' : 'group',
                     id: data.user_id ? data.user_id : data.group_id,
                     name: data.group_name ? data.group_name : data.remark === data.nickname ? data.nickname : data.remark + '（' + data.nickname + '）',
