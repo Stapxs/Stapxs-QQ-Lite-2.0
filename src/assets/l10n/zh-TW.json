@@ -279,5 +279,15 @@
   "option_dev_restart": "重新啟動應用程式",
   "option_dev_restart_tip": "SS：「99% 的特性都能透過重啟解決！」",
   "btn_close": "關閉",
-  "btn_open": "開啟"
+  "btn_open": "開啟",
+  "pop_send_file_fail": "檔案傳送失敗",
+  "pop_send_file_err": "檔案傳送時出錯",
+  "pop_send_file": "正在傳送檔案 {percent}%",
+  "chat_fun_menu_file": "檔案",
+  "chat_view_file_viewer": "檔案檢視",
+  "chat_temp": "臨時對話",
+  "pop_friend_added": "成功新增聯絡人 {name}！",
+  "option_view_no_window_mac_style": "macOS 風格標題列",
+  "option_view_no_window_mac_style_tip": "聽說 SS 很喜歡 macOS 的標題列風格",
+  "chat_temp_from": "來自群組：{group}"
 }

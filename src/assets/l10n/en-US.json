@@ -285,5 +285,15 @@
   "option_dev_restart": "Restart app",
   "option_dev_restart_tip": "Should solve most problems :D",
   "btn_close": "Close",
-  "btn_open": "Open"
+  "btn_open": "Open",
+  "pop_send_file_fail": "Failed to send files",
+  "pop_send_file_err": "Error when sending files",
+  "pop_send_file": "Sending ... ",
+  "chat_fun_menu_file": "Files",
+  "chat_view_file_viewer": "File preview",
+  "chat_temp": "Temporary chat session",
+  "pop_friend_added": "Successfully added {name} as friend!",
+  "option_view_no_window_mac_style": "macOS-inspired title bar",
+  "option_view_no_window_mac_style_tip": "Check out the style in any OS!",
+  "chat_temp_from": "From group: {group}"
 }
