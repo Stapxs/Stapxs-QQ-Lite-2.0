@@ -1167,7 +1167,7 @@ export default defineComponent({
                     var onProgress = function (e: ProgressEvent) {
                        const percent = Math.round(e.loaded / e.total * 100)
                        if(percent % 10 === 0) {
-                           new PopInfo().add(PopType.INFO, app.config.globalProperties.$t('pop_send_file') + percent + ' %')
+                           new PopInfo().add(PopType.INFO, app.config.globalProperties.$t('pop_send_file', { percent: percent}))
                        }
                     }
 
