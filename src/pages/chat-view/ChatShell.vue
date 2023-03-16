@@ -13,7 +13,8 @@
  -->
 
 <template>
-    <div :class="'chat-pan' + (runtimeData.tags.openSideBar ? ' open': '')" id="chat-pan">
+    <div id="chat-pan"
+    :class="'chat-pan' + (runtimeData.tags.openSideBar ? ' open': '') + (runtimeData.sysConfig.opt_no_window ? ' withBar': '')">
         <div id="shell-pan" class="shell-pan">
             <div>
                 <template

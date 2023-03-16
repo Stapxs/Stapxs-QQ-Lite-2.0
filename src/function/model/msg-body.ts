@@ -11,6 +11,7 @@ import app from '@/main'
 
 import { PopInfo, PopType } from '@/function/base'
 import { Connector } from '@/function/connect'
+import util from '../util'
 
 const popInfo = new PopInfo()
 
@@ -165,7 +166,7 @@ export class MsgBodyFuns {
             const type = sender.dataset.type
             // 如果存在 url 项，优先打开 url
             if (sender.dataset.url !== undefined && sender.dataset.url !== 'undefined' && sender.dataset.url !== '') {
-                window.open(sender.dataset.url, '_blank')
+                util.openLink(sender.dataset.url)
                 return
             }
             // 接下来按类型处理

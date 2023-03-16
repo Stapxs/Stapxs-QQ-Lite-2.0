@@ -17,6 +17,10 @@ export default function regIpcListener() {
     ipcMain.on('win:minimize', () => {
         if(win) win.minimize()
     })
+    // 最大化
+    ipcMain.on('win:maximize', () => {
+        if(win) win.maximize()
+    })
     // 重启应用
     ipcMain.on('win:relaunch', () => {
         app.relaunch()
@@ -86,8 +90,8 @@ export default function regIpcListener() {
     ipcMain.on('sys:download', (evt, args) => {
         const downloadPath = args.downloadPath
         const fileName = args.fileName
-        let ext = path.extname(fileName)
-        let filters = [{ name: '全部文件', extensions: ['*'] }]
+        const ext = path.extname(fileName)
+        const filters = [{ name: '全部文件', extensions: ['*'] }]
         if (ext && ext !== '.' && ext != null) {
             const array = ext.match(/[a-zA-Z]+$/)
             if (array) {

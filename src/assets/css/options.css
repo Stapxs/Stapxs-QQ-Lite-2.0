@@ -88,11 +88,17 @@
     width: 100%;
 }
 
+.contributors-card {
+    align-items: flex-start !important;
+    background: var(--color-card-1);
+    flex-direction: column;
+    padding: 0 10px;
+    width: 100%;
+}
 .contributors-card>div {
     flex-wrap: wrap;
     display: flex;
 }
-
 .contributors-card>div>div {
     background-size: 100%;
     border-radius: 35px;
@@ -103,7 +109,6 @@
     margin-bottom: 10px;
     cursor: pointer;
 }
-
 .contributors-card>div>div.me {
     outline: 2px solid var(--color-main);
     border: 1px solid var(--color-card-1);
@@ -148,6 +153,7 @@
 
 .bcd-about {
     padding: 5px 20px 10px 20px;
+    margin-bottom: 40px;
     text-align: center;
     cursor: pointer;
     flex: 1;
@@ -242,11 +248,10 @@
 
 .opt-item {
     transition: background .3s;
-    padding: 5px 15px 5px 20px;
+    padding: 10px 15px 10px 20px;
     align-items: center;
     border-radius: 7px;
     display: flex;
-    height: 45px;
 }
 
 .opt-item:hover {
@@ -274,7 +279,6 @@
 
 .opt-item>div>span:last-child {
     color: var(--color-font-1);
-    white-space: nowrap;
     text-overflow: clip;
     font-size: 0.8rem;
 }

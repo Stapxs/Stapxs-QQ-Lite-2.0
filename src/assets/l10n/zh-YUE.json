@@ -58,7 +58,7 @@
   "chat_send_pic_title": "傳送圖片",
   "chat_space": "揀人傾計",
   "chat_unsupported_msg": "未 support 到嘅訊息",
-  "chat_view_pic": "預覽圖片",
+  "chat_view_pic": "圖片 preview",
   "description": "一個同 oicq-http 相容嘅非官方網頁 QQ client",
   "friend_title": "聯絡人",
   "home_card_address": "連接地址",
@@ -283,5 +283,17 @@
   "option_view_no_window": "關閉視窗邊框",
   "option_view_no_window_tip": "◯→▢",
   "option_dev_restart": "重新啟動 App",
-  "option_dev_restart_tip": "Restart app and you have no 茶煲"
+  "option_dev_restart_tip": "Restart app and you have no 茶煲",
+  "btn_close": "關閉",
+  "btn_open": "開啟",
+  "pop_send_file_fail": "傳送 file 失敗",
+  "pop_send_file_err": "傳送 file 時出錯",
+  "pop_send_file": "傳送緊 file {percent}%",
+  "chat_fun_menu_file": "File",
+  "chat_view_file_viewer": "File preview",
+  "chat_temp": "臨時對話",
+  "pop_friend_added": "成功新增聯絡人 {name}！",
+  "option_view_no_window_mac_style": "macOS 風格 title bar",
+  "option_view_no_window_mac_style_tip": "nosumi",
+  "chat_temp_from": "來自 group：{group}"
 }

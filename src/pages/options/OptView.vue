@@ -173,13 +173,30 @@
                         <span>{{ $t('option_view_no_window_tip') }}</span>
                     </div>
                     <label class="ss-switch">
-                        <input type="checkbox" @change="save" name="opt_no_window"
+                        <input type="checkbox" @change="save($event);restartapp()" name="opt_no_window"
                             v-model="runtimeData.sysConfig.opt_no_window">
                         <div>
                             <div></div>
                         </div>
                     </label>
                 </div>
+                <template v-if="runtimeData.sysConfig.opt_no_window && browser.os && browser.os.toLowerCase().indexOf('windows') < 0">
+                    <!-- 特别针对 Windows，诶我就是不给用 -->
+                    <div class="opt-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 512c141.4 0 256-114.6 256-256S397.4 0 256 0S0 114.6 0 256S114.6 512 256 512zm0-160c-53 0-96-43-96-96s43-96 96-96s96 43 96 96s-43 96-96 96z"/></svg>
+                        <div>
+                            <span>{{ $t('option_view_no_window_mac_style') }}</span>
+                            <span>{{ $t('option_view_no_window_mac_style_tip') }}</span>
+                        </div>
+                        <label class="ss-switch">
+                            <input type="checkbox" @change="save($event)" name="opt_no_window_mac_style"
+                                v-model="runtimeData.sysConfig.opt_no_window_mac_style">
+                            <div>
+                                <div></div>
+                            </div>
+                        </label>
+                    </div>
+                </template>
             </template>
         </div>
     </div>
@@ -217,6 +234,14 @@ export default defineComponent({
         setInitialScaleShow(event: Event) {
             const sender = event.target as HTMLInputElement
             this.initialScaleShow = Number(sender.value)
+        },
+
+        restartapp() {
+            const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+            const reader = electron ? electron.ipcRenderer : null
+            if (reader) {
+                reader.send('win:relaunch')
+            }
         }
     },
     mounted() {

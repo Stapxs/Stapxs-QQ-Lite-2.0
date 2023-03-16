@@ -70,11 +70,38 @@ module.exports = {
                 appId: 'com.stapxs.qq-web',
                 productName: 'Stapxs QQ Lite',
                 copyright: 'Copyright © 2022-2023 Stapx Steve [林槐]',
-                icon: 'public/img/icons/icon.png',
 
                 directories: {
                     output: 'dist_electron/out'
                 },
+                
+                linux: {
+                    target: process.env.NODEJS_ENV === 'github-actions' ? ['AppImage', 'tar.gz'] : 'pacman',
+                    maintainer: 'Stapx Steve [林槐]',
+                    vendor: 'Stapxs Steve Team',
+                    synopsis: '一个兼容 oicq-http 的非官方网页版 QQ 客户端。',
+                    category: 'Network',
+                    // TODO: 将来可能需要占用 QQ 自己的 MIME 类型
+                    mimeTypes: ['application/x-stapxs-qq-lite'],
+                    desktop: {
+                        Type: 'Application',
+                        Name: 'Stapxs QQ Lite',
+                        GenericName: 'Stapxs QQ Lite Electron 客户端',
+                        Comment: '一个兼容 oicq-http 的非官方网页版 QQ 客户端。',
+                        Terminal: 'false',
+                        Category: 'Application',
+                        Icon: 'stapxs-qq-lite'
+                    }
+                },
+
+                win: {
+                    target: 'portable',
+                    appId: 'com.stapxs.qq-web',
+                    icon: 'public/img/icons/icon.png',
+                    legalTrademarks: 'Copyright © 2022-2023 Stapx Steve [林槐]',
+                },
+
+
 
                 afterAllArtifactBuild: async (context) => {
                     // 如果环境参数中有 `github-actions`，则删除 `dist_electron/out` 目录下所有的
@@ -96,32 +123,22 @@ module.exports = {
                             }
                         }
                     }
-                },
-                
-                linux: {
-                    target: process.env.NODEJS_ENV === 'github-actions' ? ['AppImage', 'tar.gz'] : 'pacman',
-                    maintainer: 'Stapx Steve [林槐]',
-                    vendor: 'Stapxs Steve Team',
-                    icon: 'public/img/icons/icon.png',
-                    synopsis: '一个兼容 oicq-http 的非官方网页版 QQ 客户端。',
-                    category: 'Network',
-                    // TODO: 将来可能需要占用 QQ 自己的 MIME 类型
-                    mimeTypes: ['application/x-stapxs-qq-lite'],
-                    desktop: {
-                        Type: 'Application',
-                        Name: 'Stapxs QQ Lite',
-                        GenericName: 'Stapxs QQ Lite Electron 客户端',
-                        Comment: '一个兼容 oicq-http 的非官方网页版 QQ 客户端。',
-                        Terminal: 'false',
-                        Category: 'Network',
-                        Icon: 'public/img/icons/icon.png',
+                    // 生成所有输出文件的 MD5 验证文件
+                    const crypto = require('crypto')
+                    const fs = require('fs')
+                    const path = require('path')
+                    const fileList = fs.readdirSync(context.outDir)
+                    let md5List = []
+                    for (const item of fileList) {
+                        // 只包括 stapxs 开头的文件，忽略大小写，忽略文件夹
+                        if (item.toLowerCase().startsWith('stapxs') && 
+                            fs.statSync(path.join(context.outDir, item)).isFile()) {
+                            const file = fs.readFileSync(path.join(context.outDir, item))
+                            const md5Str = crypto.createHash('md5').update(file).digest('hex')
+                            md5List.push(`${md5Str}  ${item}`)
+                        }
                     }
-                },
-
-                win: {
-                    target: 'portable',
-                    icon: 'public/img/icons/icon.png',
-                    legalTrademarks: 'Copyright © 2022-2023 Stapx Steve [林槐]',
+                    fs.writeFileSync(path.join(context.outDir, 'md5sum.txt'), md5List.join('\n'))
                 }
             }
         }

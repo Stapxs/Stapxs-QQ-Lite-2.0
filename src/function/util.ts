@@ -79,7 +79,30 @@ export function isExternal(path: string): boolean {
  * @param url 链接
  */
 export function openLink(url: string) {
-    window.open(url)
+    // 判断是不是 Electron，是的话打开内嵌 iframe
+    if(runtimeData.tags.isElectron) {
+        const popInfo = {
+            html: `<iframe src="${url}" style="width: calc(100% + 80px);border: none;margin: -40px -40px -20px -40px;height: calc(100vh - 145px);border-radius: 7px;"></iframe>`,
+            full: true,
+            button: [
+                {
+                    text: app.config.globalProperties.$t('btn_open'),
+                    fun: () => {
+                        window.open(url)
+                        runtimeData.popBoxList.shift()
+                    }
+                },
+                {
+                    text: app.config.globalProperties.$t('btn_close'),
+                    master: true,
+                    fun: () => { runtimeData.popBoxList.shift() }
+                }
+            ]
+        }
+        runtimeData.popBoxList.push(popInfo)
+    } else {
+        window.open(url)
+    }
 }
 
 /**
@@ -702,6 +725,16 @@ export function hslToRgb(h: number, s: number, l: number) {
     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)]
 }
 
+/**
+ * 重新加载用户列表
+ */
+export function reloadUsers() {
+    runtimeData.userList = []
+    Connector.send('get_friend_list', {}, 'getFriendList')
+    Connector.send('get_group_list', {}, 'getGroupList')
+    Connector.send('get_system_msg', {}, 'getSystemMsg')
+}
+
 export default {
     openLink,
     getTrueLang,
@@ -716,5 +749,6 @@ export default {
     gitmojiToEmoji,
     randomNum,
     downloadFile,
-    getSizeFromBytes
+    getSizeFromBytes,
+    reloadUsers
 }

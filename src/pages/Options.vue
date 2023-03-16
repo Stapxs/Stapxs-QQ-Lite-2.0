@@ -45,12 +45,12 @@
                 <span style="text-align: center;">{{ $t('description') }}</span>
                 <a>v{{ packageInfo.version }}</a>
                 <a class="ss-button" @click="util.openLink('https://github.com/Stapxs/Stapxs-QQ-Lite-2.0')">{{ $t('option_info_visit_github') }}</a>
-            </div>
-            <div v-if="constList.length > 0" class="ss-card contributors-card">
-                <div>
-                    <div v-for="info in constList" :key="'contributors-' + info.title" :title="info.title"
-                        :style="'background-image: url(' + info.url + ');'" :class="info.isMe ? 'me' : ''"
-                        @click="util.openLink(info.link)"></div>
+                <div v-if="constList.length > 0" class="ss-card contributors-card">
+                    <div>
+                        <div v-for="info in constList" :key="'contributors-' + info.title" :title="info.title"
+                            :style="'background-image: url(' + info.url + ');'" :class="info.isMe ? 'me' : ''"
+                            @click="util.openLink(info.link)"></div>
+                    </div>
                 </div>
             </div>
             <div class="ss-card bcd-about" @click="util.openLink('https://stapxs.github.io/Border-Card-UI/docs/')">

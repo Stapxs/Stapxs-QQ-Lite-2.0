@@ -37,7 +37,7 @@
                 <div v-for="(item, index) in data.message" :class="View.isMsgInline(item.type) ? 'msg-inline' : ''" :key="data.message_id + '-m-' + index">
                     <div v-if="item.type === undefined" ></div>
                     <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
-                    <span v-else-if="item.type == 'text'" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
+                    <span v-else-if="item.type == 'text'" @click="textClick" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
                     <img v-else-if="item.type == 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @load="scrollButtom" @error="imgLoadFail" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index, item.asface)" :src="item.url">
                     <img v-else-if="item.type == 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/img/qq-face/' + item.id + '.gif')" :title="item.text">
                     <span v-else-if="item.type == 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat_fun_menu_pic') }}：{{ item.text }} ]</span>
@@ -47,15 +47,28 @@
                     <div v-else-if="item.type == 'file'" :class="'msg-file' + (isMe ? ' me' : '')">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M0 64C0 28.65 28.65 0 64 0H224V128C224 145.7 238.3 160 256 160H384V448C384 483.3 355.3 512 320 512H64C28.65 512 0 483.3 0 448V64zM256 128V0L384 128H256z"/></svg>
                         <div>
-                            <div><p>{{ item.name }}</p><a>（{{ getSizeFromBytes(item.size) }}）</a></div><i>{{ item.md5 }}</i></div>
-                            <div>
-                                <svg @click="downloadFile(item, data.message_id)" v-if="item.downloadingPercentage === undefined" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M374.6 310.6l-160 160C208.4 476.9 200.2 480 192 480s-16.38-3.125-22.62-9.375l-160-160c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 370.8V64c0-17.69 14.33-31.1 31.1-31.1S224 46.31 224 64v306.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0S387.1 298.1 374.6 310.6z"/></svg>
-                                <svg v-if="item.downloadingPercentage !== undefined" class="download-bar" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="50%" cy="50%" r="40%" stroke-width="15%" fill="none" stroke-linecap="round" />
-                                    <circle cx="50%" cy="50%" r="40%" stroke-width="15%" fill="none" :stroke-dasharray="item.downloadingPercentage === undefined ?
-                                    '0,10000' : `${Math.floor(2 * Math.PI * 25) * item.downloadingPercentage / 100},10000`" />
-                                </svg>
-                            </div>
+                            <div><p>{{ loadFileBase(item, item.name, data.message_id) }}</p><a>（{{ getSizeFromBytes(item.size) }}）</a></div><i>{{ item.md5 }}</i>
+                        </div>
+                        <div>
+                            <svg @click="downloadFile(item, data.message_id)" v-if="item.downloadingPercentage === undefined" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M374.6 310.6l-160 160C208.4 476.9 200.2 480 192 480s-16.38-3.125-22.62-9.375l-160-160c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 370.8V64c0-17.69 14.33-31.1 31.1-31.1S224 46.31 224 64v306.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0S387.1 298.1 374.6 310.6z"/></svg>
+                            <svg v-if="item.downloadingPercentage !== undefined" class="download-bar" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="50%" cy="50%" r="40%" stroke-width="15%" fill="none" stroke-linecap="round" />
+                                <circle cx="50%" cy="50%" r="40%" stroke-width="15%" fill="none" :stroke-dasharray="item.downloadingPercentage === undefined ?
+                                '0,10000' : `${Math.floor(2 * Math.PI * 25) * item.downloadingPercentage / 100},10000`" />
+                            </svg>
+                        </div>
+                        <div class="file-view" v-if="data.fileView && Object.keys(data.fileView).length > 0">
+                            <img
+                                v-if="['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(data.fileView.ext)"
+                                :src="data.fileView.url">
+                            <video v-if="['mp4', 'avi', 'mkv', 'flv'].includes(data.fileView.ext)" controls>
+                                <source :src="data.fileView.url" :type="'video/' + data.fileView.ext">
+                            </video>
+                            <span class="txt" v-if="['txt', 'md'].includes(data.fileView.ext) && item.size < 2000000">
+                                <a>&gt; {{ item.name }} - {{ $t('chat_view_file_viewer') }}</a>
+                                {{ getTxtUrl(data.fileView.url, data.message_id) }}{{ data.fileView.txt }}
+                            </span>
+                        </div>
                     </div>
                     <div v-else-if="item.type == 'video'" class="msg-video">
                         <video v-if="item.url" controls><source :src="item.url" type="video/mp4"></video>
@@ -72,7 +85,7 @@
                             d="M8.31 189.9l176-151.1c15.41-13.3 39.69-2.509 39.69 18.16v80.05C384.6 137.9 512 170.1 512 322.3c0 61.44-39.59 122.3-83.34 154.1c-13.66 9.938-33.09-2.531-28.06-18.62c45.34-145-21.5-183.5-176.6-185.8v87.92c0 20.7-24.31 31.45-39.69 18.16l-176-151.1C-2.753 216.6-2.784 199.4 8.31 189.9z">
                         </path>
                     </svg>
-                    <a class="msg-unknown"> {{ $t('chat_jump_reply') }} </a>
+                    <a class="msg-unknown" style="cursor: pointer;"> {{ $t('chat_jump_reply') }} </a>
                     </div>
 
                     <span v-else class="msg-unknown">{{ '( ' + $t('chat_unsupported_msg') + ': ' + item.type + ' )'
@@ -109,6 +122,7 @@ import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
 import { Logger, PopInfo, PopType } from '@/function/base'
 import app from '@/main'
+import { StringifyOptions } from 'querystring'
 
 export default defineComponent({
     name: 'MsgBody',
@@ -306,7 +320,7 @@ export default defineComponent({
             text = ViewFuns.parseText(text)
             // 链接判定
             const reg = /(http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/gi //eslint-disable-line
-            text = text.replaceAll(reg, '<a href="$&" target="_blank">$&</a>')
+            text = text.replaceAll(reg, '<a href="" data-link="$&" onclick="return false">$&</a>')
             let linkList = text.match(reg)
             if (linkList !== null && !this.gotLink) {
                 this.gotLink = true
@@ -444,6 +458,84 @@ export default defineComponent({
                 fid: data.fid,
                 md5: data.md5
             }, 'getVideoUrl_' + message_id)
+        },
+
+        /**
+         * 文本消息被点击
+         * @param event 事件
+         */
+        textClick(event: Event) {
+            const target = event.target as HTMLElement
+            if(target.dataset.link) {
+                // 点击了链接
+                const link = target.dataset.link
+                Util.openLink(link)
+            }
+        },
+
+        /**
+         * 对部分文件类型进行预览处理
+         * @param name 文件名
+         */
+        loadFileBase(data: any, name: string, message_id: StringifyOptions) {
+            const ext = name.split('.').pop()
+            // 寻找消息位置
+            let msgIndex = -1
+            runtimeData.messageList.forEach((item, index) => {
+                if (item.message_id === message_id) {
+                    msgIndex = index
+                }
+            })
+            if(ext && runtimeData.messageList[msgIndex].fileView == undefined) {
+                // 图片、视频和文本文件获取文件链接
+                const list = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'mp4', 'avi', 'mkv', 'flv', 'txt', 'md']
+                if(list.includes(ext)) {
+                    runtimeData.messageList[msgIndex].fileView = {}
+                    if(data.url) {
+                        if(msgIndex !== -1) {
+                            runtimeData.messageList[msgIndex].fileView.url = data.url
+                            runtimeData.messageList[msgIndex].fileView.ext = ext
+                        }
+                    } else {
+                        // 获取下载链接
+                        Connector.send('get_file_url', {
+                            id: runtimeData.chatInfo.show.id,
+                            message_id: message_id,
+                            fid: data.fid
+                        }, 'loadFileBase_' + this.data.message_id + '_' + ext)
+                    }
+                }
+            }
+            return name
+        },
+
+        /**
+         * 下载 txt 文件并获取文件内容
+         * @param url 链接
+         */
+        getTxtUrl(url: string, id: string) {
+            // 寻找消息位置
+            let msgIndex = -1
+            runtimeData.messageList.forEach((item, index) => {
+                if (item.message_id === id) {
+                    msgIndex = index
+                }
+            })
+            // 保存文件为 Blob
+            fetch(url).then(r => r.blob())
+                .then(blob => {
+                    if (msgIndex !== -1) {
+                        // 读取文件内容并返回文本
+                        const reader = new FileReader()
+                        reader.readAsText(blob, 'utf-8')
+                        reader.onload = function () {
+                            // 只取前 300 字，超出部分加上 ……
+                            const txt = reader.result as string
+                            runtimeData.messageList[msgIndex].fileView.txt = 
+                                txt.length > 300 ? txt.slice(0, 300) + '…' : txt
+                        }
+                    }
+                })
         }
     },
     mounted () {

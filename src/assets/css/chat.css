@@ -6,7 +6,7 @@ textarea {
     background-color: var(--color-card);
     background-repeat: no-repeat;
     background-position: center;
-    background-size: auto;
+    background-size: auto 100%;
     
     color: var(--color-font);
     flex-direction: column;
@@ -93,6 +93,7 @@ textarea {
     overflow-x: hidden;
     margin-left: 20px;
     margin-top: -90px;
+    padding-top: 90px;
     z-index: 1;
     flex: 1;
 }
@@ -345,7 +346,7 @@ textarea {
 .merge-pan.show > div:last-child {
     flex-direction: column;
     display: flex;
-    width: 50%;
+    width: 450px;
 }
 .merge-pan > div:last-child > div:first-child {
     align-items: center;
@@ -451,6 +452,7 @@ textarea {
     transform: translate(-50%, -50%);
     flex-direction: column;
     position: absolute;
+    min-width: 450px;
     max-height: 80%;
     display: flex;
     width: 50%;
@@ -577,8 +579,7 @@ textarea {
     border: 0;
 }
 .chat-info-tab > li {
-    min-width: unset;
-    width: 50px;
+    min-width: 50px;
 }
 .chat-info-tab-member {
     padding: 0 20px;
@@ -587,6 +588,7 @@ textarea {
     transition: background .3s;
     align-items: center;
     border-radius: 7px;
+    cursor: pointer;
     display: flex;
     padding: 10px;
 }
@@ -1289,6 +1291,7 @@ textarea {
     .chat-info {
         width: calc(100% - 80px);
         transform: unset;
+        min-width: unset;
         margin: 20px;
         bottom: 75px;
     }
@@ -1320,6 +1323,7 @@ textarea {
         width: calc(100% - 40px);
         max-height: unset;
         border-radius: 0;
+        min-width: unset;
         margin: 0;
     }
     .chat-info:hover{
