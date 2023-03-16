@@ -17,6 +17,10 @@ export default function regIpcListener() {
     ipcMain.on('win:minimize', () => {
         if(win) win.minimize()
     })
+    // 最大化
+    ipcMain.on('win:maximize', () => {
+        if(win) win.maximize()
+    })
     // 重启应用
     ipcMain.on('win:relaunch', () => {
         app.relaunch()

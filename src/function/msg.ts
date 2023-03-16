@@ -11,17 +11,17 @@
 */
 import qed from '@/assets/qed.txt'
 
-import { Md5 } from 'ts-md5'
 import app from '@/main'
 import Option from './option'
 import Util from './util'
+import xss from 'xss'
 
+import { Md5 } from 'ts-md5'
 import { reactive, nextTick, markRaw, defineAsyncComponent } from 'vue'
 import { PopInfo, PopType, Logger, LogType } from './base'
 import { Connector, login } from './connect'
 import { GroupMemberInfoElem, UserFriendElem, UserGroupElem, MsgItemElem, RunTimeDataElem, BotMsgType } from './elements/information'
 import { NotificationElem } from './elements/system'
-import xss from 'xss'
 
 const popInfo = new PopInfo()
 
@@ -169,20 +169,15 @@ function saveLoginInfo(data: { [key: string]: any }) {
             user_id: userId
         })
     }
-    // 好友列表
-    Connector.send('get_friend_list', {}, 'getFriendList')
-    // 群列表
-    Connector.send('get_group_list', {}, 'getGroupList')
-    // 系统通知
-    Connector.send('get_system_msg', {}, 'getSystemMsg')
+    // 加载列表消息
+    Util.reloadUsers()
 }
 
 function saveUser(list: (UserFriendElem & UserGroupElem)[]) {
     runtimeData.userList = runtimeData.userList.concat(list)
     // 刷新置顶列表
     const info = runtimeData.sysConfig.top_info as { [key: string]: number[] } | null
-    runtimeData.onMsgList = []
-    if (info != null) {
+    if (info != null && runtimeData.onMsgList.length <= 0) {
         const topList = info[runtimeData.loginInfo.uin]
         if (topList !== undefined) {
             list.forEach((item) => {
@@ -563,7 +558,7 @@ function saveMoreFileList(data: any) {
 
 function newMsg(data: any) {
     // TODO: 没有对频道的支持计划
-    if(data.message_type == 'guild') {
+    if(data.detail_type == 'guild') {
         return
     }
     // 对消息进行转换
@@ -639,7 +634,7 @@ function newMsg(data: any) {
     }
     // 临时会话名字的特殊处理
     if (data.sub_type === 'group') {
-        data.sender.nickname = app.config.globalProperties.$t('chat_temp')  + '(' + data.sender.user_id + ')'
+        data.sender.nickname = data.sender.user_id
     }
     // (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息) 这些情况需要进行新消息处理
     if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
@@ -664,28 +659,30 @@ function newMsg(data: any) {
         }
         // 如果发送者不在消息列表里，将它添加到消息列表里
         if (get.length !== 1) {
-            const getList = runtimeData.userList.filter((item) => { return item.user_id === id || item.group_id === id })
-            if (getList.length === 1) {
-                runtimeData.onMsgList.push(getList[0])
+            // 如果消息子类是 group，那么是临时消息，需要进行特殊处理
+            if (data.sub_type === 'group') {
+                // 手动创建一个用户信息，因为临时消息的用户不在用户列表里
+                const user = {
+                    user_id: data.user_id,
+                    // 因为临时消息没有返回昵称
+                    nickname: app.config.globalProperties.$t('chat_temp'),
+                    remark: data.sender.user_id,
+                    new_msg: true,
+                    message_id: data.message_id,
+                    raw_msg: data.raw_message,
+                    time: data.time,
+                    group_id: data.sender.group_id,
+                    group_name: ''
+                } as UserFriendElem & UserGroupElem
+                runtimeData.onMsgList.push(user)
+            } else {
+                const getList = runtimeData.userList.filter((item) => { return item.user_id === id || item.group_id === id })
+                if (getList.length === 1) {
+                    runtimeData.onMsgList.push(getList[0])
+                }
             }
         }
-        // 如果消息子类是 group，,那么是临时消息，需要进行特殊处理
-        if (data.sub_type === 'group') {
-            // 手动创建一个用户信息，因为临时消息的用户不在用户列表里
-            const user = {
-                user_id: data.user_id,
-                // 因为临时消息没有返回昵称
-                nickname: data.sender.user_id,
-                remark: app.config.globalProperties.$t('chat_temp'),
-                new_msg: true,
-                message_id: data.message_id,
-                raw_msg: data.raw_message,
-                time: data.time,
-                group_id: data.sender.group_id,
-                group_name: ''
-            } as UserFriendElem & UserGroupElem
-            runtimeData.onMsgList.push(user)
-        }
+        
         runtimeData.onMsgList.forEach((item) => {
             // 刷新新消息标签
             if (id !== runtimeData.chatInfo.show.id && (id == item.group_id || id == item.user_id)) {
@@ -762,8 +759,8 @@ function sendNotice(msg: any) {
                 window.focus()
                 // electron：需要让 electron 拉起页面
                 if(runtimeData.tags.isElectron) {
-                    const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
-                    const reader = electron ? electron.ipcRenderer : null
+                    const electron = window.require('electron')
+                    const reader = electron.ipcRenderer
                     if (reader) {
                         reader.send('win:fouesWindow')
                     }
@@ -857,7 +854,7 @@ function updateSysInfo(type: string) {
     Connector.send('get_system_msg', {}, 'getSystemMsg')
     switch(type) {
         case 'setFriendAdd': 
-            Connector.send('get_friend_list', {}, 'getFriendList'); break
+            Util.reloadUsers(); break
     }
 }
 
@@ -878,19 +875,15 @@ function addSystemNotice(msg: any) {
  * @param msg 消息
  */
 function friendNotice(msg: any) {
+    // 重新加载联系人列表
+    Util.reloadUsers();
     switch(msg.sub_type) {
         case 'increase': {
-            // 重新加载联系人列表
-            Connector.send('get_friend_list', {}, 'getFriendList')
-            Connector.send('get_group_list', {}, 'getGroupList')
             // 添加系统通知
             new PopInfo().add(PopType.INFO, app.config.globalProperties.$t('pop_friend_added', { name: msg.nickname }))
             break
         }
         case 'decrease': {
-            // 重新加载联系人列表
-            Connector.send('get_friend_list', {}, 'getFriendList')
-            Connector.send('get_group_list', {}, 'getGroupList')
             // 输出日志（显示为红色字体）
             console.log('%c消失了一个好友：' + msg.nickname + '（' + msg.user_id + '）', 'color:red;')
             break

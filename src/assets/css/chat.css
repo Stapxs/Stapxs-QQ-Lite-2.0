@@ -579,8 +579,7 @@ textarea {
     border: 0;
 }
 .chat-info-tab > li {
-    min-width: unset;
-    width: 50px;
+    min-width: 50px;
 }
 .chat-info-tab-member {
     padding: 0 20px;
@@ -589,6 +588,7 @@ textarea {
     transition: background .3s;
     align-items: center;
     border-radius: 7px;
+    cursor: pointer;
     display: flex;
     padding: 10px;
 }

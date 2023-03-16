@@ -725,6 +725,16 @@ export function hslToRgb(h: number, s: number, l: number) {
     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)]
 }
 
+/**
+ * 重新加载用户列表
+ */
+export function reloadUsers() {
+    runtimeData.userList = []
+    Connector.send('get_friend_list', {}, 'getFriendList')
+    Connector.send('get_group_list', {}, 'getGroupList')
+    Connector.send('get_system_msg', {}, 'getSystemMsg')
+}
+
 export default {
     openLink,
     getTrueLang,
@@ -739,5 +749,6 @@ export default {
     gitmojiToEmoji,
     randomNum,
     downloadFile,
-    getSizeFromBytes
+    getSizeFromBytes,
+    reloadUsers
 }

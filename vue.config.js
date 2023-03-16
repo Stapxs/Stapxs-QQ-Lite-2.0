@@ -70,18 +70,15 @@ module.exports = {
                 appId: 'com.stapxs.qq-web',
                 productName: 'Stapxs QQ Lite',
                 copyright: 'Copyright © 2022-2023 Stapx Steve [林槐]',
-                icon: 'public/img/icons/icon.png',
 
                 directories: {
-                    output: 'dist_electron/out',
-
+                    output: 'dist_electron/out'
                 },
                 
                 linux: {
                     target: process.env.NODEJS_ENV === 'github-actions' ? ['AppImage', 'tar.gz'] : 'pacman',
                     maintainer: 'Stapx Steve [林槐]',
                     vendor: 'Stapxs Steve Team',
-                    icon: 'public/img/icons/icon.png',
                     synopsis: '一个兼容 oicq-http 的非官方网页版 QQ 客户端。',
                     category: 'Network',
                     // TODO: 将来可能需要占用 QQ 自己的 MIME 类型

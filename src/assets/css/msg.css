@@ -425,9 +425,9 @@
     display: block;
 }
 .note-nomsg {
-    margin: 100px auto 40px auto;
     color: var(--color-font-2);
     text-align: center;
+    margin: 40px auto;
     display: block;
     opacity: 0.5;
     width: 80%;

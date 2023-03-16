@@ -1,13 +1,32 @@
 <template>
-    <div class="top-bar" v-if="runtimeData.sysConfig.opt_no_window">
-        <img src="img/icons/icon.svg">
-        <span>Stapxs QQ Lite</span>
-        <div class="space"></div>
-        <div class="controller">
-            <div @click="controllWin('minimize')" class="min"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M416 256c0 17.7-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l352 0c17.7 0 32 14.3 32 32z"/></svg></div>
-            <div @click="controllWin('close')" class="close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3 265.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256 310.6 150.6z"/></svg></div>
-        </div>
-    </div>
+    <TransitionGroup class="top-bar" name="appbar" tag="div" v-if="runtimeData.sysConfig.opt_no_window">
+        <template v-if="runtimeData.sysConfig.opt_no_window_mac_style">
+            <div class="controller mac">
+                <div @click="controllWin('close')" class="close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3 265.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256 310.6 150.6z"/></svg></div>
+                <div @click="controllWin('minimize')" class="min"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M416 256c0 17.7-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l352 0c17.7 0 32 14.3 32 32z"/></svg></div>
+                <div @click="controllWin('maximize')" class="min"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M320 0c-17.7 0-32 14.3-32 32s14.3 32 32 32h82.7L201.4 265.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L448 109.3V192c0 17.7 14.3 32 32 32s32-14.3 32-32V32c0-17.7-14.3-32-32-32H320zM80 32C35.8 32 0 67.8 0 112V432c0 44.2 35.8 80 80 80H400c44.2 0 80-35.8 80-80V320c0-17.7-14.3-32-32-32s-32 14.3-32 32V432c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16H192c17.7 0 32-14.3 32-32s-14.3-32-32-32H80z"/></svg></div>
+                <div @click="flushPage" v-if="process.env.NODE_ENV == 'development'"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M447.5 224H456c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L397.4 96.6c-87.6-86.5-228.7-86.2-315.8 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L311 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H447.5z"/></svg></div>
+            </div>
+            <span class="mac">
+                Stapxs QQ Lite
+                {{ process.env.NODE_ENV == 'development' ? '(Dev)' : '' }}
+            </span>
+        </template>
+        <template v-else>
+            <img src="img/icons/icon.svg">
+            <span>
+                Stapxs QQ Lite
+                {{ process.env.NODE_ENV == 'development' ? '(Dev)' : '' }}
+            </span>
+            <div class="space"></div>
+            <div class="controller">
+                <div @click="flushPage" v-if="process.env.NODE_ENV == 'development'" class="reflush"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M447.5 224H456c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L397.4 96.6c-87.6-86.5-228.7-86.2-315.8 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L311 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H447.5z"/></svg></div>
+                <div @click="controllWin('minimize')" class="min"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M416 256c0 17.7-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l352 0c17.7 0 32 14.3 32 32z"/></svg></div>
+                <div @click="controllWin('maximize')" class="max"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M384 32C419.3 32 448 60.65 448 96V416C448 451.3 419.3 480 384 480H64C28.65 480 0 451.3 0 416V96C0 60.65 28.65 32 64 32H384zM384 80H64C55.16 80 48 87.16 48 96V416C48 424.8 55.16 432 64 432H384C392.8 432 400 424.8 400 416V96C400 87.16 392.8 80 384 80z"/></svg></div>
+                <div @click="controllWin('close')" class="close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3 265.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256 310.6 150.6z"/></svg></div>
+            </div>
+        </template>
+    </TransitionGroup>
     <div id="base-app">
         <div class="layui-tab layui-tab-brief main-body">
             <ul class="layui-tab-title">
@@ -230,6 +249,7 @@ export default defineComponent({
     },
     data () {
         return {
+            process: process,
             Connector: Connector,
             defineAsyncComponent: defineAsyncComponent,
             save: Option.runASWEvent,
@@ -257,6 +277,13 @@ export default defineComponent({
             if (reader) {
                 reader.send('win:' + name)
             }
+        },
+
+        /**
+         * 刷新页面
+         */
+        flushPage() {
+            window.location.reload()
         },
         
         /**
@@ -677,5 +704,16 @@ export default defineComponent({
 .appmsg-leave-to {
     transform: translateX(-20px);
     opacity: 0;
+}
+
+/* 标题栏变更动画 */
+.appbar-enter-active,
+.appbar-leave-active {
+    transition: all 0.2s;
+}
+
+.appbar-enter-from,
+.appbar-leave-to {
+    transform: translateY(-60px);
 }
 </style>

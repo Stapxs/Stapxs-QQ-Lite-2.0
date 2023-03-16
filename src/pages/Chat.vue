@@ -19,7 +19,10 @@
             <img :src="chat.show.avatar">
             <div>
                 <p>{{ chat.show.name }}</p>
-                <span>
+                <span v-if="chat.show.temp">
+                    {{ $t('chat_temp_from', { group: chat.show.temp }) }}
+                </span>
+                <span v-else>
                     {{ list[list.length - 1] ? $t('chat_last_msg', {
                             time: Intl.DateTimeFormat(trueLang,
                                 { hour: "numeric", minute: "numeric", second: "numeric" }).format(new Date(list[list.length - 1].time *
@@ -471,7 +474,7 @@ export default defineComponent({
                 this.loadMoreHistory()
             }
             // 底部
-            if (body.scrollTop + body.clientHeight === body.scrollHeight) {
+            if (body.scrollTop + body.clientHeight >= body.scrollHeight) {
                 this.NewMsgNum = 0
                 this.tags.showBottomButton = false
                 // 去除阴影

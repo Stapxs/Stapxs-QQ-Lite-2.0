@@ -76,6 +76,7 @@ import { UserGroupElem } from '@/function/elements/information'
 
 import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
+import { reloadUsers } from '@/function/util'
 
 export default defineComponent({
     name: 'ViewFriends',
@@ -167,9 +168,7 @@ export default defineComponent({
          * 重新加载联系人列表
          */
         reloadUser () {
-            Connector.send('get_friend_list', {}, 'getFriendList')
-            Connector.send('get_group_list', {}, 'getGroupList')
-            Connector.send('get_system_msg', {}, 'getSystemMsg')
+            reloadUsers()
         },
 
         /**

@@ -49,13 +49,13 @@
                             {{ item.tag }}
                         </div>
                     </div>
-                    <header v-if="chat.info.group_info.gAdmins !== undefined">
+                    <!-- <header v-if="chat.info.group_info.gAdmins !== undefined">
                         <span>{{ $t('chat_member_type_admin') }}</span>
                     </header>
                     <div class="admin" v-if="chat.info.group_info.gAdmins !== undefined">
                         <img v-for="(item, index) in chat.info.group_info.gAdmins" :key="'chatinfoadmin-' + item"
                             :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item}`" :title="chat.info.group_info.ns[index]">
-                    </div>
+                    </div> -->
                 </div>
                 <div v-else-if="chat.show.type === 'user'">
                     <header>
@@ -86,10 +86,13 @@
                             </span>
                         </span>
                     </div>
-                    <header>
-                        <span>{{ $t('chat_chat_info_config') }}</span>
-                    </header>
-                    <OptInfo :type="'number'" :chat="chat"></OptInfo>
+                    <template v-if="!chat.show.temp">
+                        <!-- 临时会话没有这个板块 -->
+                        <header>
+                            <span>{{ $t('chat_chat_info_config') }}</span>
+                        </header>
+                        <OptInfo :type="'number'" :chat="chat"></OptInfo>
+                    </template>
                 </div>
             </div>
             <div v-if="chat.show.type === 'group'" class="layui-tab layui-tab-brief"
@@ -102,7 +105,7 @@
                 </ul>
                 <div class="chat-info-tab-body layui-tab-content">
                     <div class="layui-tab-item layui-show chat-info-tab-member">
-                        <div v-for="item in chat.info.group_members" :key="'chatinfomlist-' + item.user_id">
+                        <div @click="startChat(item)" v-for="item in chat.info.group_members" :key="'chatinfomlist-' + item.user_id">
                             <img loading="lazy" :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.user_id}`">
                             <div>
                                 <a>{{ item.nickname }}</a>
@@ -152,14 +155,15 @@
 </template>
   
 <script lang="ts">
-import { defineComponent } from 'vue'
-
+import app from '@/main'
 import BulletinBody from '@/components/BulletinBody.vue'
 import FileBody from '@/components/FileBody.vue'
+import OptInfo from './options/OptInfo.vue'
 
+import { defineComponent } from 'vue'
 import { getTrueLang } from '@/function/util'
 import { runtimeData } from '@/function/msg'
-import OptInfo from './options/OptInfo.vue'
+import { UserFriendElem, UserGroupElem } from '@/function/elements/information'
 
 export default defineComponent({
     name: 'ViewInfo',
@@ -186,7 +190,51 @@ export default defineComponent({
          */
         fileLoad(event: Event) {
             this.$emit('loadFile', event)
-        }
+        },
+
+        /**
+         * 发起聊天
+         */
+        startChat(info: any) {
+            // 如果是自己的话就忽略
+            if (info.user_id != runtimeData.loginInfo.uin) {
+                // 检查这个人是否已经在聊天列表中
+                let chat = runtimeData.onMsgList.find((item: UserFriendElem & UserGroupElem) => {
+                    return item.user_id == info.user_id
+                })
+                if(!chat) {
+                    // 检查这个人是不是好友
+                    let friend = runtimeData.userList.find((item: UserFriendElem & UserGroupElem) => {
+                        return item.user_id == info.user_id
+                    })
+                    if(friend) {
+                        runtimeData.onMsgList.push(friend)
+                        chat = friend
+                    } else {
+                        // 创建一个临时聊天
+                        const user = {
+                            user_id: info.user_id,
+                            // 因为临时消息没有返回昵称
+                            nickname: app.config.globalProperties.$t('chat_temp'),
+                            remark: info.user_id,
+                            group_id: info.group_id,
+                            group_name: ''
+                        } as UserFriendElem & UserGroupElem
+                        runtimeData.onMsgList.push(user)
+                        chat = user
+                    }
+                }
+                // 切换到这个聊天
+                this.$nextTick(() => {
+                    if(chat) {
+                        const item = document.getElementById('user-' + chat.user_id)
+                        if(item) {
+                            item.click()
+                        }
+                    }
+                })
+            }
+        },
     }
 })
 </script>

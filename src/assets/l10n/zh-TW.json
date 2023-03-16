@@ -110,8 +110,6 @@
   "option_dev_log_level_err": "僅致命錯誤",
   "option_dev_log_level_info": "基本",
   "option_dev_log_level_tip": "ReferenceError: moYu is not defined",
-  "option_dev_msg_menu": "停用自訂滑鼠右鍵選單",
-  "option_dev_msg_menu_tip": "哼哼啊啊啊啊啊，讓我選——",
   "option_dev_notice_all": "通知所有新訊息",
   "option_dev_notice_all_tip": "讓暴風雨來得更猛烈些吧！",
   "option_dev_notice_close": "停用通知",

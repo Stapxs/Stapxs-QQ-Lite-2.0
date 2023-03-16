@@ -47,6 +47,12 @@ html, body {
 .top-bar > div.controller > div.min > svg {
     transform: scale(0.9);
 }
+.top-bar > div.controller > div.max > svg {
+    transform: scale(0.7);
+}
+.top-bar > div.controller > div.reflush > svg {
+    transform: scale(0.9);
+}
 .top-bar > div.controller > div.close {
     margin-right: 4px;
 }
@@ -62,6 +68,51 @@ html, body {
 }
 .top-bar > div.controller > div.close:hover > svg {
     fill: #fff;
+}
+.top-bar > div.controller.mac {
+    align-items: center;
+}
+.top-bar > div.controller.mac > div {
+    border-radius: 100%;
+    height: 15px;
+    width: 15px;
+    padding: 0;
+}
+.top-bar > div.controller.mac > div {
+    align-items: center;
+    margin-right: 4px;
+    margin-left: 5px;
+    display: flex;
+}
+.top-bar > div.controller.mac > div {
+    background: var(--color-main);
+}
+.top-bar > div.controller.mac > div:nth-child(1) {
+    background: #ff5e57;
+    margin-left: 15px;
+}
+.top-bar > div.controller.mac > div:nth-child(2) {
+    background: #febc2e;
+}
+.top-bar > div.controller.mac > div:nth-child(3) {
+    background: #25c83f;
+}
+.top-bar > div.controller.mac > div > svg {
+    transition: opacity .2s;
+    cursor: pointer;
+    height: 8px;
+    fill: #000;
+    opacity: 0;
+}
+.top-bar > div.controller.mac:hover > div > svg {
+    fill: #000 !important;
+    opacity: 1;
+}
+.top-bar > span.mac {
+    pointer-events: none;
+    position: absolute;
+    text-align: center;
+    width: 100%;
 }
 
 #app, #base-app {
@@ -477,7 +528,10 @@ html, body {
 }
 .menu > div > a {
     color: var(--color-font);
+    text-overflow: ellipsis;
     transition: color .3s;
+    white-space: nowrap;
+    overflow: hidden;
 }
 .menu > div:hover > a {
     color: var(--color-font-r);
@@ -1111,4 +1165,19 @@ html, body {
 }
 .v-leave-to > div.ss-card {
     transform: translateY(20px);
+}
+
+@keyframes wordsLoop {
+    0% {
+        transform: translateX(0px);
+    }
+    25% {
+        transform: translateX(0px);
+    }
+    75% {
+        transform: translateX(calc(-100% + 2.35rem));
+    }
+    100% {
+        transform: translateX(calc(-100% + 2.35rem));
+    }
 }
