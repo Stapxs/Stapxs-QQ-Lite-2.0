@@ -34,7 +34,16 @@ export class Connector {
 
         if(!websocket || websocket.readyState != WebSocket.OPEN) {
             if(!runtimeData.tags.connectSsl) {
-                websocket = new WebSocket(`ws://${address}?access_token=${token}`)
+                try {
+                    websocket = new WebSocket(`ws://${address}?access_token=${token}`)
+                } catch(e) {
+                    // 无法连接时尝试使用 SSL 连接
+                    if(runtimeData.tags.connectSsl == false) {
+                        runtimeData.tags.connectSsl = true
+                        this.create(address, token)
+                    }
+                    return
+                }
             } else {
                 websocket = new WebSocket(`wss://${address}?access_token=${token}`)
             }
