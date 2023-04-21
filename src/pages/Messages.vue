@@ -28,7 +28,15 @@
                     </div>
                 </div>
             </div>
-            <div id="message-list-body" :class="(runtimeData.tags.openSideBar ? 'open' : '')">
+            <BcMenu :data="listMenu" @close="listMenuClose" name="messages-menu">
+                <ul>
+                    <li icon="fa-solid fa-thumbtack" id="top">{{ $t('list_menu_top') }}</li>
+                    <li icon="fa-solid fa-grip-lines" id="canceltop">{{ $t('list_menu_canceltop') }}</li>
+                    <li icon="fa-solid fa-trash-can" id="remove">{{ $t('list_menu_remove') }}</li>
+                    <li icon="fa-solid fa-check-to-slot" id="readed">{{ $t('list_menu_readed') }}</li>
+                </ul>
+            </BcMenu>
+            <div id="message-list-body" :class="(runtimeData.tags.openSideBar ? 'open' : '')" style="overflow: scroll;">
                 <!-- 系统信息 -->
                 <FriendBody key="inMessage--10000"
                     v-if="runtimeData.systemNoticesList && Object.keys(runtimeData.systemNoticesList).length > 0"
@@ -38,9 +46,11 @@
                 <!-- 其他消息 -->
                 <FriendBody v-for="item in runtimeData.onMsgList"
                     :key="'inMessage-' + item.user_id ? item.user_id : item.group_id"
-                    :select="chat.show.id === item.user_id || (chat.show.id === item.group_id && chat.group_name != '')" :data="item"
-                    @click="userClick(item)" @contextmenu.prevent="readMsg(item)" @touchstart="readStart"
-                    @touchend="readEnd(item)">
+                    :select="chat.show.id === item.user_id || (chat.show.id === item.group_id && chat.group_name != '')"
+                    :menu="menu.select && menu.select == item"
+                    :data="item"
+                    @click="userClick(item)"
+                    @contextmenu.prevent="listMenuShow($event, item)">
                 </FriendBody>
             </div>
         </div>
@@ -59,22 +69,34 @@
 <script lang="ts">
 import app from '@/main'
 import FriendBody from '@/components/FriendBody.vue'
+import BcMenu from 'vue3-bcui/packages/bc-menu'
+import Menu from 'vue3-bcui/packages/bc-menu/index'
+import Option from '@/function/option'
 
 import { defineComponent } from 'vue'
 import { runtimeData, notificationList } from '@/function/msg'
 import { UserFriendElem, UserGroupElem } from '@/function/elements/information'
 import { getRaw as getOpt, run as runOpt } from '@/function/option'
 import { loadHistoryMessage } from '@/function/util'
-import { Logger, LogType, PopInfo, PopType } from '@/function/base'
+import { PopInfo, PopType } from '@/function/base'
+import { MenuStatue } from 'vue3-bcui/packages/dist/types'
+import { library } from '@fortawesome/fontawesome-svg-core'
+
+import { faThumbTack, faTrashCan, faCheckToSlot, faGripLines } from '@fortawesome/free-solid-svg-icons'
 
 export default defineComponent({
     name: 'VueMessages',
     props: ['chat'],
-    components: { FriendBody },
+    components: { FriendBody, BcMenu },
     data() {
         return {
             runtimeData: runtimeData,
-            trRead: false
+            trRead: false,
+            listMenu: {
+                show: false,
+                point: { x: 0, y: 0 }
+            } as MenuStatue,
+            menu: Menu.append
         }
     },
     methods: {
@@ -164,19 +186,6 @@ export default defineComponent({
             new PopInfo().add(
                 PopType.INFO, app.config.globalProperties.$t('chat_readed'))
         },
-        readStart() {
-            const logger = new Logger()
-            this.trRead = false
-            setTimeout(() => {
-                logger.add(LogType.UI, "列表触屏长按触发。")
-                this.trRead = true
-            }, 800)
-        },
-        readEnd(data: (UserFriendElem & UserGroupElem)) {
-            if (this.trRead) {
-                this.readMsg(data)
-            }
-        },
 
         /**
          * 清空消息列表
@@ -197,7 +206,122 @@ export default defineComponent({
                     })
                 }
             }
+        },
+
+        /**
+         * 列表菜单关闭事件
+         * @param id 选择的菜单 ID
+         */
+        listMenuClose(id: string) {
+            this.listMenu.show = false
+            const item = this.menu.select
+            if(id) {
+                switch(id) {
+                    case 'readed': this.readMsg(item); break
+                    case 'remove': {
+                        const index = runtimeData.onMsgList.findIndex((get) => {
+                            return item == get
+                        })
+                        runtimeData.onMsgList.splice(index, 1)
+                        break
+                    }
+                    case 'top': this.saveTop(true); break
+                    case 'canceltop': this.saveTop(false); break
+                }
+            }
+            this.menu.select = undefined
+        },
+
+        /**
+         * 保存置顶信息
+         * @param event 点击事件
+         */
+         saveTop(value: boolean) {
+            const id = runtimeData.loginInfo.uin
+            // 完整的 cookie JSON
+            let topInfo = runtimeData.sysConfig.top_info as { [key: string]: number[] }
+            if (topInfo == null) {
+                topInfo = {}
+            }
+            // 本人的置顶信息
+            let topList = topInfo[id]
+            // 操作
+            if (value) {
+                if (topList) {
+                    if (topList.indexOf(this.chat.show.id) < 0) {
+                        topList.push(this.chat.show.id)
+                    }
+                } else {
+                    topList = [this.chat.show.id]
+                }
+            } else {
+                if (topList) {
+                    topList.splice(topList.indexOf(this.chat.show.id), 1)
+                }
+            }
+            // 刷新 cookie
+            if (topList) {
+                topInfo[id] = topList
+                Option.save('top_info', topInfo)
+            }
+            // 为消息列表内的对象刷新置顶标志
+            for (let i = 0; i < runtimeData.onMsgList.length; i++) {
+                const item = runtimeData.onMsgList[i]
+                if (item.user_id == this.chat.show.id || item.group_id == this.chat.show.id) {
+                    runtimeData.onMsgList[i].always_top = value
+                    break
+                }
+            }
+            // 重新排序列表
+            const newList = [] as (UserFriendElem & UserGroupElem)[]
+            let topNum = 1
+            runtimeData.onMsgList.forEach((item) => {
+                // 排序操作
+                if (item.always_top === true) {
+                    newList.unshift(item)
+                    topNum++
+                } else if (item.new_msg === true) {
+                    newList.splice(topNum - 1, 0, item)
+                } else {
+                    newList.push(item)
+                }
+            })
+            runtimeData.onMsgList = newList
+        },
+
+        /**
+         * 显示列表菜单
+         * @param item 菜单内容
+         */
+        listMenuShow(event: Event, item: (UserFriendElem & UserGroupElem)) {
+            const info = this.menu.set('messages-menu', event as MouseEvent)
+            info.list = ['top', 'remove', 'readed']
+            // 置顶的不显示移除
+            if(item.always_top) {
+                info.list = ['canceltop', 'readed']
+            }
+            this.listMenu = info
+            this.menu.select = item
         }
+    },
+    mounted() {
+        library.add(faCheckToSlot, faThumbTack, faTrashCan, faGripLines)
     }
 })
 </script>
+
+<style>
+.menu div.item > a {
+    font-size: 0.9rem !important;
+}
+.menu div.item > svg {
+    margin: 3px 10px 3px 0 !important;
+    font-size: 1rem !important;
+}
+
+@media (max-width: 700px) {
+    .menu {
+        width: 140px !important;
+    }
+}
+</style>

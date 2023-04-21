@@ -22,6 +22,8 @@ import { PopInfo, PopType, Logger, LogType } from './base'
 import { Connector, login } from './connect'
 import { GroupMemberInfoElem, UserFriendElem, UserGroupElem, MsgItemElem, RunTimeDataElem, BotMsgType } from './elements/information'
 import { NotificationElem } from './elements/system'
+import { IPinyinOptions } from 'pinyin/lib/declare'
+import pinyin from 'pinyin'
 
 const popInfo = new PopInfo()
 
@@ -65,6 +67,7 @@ export function parse(str: string) {
                 case 'setFriendAdd'         : 
                 case 'setGroupAdd'          : updateSysInfo(head); break
                 case 'loadFileBase'         : loadFileBase(echoList, msg); break
+                case 'getClassInfo'         : saveClassInfo(msg); break
             }
         }
     } else {
@@ -163,7 +166,7 @@ function saveLoginInfo(data: { [key: string]: any }) {
         'getMoreLoginInfo'
     )
     // GA：将 QQ 号 MD5 编码后用于用户识别码
-    if (Option.get('open_ga_user') === true) {
+    if (Option.get('open_ga_user') == true && process.env.NODE_ENV == 'production') {
         const userId = Md5.hashStr(data.uin)
         app.config.globalProperties.$gtag.config({
             user_id: userId
@@ -174,6 +177,21 @@ function saveLoginInfo(data: { [key: string]: any }) {
 }
 
 function saveUser(list: (UserFriendElem & UserGroupElem)[]) {
+    // 拼音处理
+    // 为所有项目追加拼音名称
+    const pyConfig = {
+        style: 0 
+    } as IPinyinOptions
+    list.forEach((item, index) => {
+        let py_name = ''
+        if(item.group_id) {
+            py_name = pinyin(item.group_name, pyConfig).join('')
+        } else {
+            py_name = pinyin(item.nickname, pyConfig).join('') + ',' +
+                pinyin(item.remark, pyConfig).join('')
+        }
+        list[index].py_name = py_name
+    })
     runtimeData.userList = runtimeData.userList.concat(list)
     // 刷新置顶列表
     const info = runtimeData.sysConfig.top_info as { [key: string]: number[] } | null
@@ -189,6 +207,10 @@ function saveUser(list: (UserFriendElem & UserGroupElem)[]) {
             })
         }
     }
+}
+
+function saveClassInfo(list: any) {
+    runtimeData.tags.classes = list.data
 }
 
 function saveGroupMember(data: GroupMemberInfoElem[]) {
@@ -355,7 +377,7 @@ function saveSendedMsg(echoList: string[], msg: any) {
 }
 
 function loadFileBase(echoList: string[], msg: any) {
-    const url = msg.data.url
+    let url = msg.data.url
     const msgId = echoList[1]
     const ext = echoList[2]
     if(url) {
@@ -367,6 +389,13 @@ function loadFileBase(echoList: string[], msg: any) {
             }
         })
         if(msgIndex !== -1) {
+            if(document.location.protocol == 'https:') {
+                // 判断文件 URL 的协议
+                // PS：Chrome 不会对 http 文件进行协议升级
+                if(url.toLowerCase().startsWith('http:')) {
+                    url = 'https' + url.substring(url.indexOf('://'))
+                }
+            }
             runtimeData.messageList[msgIndex].fileView.url = url
             runtimeData.messageList[msgIndex].fileView.ext = ext
         }
@@ -901,7 +930,8 @@ const baseRuntime = {
         viewer: { index: 0 },
         msgType: BotMsgType.JSON,
         isElectron: false,
-        connectSsl: false
+        connectSsl: false,
+        classes: []
     },
     chatInfo: {
         show: { type: '', id: 0, name: '', avatar: '' },
@@ -917,7 +947,7 @@ const baseRuntime = {
     },
     pageView: {
         chatView: markRaw(defineAsyncComponent(() => import('@/pages/Chat.vue'))),
-        msgView: markRaw(defineAsyncComponent(() => import('@/pages/Chat.vue')))
+        msgView: markRaw(defineAsyncComponent(() => import('@/components/MsgBody.vue')))
     },
     userList: [],
     systemNoticesList: [],

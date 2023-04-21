@@ -74,7 +74,6 @@ import FriendBody from '@/components/FriendBody.vue'
 import { BaseChatInfoElem, UserFriendElem } from '@/function/elements/information'
 import { UserGroupElem } from '@/function/elements/information'
 
-import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
 import { reloadUsers } from '@/function/util'
 
@@ -154,8 +153,9 @@ export default defineComponent({
                 this.isSearch = true
                 runtimeData.showList = this.list.filter((item: UserFriendElem & UserGroupElem) => {
                     const name = (item.user_id ? (item.nickname + item.remark) : item.group_name).toLowerCase()
+                    const py = item.py_name ? item.py_name : ''
                     const id = item.user_id ? item.user_id : item.group_id
-                    return name.indexOf(value.toLowerCase()) !== -1 || id.toString() === value
+                    return (value.length > 4 && py.indexOf(value.toLowerCase()) != -1) || name.indexOf(value.toLowerCase()) != -1 || id.toString() === value
                 })
             } else {
                 this.isSearch = false

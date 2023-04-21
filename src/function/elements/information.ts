@@ -26,7 +26,8 @@ export interface RunTimeDataElem {
         },
         loginWaveTimer?: any,
         isElectron: boolean,
-        connectSsl: boolean
+        connectSsl: boolean,
+        classes: any[]
     },
     messageList: any[]
     mergeMessageList?: [],
@@ -81,6 +82,7 @@ export interface BaseChatInfoElem {
 export interface UserFriendElem {
     group_id: number,
     group_name: string,
+    py_name?: string,
     member_count?: number,
     admin_flag?: boolean,
     new_msg?: boolean,
@@ -94,6 +96,7 @@ export interface UserGroupElem {
     user_id: number,
     nickname: string,
     remark: string,
+    py_name?: string,
     class_id?: number,
     new_msg?: boolean,
     raw_msg?: string,

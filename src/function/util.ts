@@ -733,6 +733,7 @@ export function reloadUsers() {
     Connector.send('get_friend_list', {}, 'getFriendList')
     Connector.send('get_group_list', {}, 'getGroupList')
     Connector.send('get_system_msg', {}, 'getSystemMsg')
+    Connector.send('get_class_info', {}, "getClassInfo")
 }
 
 export default {

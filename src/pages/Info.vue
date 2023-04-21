@@ -105,10 +105,13 @@
                 </ul>
                 <div class="chat-info-tab-body layui-tab-content">
                     <div class="layui-tab-item layui-show chat-info-tab-member">
-                        <div @click="startChat(item)" v-for="item in chat.info.group_members" :key="'chatinfomlist-' + item.user_id">
+                        <div class="search-view">
+                            <input :placeholder="$t('base_search')" @input="searchList">
+                        </div>
+                        <div @click="startChat(item)" v-for="item in number_cache.length > 0 ? number_cache : chat.info.group_members" :key="'chatinfomlist-' + item.user_id">
                             <img loading="lazy" :src="`https://q1.qlogo.cn/g?b=qq&s=0&nk=${item.user_id}`">
                             <div>
-                                <a>{{ item.nickname }}</a>
+                                <a>{{ item.card ? item.card : item.nickname }}</a>
                                 <svg v-if="item.role === 'owner'" xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 576 512">
                                     <path
@@ -160,7 +163,7 @@ import BulletinBody from '@/components/BulletinBody.vue'
 import FileBody from '@/components/FileBody.vue'
 import OptInfo from './options/OptInfo.vue'
 
-import { defineComponent } from 'vue'
+import { defineComponent, toRaw } from 'vue'
 import { getTrueLang } from '@/function/util'
 import { runtimeData } from '@/function/msg'
 import { UserFriendElem, UserGroupElem } from '@/function/elements/information'
@@ -173,7 +176,8 @@ export default defineComponent({
         return {
             runtimeData: runtimeData,
             trueLang: getTrueLang(),
-            isTop: false
+            isTop: false,
+            number_cache: [] as any[]
         }
     },
     methods: {
@@ -235,7 +239,36 @@ export default defineComponent({
                 })
             }
         },
+
+        searchList(event: Event) {
+            const value = (event.target as HTMLInputElement).value
+            if (value !== '') {
+                this.number_cache = toRaw(this.chat.info.group_members)
+                this.number_cache = this.number_cache.filter((item) => {
+                    const name = item.card.toLowerCase() + '('+ item.nickname.toLowerCase() + ')'
+                    const id = item.user_id
+                    return name.indexOf(value.toLowerCase()) != -1 || id.toString() === value
+                })
+            } else {
+                this.number_cache = [] as any[]
+            }
+        }
     }
 })
 </script>
   
+<style scoped>
+.search-view {
+    background: transparent !important;
+    margin-top: -10px;
+}
+.search-view > input {
+    background: var(--color-card-1);
+    border-radius: 7px;
+    margin: 0 -10px;
+    padding: 0 10px;
+    height: 35px;
+    width: 100%;
+    border: 0;
+}
+</style>
