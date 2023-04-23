@@ -15,6 +15,7 @@ import app from '@/main'
 import Option from './option'
 import Util from './util'
 import xss from 'xss'
+import pinyin from 'pinyin'
 
 import { Md5 } from 'ts-md5'
 import { reactive, nextTick, markRaw, defineAsyncComponent } from 'vue'
@@ -23,7 +24,6 @@ import { Connector, login } from './connect'
 import { GroupMemberInfoElem, UserFriendElem, UserGroupElem, MsgItemElem, RunTimeDataElem, BotMsgType } from './elements/information'
 import { NotificationElem } from './elements/system'
 import { IPinyinOptions } from 'pinyin/lib/declare'
-import pinyin from 'pinyin'
 
 const popInfo = new PopInfo()
 
@@ -210,7 +210,23 @@ function saveUser(list: (UserFriendElem & UserGroupElem)[]) {
 }
 
 function saveClassInfo(list: any) {
-    runtimeData.tags.classes = list.data
+    // 对 classes 列表按拼音重新排序
+    const names = [] as string[]
+    list.data.forEach((item: any) => {
+        names.push(Object.values(item)[0] as string)
+    })
+    const sortedData = names.sort(pinyin.compare)
+    console.log(sortedData)
+
+    const back = [] as any[]
+    sortedData.forEach((name) => {
+        list.data.forEach((item: any) => {
+            if((Object.values(item)[0] as string) == name)
+                back.push(item)
+        })
+    })
+
+    runtimeData.tags.classes = back
 }
 
 function saveGroupMember(data: GroupMemberInfoElem[]) {
@@ -950,6 +966,7 @@ const baseRuntime = {
         msgView: markRaw(defineAsyncComponent(() => import('@/components/MsgBody.vue')))
     },
     userList: [],
+    showList: [],
     systemNoticesList: [],
     onMsgList: [],
     loginInfo: {},

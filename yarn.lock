@@ -2201,11 +2201,6 @@
   resolved "https://registry.yarnpkg.com/@vue/devtools-api/-/devtools-api-6.4.5.tgz#d54e844c1adbb1e677c81c665ecef1a2b4bb8380"
   integrity sha512-JD5fcdIuFxU4fQyXUu3w2KpAJHzTVdN+p4iOX2lMWSHMOoQdMAcpFLZzm9Z/2nmsoZ1a96QEhZ26e50xLBsgOQ==
 
-"@vue/devtools-api@^6.4.5":
-  version "6.5.0"
-  resolved "https://registry.npmmirror.com/@vue/devtools-api/-/devtools-api-6.5.0.tgz#98b99425edee70b4c992692628fa1ea2c1e57d07"
-  integrity sha512-o9KfBeaBmCKl10usN4crU53fYtC1r7jJwdGKjPT24t348rHxgfpZ0xL3Xm/gLUYnc0oTp8LAmrxOeLyu6tbk2Q==
-
 "@vue/eslint-config-typescript@^9.1.0":
   version "9.1.0"
   resolved "https://registry.npmmirror.com/@vue/eslint-config-typescript/-/eslint-config-typescript-9.1.0.tgz#b98a64352b312085444a08b98728962e2a8425ab"
@@ -10911,13 +10906,6 @@ vue-loader@^17.0.0:
     hash-sum "^2.0.0"
     loader-utils "^2.0.0"
 
-vue-router@^4.0.13:
-  version "4.1.6"
-  resolved "https://registry.npmmirror.com/vue-router/-/vue-router-4.1.6.tgz#b70303737e12b4814578d21d68d21618469375a1"
-  integrity sha512-DYWYwsG6xNPmLq/FmZn8Ip+qrhFEzA14EI12MsMgVxvHFDYvlr4NXpVF5hrRH1wVcDP8fGi5F4rxuJSl8/r+EQ==
-  dependencies:
-    "@vue/devtools-api" "^6.4.5"
-
 vue-style-loader@^4.1.0, vue-style-loader@^4.1.3:
   version "4.1.3"
   resolved "https://registry.npmmirror.com/vue-style-loader/-/vue-style-loader-4.1.3.tgz#6d55863a51fa757ab24e89d9371465072aa7bc35"
@@ -10931,10 +10919,10 @@ vue-template-es2015-compiler@^1.9.0:
   resolved "https://registry.npmmirror.com/vue-template-es2015-compiler/-/vue-template-es2015-compiler-1.9.1.tgz#1ee3bc9a16ecbf5118be334bb15f9c46f82f5825"
   integrity sha512-4gDntzrifFnCEvyoO8PqyJDmguXgVPxKiIxrBKjIowvL9l+N66196+72XVYR8BBf1Uv1Fgt3bGevJ+sEmxfZzw==
 
-vue3-bcui@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.npmmirror.com/vue3-bcui/-/vue3-bcui-0.2.0.tgz#8f03c39934800ed898045370fb0ccdc79142eef9"
-  integrity sha512-UF3ZcFd2YPVjNthZ5zj9Kx215hbkJE8QpKIlZj61goGB335ib9NkMszrThyzoF0+9U5iPtfKQ3mJw2K2TExfOA==
+vue3-bcui@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/vue3-bcui/-/vue3-bcui-0.2.1.tgz#02d3ff835fd96fd4e4d110d9be0a50df2544ea03"
+  integrity sha512-Fih3XLCq3U6VYxP4wUzqD5sxd78Jeyz28ByYWqdK9N68gpKyWf6+W7y51WaQMEL54lvXNEs1dDyKvv5QdR51Kw==
   dependencies:
     "@fortawesome/fontawesome-svg-core" "^6.3.0"
     "@fortawesome/free-regular-svg-icons" "^6.3.0"
@@ -10942,7 +10930,6 @@ vue3-bcui@^0.2.0:
     "@fortawesome/vue-fontawesome" "^3.0.3"
     core-js "^3.8.3"
     vue "^3.2.13"
-    vue-router "^4.0.13"
 
 vue3-infinite-scroll-better@^2.2.0:
   version "2.2.0"

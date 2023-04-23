@@ -290,5 +290,6 @@
   "list_menu_top": "置顶",
   "list_menu_canceltop": "取消置顶",
   "list_menu_remove": "删除",
-  "list_menu_readed": "标记已读"
+  "list_menu_readed": "标记已读",
+  "friend_group": "群组"
 }

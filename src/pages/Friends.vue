@@ -47,12 +47,47 @@
                     </svg>
                 </label>
             </div>
-            <div id="friend-list-body" v-infinite-scroll="addLoad" infinite-scroll-watch-disabled="loading"
-                :class="(runtimeData.tags.openSideBar ? 'open' : '')"
-                infinite-scroll-distance="10" infinite-scroll-immediate-check="false">
-                <FriendBody v-for="item in runtimeData.showList"
+            <div :class="(runtimeData.tags.openSideBar ? 'open' : '')">
+                <template v-if="runtimeData.showList.length <= 0">
+                    <template v-for="name in runtimeData.tags.classes"
+                        :key="'class-' + Object.keys(name)[0]">
+                        <div :class="'exp-body' + (classStatus[Object.keys(name)[0]] == true ? ' open' : '')">
+                            <header class="exp-header" @click="classClick(Object.keys(name)[0])">
+                                <div></div>
+                                <span>{{ Object.values(name)[0] }}</span>
+                            </header>
+                            <div>
+                                <template v-for="item in runtimeData.userList">
+                                    <FriendBody 
+                                        v-if="item.class_id == Number(Object.keys(name)[0])"
+                                        :key="'fb-' + (item.user_id ? item.user_id : item.group_id)" :data="item"
+                                        @click="userClick(item, $event)">
+                                    </FriendBody>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    <div class="exp-body open">
+                        <header class="exp-header">
+                            <div></div>
+                            <span>{{ $t('friend_group') }}</span>
+                        </header>
+                        <div>
+                            <template v-for="item in runtimeData.userList">
+                                <FriendBody 
+                                    v-if="item.class_id == undefined"
+                                    :key="'fb-' + (item.user_id ? item.user_id : item.group_id)" :data="item"
+                                    @click="userClick(item, $event)">
+                                </FriendBody>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+                <!-- 搜索用的 -->
+                <FriendBody v-for="item in runtimeData.showList.length > 0 ? runtimeData.showList : []"
                     :key="'fb-' + (item.user_id ? item.user_id : item.group_id)" :data="item"
-                    @click="userClick(item, $event)"></FriendBody>
+                    @click="userClick(item, $event)">
+                </FriendBody>
             </div>
         </div>
         <div>
@@ -68,9 +103,9 @@
 </template>
   
 <script lang="ts">
-import { defineComponent } from 'vue'
 import FriendBody from '@/components/FriendBody.vue'
 
+import { defineComponent } from 'vue'
 import { BaseChatInfoElem, UserFriendElem } from '@/function/elements/information'
 import { UserGroupElem } from '@/function/elements/information'
 
@@ -84,10 +119,10 @@ export default defineComponent({
     data () {
         return {
             runtimeData: runtimeData,
-            listPage: 1,
             loading: false,
             isSearch: false,
-            searchInfo: ''
+            searchInfo: '',
+            classStatus: {} as {[key: string]: boolean}
         }
     },
     methods: {
@@ -103,8 +138,6 @@ export default defineComponent({
             }
             this.isSearch = false
             this.searchInfo = ''
-            runtimeData.showList = this.list.slice(0, 15)
-            this.listPage = 1
             const back = {
                 type: data.user_id ? 'user' : 'group',
                 id: data.user_id ? data.user_id : data.group_id,
@@ -130,18 +163,6 @@ export default defineComponent({
                 barMsg.click()
             }
         },
-
-        /**
-         * 分段加载回调
-         */
-        addLoad () {
-            if (!this.isSearch) {
-                this.loading = true
-                runtimeData.showList = runtimeData.showList?.concat(this.list.slice(this.listPage * 10, (this.listPage + 1) * 10))
-                this.listPage++
-                this.loading = false
-            }
-        },
         
         /**
          * 列表搜索
@@ -151,7 +172,7 @@ export default defineComponent({
             const value = (event.target as HTMLInputElement).value
             if (value !== '') {
                 this.isSearch = true
-                runtimeData.showList = this.list.filter((item: UserFriendElem & UserGroupElem) => {
+                this.runtimeData.showList = this.list.filter((item: UserFriendElem & UserGroupElem) => {
                     const name = (item.user_id ? (item.nickname + item.remark) : item.group_name).toLowerCase()
                     const py = item.py_name ? item.py_name : ''
                     const id = item.user_id ? item.user_id : item.group_id
@@ -159,8 +180,7 @@ export default defineComponent({
                 })
             } else {
                 this.isSearch = false
-                runtimeData.showList = this.list.slice(0, 15)
-                this.listPage = 1
+                this.runtimeData.showList = [] as any[]
             }
         },
 
@@ -176,24 +196,48 @@ export default defineComponent({
          */
         openLeftBar () {
             runtimeData.tags.openSideBar = !runtimeData.tags.openSideBar
-        }
-    },
-    watch: {
-        list: {
-            deep: true,
-            /**
-             * 初始无限列表
-             * @param val 完整列表数据
-             */
-            handler (val) {
-                if(!this.isSearch) {
-                    // 只在非搜索状态刷新以防止意外刷新
-                    runtimeData.showList = val.slice(0, 15)
-                    this.listPage = 1
-                }
+        },
+
+        classClick(id: string) {
+            if(this.classStatus[id]) {
+                this.classStatus[id] = !this.classStatus[id]
+            } else {
+                this.classStatus[id] = true
             }
         }
     }
 })
 </script>
   
+<style scoped>
+.exp-header {
+    color: var(--color-font);
+    align-items: center;
+    border-radius: 7px;
+    cursor: pointer;
+    margin: 0 10px;
+    padding: 10px;
+    display: flex;
+}
+.exp-header:hover {
+    background: var(--color-card-2);
+}
+.exp-header > div {
+    background: var(--color-main);
+    margin-right: 10px;
+    border-radius: 7px;
+    height: 1rem;
+    width: 5px;
+}
+
+.exp-body > div {
+    /* transition: transform .3s;
+    transform-origin: top; */
+    transform: scaleY(0);
+    height: 0;
+}
+.exp-body.open > div {
+    transform: scaleY(1);
+    height: unset;
+}
+</style>

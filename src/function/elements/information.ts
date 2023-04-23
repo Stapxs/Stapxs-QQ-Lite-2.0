@@ -7,7 +7,7 @@ export interface RunTimeDataElem {
     botInfo: { [key: string]: any }
     loginInfo: { [key: string]: any }
     userList: (UserFriendElem & UserGroupElem)[]
-    showList?: (UserFriendElem & UserGroupElem)[]
+    showList: (UserFriendElem & UserGroupElem)[]
     onMsgList: (UserFriendElem & UserGroupElem)[]
     systemNoticesList?: { [key: string]: any }
     chatInfo: ChatInfoElem
