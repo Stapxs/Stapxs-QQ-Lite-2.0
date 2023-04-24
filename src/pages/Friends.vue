@@ -55,15 +55,14 @@
                             <header class="exp-header" @click="classClick(Object.keys(name)[0])">
                                 <div></div>
                                 <span>{{ Object.values(name)[0] }}</span>
+                                <a>{{ runtimeData.userList.filter((get) => { return get.class_id == Number(Object.keys(name)[0]) }).length }}</a>
                             </header>
-                            <div>
-                                <template v-for="item in runtimeData.userList">
-                                    <FriendBody 
-                                        v-if="item.class_id == Number(Object.keys(name)[0])"
-                                        :key="'fb-' + (item.user_id ? item.user_id : item.group_id)" :data="item"
-                                        @click="userClick(item, $event)">
-                                    </FriendBody>
-                                </template>
+                            <div :id="'class-' + Object.keys(name)[0]">
+                                <FriendBody 
+                                    v-for="item in runtimeData.userList.filter((get) => { return get.class_id == Number(Object.keys(name)[0]) })"
+                                    :key="'fb-' + (item.user_id ? item.user_id : item.group_id)" :data="item"
+                                    @click="userClick(item, $event)">
+                                </FriendBody>
                             </div>
                         </div>
                     </template>
@@ -228,6 +227,13 @@ export default defineComponent({
     border-radius: 7px;
     height: 1rem;
     width: 5px;
+}
+.exp-header > span {
+    flex: 1;
+}
+.exp-header > a {
+    color: var(--color-font-2);
+    font-size: 0.9rem;
 }
 
 .exp-body > div {

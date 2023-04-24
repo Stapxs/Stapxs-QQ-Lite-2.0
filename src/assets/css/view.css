@@ -362,7 +362,7 @@ html, body {
     flex: 1;
 }
 .friend-list > div:last-child {
-    width: calc(100% - 5px);
+    width: calc(100% - 10px);
     padding: 0 7px 0 5px;
     -webkit-box-flex: 1;
     overflow-y: scroll;

@@ -216,7 +216,6 @@ function saveClassInfo(list: any) {
         names.push(Object.values(item)[0] as string)
     })
     const sortedData = names.sort(pinyin.compare)
-    console.log(sortedData)
 
     const back = [] as any[]
     sortedData.forEach((name) => {
