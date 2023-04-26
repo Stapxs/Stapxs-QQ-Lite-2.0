@@ -295,5 +295,10 @@
   "pop_friend_added": "Successfully added {name} as friend!",
   "option_view_no_window_mac_style": "macOS-inspired title bar",
   "option_view_no_window_mac_style_tip": "Check out the style in any OS!",
-  "chat_temp_from": "From group: {group}"
+  "chat_temp_from": "From group: {group}",
+  "list_menu_top": "Pin",
+  "list_menu_canceltop": "Unpin",
+  "list_menu_remove": "Delete",
+  "list_menu_readed": "Mark as read",
+  "friend_group": "Group"
 }

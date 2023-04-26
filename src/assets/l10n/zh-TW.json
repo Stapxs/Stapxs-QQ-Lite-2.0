@@ -289,5 +289,10 @@
   "pop_friend_added": "成功新增聯絡人 {name}！",
   "option_view_no_window_mac_style": "macOS 風格標題列",
   "option_view_no_window_mac_style_tip": "聽說 SS 很喜歡 macOS 的標題列風格",
-  "chat_temp_from": "來自群組：{group}"
+  "chat_temp_from": "來自群組：{group}",
+  "list_menu_top": "釘選",
+  "list_menu_canceltop": "取消釘選",
+  "list_menu_remove": "删除",
+  "list_menu_readed": "標示為已讀",
+  "friend_group": "群組"
 }

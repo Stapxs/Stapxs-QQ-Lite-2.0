@@ -295,5 +295,10 @@
   "pop_friend_added": "成功新增聯絡人 {name}！",
   "option_view_no_window_mac_style": "macOS 風格 title bar",
   "option_view_no_window_mac_style_tip": "nosumi",
-  "chat_temp_from": "來自 group：{group}"
+  "chat_temp_from": "來自 group：{group}",
+  "list_menu_top": "置頂",
+  "list_menu_canceltop": "取消置頂",
+  "list_menu_remove": "删除",
+  "list_menu_readed": "標示為已讀",
+  "friend_group": "Group"
 }
