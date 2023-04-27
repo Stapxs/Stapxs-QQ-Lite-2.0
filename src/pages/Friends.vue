@@ -66,19 +66,18 @@
                             </div>
                         </div>
                     </template>
-                    <div class="exp-body open">
-                        <header class="exp-header">
+                    <div  :class="'exp-body' + (classStatus['-1'] == true ? ' open' : '')">
+                        <header class="exp-header" @click="classClick('-1')">
                             <div></div>
                             <span>{{ $t('friend_group') }}</span>
+                            <a>{{ runtimeData.userList.filter((get) => { return get.class_id == undefined }).length }}</a>
                         </header>
                         <div>
-                            <template v-for="item in runtimeData.userList">
-                                <FriendBody 
-                                    v-if="item.class_id == undefined"
-                                    :key="'fb-' + (item.user_id ? item.user_id : item.group_id)" :data="item"
-                                    @click="userClick(item, $event)">
-                                </FriendBody>
-                            </template>
+                            <FriendBody 
+                                v-for="item in runtimeData.userList.filter((get) => { return get.class_id == undefined })"
+                                :key="'fb-' + (item.user_id ? item.user_id : item.group_id)" :data="item"
+                                @click="userClick(item, $event)">
+                            </FriendBody>
                         </div>
                     </div>
                 </template>
