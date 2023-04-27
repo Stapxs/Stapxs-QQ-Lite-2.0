@@ -8,6 +8,7 @@ import App from './App.vue'
 
 import { createApp } from 'vue'
 import { createI18n } from 'vue-i18n'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 import './registerServiceWorker'
 
@@ -41,6 +42,8 @@ app.use(VueViewer)
 app.use(VueClipboard)
 app.use(InfiniteScroll)
 app.use(VueGtag)
+
+app.component('font-awesome-icon', FontAwesomeIcon)
 
 app.mount('#app')
 export default app

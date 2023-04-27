@@ -362,7 +362,7 @@ html, body {
     flex: 1;
 }
 .friend-list > div:last-child {
-    width: calc(100% - 5px);
+    width: calc(100% - 10px);
     padding: 0 7px 0 5px;
     -webkit-box-flex: 1;
     overflow-y: scroll;
@@ -391,6 +391,7 @@ html, body {
     background: var(--color-main);
     color: var(--color-font-r);
 }
+.friend-body.onmenu,
 .friend-body:hover {
     background: var(--color-card-2) !important;
 }
@@ -483,7 +484,7 @@ html, body {
 }
 
 /* TODO: BCUI - 这段 css 将在将来迁移到 Border Card UI 中合并 */
-.menu {
+.msg-menu-body {
     background: rgba(var(--color-bg-rgb), 0.7);
     box-shadow: 0 0 5px var(--color-shader);
     backdrop-filter: blur(50px);
@@ -497,13 +498,13 @@ html, body {
     padding: 10px;
     width: 20%;
 }
-.menu.topOut {
+.msg-menu-body.topOut {
     transition: transform .1s, margin-top .1s;
 }
-.menu.show {
+.msg-menu-body.show {
     transform: scaleY(1);
 }
-.menu > div {
+.msg-menu-body > div {
     transition: background .3s;
     background: transparent;
     align-items: center;
@@ -512,10 +513,10 @@ html, body {
     cursor: pointer;
     display: flex;
 }
-.menu > div:hover {
+.msg-menu-body > div:hover {
     background: var(--color-main);
 }
-.menu > div > div > svg {
+.msg-menu-body > div > div > svg {
     fill: var(--color-font-1);
     transition: fill .3s;
     margin-right: 10px;
@@ -523,17 +524,17 @@ html, body {
     height: 1rem;
     width: 1rem;
 }
-.menu > div:hover > div > svg {
+.msg-menu-body > div:hover > div > svg {
     fill: var(--color-font-r);
 }
-.menu > div > a {
+.msg-menu-body > div > a {
     color: var(--color-font);
     text-overflow: ellipsis;
     transition: color .3s;
     white-space: nowrap;
     overflow: hidden;
 }
-.menu > div:hover > a {
+.msg-menu-body > div:hover > a {
     color: var(--color-font-r);
 }
 
@@ -1065,6 +1066,7 @@ html, body {
         opacity: 1;
     }
     .friend-list > div:first-child label {
+        border-radius:7px;
         display: none;
     }
     .friend-list > div:last-child.open > div {
@@ -1117,10 +1119,10 @@ html, body {
         max-width: calc(100% - 80px);
     }
     /* 右击菜单 */
-    .menu {
+    .msg-menu-body {
         width: 30%;
     }
-    .menu > div {
+    .msg-menu-body > div {
         padding: 5px 15px;
     }
 }

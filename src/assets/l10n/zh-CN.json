@@ -175,8 +175,6 @@
   "pop_option_dev_debug_msg_tip_1": "你不是人（逃",
   "pop_print_all_pop": "即将输出所有应用消息（5s） ……",
   "log_cq_msg_parsed": "解析 CQ 消息结果",
-  "chat_chat_info_option_top": "置顶",
-  "chat_chat_info_option_top_tip": "再多看我一眼（无端",
   "log_com_err": "创建连接失败",
   "sw_ready": "应用已通过 service worker 服务从缓存中加载，更多信息请查看 https://goo.gl/AFskqB。",
   "sw_registered": "Service worker 服务注册成功。",
@@ -288,5 +286,10 @@
   "pop_friend_added": "添加好友 {name} 成功！",
   "option_view_no_window_mac_style": "MacOS 样式标题栏",
   "option_view_no_window_mac_style_tip": "看！Mac mini（炫耀",
-  "chat_temp_from": "来自群聊：{group}"
+  "chat_temp_from": "来自群聊：{group}",
+  "list_menu_top": "置顶",
+  "list_menu_canceltop": "取消置顶",
+  "list_menu_remove": "删除",
+  "list_menu_readed": "标记已读",
+  "friend_group": "群组"
 }

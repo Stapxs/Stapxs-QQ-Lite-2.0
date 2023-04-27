@@ -6,7 +6,7 @@
 -->
 
 <template>
-    <div :class="'friend-body' + (select ? ' active' : '')"
+    <div :class="'friend-body' + (select ? ' active' : (menu ? ' onmenu' : ''))"
         :id="'user-' + (data.user_id ? data.user_id : data.group_id)"
         :data-name="data.user_id ? data.nickname : data.group_name" :data-nickname="data.user_id ? data.nickname : ''"
         :data-type="data.user_id ? 'friend' : 'group'">
@@ -45,7 +45,7 @@ import { getTrueLang } from '@/function/util'
 
 export default defineComponent({
     name: 'FriendBody',
-    props: ['data', 'select'],
+    props: ['data', 'select', 'menu'],
     data () {
         return {
             trueLang: getTrueLang()
