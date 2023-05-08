@@ -10919,10 +10919,10 @@ vue-template-es2015-compiler@^1.9.0:
   resolved "https://registry.npmmirror.com/vue-template-es2015-compiler/-/vue-template-es2015-compiler-1.9.1.tgz#1ee3bc9a16ecbf5118be334bb15f9c46f82f5825"
   integrity sha512-4gDntzrifFnCEvyoO8PqyJDmguXgVPxKiIxrBKjIowvL9l+N66196+72XVYR8BBf1Uv1Fgt3bGevJ+sEmxfZzw==
 
-vue3-bcui@^0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/vue3-bcui/-/vue3-bcui-0.2.1.tgz#02d3ff835fd96fd4e4d110d9be0a50df2544ea03"
-  integrity sha512-Fih3XLCq3U6VYxP4wUzqD5sxd78Jeyz28ByYWqdK9N68gpKyWf6+W7y51WaQMEL54lvXNEs1dDyKvv5QdR51Kw==
+vue3-bcui@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/vue3-bcui/-/vue3-bcui-0.2.2.tgz#ba260043d9ffb5ab2796e9e2fabc76ae9f7653f6"
+  integrity sha512-Sg17WBIkSlOpbRZrbyWm9/Ex+MoJBnChlj8IVYrwDt/s5T4WFmx7MZdDNbxc60f7SYOu+oRuZxa9wE+6YPOgHA==
   dependencies:
     "@fortawesome/fontawesome-svg-core" "^6.3.0"
     "@fortawesome/free-regular-svg-icons" "^6.3.0"

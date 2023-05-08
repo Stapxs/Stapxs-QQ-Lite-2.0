@@ -414,7 +414,7 @@ export default defineComponent({
                 showMoreDetail: false,
                 showMsgMenu: false,
                 showForwardPan: false,
-                openedMenuMsg: {} as HTMLDivElement,
+                openedMenuMsg: {} as any | null,
                 openChatInfo: false,
                 isReply: false,
                 isJinLoading: false,
@@ -669,11 +669,12 @@ export default defineComponent({
          */
         showMsgMeun (event: Event, data: any) {
             this.selectedMsg = data
+
             if (Option.get('log_level') === 'debug') {
                 console.log(data)
             }
             const menu = document.getElementById('msgMenu')
-            const msg = event.currentTarget as HTMLDivElement
+            let msg = event.currentTarget as HTMLDivElement
             const select = event.target as HTMLElement
             let selectUserType = 'member'
             if(runtimeData.chatInfo.show.type == 'group' && runtimeData.chatInfo.info.group_members) {
@@ -682,6 +683,11 @@ export default defineComponent({
                         selectUserType = item.role
                     }
                 })
+            }
+            // FIX：Safari 的 contextmenu 事件并没有返回 currentTarget
+            // 如果没有获取到 currentTarget，使用屏幕点击事件得到的值
+            if(msg == null && this.tags.openedMenuMsg) {
+                msg = this.tags.openedMenuMsg.msg
             }
             if(menu !== null && msg !== null) {
                 if(select.nodeName == 'IMG' && (select as HTMLImageElement).name == 'avatar') {
@@ -753,8 +759,14 @@ export default defineComponent({
                 }
                 // 鼠标位置
                 const pointEvent = event as PointerEvent || window.event as PointerEvent
-                const pointX = pointEvent.clientX - msg.getBoundingClientRect().left + 20
-                const pointY = pointEvent.clientY
+                let pointX = pointEvent.clientX - msg.getBoundingClientRect().left + 20
+                let pointY = pointEvent.clientY
+                // FIX：Safari 的 contextmenu 事件的 Event 不完整
+                // 如果无法获取坐标则从触屏事件获取
+                if(pointY == undefined) {
+                    pointX = this.tags.openedMenuMsg.x - msg.getBoundingClientRect().left + 20
+                    pointY = this.tags.openedMenuMsg.y
+                }
                 // 移动菜单位置
                 menu.style.marginLeft = pointX + 'px'
                 menu.style.marginTop = pointY + 'px'
@@ -1005,7 +1017,8 @@ export default defineComponent({
             // 关闭菜单
             this.tags.showMsgMenu = false
             // 清理消息背景
-            this.tags.openedMenuMsg.style.background = 'unset'
+            if(this.tags.openedMenuMsg)
+                this.tags.openedMenuMsg.style.background = 'unset'
             setTimeout(() => {
                 // 重置菜单显示状态
                 this.initMenuDisplay()
@@ -1413,6 +1426,14 @@ export default defineComponent({
             this.tags.msgTouch.msgOnTouchDown = true
             this.tags.msgTouch.x = event.targetTouches[0].pageX
             this.tags.msgTouch.y = event.targetTouches[0].pageY
+            
+            // PS：保存这个只是在 Safari 下菜单事件无法获取到
+            this.tags.openedMenuMsg = {
+                msg: event.currentTarget as HTMLDivElement,
+                x: event.targetTouches[0].pageX,
+                y: event.targetTouches[0].pageY
+            }
+
             // 消息长按事件，计时判定长按
             setTimeout(() => {
                 logger.add(LogType.UI, "消息触屏长按判定：" + this.tags.msgTouch.msgOnTouchDown)

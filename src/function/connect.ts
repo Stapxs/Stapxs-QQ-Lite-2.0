@@ -32,20 +32,27 @@ export class Connector {
         logger.debug($t('log_ws_log_debug'))
         logger.add(LogType.WS, $t('log_we_log_all'))
 
-        if(!websocket || websocket.readyState != WebSocket.OPEN) {
-            if(!runtimeData.tags.connectSsl) {
-                try {
-                    websocket = new WebSocket(`ws://${address}?access_token=${token}`)
-                } catch(e) {
-                    // 无法连接时尝试使用 SSL 连接
-                    if(runtimeData.tags.connectSsl == false) {
-                        runtimeData.tags.connectSsl = true
-                        this.create(address, token)
-                    }
-                    return
+        let url = `ws://${address}?access_token=${token}`
+        if(document.location.protocol == 'https:') {
+            // 判断连接 URL 的协议，https 优先尝试 wss
+            runtimeData.tags.connectSsl = true
+            url = `wss://${address}?access_token=${token}`
+        }
+
+        if(!websocket) {
+            try {
+                websocket = new WebSocket(url)
+            } catch(e) {
+                // 如果是 http，那它是必不可能连 wss 的
+                // 如果是 https 连 wss 失败了就试一下 ws
+                if(runtimeData.tags.connectSsl == true) {
+                    runtimeData.tags.connectSsl = false
+                    url = `ws://${address}?access_token=${token}`
+                    websocket = new WebSocket(url)
+                } else {
+                    popInfo.add(PopType.ERR, $t('pop_log_con_fail') + ': ' + url.split("://")[0], false)
                 }
-            } else {
-                websocket = new WebSocket(`wss://${address}?access_token=${token}`)
+                return
             }
         }
 
@@ -63,7 +70,7 @@ export class Connector {
         }
         websocket.onmessage = (e) => {
             // 心跳包输出到日志里太烦人了
-            if (!e.data.startsWith("{\"post_type\":\"meta_event\",\"meta_event_type\":\"heartbeat\"")) {
+            if ((e.data as string).indexOf('"meta_event_type":"heartbeat"') < 0) {
                 logger.add(LogType.WS, 'GET：' + e.data)
             }
             parse(e.data)
@@ -71,14 +78,9 @@ export class Connector {
         websocket.onclose = (e) => {
             login.status = false
             if (e.code !== 1000) {
-                if(e.code == 1006 && runtimeData.tags.connectSsl == false) {
-                    runtimeData.tags.connectSsl = true
-                    this.create(address, token)
-                } else {
-                    logger.error($t('pop_log_con_fail') + ': ' + e.code)
-                    popInfo.add(PopType.ERR, $t('pop_log_con_fail') + ': ' + e.code, false)
-                    console.log(e)
-                }
+                logger.error($t('pop_log_con_fail') + ': ' + e.code)
+                popInfo.add(PopType.ERR, $t('pop_log_con_fail') + ': ' + e.code, false)
+                console.log(e)
             } else {
                 logger.debug($t('pop_log_con_closed') + ': ' + e.code)
                 popInfo.add(PopType.INFO, $t('pop_log_con_closed'))

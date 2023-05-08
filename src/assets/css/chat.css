@@ -13,6 +13,7 @@ textarea {
     pointer-events: none;
     transition: all .3s;
     position: absolute;
+    user-select: text;
     display: flex;
     height: 100%;
     left: 371px;
@@ -301,6 +302,7 @@ textarea {
 
 .msg-menu {
     position: absolute;
+    user-select: none;
     overflow: hidden;
     height: 100%;
     width: 100%;

@@ -1,4 +1,5 @@
 html, body {
+    user-select: none;
     overflow: hidden;
     height: 100%;
     padding: 0;
@@ -271,6 +272,7 @@ html, body {
 
 .friend-view {
     flex-direction: row;
+    user-select: text;
     display: flex;
     height: 100%;
     width: 100%;
@@ -634,6 +636,7 @@ html, body {
 
 .pop-box {
     position: absolute;
+    user-select: text;
     height: 100%;
     z-index: 20;
     width: 100%;
