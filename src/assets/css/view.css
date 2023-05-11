@@ -1072,11 +1072,13 @@ html, body {
         border-radius:7px;
         display: none;
     }
-    .friend-list > div:last-child.open > div {
+    .friend-list > div:last-child.open > div:not(.list),
+    .friend-list > div:last-child.open > div.list > div > div {
         padding: 10px !important;
         margin: 10px !important;
     }
-    .friend-list > div:last-child.open > div > div {
+    .friend-list > div:last-child.open > div > div,
+    .friend-list > div:last-child.open > div.list > div > div > div {
         display: block !important;
     }
     .friend-body {

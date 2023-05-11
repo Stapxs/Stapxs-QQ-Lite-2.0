@@ -18,7 +18,7 @@ import { BotActionElem, LoginCacheElem } from './elements/system'
 const logger = new Logger()
 const popInfo = new PopInfo()
 
-export let websocket: WebSocket
+export let websocket: WebSocket | undefined = undefined
 
 export class Connector {
     /**
@@ -26,39 +26,37 @@ export class Connector {
      * @param address 地址
      * @param token 密钥
      */
-    static create(address: string, token?: string) {
+    static create(address: string, token?: string, wss: boolean | undefined = undefined) {
         const $t = app.config.globalProperties.$t
         
         logger.debug($t('log_ws_log_debug'))
         logger.add(LogType.WS, $t('log_we_log_all'))
 
         let url = `ws://${address}?access_token=${token}`
-        if(document.location.protocol == 'https:') {
-            // 判断连接 URL 的协议，https 优先尝试 wss
-            runtimeData.tags.connectSsl = true
-            url = `wss://${address}?access_token=${token}`
-        }
-
-        if(!websocket) {
-            try {
-                websocket = new WebSocket(url)
-            } catch(e) {
-                // 如果是 http，那它是必不可能连 wss 的
-                // 如果是 https 连 wss 失败了就试一下 ws
-                if(runtimeData.tags.connectSsl == true) {
-                    runtimeData.tags.connectSsl = false
-                    url = `ws://${address}?access_token=${token}`
-                    websocket = new WebSocket(url)
-                } else {
-                    popInfo.add(PopType.ERR, $t('pop_log_con_fail') + ': ' + url.split("://")[0], false)
+        if(address.startsWith('ws://') || address.startsWith('wss://')) {
+            url = `${address}?access_token=${token}`
+        } else {
+            if(wss == undefined) {
+                // 判断连接类型
+                if(document.location.protocol == 'https:') {
+                    // 判断连接 URL 的协议，https 优先尝试 wss
+                    runtimeData.tags.connectSsl = true
+                    url = `wss://${address}?access_token=${token}`
                 }
-                return
+            } else {
+                if(wss) {
+                    url = `wss://${address}?access_token=${token}`
+                }
             }
+        }
+        
+        if(!websocket) {
+            websocket = new WebSocket(url)
         }
 
         websocket.onopen = () => {
             logger.add(LogType.WS, $t('log_con_success'))
-            // 保存登录信息（一个月）
+            // 保存登录信息
             Option.save('address', address)
             // 保存密钥
             if(runtimeData.sysConfig.save_password && runtimeData.sysConfig.save_password != '') {
@@ -77,6 +75,12 @@ export class Connector {
         }
         websocket.onclose = (e) => {
             login.status = false
+            if (e.code == 1015) {
+                // TSL 握手失败，这种情况一般是用 wss 连接了 ws
+                // 重新尝试使用 ws 连接
+                websocket = undefined
+                this.create(address, token, false)
+            }
             if (e.code !== 1000) {
                 logger.error($t('pop_log_con_fail') + ': ' + e.code)
                 popInfo.add(PopType.ERR, $t('pop_log_con_fail') + ': ' + e.code, false)
@@ -92,7 +96,7 @@ export class Connector {
         // 构建 JSON
         const json = JSON.stringify({ action: name, params: value, echo: echo } as BotActionElem)
         // 发送
-        websocket.send(json)
+        if(websocket) websocket.send(json)
         if (Option.get('log_level') === 'debug') {
             logger.debug('PUT：' + json)
         } else {

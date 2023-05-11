@@ -239,7 +239,7 @@ export default defineComponent({
                 this.ws_text = ''
                 // 修改 echo 防止被消息处理机处理
                 info.echo = 'websocketTest'
-                ws.send(JSON.stringify(info))
+                if(ws) ws.send(JSON.stringify(info))
             }
         },
         sendTestAppmsg (event: KeyboardEvent) {

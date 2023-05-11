@@ -51,8 +51,8 @@
                 <template v-if="runtimeData.showList.length <= 0">
                     <template v-for="name in runtimeData.tags.classes"
                         :key="'class-' + Object.keys(name)[0]">
-                        <div :class="'exp-body' + (classStatus[Object.keys(name)[0]] == true ? ' open' : '')">
-                            <header class="exp-header" @click="classClick(Object.keys(name)[0])">
+                        <div :class="'list exp-body' + (classStatus[Object.keys(name)[0]] == true ? ' open' : '')">
+                            <header :title="(Object.values(name)[0] as string)" :class="'exp-header' + (runtimeData.tags.openSideBar ? ' open' : '')" @click="classClick(Object.keys(name)[0])">
                                 <div></div>
                                 <span>{{ Object.values(name)[0] }}</span>
                                 <a>{{ runtimeData.userList.filter((get) => { return get.class_id == Number(Object.keys(name)[0]) }).length }}</a>
@@ -66,8 +66,8 @@
                             </div>
                         </div>
                     </template>
-                    <div  :class="'exp-body' + (classStatus['-1'] == true ? ' open' : '')">
-                        <header class="exp-header" @click="classClick('-1')">
+                    <div :class="'list exp-body' + (classStatus['-1'] == true ? ' open' : '')">
+                        <header :title="$t('friend_group')" :class="'exp-header' + (runtimeData.tags.openSideBar ? ' open' : '')" @click="classClick('-1')">
                             <div></div>
                             <span>{{ $t('friend_group') }}</span>
                             <a>{{ runtimeData.userList.filter((get) => { return get.class_id == undefined }).length }}</a>
@@ -136,6 +136,8 @@ export default defineComponent({
             }
             this.isSearch = false
             this.searchInfo = ''
+            this.runtimeData.showList = [] as any[]
+
             const back = {
                 type: data.user_id ? 'user' : 'group',
                 id: data.user_id ? data.user_id : data.group_id,
@@ -244,5 +246,11 @@ export default defineComponent({
 .exp-body.open > div {
     transform: scaleY(1);
     height: unset;
+}
+
+@media (max-width: 700px) {
+    .exp-header:not(.open) > span {
+        display: none;
+    }
 }
 </style>
