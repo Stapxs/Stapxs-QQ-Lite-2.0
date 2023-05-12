@@ -52,6 +52,17 @@ textarea {
     padding: 15px;
     margin: 15px;
 }
+.chat-pan > div.info > svg {
+    background: var(--color-main);
+    fill: var(--color-font-r);
+    margin-right: 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    padding: 15px;
+    display: none;
+    height: 20px;
+    width: 20px;
+}
 .chat-pan > div.info > img {
     border: 2px solid var(--color-card-2);
     border-radius: 7px;
@@ -59,27 +70,27 @@ textarea {
     height: 50px;
     width: 50px;
 }
-.chat-pan > div.info > div:nth-child(2) p {
+.chat-pan > div.info > div.info p {
     font-weight: bold;
     font-size: 1rem;
 }
-.chat-pan > div.info > div:nth-child(2) span {
+.chat-pan > div.info > div.info span {
     font-size: 0.8rem;
     font-weight: 100;
     margin-top: 3px;
     display: block;
 }
-.chat-pan > div.info > div:nth-child(3) {
+.chat-pan > div.info > div.space {
     flex: 1;
 }
-.chat-pan > div.info > div:nth-child(4) {
+.chat-pan > div.info > div.more {
     background: var(--color-card-2);
     border-radius: 50%;
     cursor: pointer;
     height: 45px;
     width: 45px;
 }
-.chat-pan > div.info > div:nth-child(4) > svg {
+.chat-pan > div.info > div.more > svg {
     fill: var(--color-main);
     margin: 10px;
     height: 25px;
@@ -1377,5 +1388,15 @@ textarea {
         transform: unset;
         box-shadow: none;
         margin: 0;
+    }
+    /* 聊天面板（二级侧栏） */
+    .chat-pan {
+        left: 0;
+    }
+    .chat-pan.open {
+        transform: translateX(100%);
+    }
+    .chat-pan > div.info > svg {
+        display: block;
     }
 }

@@ -1132,8 +1132,8 @@ html, body {
     }
 }
 
-/* 全局通用弹窗 */
 @media (max-width: 500px) {
+    /* 全局通用弹窗 */
     .pop-box-body {
         width: calc(100% - 80px);
         transform: unset !important;
@@ -1142,6 +1142,14 @@ html, body {
     }
     .pop-box-more {
         display: none;
+    }
+    /* 二级侧栏 */
+    .friend-list.open {
+        width: 100% !important;
+    }
+    .friend-list-space.open {
+        overflow: hidden;
+        width: 0;
     }
 }
 

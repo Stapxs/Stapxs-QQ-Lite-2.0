@@ -16,8 +16,9 @@
         id="chat-pan">        
         <!-- 聊天基本信息 -->
         <div class="info">
+            <svg @click="openLeftBar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H96c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"></path></svg>
             <img :src="chat.show.avatar">
-            <div>
+            <div class="info">
                 <p>{{ chat.show.name }}</p>
                 <span v-if="chat.show.temp">
                     {{ $t('chat_temp_from', { group: chat.show.temp }) }}
@@ -31,8 +32,8 @@
                     }}
                 </span>
             </div>
-            <div></div>
-            <div>
+            <div class="space"></div>
+            <div class="more">
                 <svg @click="openChatInfoPan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 512">
                     <path
                         d="M64 360c30.9 0 56 25.1 56 56s-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56zm0-160c30.9 0 56 25.1 56 56s-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56zM120 96c0 30.9-25.1 56-56 56S8 126.9 8 96S33.1 40 64 40s56 25.1 56 56z" />
@@ -1571,6 +1572,10 @@ export default defineComponent({
             if(!hasOpen) {
                 this.tags.showMoreDetail = !this.tags.showMoreDetail
             }
+        },
+
+        openLeftBar () {
+            runtimeData.tags.openSideBar = !runtimeData.tags.openSideBar
         }
     },
     watch: {
