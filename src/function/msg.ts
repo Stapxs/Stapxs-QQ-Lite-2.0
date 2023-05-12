@@ -309,6 +309,10 @@ function saveMsg(msg: any) {
 
 
 function saveForwardMsg(data: any) {
+    if(data == undefined) {
+        popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_get_forward_fail'))
+    }
+
     // gocqhttp 在 message 里，消息为 content，并且直接进行一个 CQCode 的转
     if(runtimeData.botInfo['go-cqhttp'] === true) {
         data = data.messages
@@ -978,3 +982,16 @@ const baseRuntime = {
 export const runtimeData: RunTimeDataElem = reactive(baseRuntime)
 export const appendMsg: { [ key: string ]: (msg: any) => void } = reactive({})
 export const notificationList: Notification[] = reactive([])
+
+// 重置 Runtime，但是保留应用设置之类已经加载好的应用内容
+export function resetRimtime() {
+    runtimeData.tags = reactive(baseRuntime.tags)
+    runtimeData.chatInfo = reactive(baseRuntime.chatInfo)
+    runtimeData.userList = reactive([])
+    runtimeData.showList = reactive([])
+    runtimeData.systemNoticesList = reactive([])
+    runtimeData.onMsgList = reactive([])
+    runtimeData.loginInfo = reactive([])
+    runtimeData.botInfo = reactive([])
+    runtimeData.messageList = reactive([])
+}

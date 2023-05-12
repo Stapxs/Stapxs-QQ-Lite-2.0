@@ -11,12 +11,14 @@ import app from "@/main"
 
 import { reactive } from 'vue'
 import { LogType, Logger, PopType, PopInfo  } from './base'
-import { parse, runtimeData } from './msg'
+import { parse, runtimeData, resetRimtime } from './msg'
 
 import { BotActionElem, LoginCacheElem } from './elements/system'
 
 const logger = new Logger()
 const popInfo = new PopInfo()
+
+let retry = 0
 
 export let websocket: WebSocket | undefined = undefined
 
@@ -28,6 +30,11 @@ export class Connector {
      */
     static create(address: string, token?: string, wss: boolean | undefined = undefined) {
         const $t = app.config.globalProperties.$t
+
+        // PS：只有在未设定 wss 类型的情况下才认为是首次连接
+        if(wss == undefined) retry = 0; else retry ++
+        // 最多自动重试连接五次
+        if(retry > 5) return
         
         logger.debug($t('log_ws_log_debug'))
         logger.add(LogType.WS, $t('log_we_log_all'))
@@ -75,23 +82,45 @@ export class Connector {
         }
         websocket.onclose = (e) => {
             login.status = false
-            if (e.code == 1015) {
-                // TSL 握手失败，这种情况一般是用 wss 连接了 ws
-                // 重新尝试使用 ws 连接
-                websocket = undefined
-                this.create(address, token, false)
+            websocket = undefined
+
+            switch(e.code) {
+                case 1000: break;   // 正常关闭
+                case 1006: {        // 非正常关闭，尝试重连
+                    this.create(address, token, undefined)
+                    break;
+                }
+                case 1015: {        // TSL 错误，尝试使用 ws 连接
+                    this.create(address, token, false)
+                    break;
+                }
+                default: {
+                    logger.error($t('pop_log_con_fail') + ': ' + e.code)
+                    popInfo.add(PopType.ERR, $t('pop_log_con_fail') + ': ' + e.code, false)
+                    console.log(e)
+                }
             }
-            if (e.code !== 1000) {
-                logger.error($t('pop_log_con_fail') + ': ' + e.code)
-                popInfo.add(PopType.ERR, $t('pop_log_con_fail') + ': ' + e.code, false)
-                console.log(e)
-            } else {
-                logger.debug($t('pop_log_con_closed') + ': ' + e.code)
-                popInfo.add(PopType.INFO, $t('pop_log_con_closed'))
+            
+            // 除了 1006 意外断开（可能要保留数据重连），其他情况都会清空
+            if(e.code != 1006) {
+                resetRimtime()
             }
         }
     }
 
+    /**
+     * 正常断开 Websocket 连接
+     */
+    static close() {
+        if(websocket) websocket.close(1000)
+    }
+
+    /**
+     * 发送 Websocket 消息
+     * @param name 事件名
+     * @param value 参数
+     * @param echo 回调名
+     */
     static send(name: string, value: {[key: string]: any}, echo: string = name) {
         // 构建 JSON
         const json = JSON.stringify({ action: name, params: value, echo: echo } as BotActionElem)

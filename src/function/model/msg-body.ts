@@ -135,6 +135,8 @@ export class MsgBodyFuns {
         let preview = body.preview
         if (preview !== undefined && preview.indexOf('http') === -1) preview = '//' + preview
 
+        const div = document.createElement('div')
+
         // 一些特殊判定
         if (json.desc === '群公告') {
             title = json.desc
@@ -143,17 +145,35 @@ export class MsgBodyFuns {
             icon = ''
             name = json.desc
         }
+        if(json.desc.indexOf('聊天记录') >= 1) {
+            title = json.meta.detail.source
+            desc = '<div style="padding: 15px 20px 5px 20px">'
+            json.meta.detail.news.forEach((item: any) => {
+                desc += '<span>' + item.text + '</span><br>'
+            })
+            desc += '</div>'
+            icon = ''
+            name = json.meta.detail.summary
+            
+            div.dataset.type = 'forward'
+            div.dataset.id = json.meta.detail.resid
+            div.style.cursor = 'pointer'
+        }
 
         const url = body.qqdocurl === undefined ? body.jumpUrl : body.qqdocurl
         // 构建 HTML
-        const html = '<div class="msg-json" id="json-' + msgId + '" data-url="' + url + '">' +
-            '<p>' + title + '</p>' +
+        const html = '<p>' + title + '</p>' +
             '<span>' + desc + '</span>' +
             '<img style="' + (preview === undefined ? 'display:none' : '') + '" src="' + preview + '">' +
-            '<div><img src="' + icon + '"><span>' + name + '</span></div>' +
-            '</div>'
+            '<div><img src="' + icon + '"><span>' + name + '</span></div>'
+
+        div.className = 'msg-json'
+        div.id = 'json-' + msgId
+        div.dataset.url = url
+        div.innerHTML = html
+
         // 返回
-        return html
+        return div.outerHTML
     }
 
     /**
@@ -170,9 +190,13 @@ export class MsgBodyFuns {
                 return
             }
             // 接下来按类型处理
-            if (type === 'forward') {
-                // 解析合并转发消息
-                this.getForwardMsg(sender.dataset.id)
+            switch(type) {
+                case 'forward': {
+                    // 解析合并转发消息
+                    popInfo.add(PopType.INFO, app.config.globalProperties.$t('pop_get_forward'))
+                    this.getForwardMsg(sender.dataset.id)
+                    break
+                }
             }
         }
     }

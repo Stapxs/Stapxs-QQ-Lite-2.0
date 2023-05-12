@@ -6,7 +6,6 @@
   "botinfo_coolq_directory": "运行目录",
   "botinfo_coolq_version": "版本",
   "botinfo_go-cqhttp": "go-cqhttp",
-  "botinfo_http_api": "HTTP API 版本",
   "botinfo_lost_pkt_cnt": "丢失包数量",
   "botinfo_lost_times": "掉线次数",
   "botinfo_msg_cnt_per_min": "每分钟消息",
@@ -161,7 +160,6 @@
   "pop_load_history_fail": "加载历史消息失败（构建消息 ID 失败）",
   "pop_find_pic_fail": "定位图片失败",
   "pop_log_con_fail": "连接失败",
-  "pop_log_con_closed": "连接关闭",
   "pop_chat_forward_toooomany": "合并消息层级过多，解析失败。",
   "pop_chat_chat_info_load_file_err": "加载群文件失败（{code}）",
   "pop_chat_load_msg_err": "加载消息失败（{code}）",
@@ -291,5 +289,11 @@
   "list_menu_canceltop": "取消置顶",
   "list_menu_remove": "删除",
   "list_menu_readed": "标记已读",
-  "friend_group": "群组"
+  "friend_group": "群组",
+  "pop_get_forward": "正在获取合并转发消息 ……",
+  "pop_get_forward_fail": "获取合并转发消息失败",
+  "botinfo_bot_info": "后端信息",
+  "botinfo_bot_info_name": "后端名称",
+  "botinfo_bot_info_version": "后端版本",
+  "sw_updated_1": "应用已更新，刷新生效。"
 }

@@ -119,9 +119,8 @@ export default {
          * 断开连接
          */
         exitConnect() {
-            // TODO: 因为事实上目前没没有断开清理流程，所以目前是取消自动连接然后刷新页面
             remove('auto_connect')
-            location.reload()
+            Connector.close()
         },
 
         /**

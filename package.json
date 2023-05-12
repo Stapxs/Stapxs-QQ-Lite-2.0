@@ -1,6 +1,6 @@
 {
   "name": "stapxs-qq-lite",
-  "version": "2.5.2",
+  "version": "2.5.3",
   "private": false,
   "author": "Stapx Steve [林槐]",
   "description": "一个兼容 oicq-http 的非官方网页版 QQ 客户端，使用 Vue 重制的全新版本。",

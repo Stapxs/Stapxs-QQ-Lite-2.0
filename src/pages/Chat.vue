@@ -1269,6 +1269,10 @@ export default defineComponent({
          * 发送消息
          */
         sendMsg () {
+            // 关闭所有其他的已打开的更多功能弹窗
+            this.details.forEach((item) => {
+                item.open = false
+            })
             // 为了减少对于复杂图文排版页面显示上的工作量，对于非纯文本的消息依旧处理为纯文本，如：
             // "这是一段话 [SQ:0]，[SQ:1] 你要不要来试试 Stapxs QQ Lite？"
             // 其中 [SQ:n] 结构代表着这是特殊消息以及这个消息具体内容在消息缓存中的 index，像是这样：

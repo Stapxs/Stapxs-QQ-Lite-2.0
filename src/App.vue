@@ -467,8 +467,10 @@ export default defineComponent({
             // 初始化完成
             logger.debug(this.$t('log_welcome'))
             logger.debug(this.$t('log_runtime') + ': ' + process.env.NODE_ENV)
-            // 加载布局检查工具
+            // 加载开发者相关
             if (process.env.NODE_ENV == 'development') {
+                document.title = 'Stapxs QQ Lite (Dev)'
+                // 布局检查工具
                 Spacing.start()
             }
             // GA：加载谷歌分析功能
