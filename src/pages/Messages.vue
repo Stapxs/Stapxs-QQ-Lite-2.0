@@ -49,8 +49,10 @@
                     :select="chat.show.id === item.user_id || (chat.show.id === item.group_id && chat.group_name != '')"
                     :menu="menu.select && menu.select == item"
                     :data="item"
+                    @contextmenu.prevent="listMenuShow($event, item)"
                     @click="userClick(item)"
-                    @contextmenu.prevent="listMenuShow($event, item)">
+                    @touchstart="showMenuStart($event, item)"
+                    @touchend="showMenuEnd">
                 </FriendBody>
             </div>
         </div>
@@ -96,7 +98,8 @@ export default defineComponent({
                 show: false,
                 point: { x: 0, y: 0 }
             } as MenuStatue,
-            menu: Menu.append
+            menu: Menu.append,
+            showMenu: false
         }
     },
     methods: {
@@ -295,6 +298,11 @@ export default defineComponent({
          */
         listMenuShow(event: Event, item: (UserFriendElem & UserGroupElem)) {
             const info = this.menu.set('messages-menu', event as MouseEvent)
+            this.listMenuShowRun(info, item)
+         },
+        listMenuShowRun(info: any, item: (UserFriendElem & UserGroupElem)) {
+            // PS：这是触屏触发的标志，如果优先触发了 contextmenu 就不用触发触屏了
+            this.showMenu = false
             info.list = ['top', 'remove', 'readed']
             // 置顶的不显示移除
             if(item.always_top) {
@@ -302,6 +310,26 @@ export default defineComponent({
             }
             this.listMenu = info
             this.menu.select = item
+        },
+
+        showMenuStart(event: TouchEvent, item: (UserFriendElem & UserGroupElem)) {
+            const info = {
+                show: true,
+                point: {
+                    x: event.targetTouches[0].pageX,
+                    y: event.targetTouches[0].pageY
+                }
+            }
+            this.showMenu = true
+            setTimeout(() => {
+                if(this.showMenu) {
+                    this.listMenuShowRun(info, item)
+                    this.showMenu = false
+                }
+            }, 500)
+        },
+        showMenuEnd() {
+            this.showMenu = false
         }
     },
     mounted() {

@@ -63,8 +63,8 @@
                         :key="msg.message_id"
                         :data="msg"
                         @scrollToMsg="scrollToMsg"
-                        @contextmenu.prevent="showMsgMeun($event, msg)"
                         @scrollButtom="imgLoadedScroll"
+                        @contextmenu.prevent="showMsgMeun($event, msg)"
                         @touchstart="msgStartMove($event, msg)"
                         @touchmove="msgOnMove"
                         @touchend="msgMoveEnd($event, msg)">

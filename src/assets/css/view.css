@@ -485,7 +485,6 @@ html, body {
     color: var(--color-font-1-r);
 }
 
-/* TODO: BCUI - 这段 css 将在将来迁移到 Border Card UI 中合并 */
 .msg-menu-body {
     background: rgba(var(--color-bg-rgb), 0.7);
     box-shadow: 0 0 5px var(--color-shader);
@@ -540,7 +539,6 @@ html, body {
     color: var(--color-font-r);
 }
 
-/* TODO: BCUI - 这段 css 将在将来迁移到 Border Card UI 中合并 */
 .ss-range {
     --range-dot-height: 26px;
     --range-height: 26px;
