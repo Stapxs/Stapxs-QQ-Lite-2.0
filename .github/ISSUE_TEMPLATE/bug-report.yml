@@ -1,0 +1,34 @@
+name: 提交错误
+description: 各种各样的奇怪的问题都可以提交。
+body: 
+  - type: markdown
+    attributes:
+      value: |
+        在开始提交 BUG 前，请先前往 [Projects](https://github.com/users/Stapxs/projects/2/views/7) 检查 BUG 标签卡下的已有 BUG 列表是否已存在你想提交的 BUG，如果没有再回来提交以防重复。 
+  - type: dropdown
+    attributes:
+      label: 错误来源
+      options:
+        - QQ Bot
+        - Stapxs QQ Lite
+        - 其他
+  - type: textarea
+    attributes:
+      label: 描述错误
+      description: 发生了什么呢 …… 简单说一下就好了（x
+  - type: textarea
+    attributes:
+      label: 复现流程
+      description: 如果你可以重现这个 BUG，你可以在下面留下操作流程
+  - type: textarea
+    attributes:
+      label: 截图
+      description: 如果有附加的截图，可以添加在下面
+  - type: textarea
+    attributes:
+      label: 版本信息
+      description: 执行 “设置 - 高级 - 输出调试信息” 获取应用运行的版本信息，粘贴到这儿以方便快速了解运行环境
+  - type: textarea
+    attributes:
+      label: 更多
+      description: 还有别的要说吗？比如说控制台的报错之类的，都可以塞这儿

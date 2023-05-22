@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 计划和已知错误
+    url: https://github.com/users/Stapxs/projects/2
+    about: 计划的列表和一些没有提交 ISSUE 的 BUG
