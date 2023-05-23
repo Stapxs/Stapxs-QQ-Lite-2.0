@@ -294,5 +294,11 @@
   "list_menu_canceltop": "取消釘選",
   "list_menu_remove": "删除",
   "list_menu_readed": "標示為已讀",
-  "friend_group": "群組"
+  "friend_group": "群組",
+  "pop_get_forward": "正在取得合併訊息 ……",
+  "pop_get_forward_fail": "無法取得合併訊息",
+  "botinfo_bot_info": "後端程式資訊",
+  "botinfo_bot_info_name": "後端程式名稱",
+  "botinfo_bot_info_version": "後端程式版本",
+  "sw_updated_1": "應用程式已更新，重新整理後生效"
 }
