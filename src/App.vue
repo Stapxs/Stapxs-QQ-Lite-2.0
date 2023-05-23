@@ -478,12 +478,15 @@ export default defineComponent({
                 const { property } = useState()
                 if (property) {
                     property.value = {
-                        id: 'G-ZQ88GPJRGH'
+                        id: process.env.VUE_APP_GA
                     } as DomainConfig
                 }
             } else if (process.env.NODE_ENV == 'development') {
                 logger.debug(this.$t('log_GA_auto_closed'))
             }
+            // AMAP：初始化高德地图
+            window._AMapSecurityConfig = 
+                process.env.VUE_APP_AMAP_SECRET
             // 检查版本
             const appVersion = appInfo.version
             const cacheVersion = localStorage.getItem('version')

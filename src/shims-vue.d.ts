@@ -11,5 +11,10 @@ declare module '*.txt' {
 }
 
 declare interface Window {
-  moYu: any;
+  moYu: any
+  _AMapSecurityConfig: string | undefined
+  createMap: (key: string | undefined, msgId: string, point: {
+    lat: number,
+    lng: number
+  }) => void
 }

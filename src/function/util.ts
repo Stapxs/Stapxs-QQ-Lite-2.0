@@ -736,6 +736,23 @@ export function reloadUsers() {
     Connector.send('get_class_info', {}, "getClassInfo")
 }
 
+/**
+ * 区分安卓、iOS、MacOS 和其他
+ */
+export function getDeviceType() {
+    const userAgent = navigator.userAgent
+    if (userAgent.indexOf('Android') > -1 || userAgent.indexOf('Adr') > -1) {
+        return 'Android'
+        // eslint-disable-next-line
+    } else if (!!userAgent.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/)) {
+        return 'iOS'
+    } else if (userAgent.indexOf('Mac OS X') > -1) {
+        return 'MacOS'
+    } else {
+        return 'Other'
+    }
+}
+
 export default {
     openLink,
     getTrueLang,
@@ -751,5 +768,6 @@ export default {
     randomNum,
     downloadFile,
     getSizeFromBytes,
-    reloadUsers
+    reloadUsers,
+    getDeviceType
 }

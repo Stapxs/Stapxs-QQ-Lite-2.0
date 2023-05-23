@@ -116,64 +116,77 @@ export class MsgBodyFuns {
     }
 
     /**
-     * 尝试渲染 JSON 消息
-     * @param data JSON 消息字符串
-     * @param msgId 消息 ID
-     * @returns 
+     * 获取 JSON 消息的有效信息（通用）
+     * @param data JSON 消息（已解析）
+     * @returns appInfo
      */
-    static buildJSON(data: string, msgId: string) {
+    static getJSON(json: any) {
         // 解析 JSON
-        const json = JSON.parse(data)
         const body = json.meta[Object.keys(json.meta)[0]]
         // App 信息
-        let name = body.tag === undefined ? body.title : body.tag
-        let icon = body.icon === undefined ? body.source_icon : body.icon
+        const app = {} as {[key: string]: any}
 
-        let title = body.title
-        let desc = body.desc
+        app.name = body.tag === undefined ? body.title : body.tag
+        app.icon = body.icon === undefined ? body.source_icon : body.icon
 
-        let preview = body.preview
-        if (preview !== undefined && preview.indexOf('http') === -1) preview = '//' + preview
+        app.title = body.title
+        app.desc = body.desc
 
-        const div = document.createElement('div')
+        app.preview = body.preview
+        if (app.preview !== undefined && app.preview.indexOf('http') === -1) app.preview = '//' + app.preview
 
-        // 一些特殊判定
+        app.url = body.qqdocurl === undefined ? body.jumpUrl : body.qqdocurl
+        
+        return app
+    }
+
+    /**
+     * 获取具体的 JSON 消息类型用于特殊处理
+     * @param data JSON 消息
+     * @returns { type: string, app: any }
+     */
+    static getJSONType(data: string) {
+        const json = JSON.parse(data)
+        const info = this.getJSON(json)
+        let type = 'default'
+        const append = {} as {[key: string]: any}
+        
+        // 下面就是一大堆特殊判定
         if (json.desc === '群公告') {
-            title = json.desc
-            desc = json.prompt
-            preview = undefined
-            icon = ''
-            name = json.desc
+            info.title = json.desc
+            info.desc = json.prompt
+            info.preview = undefined
+            info.icon = ''
+            info.name = json.desc
         }
         if(json.desc.indexOf('聊天记录') >= 1) {
-            title = json.meta.detail.source
-            desc = '<div style="padding: 15px 20px 5px 20px">'
+            info.title = json.meta.detail.source
+            info.desc = '<div style="padding: 15px 20px 5px 20px">'
             json.meta.detail.news.forEach((item: any) => {
-                desc += '<span>' + item.text + '</span><br>'
+                info.desc += '<span>' + item.text + '</span><br>'
             })
-            desc += '</div>'
-            icon = ''
-            name = json.meta.detail.summary
+            info.desc += '</div>'
+            info.icon = ''
+            info.name = json.meta.detail.summary
             
-            div.dataset.type = 'forward'
-            div.dataset.id = json.meta.detail.resid
-            div.style.cursor = 'pointer'
+            append.type = 'forward'
+            append.id = json.meta.detail.resid
+        }
+        if(json.app == 'com.tencent.map') {
+            info.title = json.meta['Location.Search'].name
+            append.urlOpenType = '_self'
+            const deviceType = util.getDeviceType()
+            if(deviceType == 'Android') {
+                info.url = 'geo:' + json.meta['Location.Search'].lat + ',' + json.meta['Location.Search'].lng
+            } else if(deviceType == 'iOS' || deviceType == 'MacOS') {
+                info.url = 'http://maps.apple.com/?ll=' + json.meta['Location.Search'].lat + ',' + json.meta['Location.Search'].lng +
+                    '&q=' + json.meta['Location.Search'].name
+            }
+            info.desc = json.meta['Location.Search'].address
+            type = 'tencent.map'
         }
 
-        const url = body.qqdocurl === undefined ? body.jumpUrl : body.qqdocurl
-        // 构建 HTML
-        const html = '<p>' + title + '</p>' +
-            '<span>' + desc + '</span>' +
-            '<img style="' + (preview === undefined ? 'display:none' : '') + '" src="' + preview + '">' +
-            '<div><img src="' + icon + '"><span>' + name + '</span></div>'
-
-        div.className = 'msg-json'
-        div.id = 'json-' + msgId
-        div.dataset.url = url
-        div.innerHTML = html
-
-        // 返回
-        return div.outerHTML
+        return { type, app: info, append }
     }
 
     /**
@@ -186,7 +199,13 @@ export class MsgBodyFuns {
             const type = sender.dataset.type
             // 如果存在 url 项，优先打开 url
             if (sender.dataset.url !== undefined && sender.dataset.url !== 'undefined' && sender.dataset.url !== '') {
-                util.openLink(sender.dataset.url)
+                const openType = sender.dataset.urlOpenType || sender.dataset.urlopentype
+                if(openType == '_self') {
+                    window.open(sender.dataset.url, '_self')
+                } else {
+                    // 默认都以 _blank 打开
+                    util.openLink(sender.dataset.url)
+                }
                 return
             }
             // 接下来按类型处理

@@ -81,13 +81,18 @@ export class Connector {
             parse(e.data)
         }
         websocket.onclose = (e) => {
-            login.status = false
             websocket = undefined
 
             switch(e.code) {
                 case 1000: break;   // 正常关闭
                 case 1006: {        // 非正常关闭，尝试重连
-                    this.create(address, token, undefined)
+                    if(login.status) {
+                        this.create(address, token, undefined)
+                    } else {
+                        // PS：由于创建连接失败也会触发此事件，所以需要判断是否已经登录
+                        // 尝试使用 ws 连接
+                        this.create(address, token, false)
+                    }
                     break;
                 }
                 case 1015: {        // TSL 错误，尝试使用 ws 连接
@@ -95,16 +100,21 @@ export class Connector {
                     break;
                 }
                 default: {
-                    logger.error($t('pop_log_con_fail') + ': ' + e.code)
                     popInfo.add(PopType.ERR, $t('pop_log_con_fail') + ': ' + e.code, false)
                     console.log(e)
                 }
             }
+            logger.error($t('pop_log_con_fail') + ': ' + e.code)
+            login.status = false
             
             // 除了 1006 意外断开（可能要保留数据重连），其他情况都会清空
             if(e.code != 1006) {
                 resetRimtime()
             }
+        }
+        websocket.onerror = (e) => {
+            popInfo.add(PopType.ERR, $t('pop_log_con_fail') + ': ' + e.type, false)
+            return
         }
     }
 

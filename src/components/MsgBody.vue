@@ -74,9 +74,8 @@
                         <video v-if="item.url" controls><source :src="item.url" type="video/mp4"></video>
                         <div v-else-if="!getVideo" :class="getVideoUrl(item, data.message_id)"></div>
                     </div>
-                    <div v-else-if="item.type == 'xml'" v-html="View.buildXML(item.data, item.id, data.message_id)" @click="View.cardClick('xml-' + data.message_id)"></div>
-                    <div v-else-if="item.type == 'json'" v-html="View.buildJSON(item.data, data.message_id)" @click="View.cardClick('json-' + data.message_id)">
-                    </div>
+                    <CardMessage
+                        v-else-if="item.type == 'xml' || item.type == 'json'" :item="item" :id="data.message_id"></CardMessage>
 
                     <span v-else-if="item.type == 'forward'" class="msg-unknown" @click="View.getForwardMsg(item.id)">{{ $t('chat_show_forward') }}</span>
                     <div :data-seq="getSeq(item.id).toString()" @click="scrollToMsg(getSeq(item.id).toString())" v-else-if="item.type == 'reply'" :class="isMe ? (type == 'merge' ? 'msg-replay' : 'msg-replay me') : 'msg-replay'">
@@ -115,6 +114,7 @@
 
 import Util from '@/function/util'
 import Option from '@/function/option'
+import CardMessage from './msg-component/CardMessage.vue'
 
 import { MsgBodyFuns as ViewFuns } from '@/function/model/msg-body'
 import { defineComponent } from 'vue'
@@ -127,6 +127,7 @@ import { StringifyOptions } from 'querystring'
 export default defineComponent({
     name: 'MsgBody',
     props: ['data', 'type'],
+    components: { CardMessage },
     data () {
         return {
             getSizeFromBytes: Util.getSizeFromBytes,
