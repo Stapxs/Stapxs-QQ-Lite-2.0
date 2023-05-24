@@ -1,3 +1,7 @@
+简体中文
+ | [English](README_en-US.md)
+<br><br><br>
+
 <p align="center">
   <a href="https://blog.stapxs.cn" target="blank">
     <img src="public/img/icons/icon.svg" alt="Logo" width="156" height="156">
@@ -29,7 +33,7 @@
   - 群文件、群公告、群设置（一小部分）、精华消息
   - 图片、收藏表情、文件发送
 - 📦️ 支持多种 bot，我就是要用！
-- 🔥 水生火热但是更好看的 Electron 客户端
+- 🔥 水深火热但是更好看的 Electron 客户端
 - 🥚 彩蛋！来更多的彩蛋！
 - 🛠 更多特性开发中
 

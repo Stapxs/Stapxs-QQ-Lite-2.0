@@ -300,5 +300,11 @@
   "list_menu_canceltop": "Unpin",
   "list_menu_remove": "Delete",
   "list_menu_readed": "Mark as read",
-  "friend_group": "Group"
+  "friend_group": "Group",
+  "pop_get_forward": "Loading combined chat messages ...",
+  "pop_get_forward_fail": "Error loading combined messages",
+  "botinfo_bot_info": "Backend info",
+  "botinfo_bot_info_name": "Backend",
+  "botinfo_bot_info_version": "Backend version",
+  "sw_updated_1": "New version available. Reload to take effect."
 }
