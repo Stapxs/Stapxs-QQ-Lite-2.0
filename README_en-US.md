@@ -1,3 +1,8 @@
+[简体中文](README.md)
+ | English
+<br><br><br>
+
+
 <p align="center">
   <a href="https://blog.stapxs.cn" target="blank">
     <img src="public/img/icons/icon.svg" alt="Logo" width="156" height="156">
