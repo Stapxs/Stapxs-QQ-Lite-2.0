@@ -159,7 +159,7 @@ export class MsgBodyFuns {
             info.icon = ''
             info.name = json.desc
         }
-        if(json.desc.indexOf('聊天记录') >= 1) {
+        if(json.app == 'com.tencent.multimsg') {
             info.title = json.meta.detail.source
             info.desc = '<div style="padding: 15px 20px 5px 20px">'
             json.meta.detail.news.forEach((item: any) => {
