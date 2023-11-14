@@ -95,14 +95,46 @@ module.exports = {
                 },
 
                 win: {
-                    target: 'portable',
+                    target: [
+                        {
+                            target: 'portable',
+                            arch: 'x64'
+                        }
+                    ],
                     appId: 'com.stapxs.qq-web',
                     icon: 'public/img/icons/icon.png',
                     legalTrademarks: 'Copyright © 2022-2023 Stapx Steve [林槐]',
                 },
 
-
-
+                mac: {
+                    target: [
+                        {
+                            target: 'dmg',
+                            arch:['x64', 'arm64']
+                        }
+                    ],
+                    category: 'public.app-category.social-networking',
+                    icon: 'public/img/icons/icon.icns',
+                    darkModeSupport: true
+                },
+                dmg: {
+                    background: 'public/img/dmg-bg.png',
+                    iconSize: 80,
+                    sign: false,
+                    contents: [
+                        {
+                            x: 102,
+                            y: 140
+                        },
+                        {
+                            type: 'link',
+                            path: '/Applications',
+                            x: 386,
+                            y: 140
+                        },
+                    ],
+                },
+                
                 afterAllArtifactBuild: async (context) => {
                     // 如果环境参数中有 `github-actions`，则删除 `dist_electron/out` 目录下所有的
                     //  `*-unpacked` 目录和 `build` 开头的文件，便于 GitHub Actions 上传构建结果
@@ -111,7 +143,8 @@ module.exports = {
                         const path = require('path')
                         // 寻找所有需要删除的文件和目录
                         const delList = fs.readdirSync(context.outDir).filter((item) => {
-                            return item.endsWith('-unpacked') || item.startsWith('build')
+                            return item.endsWith('-unpacked') || item.startsWith('build') ||
+                            item.startsWith('mac')
                         })
                         console.log('删除的目录和文件：', delList)
                         for (const item of delList) {

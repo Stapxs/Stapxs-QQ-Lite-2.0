@@ -864,10 +864,10 @@ function saveJin (data: any) {
         runtimeData.chatInfo.info.jin_info = data
     } else {
         // 追加保存
-        if(data.retcode == 0) {
-            runtimeData.chatInfo.info.jin_info.data.msg_list = 
+        if (data.retcode == 0) {
+            runtimeData.chatInfo.info.jin_info.data.msg_list =
                 runtimeData.chatInfo.info.jin_info.data.msg_list.concat(data.data.msg_list)
-                runtimeData.chatInfo.info.jin_info.data.is_end = data.data.is_end
+            runtimeData.chatInfo.info.jin_info.data.is_end = data.data.is_end
         }
     }
 }
