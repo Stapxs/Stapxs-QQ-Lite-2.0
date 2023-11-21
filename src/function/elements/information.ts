@@ -4,6 +4,7 @@ export enum BotMsgType {
 
 export interface RunTimeDataElem {
     sysConfig: { [key: string]: any }
+    jsonMap?: any
     botInfo: { [key: string]: any }
     loginInfo: { [key: string]: any }
     userList: (UserFriendElem & UserGroupElem)[]
@@ -85,6 +86,7 @@ export interface UserFriendElem {
     py_name?: string,
     member_count?: number,
     admin_flag?: boolean,
+    
     new_msg?: boolean,
     raw_msg?: string,
     time?: number,
@@ -98,6 +100,7 @@ export interface UserGroupElem {
     remark: string,
     py_name?: string,
     class_id?: number,
+
     new_msg?: boolean,
     raw_msg?: string,
     time?: number,

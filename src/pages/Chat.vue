@@ -118,7 +118,7 @@
                                         <template v-for="(context, indexc) in item.msg_content"
                                             :key="'jinc-' + index + '-' + indexc">
                                             <span v-if="context.msg_type === 1">{{ context.text }}</span>
-                                            <img v-if="context.msg_type === 2" class="face" :src="require('./../assets/img/qq-face/' + context.face_index + '.gif')">
+                                            <img v-if="context.msg_type === 2" class="face" :src="require('./../assets/img/qq-face/gif/s' + context.face_index + '.gif')">
                                             <img v-if="context.msg_type === 3" :src="context.image_url">
                                         </template>
                                     </div>

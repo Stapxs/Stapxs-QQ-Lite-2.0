@@ -1,0 +1,25 @@
+{
+    "_name": "Shamrock",
+    "version_info": "$.data",
+    "login_info": {
+        "uin": "$.data.user_id",
+        "bkn": "",
+        "nickname": "$.data.nickname"
+    },
+    "user_list": {
+        "_basic": "$.data[*]",
+        "_list": {
+            "group_id": "/group_id",
+            "group_name": "/group_name",
+            "member_count": "/member_count",
+            "admin_flag": "$.admins[?(@ == '<uin>')]",
+
+            "user_id": "/user_id",
+            "nickname": "/user_name",
+            "remark": "/user_remark"
+        }
+    },
+    "history_message": {
+        "_name": "get_history_msg"
+    }
+}

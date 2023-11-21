@@ -407,53 +407,18 @@ export function loadHistory(info: BaseChatInfoElem) {
 export function loadHistoryMessage(id: number, type: string, count = 20, echo = 'getChatHistoryFist') {
     // 加载历史消息
     // Note: https://github.com/takayama-lily/oicq/wiki/93.%E8%A7%A3%E6%9E%90%E6%B6%88%E6%81%AFID
-    let msgid = null
-    switch (type) {
-        case 'user': {
-            // friend msg id 为 4*4+1 = 17 bit
-            const buffer = new ArrayBuffer(17)
-            const dv = new DataView(buffer, 0)
-            dv.setInt32(0, id)
-            dv.setInt32(4, 0)
-            dv.setInt32(8, 0)
-            dv.setInt32(12, 0)
-            dv.setInt8(16, 0)
-            msgid = buildMsgIdInfo(buffer)
-            break
-        }
-        case 'group': {
-            // group msg id 为 4*5+1 = 21 bit
-            const buffer = new ArrayBuffer(21)
-            const dv = new DataView(buffer, 0)
-            dv.setInt32(0, id)
-            dv.setInt32(4, 0)
-            dv.setInt32(8, 0)
-            dv.setInt32(12, 0)
-            dv.setInt32(16, 0)
-            dv.setInt8(20, 0)
-            msgid = buildMsgIdInfo(buffer)
-            break
-        }
-    }
-    if (msgid != null) {
-        // 发送请求
-        let name = 'get_chat_history'
-        if(runtimeData.botInfo['go-cqhttp'] === true)
-            name = 'get_msg_history'
-        Connector.send(
-            name,
-            {
-                message_id: msgid,
-                target_id: id,
-                group: type == 'group',
-                count: count
-            },
-            echo
-        )
-        return true
-    } else {
-        return false
-    }
+    // Connector.send(
+    //     runtimeData.jsonMap.history_message._name ?? 'get_chat_history',
+    //     {
+    //         message_type: type,
+    //         group_id: type == "group" ? id : undefined,
+    //         user_id: type != "group" ? id : undefined,
+    //         message_seq: 0,
+    //         count: count
+    //     },
+    //     echo
+    // )
+    return true
 }
 
 /**

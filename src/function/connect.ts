@@ -71,7 +71,7 @@ export class Connector {
             }
             // 加载初始化数据
             // PS：标记登陆成功在获取用户信息的回调位置，防止无法获取到内容
-            getBaseInfo()
+            Connector.send('get_version_info', {}, 'getVersionInfo')
         }
         websocket.onmessage = (e) => {
             // 心跳包输出到日志里太烦人了
@@ -142,13 +142,6 @@ export class Connector {
             logger.add(LogType.WS, 'PUT：' + json)
         }
     }
-}
-
-function getBaseInfo() {
-    // bot 信息
-    Connector.send('get_version_info', {}, 'getVersionInfo')
-    // 用户信息
-    Connector.send('get_login_info', {}, 'getLoginInfo')
 }
 
 export const login: LoginCacheElem = reactive({ status: false, address: '', token: '' })

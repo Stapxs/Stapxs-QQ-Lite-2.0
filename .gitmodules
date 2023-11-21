@@ -1,0 +1,7 @@
+[submodule "src/assets/img/qq-face"]
+	path = src/assets/img/qq-face
+	url = https://github.com/koishijs/QFace.git
+[submodule "public/bcui"]
+	path = public/bcui
+	url = https://github.com/Stapxs/Border-Card-UI.git
+	branch = js-bcui

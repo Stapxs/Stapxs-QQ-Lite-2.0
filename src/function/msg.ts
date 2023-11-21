@@ -17,6 +17,8 @@ import Util from './util'
 import xss from 'xss'
 import pinyin from 'pinyin'
 
+import { getMsgData } from '@/utils/msgUtil'
+
 import { Md5 } from 'ts-md5'
 import { reactive, nextTick, markRaw, defineAsyncComponent } from 'vue'
 import { PopInfo, PopType, Logger, LogType } from './base'
@@ -25,7 +27,10 @@ import { GroupMemberInfoElem, UserFriendElem, UserGroupElem, MsgItemElem, RunTim
 import { NotificationElem } from './elements/system'
 import { IPinyinOptions } from 'pinyin/lib/declare'
 
+const logger = new Logger()
 const popInfo = new PopInfo()
+// eslint-disable-next-line
+let msgPath = require('@/assets/pathMap/default.json')
 
 export function parse(str: string) {
     const msg = JSON.parse(str)
@@ -38,11 +43,11 @@ export function parse(str: string) {
             appendMsg[head](msg)
         } else {
             switch (head) {
-                case 'getVersionInfo'       : saveBotInfo(msg.data); break
-                case 'getLoginInfo'         : saveLoginInfo(msg.data); break
+                case 'getVersionInfo'       : saveBotInfo(msg); break
+                case 'getLoginInfo'         : saveLoginInfo(msg); break
                 case 'getMoreLoginInfo'     : runtimeData.loginInfo.info = msg.data.data.result.buddy.info_list[0]; break
-                case 'getGroupList'         : saveUser(msg.data); break
-                case 'getFriendList'        : saveUser(msg.data); break
+                case 'getGroupList'         : saveUser(msg); break
+                case 'getFriendList'        : saveUser(msg); break
                 case 'getUserInfoInGroup'   : runtimeData.chatInfo.info.me_info = msg; break
                 case 'getGroupMemberList'   : saveGroupMember(msg.data); break
                 case 'getChatHistoryFist'   : saveMsgFist(msg); break
@@ -110,101 +115,107 @@ export function parse(str: string) {
  * 保存 Bot 信息
  * @param data Bot 信息
  */
-function saveBotInfo(data: { [key: string]: any }) {
-    runtimeData.botInfo = data
-    // GA：提交分析信息，主要在意的是 bot 类型
-    if (Option.get('open_ga_bot') !== false) {
-        if (data.app_name !== undefined) {
-            app.config.globalProperties.
-                $gtag.event('login', { method: data.app_name })
-        } else {
-            app.config.globalProperties.
-                $gtag.event('login')
+function saveBotInfo(msg: { [key: string]: any }) {
+    const msgBody = getMsgData('version_info', msg, msgPath.version_info)
+
+    if (msgBody) {
+        const data = msgBody[0]
+        runtimeData.botInfo = data
+        // GA：提交分析信息，主要在意的是 bot 类型
+        if (Option.get('open_ga_bot') !== false) {
+            if (data.app_name !== undefined) {
+                app.config.globalProperties.
+                    $gtag.event('login', { method: data.app_name })
+            } else {
+                app.config.globalProperties.
+                    $gtag.event('login')
+            }
+        }
+        if(!login.status) {
+            // 尝试动态载入对应的 pathMap
+            if (data.app_name !== undefined) {
+                try {
+                    msgPath = require(`@/assets/pathMap/${data.app_name}.json`)
+                    runtimeData.jsonMap = msgPath
+                    logger.debug('加载 JSON 映射表：' + msgPath._name)
+                } catch(ex) {
+                    logger.debug('加载 JSON 映射表失败：' + ex)
+                }
+            }
+            // 继续获取后续内容
+            Connector.send('get_login_info', {}, 'getLoginInfo')
         }
     }
-    // 加载切换兼容功能
-    switch (data.app_name) {
-        // go-cqhttp：消息格式 CQCode <-> JSON
-        case 'go-cqhttp': {
-            runtimeData.tags.msgType = BotMsgType.CQCode
-            break
-        }
-        // oicq1：消息格式 JSON_OICQ_1 <-> JSON
-        case 'oicq': {
-            runtimeData.tags.msgType = BotMsgType.JSON_OICQ_1
-            break
-        }
-    }
-    // 加载设置项内的兼容功能，覆盖此处的设置（如果有的话）
-    Option.runAS('msg_type', Number(Option.get('msg_type')))
 }
 
 /**
  * 保存账号信息
  * @param data 账号信息
  */
-function saveLoginInfo(data: { [key: string]: any }) {
-    // 如果是 user_id 的话 ……
-    if (data.uin === undefined && data.user_id !== undefined) {
-        data.uin = data.user_id
+function saveLoginInfo(msg: { [key: string]: any }) {
+    const msgBody = getMsgData('login_info', msg, msgPath.login_info)
+    if (msgBody) {
+        const data = msgBody[0]
+
+        // 完成登陆初始化
+        runtimeData.loginInfo = data
+        login.status = true
+        // 结束登录页面的水波动画
+        clearInterval(runtimeData.tags.loginWaveTimer)
+        // 跳转标签卡
+        const barMsg = document.getElementById('bar-msg')
+        if (barMsg != null) barMsg.click()
+        // 获取更详细的信息
+        const url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
+        const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${data.uin}&nf=0&of=0&ldw=${data.bkn}`
+        Connector.send(
+            'http_proxy',
+            { 'url': url, 'method': 'post', 'data': info },
+            'getMoreLoginInfo'
+        )
+        // GA：将 QQ 号 MD5 编码后用于用户识别码
+        if (Option.get('open_ga_user') == true && process.env.NODE_ENV == 'production') {
+            const userId = Md5.hashStr(data.uin)
+            app.config.globalProperties.$gtag.config({
+                user_id: userId
+            })
+        }
+        // 加载列表消息
+        Util.reloadUsers()
     }
-    // 完成登陆初始化
-    runtimeData.loginInfo = data
-    login.status = true
-    clearInterval(runtimeData.tags.loginWaveTimer)
-    // 跳转标签卡
-    const barMsg = document.getElementById('bar-msg')
-    if(barMsg != null) {
-        barMsg.click()
-    }
-    // 获取更详细的信息
-    const url = 'https://find.qq.com/proxy/domain/cgi.find.qq.com/qqfind/find_v11?backver=2'
-    const info = `bnum=15&pagesize=15&id=0&sid=0&page=0&pageindex=0&ext=&guagua=1&gnum=12&guaguan=2&type=2&ver=4903&longitude=116.405285&latitude=39.904989&lbs_addr_country=%E4%B8%AD%E5%9B%BD&lbs_addr_province=%E5%8C%97%E4%BA%AC&lbs_addr_city=%E5%8C%97%E4%BA%AC%E5%B8%82&keyword=${data.uin}&nf=0&of=0&ldw=${data.bkn}`
-    Connector.send(
-        'http_proxy',
-        { 'url': url, 'method': 'post', 'data': info },
-        'getMoreLoginInfo'
-    )
-    // GA：将 QQ 号 MD5 编码后用于用户识别码
-    if (Option.get('open_ga_user') == true && process.env.NODE_ENV == 'production') {
-        const userId = Md5.hashStr(data.uin)
-        app.config.globalProperties.$gtag.config({
-            user_id: userId
-        })
-    }
-    // 加载列表消息
-    Util.reloadUsers()
 }
 
-function saveUser(list: (UserFriendElem & UserGroupElem)[]) {
-    // 拼音处理
-    // 为所有项目追加拼音名称
-    const pyConfig = {
-        style: 0 
-    } as IPinyinOptions
-    list.forEach((item, index) => {
-        let py_name = ''
-        if(item.group_id) {
-            py_name = pinyin(item.group_name, pyConfig).join('')
-        } else {
-            py_name = pinyin(item.nickname, pyConfig).join('') + ',' +
-                pinyin(item.remark, pyConfig).join('')
-        }
-        list[index].py_name = py_name
-    })
-    runtimeData.userList = runtimeData.userList.concat(list)
-    // 刷新置顶列表
-    const info = runtimeData.sysConfig.top_info as { [key: string]: number[] } | null
-    if (info != null && runtimeData.onMsgList.length <= 0) {
-        const topList = info[runtimeData.loginInfo.uin]
-        if (topList !== undefined) {
-            list.forEach((item) => {
-                const id = Number(item.user_id ? item.user_id : item.group_id)
-                if (topList.indexOf(id) >= 0) {
-                    item.always_top = true
-                    runtimeData.onMsgList.push(item)
-                }
-            })
+function saveUser(msg: { [key: string]: any }) {
+    const list = getMsgData('user_list', msg, msgPath.user_list)
+    if (list != undefined) {
+
+        // 拼音处理
+        // 为所有项目追加拼音名称
+        const pyConfig = { style: 0 } as IPinyinOptions
+        list.forEach((item, index) => {
+            let py_name = ''
+            if (item.group_id) {
+                py_name = pinyin(item.group_name, pyConfig).join('')
+            } else {
+                py_name = pinyin(item.nickname, pyConfig).join('') + ',' +
+                    pinyin(item.remark, pyConfig).join('')
+            }
+            list[index].py_name = py_name
+        })
+        runtimeData.userList = runtimeData.userList.concat(list)
+        // 刷新置顶列表
+        const info = runtimeData.sysConfig.top_info as { [key: string]: number[] } | null
+        if (info != null && runtimeData.onMsgList.length <= 0) {
+            const topList = info[runtimeData.loginInfo.uin]
+            if (topList !== undefined) {
+                list.forEach((item) => {
+                    const id = Number(item.user_id ? item.user_id : item.group_id)
+                    if (topList.indexOf(id) >= 0) {
+                        item.always_top = true
+                        runtimeData.onMsgList.push(item)
+                    }
+                })
+            }
         }
     }
 }

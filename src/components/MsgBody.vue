@@ -39,7 +39,7 @@
                     <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
                     <span v-else-if="item.type == 'text'" @click="textClick" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
                     <img v-else-if="item.type == 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @load="scrollButtom" @error="imgLoadFail" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index, item.asface)" :src="item.url">
-                    <img v-else-if="item.type == 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/img/qq-face/' + item.id + '.gif')" :title="item.text">
+                    <img v-else-if="item.type == 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/img/qq-face/gif/s' + item.id + '.gif')" :title="item.text">
                     <span v-else-if="item.type == 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat_fun_menu_pic') }}：{{ item.text }} ]</span>
                     <div v-else-if="item.type == 'at'" v-show="isAtShow(data.source, item.qq)" :class="getAtClass(item.qq)">
                         <a @mouseenter="showUserInfo" :data-id="item.qq" :data-group="data.group_id">{{ getAtName(item) }}</a>
