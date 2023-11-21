@@ -406,18 +406,18 @@ export function loadHistory(info: BaseChatInfoElem) {
 }
 export function loadHistoryMessage(id: number, type: string, count = 20, echo = 'getChatHistoryFist') {
     // 加载历史消息
-    // Note: https://github.com/takayama-lily/oicq/wiki/93.%E8%A7%A3%E6%9E%90%E6%B6%88%E6%81%AFID
-    // Connector.send(
-    //     runtimeData.jsonMap.history_message._name ?? 'get_chat_history',
-    //     {
-    //         message_type: type,
-    //         group_id: type == "group" ? id : undefined,
-    //         user_id: type != "group" ? id : undefined,
-    //         message_seq: 0,
-    //         count: count
-    //     },
-    //     echo
-    // )
+    // oicq2 Note: https://github.com/takayama-lily/oicq/wiki/93.%E8%A7%A3%E6%9E%90%E6%B6%88%E6%81%AFID
+    Connector.send(
+        runtimeData.jsonMap.message_list._name ?? 'get_chat_history',
+        {
+            message_type: runtimeData.jsonMap.message_list._message_type[type],
+            group_id: type == "group" ? id : undefined,
+            user_id: type != "group" ? id : undefined,
+            message_seq: 0,
+            count: count
+        },
+        echo
+    )
     return true
 }
 

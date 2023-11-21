@@ -23,10 +23,12 @@ export function getMsgData(name: string, msg: { [key: string]: any }, map: strin
                     back.forEach((item) => {
                         const itemObj = {} as any
                         Object.keys(map._list).forEach((key: string) => {
-                            if(map._list[key].startsWith('/'))
-                                itemObj[key] = item[map._list[key].substring(1)]
-                            else
-                                itemObj[key] = jp.query(item, replaceJPValue(map._list[key]))[0]
+                            if(map._list[key] != '') {
+                                if(map._list[key].startsWith('/'))
+                                    itemObj[key] = item[map._list[key].substring(1)]
+                                else
+                                    itemObj[key] = jp.query(item, replaceJPValue(map._list[key]))[0]
+                            }
                         })
                         backList.push(itemObj)
                     })
@@ -71,6 +73,32 @@ export function getFace(id: number) {
     // eslint-disable-next-line
     try { return require('./../assets/img/qq-face/static/s' + id + '.png') } catch {}
     return false
+}
+
+/**
+ * 将一个消息体列表组装为标准消息列表便于解析
+ * @param msgList 
+ * @param map 
+ * @returns 
+ */
+export function buildMsgList(msgList: any) {
+    const path = jp.parse(runtimeData.jsonMap.message_list._basic)
+    const keys = [] as string[]
+    path.forEach((item) => {
+        if (item.expression.value != '*' && item.expression.value != '$') {
+            keys.push(item.expression.value)
+        }
+    })
+    const result = {} as any
+    keys.reduce((acc, key, index) => {
+        if (index === keys.length - 1) {
+            acc[key] = msgList
+        } else {
+            acc[key] = {}
+        }
+        return acc[key]
+    }, result)
+    return result
 }
 
 export default {

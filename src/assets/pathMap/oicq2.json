@@ -1,0 +1,9 @@
+{
+    "_name": "oicq2",
+    "version_info": "$.data",
+    "login_info": {
+        "uin": "$.data.user_id",
+        "bkn": "",
+        "nickname": "$.data.nickname"
+    }
+}

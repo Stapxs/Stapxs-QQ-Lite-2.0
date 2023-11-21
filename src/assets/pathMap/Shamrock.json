@@ -19,7 +19,29 @@
             "remark": "/user_remark"
         }
     },
-    "history_message": {
-        "_name": "get_history_msg"
-    }
+    "message_list": {
+        "_name": "get_history_msg",
+        "_basic": "$.data.messages[*]",
+        "_type": "json_with_data|$.data",
+        "_message_type": {
+            "user": "private",
+            "group": "group"
+        },
+        "_list": {
+            "time": "/time",
+            "message_type": "/message_type",
+            "post_type": "",
+            "message_id": "/message_id",
+            "sender": "/sender",
+            "message": "/message",
+            "raw_message": "/raw_message"
+        }
+    },
+    "message_info": {
+        "message_id": "$.message_id",
+        "private_id": "$.target_id",
+        "group_id": "$.group_id",
+        "sender": "$.sender.user_id"
+    },
+    "get_message": "$.data"
 }

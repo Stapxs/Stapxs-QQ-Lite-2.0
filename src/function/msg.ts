@@ -17,7 +17,7 @@ import Util from './util'
 import xss from 'xss'
 import pinyin from 'pinyin'
 
-import { getMsgData } from '@/utils/msgUtil'
+import { buildMsgList, getMsgData } from '@/utils/msgUtil'
 
 import { Md5 } from 'ts-md5'
 import { reactive, nextTick, markRaw, defineAsyncComponent } from 'vue'
@@ -30,7 +30,7 @@ import { IPinyinOptions } from 'pinyin/lib/declare'
 const logger = new Logger()
 const popInfo = new PopInfo()
 // eslint-disable-next-line
-let msgPath = require('@/assets/pathMap/default.json')
+let msgPath = require('@/assets/pathMap/oicq2.json')
 
 export function parse(str: string) {
     const msg = JSON.parse(str)
@@ -50,8 +50,8 @@ export function parse(str: string) {
                 case 'getFriendList'        : saveUser(msg); break
                 case 'getUserInfoInGroup'   : runtimeData.chatInfo.info.me_info = msg; break
                 case 'getGroupMemberList'   : saveGroupMember(msg.data); break
-                case 'getChatHistoryFist'   : saveMsgFist(msg); break
-                case 'getChatHistory'       : saveMsg(msg); break
+                case 'getChatHistoryFist'   : saveMsg(msg); break
+                case 'getChatHistory'       : saveMsg(msg, "top"); break
                 case 'getForwardMsg'        : saveForwardMsg(msg.data); break
                 case 'sendMsgBack'          : showSendedMsg(msg, echoList); break
                 case 'getRoamingStamp'      : runtimeData.stickerCache = msg.data.reverse(); break
@@ -255,69 +255,63 @@ function saveGroupMember(data: GroupMemberInfoElem[]) {
     runtimeData.chatInfo.info.group_members = back
 }
 
-function saveMsgFist(msg: any) {
-    runtimeData.messageList = []
+function saveMsg(msg: any, append = undefined as undefined | string) {
     if (msg.error !== null && (msg.error !== undefined || msg.status === 'failed')) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error | msg.retcode }))
     } else {
-        // go-cqhttp：返回的列表是倒的
-        if(runtimeData.botInfo.app_name == 'go-cqhttp') {
-            msg.data.reverse()
+        const list = getMsgData('message_list', msg, msgPath.message_list)
+        if (list != undefined) {
+            // 消息类型的特殊处理
+            switch(msgPath.message_list._type.split('|')[0]) {
+                case 'cq-code': {
+                    // 这儿会默认处理成 oicq2 的格式，所以 CQCode 消息请使用 oicq2 配置文件修改
+                    for (let i = 0; i < list.length; i++) {
+                        list[i] = Util.parseCQ(list[i])
+                    }
+                    break
+                }
+                case 'json_with_data': {
+                    // 非扁平化消息体，这儿会取 _type 后半段的 JSON Path 将结果并入 message
+                    for (let i = 0; i < list.length; i++) {
+                        for(let j = 0; j < list[i].message.length; j++) {
+                            const data = getMsgData('message_list_message', list[i].message[j], msgPath.message_list._type.split('|')[1])
+                            if(data != undefined && data.length == 1) {
+                                list[i].message[j] = Object.assign(list[i].message[j], data[0])
+                            }
+                        }
+                    }
+                }
+            }
+            // 倒序处理
+            if (msgPath.message_list._order === 'reverse') {
+                list.reverse()
+            }
+            // 检查必要字段
+            list.forEach((item: any) => {
+                if (!item.post_type) {
+                    item.post_type = 'message'
+                }
+            })
+            // 追加处理
+            if(append != undefined) {
+                // 没有更旧的消息能加载了，禁用允许加载标志
+                if (list.length < 1) {
+                    runtimeData.tags.canLoadHistory = false
+                    return
+                }
+                if(append == 'top') {
+                    list.pop()      // TODO：丢掉一条重复消息，将来可以改成自动判断
+                    runtimeData.messageList = list.concat(runtimeData.messageList)
+                } else if(append == 'bottom') {
+                    runtimeData.messageList =  runtimeData.messageList.concat(list)
+                }
+            } else {
+                runtimeData.messageList = []
+                runtimeData.messageList = list
+            }
         }
-        // 对消息进行转换
-        if (runtimeData.tags.msgType === BotMsgType.CQCode) {
-            for (let i = 0; i < msg.data.length; i++) {
-                msg.data[i] = Util.parseCQ(msg.data[i])
-            }
-        } else if(runtimeData.tags.msgType == BotMsgType.JSON_OICQ_1) {
-            for (let i = 0; i < msg.data.length; i++) {
-                msg.data[i] = Util.parseOICQ1JSON(msg.data[i])
-            }
-        }
-        // 检查必要字段
-        msg.data.forEach((item: any) => {
-            if(!item.post_type) {
-                item.post_type = 'message'
-            }
-        })
-        runtimeData.messageList = msg.data
     }
 }
-
-function saveMsg(msg: any) {
-    if (msg.error != null && msg.error !== undefined) {
-        popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error | msg.retcode }))
-    } else {
-        const items = msg.data
-        // go-cqhttp：返回的列表是倒的
-        if(runtimeData.botInfo.app_name == 'go-cqhttp') {
-            items.reverse()
-        }
-        items.pop() // 去除最后一条重复的消息，获取历史消息会返回当前消息 **以及** 之前的 N-1 条
-        if (items.length < 1) {
-            runtimeData.tags.canLoadHistory = false
-            return
-        }
-        // 对消息进行转换
-        if (runtimeData.tags.msgType === BotMsgType.CQCode) {
-            for (let i = 0; i < items.length; i++) {
-                items[i] = Util.parseCQ(items[i])
-            }
-        } else if(runtimeData.tags.msgType == BotMsgType.JSON_OICQ_1) {
-            for (let i = 0; i < msg.data.length; i++) {
-                items[i] = Util.parseOICQ1JSON(items[i])
-            }
-        }
-        // 检查必要字段
-        msg.data.forEach((item: any) => {
-            if(!item.post_type) {
-                item.post_type = 'message'
-            }
-        })
-        runtimeData.messageList = items.concat(runtimeData.messageList)
-    }
-}
-
 
 function saveForwardMsg(data: any) {
     if(data == undefined) {
@@ -357,7 +351,7 @@ function showSendedMsg(msg: any, echoList: string[]) {
         if (msg.message_id !== undefined && Option.get('send_reget') !== true) {
             // 请求消息内容
             Connector.send(
-                'get_msg',
+                runtimeData.jsonMap.get_message._name ?? 'get_msg',
                 { 'message_id': msg.message_id },
                 'getSendMsg_' + msg.message_id + '_0'
             )
@@ -369,40 +363,48 @@ function showSendedMsg(msg: any, echoList: string[]) {
     }
 }
 
-function saveSendedMsg(echoList: string[], msg: any) {
-    // TODO: 这里暂时没有考虑消息获取失败的情况（因为没有例子）
-    const msgIdInfo = Util.parseMsgId(echoList[1]);
-    if (Number(echoList[2]) <= 5) {
-        // // 防止重试过程中切换聊天
-        if(msgIdInfo.gid == runtimeData.chatInfo.show.id || msgIdInfo.uid == runtimeData.chatInfo.show.id) {
-            // oicq1：返回的消息格式兼容
-            if(msg.message_id == undefined) {
-                msg = msg.data
+function saveSendedMsg(echoList: string[], data: any) {
+    if (data.status == 'ok') {
+        const msgData = getMsgData('get_message', data, msgPath.get_message)
+        let msgInfoData = undefined
+        if (msgData) {
+            msgInfoData = getMsgData('message_info', msgData[0], msgPath.message_info)
+        }
+        if (Number(echoList[2]) <= 5 && msgData && msgInfoData) {
+            const msg = msgData[0]
+            const msgInfo = msgInfoData[0]
+            // // 防止重试过程中切换聊天
+            if (msgInfo.group_id == runtimeData.chatInfo.show.id ||
+                msgInfo.private_id == runtimeData.chatInfo.show.id) {
+                if (echoList[1] !== msgInfo.message_id.toString()) {
+                    // 返回的不是这条消息，重新请求
+                    popInfo.add(PopType.ERR,
+                        app.config.globalProperties.$t('pop_chat_get_msg_err') + ' ( ' + echoList[2] + ' )')
+                    setTimeout(() => {
+                        Connector.send(
+                            runtimeData.jsonMap.get_message._name ?? 'get_msg',
+                            { 'message_id': echoList[1] },
+                            'getSendMsg_' + echoList[1] + '_' + (Number(echoList[2]) + 1)
+                        )
+                    }, 5000)
+                } else {
+                    saveMsg(buildMsgList([msg]), 'bottom')
+                }
             }
-            // 对消息进行转换
-            if (runtimeData.tags.msgType === BotMsgType.CQCode) {
-                msg = Util.parseCQ(msg)
-            } else if(runtimeData.tags.msgType == BotMsgType.JSON_OICQ_1) {
-                msg = Util.parseOICQ1JSON(msg)
-            }
-            if (echoList[1] !== msg.message_id) {
-                console.log(msg)
-                // 返回的不是这条消息，重新请求
-                popInfo.add(PopType.ERR, 
-                    app.config.globalProperties.$t('pop_chat_get_msg_err') + ' ( ' + echoList[2] + ' )')
-                setTimeout(() => {
-                    Connector.send(
-                        'get_msg',
-                        { 'message_id': echoList[1] },
-                        'getSendMsg_' + echoList[1] + '_' + (Number(echoList[2]) + 1)
-                    )
-                }, 5000)
-            } else {
-                runtimeData.messageList.push(msg)
-            }
+        } else {
+            popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_get_msg_err_fin'))
         }
     } else {
-        popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_get_msg_err_fin'))
+        // 看起来没获取到，再试试
+        popInfo.add(PopType.ERR,
+            app.config.globalProperties.$t('pop_chat_get_msg_err') + ' ( ' + echoList[2] + ' )')
+        setTimeout(() => {
+            Connector.send(
+                runtimeData.jsonMap.get_message._name ?? 'get_msg',
+                { 'message_id': echoList[1] },
+                'getSendMsg_' + echoList[1] + '_' + (Number(echoList[2]) + 1)
+            )
+        }, 5000)
     }
 }
 
@@ -616,153 +618,139 @@ function saveMoreFileList(data: any) {
 }
 
 function newMsg(data: any) {
-    // TODO: 没有对频道的支持计划
-    if(data.detail_type == 'guild') {
-        return
-    }
-    // 对消息进行转换
-    if (runtimeData.tags.msgType === BotMsgType.CQCode) {
-        data = Util.parseCQ(data)
-    } else if (runtimeData.tags.msgType == BotMsgType.JSON_OICQ_1) {
-        data = Util.parseOICQ1JSON(data)
-    }
-    let id = data.from_id ? data.from_id : data.group_id
-    const sender = data.sender.user_id
-    // oicq1：消息格式兼容
-    if(runtimeData.botInfo.app_name == 'oicq') {
-        id = data.group_id ? data.group_id : data.user_id
-    }
-    // go-cqhttp：消息格式兼容
-    if(runtimeData.botInfo.app_name == 'go-cqhttp') {
-        if(data.post_type == 'message_sent') {
-            id = data.group_id ? data.group_id : data.target_id
-            data.post_type = 'message'
-        } else {
-            id = data.group_id ? data.group_id : data.user_id
+    // 没有对频道的支持计划
+    if (data.detail_type == 'guild') { return }
+    // 获取一些基础信息
+    const infoList = getMsgData('message_info', data, msgPath.message_info)
+    if (infoList != undefined) {
+        const info = infoList[0]
+        const id = info.private_id ?? info.group_id
+        const sender = info.sender
+
+        // 消息回调检查
+        // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复
+        if (Option.get('send_reget') !== true && sender === runtimeData.loginInfo.uin) {
+            Option.save('send_reget', true)
         }
-    }
-    // 消息回调检查
-    // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复
-    if (Option.get('send_reget') !== true && sender === runtimeData.loginInfo.uin) {
-        Option.save('send_reget', true)
-    }
-    // 显示消息
-    if (id === runtimeData.chatInfo.show.id) {
-        runtimeData.messageList.push(data)
-        // 抽个签
-        const num = Util.randomNum(0, 10000)
-        if (num >= 4500 && num <= 5500) {
-            new Logger().add(LogType.INFO, num.toString())
-        }
-        if (num === 5000) {
-            const popInfo = {
-                html: qed,
-                button: [
-                    {
-                        text: '确定(O)',
-                        fun: () => { runtimeData.popBoxList.shift() }
-                    }
-                ]
+        // 显示消息
+        if (id === runtimeData.chatInfo.show.id) {
+            // 保存消息
+            saveMsg(buildMsgList([data]), 'bottom')
+            // 抽个签
+            const num = Util.randomNum(0, 10000)
+            if (num >= 4500 && num <= 5500) {
+                new Logger().add(LogType.INFO, num.toString())
             }
-            runtimeData.popBoxList.push(popInfo)
-        }
-    }
-    // 刷新消息列表
-    // PS：在消息列表内的永远会刷新，不需要被提及
-    const get = runtimeData.onMsgList.filter((item, index) => {
-        if(Number(id) === item.user_id || Number(id) === item.group_id) {
-            runtimeData.onMsgList[index].message_id = data.message_id
-            if(data.message_type === 'group') {
-                const name = (data.sender.card && data.sender.card !== '') ? data.sender.card : data.sender.nickname
-                runtimeData.onMsgList[index].raw_msg = name + ': ' + data.raw_message
-            } else {
-                runtimeData.onMsgList[index].raw_msg = data.raw_message
+            if (num === 5000) {
+                const popInfo = {
+                    html: qed,
+                    button: [
+                        {
+                            text: '确定(O)',
+                            fun: () => { runtimeData.popBoxList.shift() }
+                        }
+                    ]
+                }
+                runtimeData.popBoxList.push(popInfo)
             }
-            runtimeData.onMsgList[index].time = Number(data.time) * 1000
-            return true
         }
-        return false
-    })
-    // 对于其他不在消息里标记 atme、atall 的处理
-    if(data.atme == undefined || data.atall == undefined) {
-        data.message.forEach((item: any) => {
-            if(item.type == 'at' && item.qq == runtimeData.loginInfo.uin) {
-                data.atme = true
+        // 刷新消息列表
+        // PS：在消息列表内的永远会刷新，不需要被提及
+        const get = runtimeData.onMsgList.filter((item, index) => {
+            if (Number(id) === item.user_id || Number(id) === item.group_id) {
+                runtimeData.onMsgList[index].message_id = data.message_id
+                if (data.message_type === 'group') {
+                    const name = (data.sender.card && data.sender.card !== '') ? data.sender.card : data.sender.nickname
+                    runtimeData.onMsgList[index].raw_msg = name + ': ' + data.raw_message
+                } else {
+                    runtimeData.onMsgList[index].raw_msg = data.raw_message
+                }
+                runtimeData.onMsgList[index].time = Number(data.time) * 1000
+                return true
             }
+            return false
         })
-    }
-    // 临时会话名字的特殊处理
-    if (data.sub_type === 'group') {
-        data.sender.nickname = data.sender.user_id
-    }
-    // (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息) 这些情况需要进行新消息处理
-    if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
-        // (发送者没有被打开 || 窗口被最小化) 这些情况需要进行消息通知
-        if (id !== runtimeData.chatInfo.show.id || document.hidden) {
-            // 检查通知权限，老旧浏览器不支持这个功能
-            if (Notification.permission === 'default') {
-                Notification.requestPermission(() => {
+        // 对于其他不在消息里标记 atme、atall 的处理
+        if (data.atme == undefined || data.atall == undefined) {
+            data.message.forEach((item: any) => {
+                if (item.type == 'at' && item.qq == runtimeData.loginInfo.uin) {
+                    data.atme = true
+                }
+            })
+        }
+        // 临时会话名字的特殊处理
+        if (data.sub_type === 'group') {
+            data.sender.nickname = data.sender.user_id
+        }
+        // (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息) 这些情况需要进行新消息处理
+        if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
+            // (发送者没有被打开 || 窗口被最小化) 这些情况需要进行消息通知
+            if (id !== runtimeData.chatInfo.show.id || document.hidden) {
+                // 检查通知权限，老旧浏览器不支持这个功能
+                if (Notification.permission === 'default') {
+                    Notification.requestPermission(() => {
+                        sendNotice(data)
+                    })
+                } else if (Notification.permission !== 'denied') {
                     sendNotice(data)
-                })
-            } else if (Notification.permission !== 'denied') {
-                sendNotice(data)
-            }
-            // electron：在 windows 下对任务栏图标进行闪烁
-            if(runtimeData.tags.isElectron) {
-                const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
-                const reader = electron ? electron.ipcRenderer : null
-                if (reader) {
-                    reader.send('win:flashWindow')
+                }
+                // electron：在 windows 下对任务栏图标进行闪烁
+                if (runtimeData.tags.isElectron) {
+                    const electron = (process.env.IS_ELECTRON as any) === true ? window.require('electron') : null
+                    const reader = electron ? electron.ipcRenderer : null
+                    if (reader) {
+                        reader.send('win:flashWindow')
+                    }
                 }
             }
-        }
-        // 如果发送者不在消息列表里，将它添加到消息列表里
-        if (get.length !== 1) {
-            // 如果消息子类是 group，那么是临时消息，需要进行特殊处理
-            if (data.sub_type === 'group') {
-                // 手动创建一个用户信息，因为临时消息的用户不在用户列表里
-                const user = {
-                    user_id: data.user_id,
-                    // 因为临时消息没有返回昵称
-                    nickname: app.config.globalProperties.$t('chat_temp'),
-                    remark: data.sender.user_id,
-                    new_msg: true,
-                    message_id: data.message_id,
-                    raw_msg: data.raw_message,
-                    time: data.time,
-                    group_id: data.sender.group_id,
-                    group_name: ''
-                } as UserFriendElem & UserGroupElem
-                runtimeData.onMsgList.push(user)
-            } else {
-                const getList = runtimeData.userList.filter((item) => { return item.user_id === id || item.group_id === id })
-                if (getList.length === 1) {
-                    runtimeData.onMsgList.push(getList[0])
+            // 如果发送者不在消息列表里，将它添加到消息列表里
+            if (get.length !== 1) {
+                // 如果消息子类是 group，那么是临时消息，需要进行特殊处理
+                if (data.sub_type === 'group') {
+                    // 手动创建一个用户信息，因为临时消息的用户不在用户列表里
+                    const user = {
+                        user_id: data.user_id,
+                        // 因为临时消息没有返回昵称
+                        nickname: app.config.globalProperties.$t('chat_temp'),
+                        remark: data.sender.user_id,
+                        new_msg: true,
+                        message_id: data.message_id,
+                        raw_msg: data.raw_message,
+                        time: data.time,
+                        group_id: data.sender.group_id,
+                        group_name: ''
+                    } as UserFriendElem & UserGroupElem
+                    runtimeData.onMsgList.push(user)
+                } else {
+                    const getList = runtimeData.userList.filter((item) => { return item.user_id === id || item.group_id === id })
+                    if (getList.length === 1) {
+                        runtimeData.onMsgList.push(getList[0])
+                    }
                 }
             }
+
+            runtimeData.onMsgList.forEach((item) => {
+                // 刷新新消息标签
+                if (id !== runtimeData.chatInfo.show.id && (id == item.group_id || id == item.user_id)) {
+                    item.new_msg = true
+                }
+            })
+            // 重新排序列表
+            const newList = [] as (UserFriendElem & UserGroupElem)[]
+            let topNum = 1
+            runtimeData.onMsgList.forEach((item) => {
+                // 排序操作
+                if (item.always_top === true) {
+                    newList.unshift(item)
+                    topNum++
+                } else if (item.new_msg === true) {
+                    newList.splice(topNum - 1, 0, item)
+                } else {
+                    newList.push(item)
+                }
+            })
+            runtimeData.onMsgList = newList
         }
-        
-        runtimeData.onMsgList.forEach((item) => {
-            // 刷新新消息标签
-            if (id !== runtimeData.chatInfo.show.id && (id == item.group_id || id == item.user_id)) {
-                item.new_msg = true
-            }
-        })
-        // 重新排序列表
-        const newList = [] as (UserFriendElem & UserGroupElem)[]
-        let topNum = 1
-        runtimeData.onMsgList.forEach((item) => {
-            // 排序操作
-            if (item.always_top === true) {
-                newList.unshift(item)
-                topNum++
-            } else if (item.new_msg === true) {
-                newList.splice(topNum - 1, 0, item)
-            } else {
-                newList.push(item)
-            }
-        })
-        runtimeData.onMsgList = newList
     }
 }
 
