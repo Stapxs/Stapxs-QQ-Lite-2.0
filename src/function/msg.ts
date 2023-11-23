@@ -46,8 +46,8 @@ export function parse(str: string) {
                 case 'getVersionInfo'       : saveBotInfo(msg); break
                 case 'getLoginInfo'         : saveLoginInfo(msg); break
                 case 'getMoreLoginInfo'     : runtimeData.loginInfo.info = msg.data.data.result.buddy.info_list[0]; break
-                case 'getGroupList'         : saveUser(msg); break
-                case 'getFriendList'        : saveUser(msg); break
+                case 'getGroupList'         : saveUser(msg, 'group'); break
+                case 'getFriendList'        : saveUser(msg, 'friend'); break
                 case 'getUserInfoInGroup'   : runtimeData.chatInfo.info.me_info = msg; break
                 case 'getGroupMemberList'   : saveGroupMember(msg.data); break
                 case 'getChatHistoryFist'   : saveMsg(msg); break
@@ -82,28 +82,16 @@ export function parse(str: string) {
             // go-cqhttp：自动发送的消息回调和其他消息有区分
             case 'message_sent'         :
             case 'message'              : newMsg(msg); break
-            case 'notice'               : {
-                if(runtimeData.botInfo.app_name == 'go-cqhttp') {
-                    // go-cqhttp：通知消息子类别是 notice_type
-                    switch (msg.notice_type) {
-                        case 'group_recall'     : msg.notice_type = 'group'
-                        // eslint-disable-next-line
-                        case 'friend_recall'    : msg.notice_type = 'friend'
-                        // eslint-disable-next-line
-                        case 'recall'           : revokeMsg(msg); break
-                    }
-                    break
-                } else {
-                    switch (msg.notice_type) {
-                        case 'friend'           : friendNotice(msg); break
-                    }
-                    switch (msg.sub_type) {
-                        case 'recall'           : revokeMsg(msg); break
-                    }
-                    break
-                }
-            }
             case 'request'              : addSystemNotice(msg); break
+            case 'notice'               : {
+                switch (msg.notice_type) {
+                    case 'friend': friendNotice(msg); break
+                }
+                switch (msg.sub_type) {
+                    case 'recall': revokeMsg(msg); break
+                }
+                break
+            }
         }
     }
 }
@@ -185,14 +173,13 @@ function saveLoginInfo(msg: { [key: string]: any }) {
     }
 }
 
-function saveUser(msg: { [key: string]: any }) {
+function saveUser(msg: { [key: string]: any }, type: string) {
     const list = getMsgData('user_list', msg, msgPath.user_list)
     if (list != undefined) {
-
-        // 拼音处理
-        // 为所有项目追加拼音名称
         const pyConfig = { style: 0 } as IPinyinOptions
+        const groupNames = {} as {[key: number]: string}
         list.forEach((item, index) => {
+            // 为所有项目追加拼音名称
             let py_name = ''
             if (item.group_id) {
                 py_name = pinyin(item.group_name, pyConfig).join('')
@@ -201,7 +188,19 @@ function saveUser(msg: { [key: string]: any }) {
                     pinyin(item.remark, pyConfig).join('')
             }
             list[index].py_name = py_name
+            // 构建分类
+            if(type == 'friend') {
+                if(item.class_id != undefined && item.class_name) {
+                    groupNames[item.class_id] = item.class_name
+                }
+            } else {
+                delete item.class_id
+                delete item.class_name
+            }
         })
+        if(Object.keys(groupNames).length > 0) {
+            saveClassInfo(Array.from(Object.entries(groupNames), ([key, value]) => ({[key]: value})))
+        }
         runtimeData.userList = runtimeData.userList.concat(list)
         // 刷新置顶列表
         const info = runtimeData.sysConfig.top_info as { [key: string]: number[] } | null
@@ -220,23 +219,29 @@ function saveUser(msg: { [key: string]: any }) {
     }
 }
 
-function saveClassInfo(list: any) {
-    // 对 classes 列表按拼音重新排序
-    const names = [] as string[]
-    list.data.forEach((item: any) => {
-        names.push(Object.values(item)[0] as string)
-    })
-    const sortedData = names.sort(pinyin.compare)
+function saveClassInfo(data: any) {
+    const list = getMsgData('class_list', data, msgPath.class_list)
+    if (list != undefined && (data.status == 'ok' || data.status == undefined)) {
 
-    const back = [] as any[]
-    sortedData.forEach((name) => {
-        list.data.forEach((item: any) => {
-            if((Object.values(item)[0] as string) == name)
-                back.push(item)
+        console.log(list)
+        // 对 classes 列表按拼音重新排序
+        const names = [] as string[]
+        list.forEach((item: any) => {
+            console.log(item)
+            names.push(Object.values(item)[0] as string)
         })
-    })
+        const sortedData = names.sort(pinyin.compare)
 
-    runtimeData.tags.classes = back
+        const back = [] as any[]
+        sortedData.forEach((name) => {
+            list.forEach((item: any) => {
+                if ((Object.values(item)[0] as string) == name)
+                    back.push(item)
+            })
+        })
+
+        runtimeData.tags.classes = back
+    }
 }
 
 function saveGroupMember(data: GroupMemberInfoElem[]) {

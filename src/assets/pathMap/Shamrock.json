@@ -14,11 +14,14 @@
             "member_count": "/member_count",
             "admin_flag": "$.admins[?(@ == '<uin>')]",
 
+            "class_id": "/group_id",
+            "class_name": "/group_name",
             "user_id": "/user_id",
             "nickname": "/user_name",
             "remark": "/user_remark"
         }
     },
+    "class_list": "$[*]",
     "message_list": {
         "_name": "get_history_msg",
         "_basic": "$.data.messages[*]",

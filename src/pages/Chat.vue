@@ -59,7 +59,7 @@
                     <NoticeBody v-if="isShowTime((list[index - 1] ? list[index - 1].time : undefined), msg.time)" :key="'notice-time-' + index" :data="{sub_type: 'time', time: msg.time}"></NoticeBody>
                     <!-- 消息体 -->
                     <MsgBody
-                        v-if="msg.post_type === 'message'"
+                        v-if="msg.post_type === 'message' && msg.message.length > 0"
                         :key="msg.message_id"
                         :data="msg"
                         @scrollToMsg="scrollToMsg"
