@@ -61,9 +61,8 @@ function replaceJPValue(jpStr: string) {
 
 /**
  * 获取表情图片，优先返回 gif，不存在的返回 png
- * @param id 
- * @param getShow 
- * @returns 
+ * @param id 表情编号
+ * @returns 表情图片
  */
 export function getFace(id: number) {
     // eslint-disable-next-line

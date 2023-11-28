@@ -32,6 +32,8 @@
 </template>
 
 <script lang="ts">
+import app from '@/main'
+
 import { defineComponent } from 'vue'
 import { MsgBodyFuns as ViewFuns } from '@/function/model/msg-body'
 
@@ -52,28 +54,32 @@ export default defineComponent({
          * @param id 消息 ID
          */
         buildJSON(data: any, id: string) {
-            const info = data.app
-            const div = document.createElement('div')
-            // 构建 HTML
-            const html = '<p>' + info.title + '</p>' +
-                '<span>' + info.desc + '</span>' +
-                '<img style="' + (info.preview === undefined ? 'display:none' : '') + '" src="' + info.preview + '">' +
-                (info.name ? '<div><img src="' + info.icon + '"><span>' + info.name + '</span></div>' : '')
+            try {
+                const info = data.app
+                const div = document.createElement('div')
+                // 构建 HTML
+                const html = '<p>' + info.title + '</p>' +
+                    '<span>' + info.desc + '</span>' +
+                    '<img style="' + (info.preview === undefined ? 'display:none' : '') + '" src="' + info.preview + '">' +
+                    (info.name ? '<div><img src="' + info.icon + '"><span>' + info.name + '</span></div>' : '')
 
-            div.className = 'msg-json'
-            div.id = 'json-' + id
-            div.dataset.url = info.url
-            div.dataset.urlOpenType = info.urlOpenType
-            div.innerHTML = html
-            // 附加信息
-            if(Object.keys(data.append).length > 0) {
-                // 将 append 里的信息附加到 div 上
-                for(const key in data.append) {
-                    div.dataset[key] = data.append[key]
+                div.className = 'msg-json'
+                div.id = 'json-' + id
+                div.dataset.url = info.url
+                div.dataset.urlOpenType = info.urlOpenType
+                div.innerHTML = html
+                // 附加信息
+                if (Object.keys(data.append).length > 0) {
+                    // 将 append 里的信息附加到 div 上
+                    for (const key in data.append) {
+                        div.dataset[key] = data.append[key]
+                    }
                 }
+                // 返回
+                return div.outerHTML
+            } catch (ex) {
+                return '<span v-else class="msg-unknown">( ' + app.config.globalProperties.$t('chat_show_msg_error') + ': json )</span>'
             }
-            // 返回
-            return div.outerHTML
         },
 
         /**

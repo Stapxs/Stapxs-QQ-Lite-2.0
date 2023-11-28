@@ -659,7 +659,7 @@ export default defineComponent({
                                 }
                             })
                         }
-                        if (notice.version == 2 &&noticeShow.indexOf((notice.id).toString()) < 0 && isShowInDate) {
+                        if (notice.version == 2 && noticeShow.indexOf((notice.id).toString()) < 0 && isShowInDate) {
                             // 加载公告弹窗列表
                             for (let i = 0; i < notice.pops.length; i++) {
                                 // 添加弹窗

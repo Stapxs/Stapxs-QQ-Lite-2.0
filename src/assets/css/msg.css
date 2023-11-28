@@ -150,6 +150,16 @@
     margin: -5px 2px 0 2px;
     /* image-rendering: pixelated; */
 }
+.msg-face-svg {
+    fill: var(--color-font-1);
+    margin: -5px 2px -3px 2px;
+    height: 1.2rem;
+    width: 1.2rem;
+    opacity: 0.7;
+}
+.msg-face-svg.me {
+    fill: var(--color-font-1-r);
+}
 
 .msg-unknow {
     color: var(--color-font-2) !important;

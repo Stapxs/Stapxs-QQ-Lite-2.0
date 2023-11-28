@@ -630,11 +630,12 @@ function newMsg(data: any) {
         const id = info.private_id ?? info.group_id
         const sender = info.sender
 
+        // TODO：有点 BUG 但是暂时不知道为什么
         // 消息回调检查
         // PS：如果在新消息中获取到了自己的消息，则自动打开“停止消息回调”设置防止发送的消息重复
-        if (Option.get('send_reget') !== true && sender === runtimeData.loginInfo.uin) {
-            Option.save('send_reget', true)
-        }
+        // if (Option.get('send_reget') !== true && sender === runtimeData.loginInfo.uin) {
+        //     Option.save('send_reget', true)
+        // }
         // 显示消息
         if (id === runtimeData.chatInfo.show.id) {
             // 保存消息

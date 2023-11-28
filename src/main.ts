@@ -28,11 +28,11 @@ import zh from './assets/l10n/zh-CN.json'
 const messages = { 'zh-CN': zh }
 // 初始化 i18n
 export const i18n = createI18n({
-  legacy: false,
-  locale: 'zh-CN',
-  fallbackLocale: 'zh-CN',
-  silentFallbackWarn: true,
-  messages
+    legacy: false,
+    locale: 'zh-CN',
+    fallbackLocale: 'zh-CN',
+    silentFallbackWarn: true,
+    messages
 })
 
 // 创建 App

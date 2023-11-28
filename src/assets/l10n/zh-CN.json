@@ -295,5 +295,6 @@
   "botinfo_bot_info": "后端信息",
   "botinfo_bot_info_name": "后端名称",
   "botinfo_bot_info_version": "后端版本",
-  "sw_updated_1": "应用已更新，刷新生效。"
+  "sw_updated_1": "应用已更新，刷新生效。",
+  "chat_show_msg_error": "解析消息错误"
 }

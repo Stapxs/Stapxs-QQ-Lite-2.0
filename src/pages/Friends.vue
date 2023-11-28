@@ -82,10 +82,14 @@
                     </div>
                 </template>
                 <!-- 搜索用的 -->
-                <FriendBody v-for="item in runtimeData.showList.length > 0 ? runtimeData.showList : []"
-                    :key="'fb-' + (item.user_id ? item.user_id : item.group_id)" :data="item"
-                    @click="userClick(item, $event)">
-                </FriendBody>
+                <div v-else class="list">
+                    <div>
+                        <FriendBody v-for="item in runtimeData.showList"
+                            :key="'fb-' + (item.user_id ? item.user_id : item.group_id)" :data="item"
+                            @click="userClick(item, $event)">
+                        </FriendBody>
+                    </div>
+                </div>
             </div>
         </div>
         <div :class="'friend-list-space' + (runtimeData.tags.openSideBar ? ' open' : '')">
@@ -249,6 +253,9 @@ export default defineComponent({
 }
 
 @media (max-width: 700px) {
+    .exp-header:not(.open) {
+        padding: 10px 5px;
+    }
     .exp-header:not(.open) > span {
         display: none;
     }

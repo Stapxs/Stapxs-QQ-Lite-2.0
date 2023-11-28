@@ -39,7 +39,10 @@
                     <span v-else-if="isDebugMsg" class="msg-text">{{ item }}</span>
                     <span v-else-if="item.type == 'text'" @click="textClick" v-show="item.text !== ''" class="msg-text" v-html="parseText(item.text)"></span>
                     <img v-else-if="item.type == 'image'" :title="$t('chat_view_pic')" :alt="$t('chat_group_pic')" @load="scrollButtom" @error="imgLoadFail" @click="imgClick(data.message_id)" :class="imgStyle(data.message.length, index, item.asface)" :src="item.url">
-                    <img v-else-if="item.type == 'face'" :alt="item.text" class="msg-face" :src="require('./../assets/img/qq-face/gif/s' + item.id + '.gif')" :title="item.text">
+                    <template v-else-if="item.type == 'face'">
+                        <img v-if="getFace(item.id)" :alt="item.text" class="msg-face" :src="getFace(item.id)" :title="item.text">
+                        <svg v-else :class="'msg-face-svg' + (isMe ? ' me': '')" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-v-658eb408=""><path d="M0 256C0 114.6 114.6 0 256 0C397.4 0 512 114.6 512 256C512 397.4 397.4 512 256 512C114.6 512 0 397.4 0 256zM256 432C332.1 432 396.2 382 415.2 314.1C419.1 300.4 407.8 288 393.6 288H118.4C104.2 288 92.92 300.4 96.76 314.1C115.8 382 179.9 432 256 432V432zM176.4 160C158.7 160 144.4 174.3 144.4 192C144.4 209.7 158.7 224 176.4 224C194 224 208.4 209.7 208.4 192C208.4 174.3 194 160 176.4 160zM336.4 224C354 224 368.4 209.7 368.4 192C368.4 174.3 354 160 336.4 160C318.7 160 304.4 174.3 304.4 192C304.4 209.7 318.7 224 336.4 224z" data-v-658eb408=""></path></svg>
+                    </template>
                     <span v-else-if="item.type == 'bface'" style="font-style: italic;opacity: 0.7;">[ {{ $t('chat_fun_menu_pic') }}：{{ item.text }} ]</span>
                     <div v-else-if="item.type == 'at'" v-show="isAtShow(data.source, item.qq)" :class="getAtClass(item.qq)">
                         <a @mouseenter="showUserInfo" :data-id="item.qq" :data-group="data.group_id">{{ getAtName(item) }}</a>
@@ -86,11 +89,10 @@
                                 d="M8.31 189.9l176-151.1c15.41-13.3 39.69-2.509 39.69 18.16v80.05C384.6 137.9 512 170.1 512 322.3c0 61.44-39.59 122.3-83.34 154.1c-13.66 9.938-33.09-2.531-28.06-18.62c45.34-145-21.5-183.5-176.6-185.8v87.92c0 20.7-24.31 31.45-39.69 18.16l-176-151.1C-2.753 216.6-2.784 199.4 8.31 189.9z">
                             </path>
                         </svg>
-                        <a class="msg-unknown" style="cursor: pointer;"> {{ getRepMsg(item.id) ?? $t('chat_jump_reply') }} </a>
+                        <a :class="getRepMsg(item.id) ? '' : 'msg-unknown'" style="cursor: pointer;"> {{ getRepMsg(item.id) ?? $t('chat_jump_reply') }} </a>
                     </div>
 
-                    <span v-else class="msg-unknown">{{ '( ' + $t('chat_unsupported_msg') + ': ' + item.type + ' )'
-                    }}</span>
+                    <span v-else class="msg-unknown">{{ '( ' + $t('chat_unsupported_msg') + ': ' + item.type + ' )' }}</span>
                 </div>
                 <!-- 链接预览框 -->
                 <div :class="'msg-link-view ' + linkViewStyle"
@@ -126,6 +128,7 @@ import { runtimeData } from '@/function/msg'
 import { Logger, PopInfo, PopType } from '@/function/base'
 import { StringifyOptions } from 'querystring'
 import { getMsgRawTxt } from '@/function/util'
+import { getFace } from '@/utils/msgUtil'
 
 export default defineComponent({
     name: 'MsgBody',
@@ -133,6 +136,7 @@ export default defineComponent({
     components: { CardMessage },
     data () {
         return {
+            getFace: getFace,
             getSizeFromBytes: Util.getSizeFromBytes,
             isMe: false,
             isDebugMsg: Option.get('debug_msg'),
@@ -277,7 +281,7 @@ export default defineComponent({
             svg.style.opacity = '0.8'
             svg.style.fill = 'var(--color-main)'
             if(this.isMe) {
-            svg.style.fill = 'var(--color-font-r)'
+                svg.style.fill = 'var(--color-font-r)'
             }
             parent.appendChild(svg)
             // 新建 span

@@ -29,7 +29,7 @@
                     <span>{{ $t('option_view_language') }}</span>
                     <span>{{ $t('option_view_language_tip') }}</span>
                 </div>
-                <select @change="save($event); gaLanguage($event)" name="language"
+                <select @change="save($event); gaLanguage($event)" name="language" title="language"
                     v-model="runtimeData.sysConfig.language">
                     <option v-for="item in languages" :value="item.value" :key="item.value">{{ item.name }}</option>
                 </select>

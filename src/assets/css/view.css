@@ -329,6 +329,7 @@ html, body {
     align-items: center;
     margin-right: 10px;
     border-radius: 7px;
+    text-wrap: nowrap;
     padding: 0 20px;
     font-size: 1rem;
     display: flex;
@@ -364,7 +365,7 @@ html, body {
     flex: 1;
 }
 .friend-list > div:last-child {
-    width: calc(100% - 10px);
+    width: calc(100% - 5px);
     padding: 0 7px 0 5px;
     -webkit-box-flex: 1;
     overflow-y: scroll;
@@ -555,6 +556,7 @@ html, body {
     min-width: 100%;
 
     -webkit-appearance: none;
+    appearance: none;
 }
 .ss-range input::-webkit-slider-thumb,
 .ss-range input::-moz-range-thumb {
@@ -1082,8 +1084,8 @@ html, body {
     .friend-body {
         background: transparent !important;
         justify-content: center;
-        margin: 0 5px 0 0;
         padding: 10px 0;
+        margin: 0;
     }
     .friend-body > div {
         display: none;

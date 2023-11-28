@@ -43,76 +43,80 @@ export class MsgBodyFuns {
      * @returns 处理完成的 HTML 代码
      */
     static buildXML(xml: string, id: string, msgid: string) {
-        // <msg> 标签内的为本体
-        let item = xml.substring(xml.indexOf('<item'), xml.indexOf('</msg>'))
-        // 尝试转换标签为 html
-        // item = item.replaceAll('/>', '>')
-        item = item.replaceAll('item', 'div') // item
-        item = item.replaceAll('<div', '<div class="msg-xml"')
-        item = item.replaceAll('title', 'p') // title
-        item = item.replaceAll('summary', 'a') // summary
-        item = item.replaceAll('<a', '<a class="msg-xml-summary"')
-        item = item.replaceAll('<picture', '<img class="msg-xml-img"') // picture
-        // 将不正确的参数改为 dataset
-        item = item.replaceAll('size=', 'data-size=')
-        item = item.replaceAll('linespace=', 'data-linespace=')
-        item = item.replaceAll('cover=', 'src=')
-        // 处理出处标签
-        item = item.replace('source name=', 'source data-name=')
-        // 处理错误的 style 位置
-        const div = document.createElement('div')
-        div.id = 'xml-' + msgid
-        div.dataset.id = id
-        div.innerHTML = item
-        for (let i = 0; i < div.children[0].children.length; i++) {
-            switch (div.children[0].children[i].nodeName) {
-                case 'P': {
-                    const pBody = div.children[0].children[i] as HTMLParagraphElement
-                    pBody.style.fontSize = (Number(pBody.dataset.size) / 30).toString() + 'rem'
-                    pBody.style.marginBottom = Number(pBody.dataset.size) / 5 + 'px'
-                    break
-                }
-            }
-        }
-        // 解析 msg 消息体
-        let msgHeader = xml.substring(xml.indexOf('<msg'), xml.indexOf('<item')) + '</msg>'
-        msgHeader = msgHeader.replace('msg', 'div')
-        msgHeader = msgHeader.replace('m_resid=', 'data-resid=')
-        msgHeader = msgHeader.replace('url=', 'data-url=')
-        const header = document.createElement('div')
-        header.innerHTML = msgHeader
-        // 处理特殊的出处
-        let sourceBody = undefined
-        for (let i = 0; i < div.children.length; i++) {
-            if (div.children[i].nodeName === 'SOURCE') {
-                sourceBody = div.children[i] as HTMLElement
-            }
-        }
-        if (sourceBody !== undefined) {
-            let source = sourceBody.dataset.name
-            if(source) {
-                if(source.indexOf('聊天记录') >= 0) source = '聊天记录'
-                switch (source) {
-                    case '聊天记录': {
-                        // 合并转发消息
-                        div.dataset.type = 'forward'
-                        div.dataset.id = (header.children[0] as HTMLElement).dataset.resid
-                        div.style.cursor = 'pointer'
+        try {
+            // <msg> 标签内的为本体
+            let item = xml.substring(xml.indexOf('<item'), xml.indexOf('</msg>'))
+            // 尝试转换标签为 html
+            // item = item.replaceAll('/>', '>')
+            item = item.replaceAll('item', 'div') // item
+            item = item.replaceAll('<div', '<div class="msg-xml"')
+            item = item.replaceAll('title', 'p') // title
+            item = item.replaceAll('summary', 'a') // summary
+            item = item.replaceAll('<a', '<a class="msg-xml-summary"')
+            item = item.replaceAll('<picture', '<img class="msg-xml-img"') // picture
+            // 将不正确的参数改为 dataset
+            item = item.replaceAll('size=', 'data-size=')
+            item = item.replaceAll('linespace=', 'data-linespace=')
+            item = item.replaceAll('cover=', 'src=')
+            // 处理出处标签
+            item = item.replace('source name=', 'source data-name=')
+            // 处理错误的 style 位置
+            const div = document.createElement('div')
+            div.id = 'xml-' + msgid
+            div.dataset.id = id
+            div.innerHTML = item
+            for (let i = 0; i < div.children[0].children.length; i++) {
+                switch (div.children[0].children[i].nodeName) {
+                    case 'P': {
+                        const pBody = div.children[0].children[i] as HTMLParagraphElement
+                        pBody.style.fontSize = (Number(pBody.dataset.size) / 30).toString() + 'rem'
+                        pBody.style.marginBottom = Number(pBody.dataset.size) / 5 + 'px'
                         break
                     }
-                    case '群投票': {
-                        // 群投票
-                        return '<a class="msg-unknow">（' + app.config.globalProperties.$t('chat_xml_unsupport') + '：' + source + '）</a>'
+                }
+            }
+            // 解析 msg 消息体
+            let msgHeader = xml.substring(xml.indexOf('<msg'), xml.indexOf('<item')) + '</msg>'
+            msgHeader = msgHeader.replace('msg', 'div')
+            msgHeader = msgHeader.replace('m_resid=', 'data-resid=')
+            msgHeader = msgHeader.replace('url=', 'data-url=')
+            const header = document.createElement('div')
+            header.innerHTML = msgHeader
+            // 处理特殊的出处
+            let sourceBody = undefined
+            for (let i = 0; i < div.children.length; i++) {
+                if (div.children[i].nodeName === 'SOURCE') {
+                    sourceBody = div.children[i] as HTMLElement
+                }
+            }
+            if (sourceBody !== undefined) {
+                let source = sourceBody.dataset.name
+                if (source) {
+                    if (source.indexOf('聊天记录') >= 0) source = '聊天记录'
+                    switch (source) {
+                        case '聊天记录': {
+                            // 合并转发消息
+                            div.dataset.type = 'forward'
+                            div.dataset.id = (header.children[0] as HTMLElement).dataset.resid
+                            div.style.cursor = 'pointer'
+                            break
+                        }
+                        case '群投票': {
+                            // 群投票
+                            return '<a class="msg-unknow">（' + app.config.globalProperties.$t('chat_xml_unsupport') + '：' + source + '）</a>'
+                        }
                     }
                 }
             }
+            // 附带链接的 xml 消息处理
+            if ((header.children[0] as HTMLElement).dataset.url !== undefined) {
+                div.dataset.url = (header.children[0] as HTMLElement).dataset.url
+                div.style.cursor = 'pointer'
+            }
+            return div.outerHTML
+        } catch (ex) {
+            return '<span v-else class="msg-unknown">( ' + app.config.globalProperties.$t('chat_show_msg_error') + ': xml )</span>'
         }
-        // 附带链接的 xml 消息处理
-        if ((header.children[0] as HTMLElement).dataset.url !== undefined) {
-            div.dataset.url = (header.children[0] as HTMLElement).dataset.url
-            div.style.cursor = 'pointer'
-        }
-        return div.outerHTML
     }
 
     /**

@@ -18,7 +18,7 @@
                     <span>{{ $t('option_dev_log_level') }}</span>
                     <span>{{ $t('option_dev_log_level_tip') }}</span>
                 </div>
-                <select @change="save" name="log_level" v-model="runtimeData.sysConfig.log_level">
+                <select @change="save" name="log_level" title="log_level" v-model="runtimeData.sysConfig.log_level">
                     <option value="err">{{ $t('option_dev_log_level_err') }}</option>
                     <option value="debug">{{ $t('option_dev_log_level_debug') }}</option>
                     <option value="info">{{ $t('option_dev_log_level_info') }}</option>
@@ -84,7 +84,7 @@
                     <span>{{ $t('option_dev_msg_type') }}</span>
                     <span>{{ $t('option_dev_msg_type_tip') }}</span>
                 </div>
-                <select @change="save" name="msg_type" v-model="runtimeData.tags.msgType">
+                <select @change="save" name="msg_type" title="msg_type" v-model="runtimeData.tags.msgType">
                     <option value="">{{ $t('option_dev_msg_type_auto') }}</option>
                     <option v-for="item in BotMsgType" v-show="(typeof item == 'number')" :value="item" :key="item">{{
                         BotMsgType[item] }}</option>
