@@ -193,6 +193,7 @@ function saveUser(msg: { [key: string]: any }, type: string) {
                 if(item.class_id != undefined && item.class_name) {
                     groupNames[item.class_id] = item.class_name
                 }
+                delete item.group_name
             } else {
                 delete item.class_id
                 delete item.class_name
@@ -222,12 +223,9 @@ function saveUser(msg: { [key: string]: any }, type: string) {
 function saveClassInfo(data: any) {
     const list = getMsgData('class_list', data, msgPath.class_list)
     if (list != undefined && (data.status == 'ok' || data.status == undefined)) {
-
-        console.log(list)
         // 对 classes 列表按拼音重新排序
         const names = [] as string[]
         list.forEach((item: any) => {
-            console.log(item)
             names.push(Object.values(item)[0] as string)
         })
         const sortedData = names.sort(pinyin.compare)
@@ -644,7 +642,7 @@ function newMsg(data: any) {
             // 抽个签
             const num = Util.randomNum(0, 10000)
             if (num >= 4500 && num <= 5500) {
-                new Logger().add(LogType.INFO, num.toString())
+                new Logger().add(LogType.INFO, num.toString() + '，这只是个神秘的数字...')
             }
             if (num === 5000) {
                 const popInfo = {

@@ -141,7 +141,7 @@
                             d="M8.31 189.9l176-151.1c15.41-13.3 39.69-2.509 39.69 18.16v80.05C384.6 137.9 512 170.1 512 322.3c0 61.44-39.59 122.3-83.34 154.1c-13.66 9.938-33.09-2.531-28.06-18.62c45.34-145-21.5-183.5-176.6-185.8v87.92c0 20.7-24.31 31.45-39.69 18.16l-176-151.1C-2.753 216.6-2.784 199.4 8.31 189.9z">
                         </path>
                     </svg>
-                    <span>{{ selectedMsg === null ? '' : (selectedMsg.sender.nickname + ': ' + selectedMsg.raw_message)
+                    <span>{{ selectedMsg === null ? '' : (selectedMsg.sender.nickname + ': ' + (selectedMsg.raw_message ?? fun.getMsgRawTxt(selectedMsg.mess)))
                     }}</span>
                     <div @click="cancelReply"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
                             <path
@@ -393,7 +393,7 @@ import imageCompression from 'browser-image-compression'
 import jp from 'jsonpath'
 
 import { defineComponent, markRaw } from 'vue'
-import { parseMsgId, getTrueLang, loadHistory as loadHistoryFirst } from '@/function/util'
+import { getTrueLang, loadHistory as loadHistoryFirst, getMsgRawTxt } from '@/function/util'
 import { Logger, LogType, PopInfo, PopType } from '@/function/base'
 import { Connector, login as loginInfo } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
@@ -403,8 +403,11 @@ export default defineComponent({
     name: 'ViewChat',
     props: ['chat', 'list', 'mergeList', 'mumberInfo', 'imgView'],
     components: { Info, MsgBody, NoticeBody, FacePan },
-    data () {
+    data() {
         return {
+            fun: {
+                getMsgRawTxt: getMsgRawTxt
+            },
             Option: Option,
             Connector: Connector,
             runtimeData: runtimeData,
@@ -438,7 +441,7 @@ export default defineComponent({
                     onMove: 'no'
                 }
             },
-            details: [{ open: false }, { open: false }, {open: false}],
+            details: [{ open: false }, { open: false }, { open: false }],
             msgMenus: [],
             NewMsgNum: 0,
             msg: '',
@@ -1421,15 +1424,12 @@ export default defineComponent({
                         if (item.message !== undefined) {
                             item.message.forEach((msg: MsgItemElem) => {
                                 if (msg.type === 'image' && !msg.asface) {
-                                    const index = (parseMsgId(item.message_id)).seqid
-                                    if(index != undefined) {
-                                        const info = {
-                                            index: index,
-                                            message_id: item.message_id,
-                                            img_url: msg.url
-                                        }
-                                        getImgList.push(info)
+                                    const info = {
+                                        index: item.message_id,
+                                        message_id: item.message_id,
+                                        img_url: msg.url
                                     }
+                                    getImgList.push(info)
                                 }
                             })
                         }
@@ -1453,7 +1453,7 @@ export default defineComponent({
                     // 如果 jump 参数不是 undefined，则意味着这次加载历史记录的同时需要跳转到指定的消息
                     if (runtimeData.chatInfo.show && runtimeData.chatInfo.show.jump) {
                         new Logger().debug('进入跳转至消息：' + runtimeData.chatInfo.show.jump)
-                        this.scrollToMsg('chat-' + parseMsgId(runtimeData.chatInfo.show.jump).seqid)
+                        this.scrollToMsg('chat-' + runtimeData.chatInfo.show.jump)
                         runtimeData.chatInfo.show.jump = undefined
                     }
                 })
@@ -1664,5 +1664,4 @@ export default defineComponent({
 }
 .pan-leave-to {
     opacity: 0;
-}
-</style>
+}</style>

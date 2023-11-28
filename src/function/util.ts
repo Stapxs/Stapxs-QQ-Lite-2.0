@@ -26,35 +26,6 @@ import { Connector } from './connect'
 const logger = new Logger()
 const popInfo = new PopInfo()
 
-/**
- * 解析消息 ID
- * @param id 消息 ID
- * @returns 消息 ID 的内容
- */
-export function parseMsgId(id: string): MsgIdInfoElem {
-    if (id !== undefined && id !== null && id.length > 0) {
-        const binaryString = window.atob(id)
-        const bytes = new Uint8Array(binaryString.length)
-        for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i)
-        }
-        const dv = new DataView(bytes.buffer, 0)
-        if (id.length === 28) {
-            return {
-                gid: dv.getInt32(0),
-                uid: dv.getInt32(4),
-                seqid: dv.getInt32(8)
-            }
-        } else if (id.length === 24) {
-            return {
-                uid: dv.getInt32(0),
-                seqid: dv.getInt32(4)
-            }
-        }
-    }
-    return {}
-}
-
 export function buildMsgIdInfo(buffer: any) {
     let binary = ''
     const bytes = new Uint8Array(buffer)
@@ -722,7 +693,6 @@ export default {
     openLink,
     getTrueLang,
     getMsgRawTxt,
-    parseMsgId,
     htmlDecodeByRegExp,
     parseCQ,
     parseOICQ1JSON,

@@ -85,7 +85,7 @@ import { nextTick } from 'vue'
 import { Connector } from '@/function/connect'
 import { defineComponent, markRaw } from 'vue'
 import { runtimeData, appendMsg } from '@/function/msg'
-import { getTrueLang, parseMsgId } from '@/function/util'
+import { getTrueLang } from '@/function/util'
 import { MsgItemElem, SQCodeElem, UserFriendElem, UserGroupElem } from '@/function/elements/information'
 import { Logger, LogType, PopInfo, popList, PopType } from '@/function/base'
 
@@ -457,12 +457,7 @@ export default defineComponent({
                                 return item.type !== 'reply'
                             })
                             if(item[2]) {
-                                try {
-                                    parseMsgId(item[2])
-                                    this.addSpecialMsg({ msgObj: { type: 'reply', id: item[2] }, addText: false, addTop: true })
-                                } catch (e) {
-                                    this.addCommandOut(':: Invalid message id.')
-                                }
+                                this.addSpecialMsg({ msgObj: { type: 'reply', id: item[2] }, addText: false, addTop: true })
                             }
                             break
                         }

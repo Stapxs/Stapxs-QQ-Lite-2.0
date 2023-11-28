@@ -176,7 +176,7 @@ export default defineComponent({
                     const name = (item.user_id ? (item.nickname + item.remark) : item.group_name).toLowerCase()
                     const py = item.py_name ? item.py_name : ''
                     const id = item.user_id ? item.user_id : item.group_id
-                    return (value.length > 4 && py.indexOf(value.toLowerCase()) != -1) || name.indexOf(value.toLowerCase()) != -1 || id.toString() === value
+                    return id.toString() === value || (value.length > 4 && py.indexOf(value.toLowerCase()) != -1) || name.indexOf(value.toLowerCase()) != -1
                 })
             } else {
                 this.isSearch = false

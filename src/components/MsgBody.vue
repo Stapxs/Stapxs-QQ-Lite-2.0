@@ -11,7 +11,7 @@
 
 <template>
     <div :class="'message' + (type ? ' ' + type : '') + (data.revoke ? ' revoke' : '') + (isMe ? ' me': '')" :data-raw="getMsgRawTxt(data.message)"
-        :id="'chat-' + getSeq(data.message_id)" :data-sender="data.sender.user_id" :data-time="data.time"
+        :id="'chat-' + data.message_id" :data-sender="data.sender.user_id" :data-time="data.time"
         @mouseleave="hiddenUserInfo">
         <img name="avatar" :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id" v-show="!isMe || type == 'merge'">
         <div class="message-space" v-if="isMe && type != 'merge'"></div>
@@ -23,7 +23,7 @@
                 {{ isMe ? runtimeData.loginInfo.nickname : runtimeData.chatInfo.show.name }}
             </a>
             <div>
-                <!-- 回复指示框 -->
+                <!-- 回复指示框（oicq2 独立版本） -->
                 <div v-if="data.source && data.source.seq" :class="isMe ? (type == 'merge' ? 'msg-replay' : 'msg-replay me') : 'msg-replay'"
                     @click="scrollToMsg(data.source.seq)">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -75,16 +75,18 @@
                         <div v-else-if="!getVideo" :class="getVideoUrl(item, data.message_id)"></div>
                     </div>
                     <CardMessage
-                        v-else-if="item.type == 'xml' || item.type == 'json'" :item="item" :id="data.message_id"></CardMessage>
-
+                        v-else-if="item.type == 'xml' || item.type == 'json'"
+                        :item="item"
+                        :id="data.message_id">
+                    </CardMessage>
                     <span v-else-if="item.type == 'forward'" class="msg-unknown" @click="View.getForwardMsg(item.id)">{{ $t('chat_show_forward') }}</span>
-                    <div :data-seq="getSeq(item.id).toString()" @click="scrollToMsg(getSeq(item.id).toString())" v-else-if="item.type == 'reply'" :class="isMe ? (type == 'merge' ? 'msg-replay' : 'msg-replay me') : 'msg-replay'">
+                    <div v-else-if="item.type == 'reply'" @click="scrollToMsg(item.id)" :class="isMe ? (type == 'merge' ? 'msg-replay' : 'msg-replay me') : 'msg-replay'">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                        <path
-                            d="M8.31 189.9l176-151.1c15.41-13.3 39.69-2.509 39.69 18.16v80.05C384.6 137.9 512 170.1 512 322.3c0 61.44-39.59 122.3-83.34 154.1c-13.66 9.938-33.09-2.531-28.06-18.62c45.34-145-21.5-183.5-176.6-185.8v87.92c0 20.7-24.31 31.45-39.69 18.16l-176-151.1C-2.753 216.6-2.784 199.4 8.31 189.9z">
-                        </path>
-                    </svg>
-                    <a class="msg-unknown" style="cursor: pointer;"> {{ $t('chat_jump_reply') }} </a>
+                            <path
+                                d="M8.31 189.9l176-151.1c15.41-13.3 39.69-2.509 39.69 18.16v80.05C384.6 137.9 512 170.1 512 322.3c0 61.44-39.59 122.3-83.34 154.1c-13.66 9.938-33.09-2.531-28.06-18.62c45.34-145-21.5-183.5-176.6-185.8v87.92c0 20.7-24.31 31.45-39.69 18.16l-176-151.1C-2.753 216.6-2.784 199.4 8.31 189.9z">
+                            </path>
+                        </svg>
+                        <a class="msg-unknown" style="cursor: pointer;"> {{ getRepMsg(item.id) ?? $t('chat_jump_reply') }} </a>
                     </div>
 
                     <span v-else class="msg-unknown">{{ '( ' + $t('chat_unsupported_msg') + ': ' + item.type + ' )'
@@ -115,14 +117,15 @@
 import Util from '@/function/util'
 import Option from '@/function/option'
 import CardMessage from './msg-component/CardMessage.vue'
+import app from '@/main'
 
 import { MsgBodyFuns as ViewFuns } from '@/function/model/msg-body'
 import { defineComponent } from 'vue'
 import { Connector } from '@/function/connect'
 import { runtimeData } from '@/function/msg'
 import { Logger, PopInfo, PopType } from '@/function/base'
-import app from '@/main'
 import { StringifyOptions } from 'querystring'
+import { getMsgRawTxt } from '@/function/util'
 
 export default defineComponent({
     name: 'MsgBody',
@@ -196,7 +199,7 @@ export default defineComponent({
 
         /**
          * 滚动到指定消息
-         * @param id 消息 seq
+         * @param id 消息 id
          */
         scrollToMsg (id: string) {
             this.$emit('scrollToMsg', 'chat-' + id)
@@ -223,13 +226,12 @@ export default defineComponent({
          * @param msgId 消息 ID
          */
         imgClick (msgId: string) {
-            const seq = Util.parseMsgId(msgId).seqid
             if(runtimeData.chatInfo.info.image_list !== undefined) {
                 // 寻找实际的序号
                 let num = -1
                 for(let i = 0; i < runtimeData.chatInfo.info.image_list.length; i++) {
                     const item = runtimeData.chatInfo.info.image_list[i]
-                    if(item.index == seq && item.message_id == msgId) {
+                    if(item.message_id == msgId) {
                         num = i
                         break
                     }
@@ -300,15 +302,6 @@ export default defineComponent({
                 a.style.color = 'var(--color-font-1-r)'
             }
             parent.appendChild(a)
-        },
-
-        /**
-         * 获取消息 ID 的 seq
-         * @param id 消息 ID
-         */
-        getSeq (id: string) {
-            const seq = Util.parseMsgId(id).seqid
-            return seq ? seq : id
         },
 
         /**
@@ -422,6 +415,20 @@ export default defineComponent({
                 return (list[0].card !== '' ? list[0].card : list[0].nickname) + ': ' + msg
             }
             return msg
+        },
+
+        /**
+         * 尝试在消息列表中寻找这条被回复的消息，获取消息内容
+         * @param message_id 
+         */
+        getRepMsg(message_id: string) {
+            const list = this.runtimeData.messageList.filter((item) => {
+                return item.message_id == message_id
+            })
+            if (list.length === 1) {
+                return list[0].sender.nickname + ': ' + getMsgRawTxt(list[0].message)
+            }
+            return null
         },
 
         /**
