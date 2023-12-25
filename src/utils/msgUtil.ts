@@ -2,6 +2,7 @@ import jp from 'jsonpath'
 
 import { Logger } from '@/function/base'
 import { runtimeData } from '@/function/msg'
+import util from '@/function/util'
 
 const logger = new Logger()
 
@@ -98,6 +99,47 @@ export function buildMsgList(msgList: any) {
         return acc[key]
     }, result)
     return result
+}
+
+export function parseMsgList(list: any, map: string, valueMap: { [key: string]: any }): any[] {
+    // 消息类型的特殊处理
+    switch(map.split('|')[0]) {
+        case 'cq-code': {
+            // 这儿会默认处理成 oicq2 的格式，所以 CQCode 消息请使用 oicq2 配置文件修改
+            for (let i = 0; i < list.length; i++) {
+                list[i] = util.parseCQ(list[i])
+            }
+            break
+        }
+        case 'json_with_data': {
+            // 非扁平化消息体，这儿会取 _type 后半段的 JSON Path 将结果并入 message
+            for (let i = 0; i < list.length; i++) {
+                for(let j = 0; j < list[i].message.length; j++) {
+                    const data = getMsgData('message_list_message', list[i].message[j], map.split('|')[1])
+                    if(data != undefined && data.length == 1) {
+                        list[i].message[j] = Object.assign(list[i].message[j], data[0])
+                    }
+                }
+            }
+        }
+    }
+    // 消息字段的标准化特殊处理
+    if(valueMap != undefined) {
+        for (let i = 0; i < list.length; i++) {
+            Object.entries(valueMap).forEach(([type, values]) => {
+                Object.entries(values).forEach(([key, value]) => {
+                    list[i].message.forEach((item: any) => {
+                        if(item.type == type) {
+                            item[key] = jp.query(item, value as string)[0]
+                        }
+                        // 顺便把没用的 data 删了
+                        delete item.data
+                    })
+                })
+            })
+        }
+    }
+    return list
 }
 
 export default {

@@ -17,7 +17,7 @@ import Util from './util'
 import xss from 'xss'
 import pinyin from 'pinyin'
 
-import { buildMsgList, getMsgData } from '@/utils/msgUtil'
+import { buildMsgList, getMsgData, parseMsgList } from '@/utils/msgUtil'
 
 import { Md5 } from 'ts-md5'
 import { reactive, nextTick, markRaw, defineAsyncComponent } from 'vue'
@@ -262,29 +262,9 @@ function saveMsg(msg: any, append = undefined as undefined | string) {
     if (msg.error !== null && (msg.error !== undefined || msg.status === 'failed')) {
         popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_load_msg_err', { code: msg.error | msg.retcode }))
     } else {
-        const list = getMsgData('message_list', msg, msgPath.message_list)
+        let list = getMsgData('message_list', msg, msgPath.message_list)
         if (list != undefined) {
-            // 消息类型的特殊处理
-            switch(msgPath.message_list._type.split('|')[0]) {
-                case 'cq-code': {
-                    // 这儿会默认处理成 oicq2 的格式，所以 CQCode 消息请使用 oicq2 配置文件修改
-                    for (let i = 0; i < list.length; i++) {
-                        list[i] = Util.parseCQ(list[i])
-                    }
-                    break
-                }
-                case 'json_with_data': {
-                    // 非扁平化消息体，这儿会取 _type 后半段的 JSON Path 将结果并入 message
-                    for (let i = 0; i < list.length; i++) {
-                        for(let j = 0; j < list[i].message.length; j++) {
-                            const data = getMsgData('message_list_message', list[i].message[j], msgPath.message_list._type.split('|')[1])
-                            if(data != undefined && data.length == 1) {
-                                list[i].message[j] = Object.assign(list[i].message[j], data[0])
-                            }
-                        }
-                    }
-                }
-            }
+            list = parseMsgList(list, msgPath.message_list._type, msgPath.message_value)
             // 倒序处理
             if (msgPath.message_list._order === 'reverse') {
                 list.reverse()
@@ -397,7 +377,7 @@ function saveSendedMsg(echoList: string[], data: any) {
         } else {
             popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_get_msg_err_fin'))
         }
-    } else {
+    } else if(Number(echoList[2]) < 5) {
         // 看起来没获取到，再试试
         popInfo.add(PopType.ERR,
             app.config.globalProperties.$t('pop_chat_get_msg_err') + ' ( ' + echoList[2] + ' )')
@@ -674,6 +654,12 @@ function newMsg(data: any) {
             }
             return false
         })
+        // 对消息进行一次格式化处理
+        let list = getMsgData('message_list', buildMsgList([data]), msgPath.message_list)
+            if (list != undefined) {
+                list = parseMsgList(list, msgPath.message_list._type, msgPath.message_value)
+                data = list[0]
+            }
         // 对于其他不在消息里标记 atme、atall 的处理
         if (data.atme == undefined || data.atall == undefined) {
             data.message.forEach((item: any) => {

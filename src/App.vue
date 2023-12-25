@@ -305,11 +305,7 @@ export default defineComponent({
               page_path: '/' + view,
               page_title: name
             })
-            if (!show) {
-                this.tags.showChat = true
-            } else {
-                this.tags.showChat = false
-            }
+            this.tags.showChat = !show
         },
 
         /**
