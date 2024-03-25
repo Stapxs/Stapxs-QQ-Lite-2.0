@@ -1,0 +1,468 @@
+input {
+    caret-color: var(--color-main);
+    color: var(--color-font);
+}
+
+.ss-code {
+    background: var(--color-main);
+    color: var(--color-font-r);
+    border-radius: 7px;
+    padding: 3px 10px;
+    margin: 0 5px;
+}
+
+.ss-card {
+    background-color: var(--color-card);;
+    box-shadow:0 0 5px transparent;
+    transition: box-shadow .3s;
+    color: var(--color-font);
+    border-radius: 7px;
+    min-height: 40px;
+    min-width: 40px;
+    padding: 20px;
+}
+.ss-card div[class="ss-card"] {
+    min-height: 65px;
+    padding: 0;
+}
+.ss-card div[class="ss-card"] header {
+    padding: 20px 0 0 20px;
+}
+.ss-card div[class="ss-card"] > button > svg {
+    margin-right: 20px;
+    margin-top: -25px;
+}
+.ss-card:hover {
+     box-shadow:0 0 5px var(--color-shader);
+ }
+.ss-card header {
+    color: var(--color-font);
+    letter-spacing: 0.1rem;
+    padding-bottom: 10px;
+    font-size: 1.02rem;
+    font-weight: 300;
+    text-indent: 0;
+}
+.ss-card header div:first-child {
+    background: var(--color-main);
+    margin-right: 20px;
+    border-radius: 5px;
+    height: 25px;
+    float: left;
+    width: 5px;
+}
+.ss-card header > i:first-child {
+    color: var(--color-main);
+    display: inline-block;
+    margin-right: 10px;
+    text-align: center;
+    font-size: 1.1rem;
+    min-width: 20px;
+}
+
+.ss-button {
+    background: var(--color-main);
+    color: var(--color-font-r);
+    border-radius: 7px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    height: 33px;
+    border: 0;
+}
+.ss-button:hover {
+    opacity: 0.95;
+}
+.ss-button:focus {
+    outline: none;
+}
+.ss-button:active {
+    opacity: 0.9;
+}
+.ss-button:disabled {
+    opacity: 0.4;
+}
+
+.ss-input {
+    background: var(--color-card-1);
+    border-radius: 7px;
+    padding: 0 10px;
+    font-size: 15px;
+    height: 35px;
+    border: 0;
+}
+.ss-input:focus {
+    outline: 2px solid var(--color-card-1);
+}
+
+.ss-pop {
+    -webkit-box-shadow: 0 0 5px var(--color-shader);
+    -moz-box-shadow: 0 0 5px var(--color-shader);
+    box-shadow: 0 0 5px var(--color-shader);
+    background: var(--color-bg);
+}
+.ss-pop div[class="arrow"]:before {
+    border: none;
+}
+.ss-pop div[class="arrow"]:after {
+    border: none;
+}
+.ss-pop div {
+    color: var(--color-font);
+}
+
+.ss-radio {
+    --radio-size: 32px;
+
+    height: var(--radio-size);
+    margin-bottom: 0;
+}
+.ss-radio:hover > div:nth-child(2) {
+    padding: calc((var(--radio-size) / 4) + 1px);
+}
+.ss-radio > div:nth-child(2) {
+    padding: calc((var(--radio-size) / 4) + 2px);
+    border-radius: var(--radio-size);
+    background: var(--color-main);
+    height: var(--radio-size);
+    width: var(--radio-size);
+    transition: padding .1s;
+}
+.ss-radio > div:nth-child(2) > div {
+    background: #fff;
+    border-radius: 100%;
+    width: 100%;
+    height: 100%;
+}
+.ss-radio input {
+    display: none;
+}
+.ss-radio input:checked ~ div:nth-child(2) {
+    padding: calc(var(--radio-size) / 4);
+}
+
+.ss-checkbox {
+    --checkbox-size: 13px;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+}
+.ss-checkbox > input {
+    display: none;
+}
+.ss-checkbox > div {
+    border: 1px solid var(--color-font);
+    border-radius: 30%;
+    background: transparent;
+    transition: background .3s, border .1s;
+    height: var(--checkbox-size);
+    width: var(--checkbox-size);
+}
+.ss-checkbox > input:checked ~ div {
+    background: var(--color-bg);
+    border: calc(var(--checkbox-size) / 3) solid var(--color-main);
+}
+.ss-checkbox > span {
+    margin-left: 10px;
+    font-size: 0.9rem;
+}
+.ss-checkbox.button {
+    border: 2px solid var(--color-main);
+    border-radius: 7px;
+    background: transparent;
+    padding: 10px 15px;
+}
+.ss-checkbox.button > div {
+    border: 0 !important;
+    max-width: 5px;
+    border-radius: 5px;
+    transform: scaleY(0);
+    background: var(--color-main) !important;
+    transition: transform .3s;
+}
+.ss-checkbox.button > input:checked ~ div {
+    transform: scaleY(1);
+}
+
+.ss-switch {
+    --switch-dot-border: 4px;
+    --switch-dot-margin: 5px;
+    --switch-height: 30px;
+    min-width: 55px;
+    margin-bottom: 0;
+}
+.ss-switch > div {
+    border-radius: var(--switch-height);
+    background: var(--color-card-1);
+    height: var(--switch-height);
+    transition: background .4s;
+    width: 100%;
+}
+.ss-switch > div > div {
+    transition: margin-left .3s cubic-bezier(0.85, 0, 0.12, 0.99), border .2s;
+    border-radius: calc(var(--switch-height) - (var(--switch-dot-margin) * 2));
+    height: calc(var(--switch-height) - (var(--switch-dot-margin) * 2));
+    width: calc(var(--switch-height) - (var(--switch-dot-margin) * 2));
+    border: var(--switch-dot-border) solid #fff;
+    box-shadow:0 0 5px var(--color-shader);
+    margin-left: var(--switch-dot-margin);
+    margin-top: var(--switch-dot-margin);
+    background: var(--color-main);
+    float: left;
+}
+.ss-switch input {
+    display: none;
+}
+.ss-switch input:checked ~ div {
+    background: var(--color-main);
+}
+.ss-switch input:checked ~ div > div {
+    border: calc((var(--switch-height) - var(--switch-dot-margin) * 2) / 2 + 0.5px) solid #fff;
+    margin-left: calc(100% - var(--switch-height) + var(--switch-dot-margin));
+}
+
+.ss-code-input {
+    flex-direction: initial;
+    justify-content: center;
+    padding-top: 30px;
+    display: flex;
+}
+.ss-code-input input {
+    background: var(--color-card-1);
+    outline: 2px solid transparent;
+    caret-color: transparent;
+    transition: outline .3s;
+    border-radius: 7px;
+    text-align: center;
+    font-size: 1.5rem;
+    margin: 0 10px;
+    height: 60px;
+    width: 60px;
+    border: 0;
+}
+.ss-code-input input:first-child {
+    padding: 0;
+    margin: 0;
+    height: 0;
+    width: 0;
+}
+.ss-code-input-selete {
+    outline: 2px solid var(--color-main) !important;
+}
+.ss-code-input-err {
+    outline: 2px solid #ef5f5f !important;
+}
+
+.ana-card {
+    color: var(--color-font);
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 100;
+    display: flex;
+    height: 60px;
+}
+.ana-card div {
+    background: var(--color-main);
+    border-radius: 5px;
+    height: 100%;
+    width: 5px;
+}
+.ana-card span {
+    width: 100%;
+}
+.ana-card-left {
+    text-align: left;
+}
+
+footer > div:first-child {
+    color: var(--color-font);
+    margin-bottom: 20px;
+}
+footer > div:first-child > span {
+    margin-left: 20px;
+    font-size: 0.7rem;
+}
+footer > div:last-child {
+    margin-bottom: 10px;
+    text-align: center;
+    margin-top: -10px;
+    font-size: 0.7rem;
+}
+footer > div:last-child span a {
+    color: var(--color-font-1);
+}
+footer header {
+    color: var(--color-main);
+}
+footer header span {
+    color: var(--color-font-1);
+    font-size: 0.7rem;
+    margin-left: 10px;
+}
+
+.cls-1 {
+    fill: var(--color-card-1);
+}
+
+.bar-search {
+    border: 0;
+    height: 35px;
+    font-size: 15px;
+    margin-right: 0 !important;
+    background: var(--color-card-1);
+}
+.bar-search:focus {
+    background: var(--color-card-1);
+    outline: none;
+
+    -webkit-box-shadow:0 0 5px var(--color-shader);
+    -moz-box-shadow:0 0 5px var(--color-shader);
+    box-shadow:0 0 5px var(--color-shader);
+}
+
+.avatar {
+    cursor: hand;
+    overflow: hidden;
+    margin-left: 20px;
+    --main-size: 33px;
+    margin-right: 5px;
+    width: var(--main-size);
+    height: var(--main-size);
+    border-radius: var(--main-size);
+    background: var(--color-card-1);
+}
+.avatar img {
+    width: var(--main-size);
+    height: var(--main-size);
+}
+
+.user-name {
+    display: none;
+}
+
+.scroll-top {
+    border-top: 1px dashed var(--color-main);
+    margin: 0 30px;
+}
+
+pre {
+    background: transparent !important;
+    overflow: visible !important;
+    padding: 0 !important;
+}
+pre:before {
+    display: none !important;
+}
+pre:after {
+    display: none !important;
+}
+pre > code {
+    font-family: 'Fira Code', monospace !important;
+    padding: 1rem !important;
+}
+@supports (font-variation-settings: normal) {
+    pre > code
+    {
+        font-family: 'Fira Code VF', monospace !important;
+    }
+}
+pre > code span {
+    background: transparent !important;
+}
+pre[class*=language-]>code {
+    border-left: 0px solid var(--color-main) !important;
+    background-color: var(--color-card-2) !important;
+    background-image: none !important;
+    border-left: 10px solid #358ccb;
+    background-origin: content-box;
+    background-attachment: local;
+    box-shadow: none !important;
+    background-size: 3em 3em;
+    margin-bottom: -75px;
+    border-radius: 7px;
+    position: relative;
+    margin-top: -10px;
+    z-index: 1;
+}
+code[class*=language-] {
+    max-height: inherit;
+    font-size: 0.8rem;
+    height: inherit;
+    padding: 0 1em;
+    display: block;
+    overflow: auto;
+}
+
+.about-text {
+    padding: 20px;
+}
+.about-text i {
+    color: var(--color-font-1);
+    margin-bottom: 10px;
+    font-style: normal;
+    font-size: 0.9rem;
+    font-weight: 400;
+    text-indent: 2em;
+    display: block;
+}
+.about-text a {
+    color: var(--color-font);
+    font-weight: bold;
+}
+.no-indent i {
+    text-indent: 0;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-main);
+    border-radius: 6px;
+}
+::-webkit-scrollbar {
+    background-color:var(--color-card-1);
+    width:6px;
+}
+::-webkit-scrollbar-button {
+    display: none;
+}
+
+@media screen and (max-width: 992px) {
+    .avatar {
+        width: auto;
+        height: auto;
+        margin-left: 0;
+        border-radius: 0;
+        background: none;
+    }
+    .avatar img {
+        display: none;
+    }
+
+    .bar-search {
+        display: none !important;
+    }
+
+    .user-name {
+        display: unset;
+        cursor: pointer;
+        color: var(--color-font-1);
+    }
+    .user-name:hover {
+        color: var(--color-font);
+        opacity: 0.7;
+    }
+}
+
+.navbar-dark .navbar-brand {
+    color: var(--color-font) !important;
+}
+
+.navbar-dark .navbar-nav .nav-link.active {
+    color: var(--color-font) !important;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: var(--color-font-1) !important;
+}
+.navbar-dark:hover .navbar-nav:hover .nav-link:hover {
+    color: var(--color-font) !important;
+    opacity: 0.7 !important;
+}
