@@ -16,9 +16,9 @@
 
             "class_id": "/group_id",
             "class_name": "/group_name",
-            "user_id": "/user_id",
-            "nickname": "/user_name",
-            "remark": "/user_remark"
+            "user_id": "/user_id",            
+            "nickname": "/username",
+            "remark": "/remark"
         }
     },
     "roaming_stamp": {
