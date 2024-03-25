@@ -493,7 +493,7 @@ export default defineComponent({
                 // 从 Github 获取更新日志
                 const url = 'https://api.github.com/repos/stapxs/stapxs-qq-lite-2.0/commits'
                 const fetchData = {
-                    sha: process.env.NODE_ENV == 'development' ? 'dev' : 'main',
+                    sha: process.env.NODE_ENV == 'development' ? 'dev' : 'next',
                     per_page: '10'
                 } as Record<string, string>
                 fetch(url + '?' + new URLSearchParams(fetchData).toString())

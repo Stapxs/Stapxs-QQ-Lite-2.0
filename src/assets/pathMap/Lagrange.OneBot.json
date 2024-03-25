@@ -21,8 +21,11 @@
             "remark": "/user_remark"
         }
     },
+    "roaming_stamp": {
+        "_name": "fetch_custom_face"
+    },
     "message_list": {
-        "_name": "get_history_msg",
+        "_name": "get_group_msg_history",
         "_basic": "$.data.messages[*]",
         "_type": "json_with_data|$.data",
         "_message_type": {
@@ -38,6 +41,9 @@
             "message": "/message",
             "raw_message": "/raw_message"
         }
+    },
+    "message_list_private": {
+        "_name": "get_friend_msg_history"
     },
     "message_info": {
         "message_id": "$.message_id",

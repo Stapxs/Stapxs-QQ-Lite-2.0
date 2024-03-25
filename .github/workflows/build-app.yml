@@ -3,7 +3,7 @@ name: build
 on:
   push: # push 触发
     branches:
-      - main
+      - next
 
 jobs:
   # ========================= 准备项目 ========================= 
@@ -19,6 +19,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
       with:
+        submodules: recursive
         persist-credentials: false
     # 初始化一些流程需要的环境变量
     - name: Init Env
@@ -54,6 +55,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
       with:
+        submodules: recursive
         persist-credentials: false
     # 设置 Node.js 版本
     - name: Load Node.js
@@ -96,6 +98,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
       with:
+        submodules: recursive
         persist-credentials: false
     # 设置 Node.js 版本
     - name: Load Node.js

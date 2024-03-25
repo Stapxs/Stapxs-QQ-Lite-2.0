@@ -132,8 +132,11 @@ export function parseMsgList(list: any, map: string, valueMap: { [key: string]: 
                         if(item.type == type) {
                             item[key] = jp.query(item, value as string)[0]
                         }
-                        // 顺便把没用的 data 删了
-                        delete item.data
+                        // 顺便把没用的 data 删了，这边要注意 item.data 必须是个对象
+                        // 因为有些消息类型的 data 就叫 data
+                        if(typeof item.data == 'object') {
+                            delete item.data
+                        }
                     })
                 })
             })

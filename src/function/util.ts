@@ -136,8 +136,11 @@ export function htmlDecodeByRegExp(str: string): string {
 
 /**
  * 根据区间和位数生成指定长度的随机数
- * @param TODO: 我忘了这些参数都是干嘛的了，懒得看
- * @returns 随机数组
+ * @param num 是否包含数字
+ * @param maxA 是否包含大写字母
+ * @param minlA 是否包含小写字母
+ * @param fqy 生成的随机数的位数
+ * @returns 生成的随机数字符串
  */
 export function getRandom(num: boolean, maxA: boolean, minlA: boolean, fqy: number): string {
     const arr = []
@@ -217,7 +220,14 @@ export function getMsgRawTxt(message: [{ [key: string]: any }]): string {
             case 'record': back += '[语音]'; break
             case 'video': back += '[视频]'; break
             case 'file': back += '[文件]'; break
-            case 'json': back += JSON.parse(message[i].data).prompt; break
+            case 'json':  { 
+                try {
+                    back += JSON.parse(message[i].data).prompt;
+                } catch (error) {
+                    back += '[卡片消息]';
+                }
+                break
+            }
             case 'xml': {
                 let name = message[i].data.substring(message[i].data.indexOf('<source name="') + 14)
                 name = name.substring(0, name.indexOf('"'))
@@ -378,13 +388,21 @@ export function loadHistory(info: BaseChatInfoElem) {
 export function loadHistoryMessage(id: number, type: string, count = 20, echo = 'getChatHistoryFist') {
     // 加载历史消息
     // oicq2 Note: https://github.com/takayama-lily/oicq/wiki/93.%E8%A7%A3%E6%9E%90%E6%B6%88%E6%81%AFID
+    let name
+    if(runtimeData.jsonMap.message_list_private && type != "group") {
+        name = runtimeData.jsonMap.message_list_private._name
+    } else {
+        name = runtimeData.jsonMap.message_list._name
+    }
+
     Connector.send(
-        runtimeData.jsonMap.message_list._name ?? 'get_chat_history',
+        name ?? 'get_chat_history',
         {
             message_type: runtimeData.jsonMap.message_list._message_type[type],
             group_id: type == "group" ? id : undefined,
             user_id: type != "group" ? id : undefined,
             message_seq: 0,
+            message_id: 0,
             count: count
         },
         echo
