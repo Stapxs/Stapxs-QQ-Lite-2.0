@@ -126,6 +126,18 @@ function saveBotInfo(msg: { [key: string]: any }) {
                     msgPath = require(`@/assets/pathMap/${data.app_name}.json`)
                     runtimeData.jsonMap = msgPath
                     logger.debug('加载 JSON 映射表：' + msgPath._name)
+
+                    // TODO: - 插件系统完善 - Lagrange.OneBot
+                    if (data.app_name === 'Lagrange.OneBot') {
+                        /**
+                         * 一个对 Lagrange.OneBot 单独的优化
+                         * 在发送消息时 getSendMsg 无法获取到消息
+                         * 目前先关闭，用 Lagrange.OneBot 配置中的
+                         * Message.IgnoreSelf 为 false
+                         * 可以正常看到消息
+                         */
+                        appendMsg['getSendMsg'] = (_:any)=>{}
+                    }
                 } catch(ex) {
                     logger.debug('加载 JSON 映射表失败：' + ex)
                 }
