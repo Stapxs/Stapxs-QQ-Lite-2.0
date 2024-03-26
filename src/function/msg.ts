@@ -753,7 +753,6 @@ function sendNotice(msg: any) {
         let raw = Util.getMsgRawTxt(msg.message)
         raw = raw === '' ? msg.raw_message : raw
         // 检查消息内是否有群名
-        debugger
         if(msg.group_name === undefined) {
             // 去列表里寻找
             runtimeData.userList.filter((item) => {

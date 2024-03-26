@@ -120,18 +120,19 @@ module.exports = {
                 },
                 dmg: {
                     background: 'public/img/dmg-bg.png',
+                    icon: 'public/img/icons/icon.icns',
                     iconSize: 80,
                     sign: false,
                     contents: [
                         {
-                            x: 102,
-                            y: 140
+                            x: 112,
+                            y: 110
                         },
                         {
                             type: 'link',
                             path: '/Applications',
-                            x: 386,
-                            y: 140
+                            x: 396,
+                            y: 110
                         },
                     ],
                 },

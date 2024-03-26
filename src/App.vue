@@ -491,12 +491,13 @@ export default defineComponent({
                 localStorage.setItem('version', appVersion)
                 logger.debug(this.$t('version_updated') + ': ' + cacheVersion + ' -> ' + appVersion)
                 // 从 Github 获取更新日志
-                const url = 'https://api.github.com/repos/stapxs/stapxs-qq-lite-2.0/commits'
                 const fetchData = {
-                    sha: process.env.NODE_ENV == 'development' ? 'dev' : 'next',
+                    sha: 'next',
                     per_page: '10'
                 } as Record<string, string>
-                fetch(url + '?' + new URLSearchParams(fetchData).toString())
+                const url = 'https://api.github.com/repos/stapxs/stapxs-qq-lite-2.0/commits'
+                    + '?' + new URLSearchParams(fetchData).toString()
+                fetch(url)
                     .then(response => response.json())
                     .then(data => {
                         // 正式版本的更新记录必须是 # 开头的 commit
