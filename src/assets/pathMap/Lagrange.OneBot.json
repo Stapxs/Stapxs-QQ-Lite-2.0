@@ -17,7 +17,7 @@
             "class_id": "/group_id",
             "class_name": "/group_name",
             "user_id": "/user_id",            
-            "nickname": "/username",
+            "nickname": "/nickname",
             "remark": "/remark"
         }
     },
@@ -37,6 +37,7 @@
             "message_type": "/message_type",
             "post_type": "",
             "message_id": "/message_id",
+            "group_id": "/group_id",
             "sender": "/sender",
             "message": "/message",
             "raw_message": "/raw_message"
@@ -47,7 +48,7 @@
     },
     "message_info": {
         "message_id": "$.message_id",
-        "private_id": "$.target_id",
+        "private_id": "$.user_id",
         "group_id": "$.group_id",
         "sender": "$.sender.user_id"
     },

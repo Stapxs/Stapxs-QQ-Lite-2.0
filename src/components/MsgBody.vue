@@ -23,7 +23,7 @@
                 {{ isMe ? runtimeData.loginInfo.nickname : runtimeData.chatInfo.show.name }}
             </a>
             <div>
-                <!-- 回复指示框（oicq2 独立版本） -->
+                <!-- 回复指示框（独立版本） -->
                 <div v-if="data.source && data.source.seq" :class="isMe ? (type == 'merge' ? 'msg-replay' : 'msg-replay me') : 'msg-replay'"
                     @click="scrollToMsg(data.source.seq)">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -195,9 +195,10 @@ export default defineComponent({
                 for(let i=0; i<runtimeData.chatInfo.info.group_members.length; i++) {
                     const user = runtimeData.chatInfo.info.group_members[i]
                     if(user.user_id == Number(item.qq)) {
-                        return '@' + (user.card != '' ? user.card : user.nickname)
+                        return '@' + ((user.card != '' && user.card != null) ? user.card : user.nickname)
                     }
                 }
+                return '@' + item.qq
             }
         },
 

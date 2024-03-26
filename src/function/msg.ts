@@ -361,8 +361,8 @@ function saveSendedMsg(echoList: string[], data: any) {
                 msgInfo.private_id == runtimeData.chatInfo.show.id) {
                 if (echoList[1] !== msgInfo.message_id.toString()) {
                     // 返回的不是这条消息，重新请求
-                    popInfo.add(PopType.ERR,
-                        app.config.globalProperties.$t('pop_chat_get_msg_err') + ' ( ' + echoList[2] + ' )')
+                    // popInfo.add(PopType.ERR,
+                    //     app.config.globalProperties.$t('pop_chat_get_msg_err') + ' ( A' + echoList[2] + ' )')
                     setTimeout(() => {
                         Connector.send(
                             runtimeData.jsonMap.get_message._name ?? 'get_msg',
@@ -377,17 +377,21 @@ function saveSendedMsg(echoList: string[], data: any) {
         } else {
             popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_get_msg_err_fin'))
         }
-    } else if(Number(echoList[2]) < 5) {
-        // 看起来没获取到，再试试
-        popInfo.add(PopType.ERR,
-            app.config.globalProperties.$t('pop_chat_get_msg_err') + ' ( ' + echoList[2] + ' )')
-        setTimeout(() => {
-            Connector.send(
-                runtimeData.jsonMap.get_message._name ?? 'get_msg',
-                { 'message_id': echoList[1] },
-                'getSendMsg_' + echoList[1] + '_' + (Number(echoList[2]) + 1)
-            )
-        }, 5000)
+    } else {
+        if (Number(echoList[2]) < 5) {
+            // 看起来没获取到，再试试
+            // popInfo.add(PopType.ERR,
+            //     app.config.globalProperties.$t('pop_chat_get_msg_err') + ' ( B' + echoList[2] + ' )')
+            setTimeout(() => {
+                Connector.send(
+                    runtimeData.jsonMap.get_message._name ?? 'get_msg',
+                    { 'message_id': echoList[1] },
+                    'getSendMsg_' + echoList[1] + '_' + (Number(echoList[2]) + 1)
+                )
+            }, 5000)
+        } else {
+            popInfo.add(PopType.ERR, app.config.globalProperties.$t('pop_chat_get_msg_err_fin'))
+        }
     }
 }
 
@@ -607,7 +611,7 @@ function newMsg(data: any) {
     const infoList = getMsgData('message_info', data, msgPath.message_info)
     if (infoList != undefined) {
         const info = infoList[0]
-        const id = info.private_id ?? info.group_id
+        const id = info.group_id ?? info.private_id
         const sender = info.sender
 
         // TODO：有点 BUG 但是暂时不知道为什么
@@ -617,7 +621,7 @@ function newMsg(data: any) {
         //     Option.save('send_reget', true)
         // }
         // 显示消息
-        if (id === runtimeData.chatInfo.show.id) {
+        if (id === runtimeData.chatInfo.show.id && id !== runtimeData.loginInfo.uin) {
             // 保存消息
             saveMsg(buildMsgList([data]), 'bottom')
             // 抽个签
@@ -674,8 +678,8 @@ function newMsg(data: any) {
         }
         // (发送者不是群组 || 群组 AT || 群组 AT 全体 || 打开了通知全部消息) 这些情况需要进行新消息处理
         if (data.message_type !== 'group' || data.atme || data.atall || Option.get('notice_all') === true) {
-            // (发送者没有被打开 || 窗口被最小化) 这些情况需要进行消息通知
-            if (id !== runtimeData.chatInfo.show.id || document.hidden) {
+            // ((发送者没有被打开 || 窗口被最小化) && 发送者不是自己) 这些情况需要进行消息通知
+            if ((id !== runtimeData.chatInfo.show.id || document.hidden) && id !== runtimeData.loginInfo.uin) {
                 // 检查通知权限，老旧浏览器不支持这个功能
                 if (Notification.permission === 'default') {
                     Notification.requestPermission(() => {
@@ -748,6 +752,16 @@ function sendNotice(msg: any) {
     if (Option.get('close_notice') !== true) {
         let raw = Util.getMsgRawTxt(msg.message)
         raw = raw === '' ? msg.raw_message : raw
+        // 检查消息内是否有群名
+        debugger
+        if(msg.group_name === undefined) {
+            // 去列表里寻找
+            runtimeData.userList.filter((item) => {
+                if (item.group_id == msg.group_id) {
+                    msg.group_name = item.group_name
+                }
+            })
+        }
         // 构建通知
         let notificationTile = ''
         const notificationBody = {} as NotificationElem

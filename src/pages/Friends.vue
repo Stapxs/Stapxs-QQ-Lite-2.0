@@ -145,7 +145,7 @@ export default defineComponent({
             const back = {
                 type: data.user_id ? 'user' : 'group',
                 id: data.user_id ? data.user_id : data.group_id,
-                name: data.group_name ? data.group_name : data.remark === data.nickname ? data.nickname : data.remark + '（' + data.nickname + '）',
+                name: this.getShowName(data),
                 avatar: data.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id : 'https://p.qlogo.cn/gh/' + data.group_id + '/' + data.group_id + '/0',
                 jump: sender.dataset.jump
             } as BaseChatInfoElem
@@ -207,6 +207,20 @@ export default defineComponent({
                 this.classStatus[id] = !this.classStatus[id]
             } else {
                 this.classStatus[id] = true
+            }
+        },
+
+        getShowName(data: UserFriendElem & UserGroupElem) {
+            const group = data.group_name
+            const remark = data.remark
+            const nickname = data.nickname
+            if(group) return group
+            else {
+                if(!remark || remark == nickname) {
+                    return nickname
+                } else {
+                    return remark + '（' + nickname + '）'
+                }
             }
         }
     }

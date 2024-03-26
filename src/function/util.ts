@@ -386,8 +386,6 @@ export function loadHistory(info: BaseChatInfoElem) {
     }
 }
 export function loadHistoryMessage(id: number, type: string, count = 20, echo = 'getChatHistoryFist') {
-    // 加载历史消息
-    // oicq2 Note: https://github.com/takayama-lily/oicq/wiki/93.%E8%A7%A3%E6%9E%90%E6%B6%88%E6%81%AFID
     let name
     if(runtimeData.jsonMap.message_list_private && type != "group") {
         name = runtimeData.jsonMap.message_list_private._name

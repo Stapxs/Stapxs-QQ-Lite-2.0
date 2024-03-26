@@ -513,13 +513,20 @@ export default defineComponent({
                 // 发起获取历史消息请求
                 const type = runtimeData.chatInfo.show.type
                 const id = runtimeData.chatInfo.show.id
+                let name
+                if(runtimeData.jsonMap.message_list_private && type != "group") {
+                    name = runtimeData.jsonMap.message_list_private._name
+                } else {
+                    name = runtimeData.jsonMap.message_list._name
+                }
                 Connector.send(
-                    runtimeData.jsonMap.message_list._name ?? 'get_chat_history',
+                    name ?? 'get_chat_history',
                     {
                         message_type: runtimeData.jsonMap.message_list._message_type[type],
                         group_id: type == "group" ? id : undefined,
                         user_id: type != "group" ? id : undefined,
                         message_seq: firstMsgId,
+                        message_id: firstMsgId,
                         count: 20
                     },
                     'getChatHistory'
