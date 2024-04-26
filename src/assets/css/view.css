@@ -1031,6 +1031,13 @@ input::placeholder {
     margin-right: 5px;
 }
 
+.view-iframe {
+    margin: -40px -40px -20px -40px;
+    width: calc(100% + 80px);
+    border-radius: 7px;
+    border: none;
+}
+
 @media (max-width: 700px) {
     /* 侧栏及主布局自适应 */
     .main-body {

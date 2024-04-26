@@ -172,9 +172,12 @@
 .contributors-card>div>div {
     min-width: 25px;
     min-height: 25px;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 .contributors-card {
     width: calc(100% - 20px);
+    min-height: 0;
 }
 .buttons > a {
     height: 35px;
@@ -195,7 +198,7 @@
 }
 
 .end-card {
-    margin: 10px 10px 40px 10px;
+    margin: 10px 10px 20px 10px;
     padding: 15px 20px;
 }
 .end-card>div>div>span {
@@ -218,6 +221,7 @@
     font-size: 0.8rem;
 }
 .chat-pan > div.new-msg {
+    margin: -50px 20px 15px auto;
     height: 35px;
 }
 .chat-pan > div.new-msg > div > svg {
@@ -304,6 +308,144 @@
     border: 0;
     min-height: 30px;
     height: 30px;
+}
+.account-info>img {
+    height: 26px;
+}
+.account-info>svg {
+    height: 15px;
+    width: 15px;
+}
+.account-info>div>div>span:first-child {
+    font-size: 0.9rem;
+}
+.account-info>div>div>span:last-child {
+    font-size: 0.8rem;
+}
+.account-info {
+    padding: 10px 20px;
+}
+.opt-page>div>header {
+    font-size: 0.85rem;
+}
+.l10n-info>div>span:first-child {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+.l10n-info>div>span:first-child > a {
+    font-size: 0.75rem;
+}
+.l10n-info>div>span:last-child {
+    font-size: 0.75rem;
+}
+.l10n-info>svg {
+    margin: 0 15px 0 5px;
+    min-width: unset;
+    width: 2rem;
+}
+.bot-info > div > span > span:first-child {
+    font-size: 0.9rem;
+}
+.bot-info > div > span > span:last-child {
+    font-size: 0.75rem;
+}
+
+.opt-item>div > span:first-child {
+    font-size: 0.85rem;
+}
+.opt-item>div > span:last-child {
+    font-size: 0.7rem;
+}
+.opt-item>svg {
+    height: 1rem;
+    width: 1rem;
+}
+.opt-item input[type=text] {
+    border-bottom: 1px solid var(--color-font-2);
+    line-height: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+    width: 140px !important;
+}
+.opt-body label[class=ss-switch] {
+    --switch-height: 24px;
+    min-width: 42px;
+}
+.theme-color-col>label {
+    --radio-size: 14px;
+}
+.opt-item select {
+    border-bottom: 1px solid var(--color-font-2);
+    line-height: 28px;
+    font-size: 0.75rem;
+}
+.opt-item .ss-button {
+    height: 30px;
+    font-size: 0.75rem !important;
+    width: 90px !important;
+}
+
+.pop-box-body > div.button {
+    margin: 0 -15px -15px -15px;
+}
+.pop-box-body > div.button > button {
+    height: 30px;
+}
+
+.view-iframe {
+    margin: -35px -35px -25px -35px;
+    width: calc(100% + 70px);
+    border-radius: 7px;
+    border: none;
+}
+
+.img-sender > div.card {
+    margin: 50vh 0 0 50%;
+    max-height: 70%;
+    width: 70%;
+}
+.img-sender > div.card > div.hander > span {
+    font-size: 0.9rem;
+}
+.img-sender > div.card > div.hander > button {
+    height: 30px;
+    font-size: 0.8rem;
+    width: 90px;
+}
+.img-sender > div.card > div.sender > svg {
+    width: 15px;
+    height: 15px;
+    padding: 12.5px;
+    margin-right: 15px;
+}
+.img-sender > div.card > div.sender > input {
+    height: 40px;
+}
+
+.forward-pan > div.card {
+    height: 70%;
+    width: 70%;
+}
+.forward-pan > div.card > header > span {
+    font-size: 0.9rem;
+}
+.forward-pan > div.card > header > svg {
+    height: 1.1rem;
+}
+.forward-pan > div.card > input {
+    height: 30px;
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--color-font-2);
+}
+.forward-pan > div.card > div > div > img {
+    width: 35px;
+    height: 35px;
+}
+.forward-pan > div.card > div > div p {
+    font-size: 0.85rem;
+}
+.forward-pan > div.card > div > div span {
+    font-size: 0.7rem;
 }
 
 @media (max-width: 700px) {

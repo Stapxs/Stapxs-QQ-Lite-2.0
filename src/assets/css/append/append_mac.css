@@ -43,6 +43,9 @@
     margin-left: 0;
 }
 
+.opt-main-tab {
+    display: block !important;
+}
 .opt-main-tab.layui-show .opt-main > div:last-child {
     margin-left: 0 !important;
 }
@@ -57,7 +60,7 @@
     margin-left: -25px;
 }
 .opt-main > div:last-child {
-    margin-left: -65px;
+    margin-left: -65px !important;
     background: var(--color-bg);
     margin: -30px -5px 0 5px;
     height: calc(100% - 5px);

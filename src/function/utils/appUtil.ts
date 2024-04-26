@@ -51,7 +51,7 @@ export function openLink(url: string) {
     // 判断是不是 Electron，是的话打开内嵌 iframe
     if(runtimeData.tags.isElectron) {
         const popInfo = {
-            html: `<iframe src="${url}" style="width: calc(100% + 80px);border: none;margin: -40px -40px -20px -40px;border-radius: 7px;"></iframe>`,
+            html: `<iframe src="${url}" class="view-iframe"></iframe>`,
             full: true,
             button: [
                 {
