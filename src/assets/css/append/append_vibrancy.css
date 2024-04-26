@@ -19,8 +19,6 @@
 
 .main-body > ul {
     background: rgba(var(--color-card-rgb), 0.6);
-    height: calc(100% - 25px);
-    padding-top: 25px;
 }
 .friend-list {
     background: rgba(var(--color-card-rgb), 0.6);
@@ -51,9 +49,8 @@
 }
 .opt-main {
     background: rgba(var(--color-card-rgb), 0.6);
-    padding-top: 30px;
-    padding-left: 3px;
     height: calc(100% - 10px);
+    padding-left: 3px;
 }
 .opt-main > div:first-child {
     width: 285px !important;
@@ -62,11 +59,11 @@
 .opt-main > div:last-child {
     margin-left: -65px !important;
     background: var(--color-bg);
-    margin: -30px -5px 0 5px;
-    height: calc(100% - 5px);
-    padding: 33px 10px 0 10px;
+    margin: -3px -5px 0 5px;
     box-shadow: -5px 0px 4px -5px var(--color-shader);
     transition: margin .3s;
+    height: calc(100% + 5px);
+    padding: 3px 10px 0 10px;
 }
 
 .about-pan > div {

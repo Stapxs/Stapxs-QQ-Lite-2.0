@@ -460,9 +460,16 @@ export default defineComponent({
             createIpc()
             // 加载补充样式
             logger.info('正在装载补充样式……')
+            try {
+                import(`@/assets/css/append/append_${this.platform}.css`).then(() => {
+                    logger.info(`${this.platform} 平台附加样式加载完成`)
+                })
+            } catch (e) {
+                logger.info('未找到对应平台的附加样式')
+            }
             if(this.platform == 'darwin') {
-                import('@/assets/css/append/append_mac.css').then(() => {
-                    logger.info('macOS 附加样式加载完成')
+                import('@/assets/css/append/append_vibrancy.css').then(() => {
+                    logger.info('透明 UI 附加样式加载完成')
                 })
             }
             if(runtimeData.tags.isElectron) {

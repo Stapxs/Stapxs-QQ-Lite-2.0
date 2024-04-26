@@ -104,7 +104,7 @@ module.exports = {
                     target: [
                         {
                             target: 'portable',
-                            arch: 'arm64'
+                            arch: 'x64'
                         },
                         // {
                         //     target: 'appx',

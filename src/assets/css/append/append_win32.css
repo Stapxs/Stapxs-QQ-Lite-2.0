@@ -1,0 +1,34 @@
+#app {
+    margin: 10px;
+    border-radius: 7px;
+    overflow: hidden;
+    box-shadow: 0 0 10px #0005;
+    height: calc(100% - 20px);
+}
+
+#base-app.withBar {
+    height: calc(100% - 36px);
+    padding-top: 36px;
+}
+.top-bar {
+    border-bottom: 1px solid var(--color-card-2);
+    border-radius: 7px 7px 0 0;
+    box-shadow: unset;
+    background: var(--color-bg);
+    height: 35px;
+    width: calc(100% - 20px);
+}
+.top-bar>img, .top-bar>svg {
+    height: 15px;
+}
+.top-bar>span {
+    font-size: .8rem;
+    line-height: 35px;
+    font-weight: normal;
+}
+.top-bar>div.controller>div {
+    padding: 7px;
+}
+.top-bar>div.controller>div>svg{
+    height: 14px;
+}
