@@ -1,0 +1,8 @@
+.main-body > ul {
+    height: calc(100% - 25px);
+    padding-top: 25px;
+}
+
+.opt-main > div:last-child {
+    padding: 33px 10px 0 10px;
+}

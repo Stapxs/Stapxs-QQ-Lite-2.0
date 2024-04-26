@@ -81,6 +81,10 @@
 .friend-body:hover {
     background: transparent !important;
 }
+.friend-body > div > div a.time {
+    font-size: 0.7rem;
+
+}
 
 .chat-pan {
     left: 270px;
@@ -138,8 +142,9 @@
 }
 
 .message > img {
-    width: 30px;
+    border: 1px solid var(--color-card-2);
     height: 30px;
+    width: 30px;
 }
 .message-body > a {
     font-size: 0.8rem;
@@ -446,6 +451,26 @@
 }
 .forward-pan > div.card > div > div span {
     font-size: 0.7rem;
+}
+
+.app-msg {
+    height: calc(100% - 50px);
+    padding-left: 50px;
+}
+
+.app-msg > div {
+    border-radius: 7px;
+    height: 15px;
+}
+.app-msg > div > a {
+    font-size: 0.87rem;
+}
+.app-msg > div > div:first-child > svg {
+    margin-top: 3px;
+    height: 0.8rem;
+}
+.app-msg > div > div:last-child {
+    margin-right: -5px;
 }
 
 @media (max-width: 700px) {

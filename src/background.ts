@@ -71,6 +71,14 @@ async function createWindow() {
             frame: noWindow === "true" ? false : true
         }
     }
+    // Windows
+    if(process.platform === 'win32') {
+        windowConfig = {
+            ...windowConfig,
+            frame: false
+        }
+        store.set('opt_no_window', 'true')
+    }
     win = new BrowserWindow(windowConfig)
     win.once('focus', () => {if(win)win.flashFrame(false)})
     mainWindowState.manage(win)     // 窗口状态管理器
