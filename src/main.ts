@@ -1,6 +1,5 @@
 import VueViewer from 'v-viewer'
 import VueClipboard from 'vue-clipboard2'
-import InfiniteScroll from 'vue3-infinite-scroll-better'
 import packageInfo from '../package.json'
 
 import App from './App.vue'
@@ -40,7 +39,6 @@ const app = createApp(App)
 app.use(i18n)
 app.use(VueViewer)
 app.use(VueClipboard)
-app.use(InfiniteScroll)
 
 library.add(fas)
 library.add(faSquare)
