@@ -6,6 +6,7 @@ import { runtimeData } from '@/function/msg'
 import { v4 as uuid } from 'uuid'
 import { Connector } from '@/function/connect'
 import { BotMsgType } from '../elements/information'
+import Umami from '@stapxs/umami-logger-typescript'
 
 const logger = new Logger()
 
@@ -397,5 +398,7 @@ export function sendMsgRaw(id: string, type: string, msg: string | { type: strin
                 break
             }
         }
+        // UM：统计消息发送次数
+        Umami.trackEvent('sendMsg', { type: type })
     }
 }

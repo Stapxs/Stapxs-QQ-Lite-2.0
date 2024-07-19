@@ -25,9 +25,9 @@
             <span style="text-align: center;">{{ $t('description') }}</span>
             <a>v{{ packageInfo.version }}</a>
             <div class="buttons">
-                <a class="ss-button" @click="openLink('https://github.com/Stapxs/Stapxs-QQ-Lite-2.0')">{{
+                <a class="ss-button" @click="goGithub()">{{
                 $t('option_info_visit_github') }}</a>
-                <a class="ss-button" style="width: 30px;" @click="openLink('https://blog.stapxs.cn/About.html')">
+                <a class="ss-button" style="width: 30px;" @click="goBlog()">
                     <font-awesome-icon :icon="['fas', 'circle-info']"/>
                 </a>
             </div>
@@ -127,12 +127,14 @@
 </template>
 
 <script lang="ts">
+import Umami from '@stapxs/umami-logger-typescript'
+import DepPan from './DepPan.vue'
+import packageInfo from '../../package.json'
+
 import { defineComponent } from 'vue'
 import { openLink } from '@/function/utils/appUtil'
 import { ContributorElem } from '@/function/elements/system'
 
-import DepPan from './DepPan.vue'
-import packageInfo from '../../package.json'
 import { runtimeData } from '@/function/msg'
 
 export default defineComponent({
@@ -158,6 +160,18 @@ export default defineComponent({
                     template: DepPan
                 }
                 runtimeData.popBoxList.push(popInfo)
+        },
+
+        goGithub() {
+            openLink('https://github.com/Stapxs/Stapxs-QQ-Lite-2.0')
+            // UM：统计点击事件
+            Umami.trackEvent('click_statistics', { name: 'visit_github' })
+        },
+
+        goBlog() {
+            openLink('https://blog.stapxs.cn/About.html')
+            // UM：统计点击事件
+            Umami.trackEvent('click_statistics', { name: 'visit_blog' })
         }
     },
     mounted() {

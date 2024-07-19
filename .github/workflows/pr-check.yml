@@ -1,0 +1,28 @@
+# 在主分支上构建
+name: build
+on:
+  pull_request: # PR 触发
+    branches:
+      - next
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    steps:
+    # 拉取代码
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        persist-credentials: false
+    # 设置 Node.js 版本
+    - name: Load Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.x
+    # 更新依赖
+    - name: Install
+      run: yarn
+    # 代码检查
+    - name: Lint
+      run: yarn lint

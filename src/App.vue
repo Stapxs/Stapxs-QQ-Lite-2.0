@@ -257,7 +257,6 @@ export default defineComponent({
             this.tags.page = view
         },
         barMainClick() {
-            console.log(1111)
             if(loginInfo.status) {
                 this.changeTab('信息', 'Messages', false)
             } else {

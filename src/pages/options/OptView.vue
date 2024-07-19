@@ -68,7 +68,7 @@
                         </div>
                         <div class="theme-color-col">
                             <label v-for="(name, index) in colors" :title="name" :key="'color_id_' + index" class="ss-radio">
-                                <input type="radio" name="theme_color" @change="save" :data-id="index"
+                                <input type="radio" name="theme_color" @change="save($event); gaColor($event)" :data-id="index"
                                     :checked="runtimeData.sysConfig.theme_color === undefined ? index === 0 : Number(runtimeData.sysConfig.theme_color) === index">
                                 <div :style="'background: var(--color-main-' + index + ');'">
                                     <div></div>
@@ -116,7 +116,7 @@
                     <span>{{ $t('option_dev_chatview_name') }}</span>
                     <span>{{ $t('option_dev_chatview_name_tip') }}</span>
                 </div>
-                <select @change="save" name="chatview_name" title="chatview_name" v-model="chatview_name">
+                <select @change="save($event); gaChatView($event)" name="chatview_name" title="chatview_name" v-model="chatview_name">
                     <option value="">{{ $t('option_dev_chatview_name_none') }}</option>
                     <option v-for="item in getAppendChatView()" :value="item" :key="item">{{ item.replace('Chat', '') }}</option>
                 </select>
@@ -217,6 +217,18 @@ export default defineComponent({
             Umami.trackEvent('use_language', { name: sender.value })
         },
 
+        gaChatView(event: Event) {
+            const sender = event.target as HTMLInputElement
+            // UM：上传Chat View 选择
+            Umami.trackEvent('use_chatview', { name: sender.value })
+        },
+
+        gaColor(event: Event) {
+            const sender = event.target as HTMLInputElement
+            // UM：上传主题颜色选择
+            Umami.trackEvent('use_theme_color', { name: this.colors[Number(sender.dataset.id)] })
+        },
+
         setInitialScaleShow(event: Event) {
             const sender = event.target as HTMLInputElement
             this.initialScaleShow = Number(sender.value)
@@ -245,6 +257,8 @@ export default defineComponent({
                     sender.checked = false
                 } else {
                     baseApp.classList.add('no-touch')
+                    // UM：上传禁用触摸(彩蛋)的选择
+                    Umami.trackEvent('click_statistics', { name: 'touch_randomly' })
                 }
             }
         },

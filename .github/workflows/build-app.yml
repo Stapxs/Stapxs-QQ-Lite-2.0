@@ -43,17 +43,6 @@ jobs:
         fi
         # 获取版本号
         echo VERSION=$(node -p "require('./package.json').version") >> $GITHUB_OUTPUT
-    # 设置 Node.js 版本
-    - name: Load Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 18.x
-    # 更新依赖
-    - name: Install
-      run: yarn
-    # 代码检查
-    - name: Lint
-      run: yarn lint
 
   # ========================= 构建 Web 版本 ========================= 
   build-pages:
