@@ -97,7 +97,7 @@ Stapxs QQ Lite 2.0 是一个基于 Vue 的单页应用，这意味着如果你�
 # 安装依赖
 yarn install
 # 运行本地调试
-yarn serve
+yarn dev
 # 代码检查和自动格式化
 yarn lint
 # 构建应用
@@ -111,15 +111,11 @@ yarn build
 
 ``` bash
 # electron 运行本地调试
-yarn electron:serve
-# electron 构建应用
-yarn electron:build
+yarn dev:electron
+# 指定平台构建应用
+yarn build:win
 ```
-你可以补充平台选项来指定构建某个平台：
 
-```bash
-yarn electron:build --linux
-```
 ### > Github Actions
 *为什么会有人对自动构建感兴趣，总之自动构建脚本我写了好久。感兴趣就自己去看好了（无端）。*
 

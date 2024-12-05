@@ -22,7 +22,7 @@
   </p>
 </p>
 
-![card](README/card.png)
+![view](README/view.png)
 
 ## ✨ Supported Features
 - ✅ Developed with a complete Vue.js framwork, frontend-backend seperated
@@ -92,25 +92,15 @@ Commands for testing and building the Electron app are shown below. Artifacts wi
 
 ``` bash
 # Run local Electron test
-yarn electron:serve
-# Build the Electron app
-yarn electron:build
+yarn dev:electron
+# Build the app desired platform
+yarn build:win
 ```
-You can also specify the desired platform with an option:
 
-```bash
-yarn electron:build --linux
-```
 ### > GitHub Actions
 *Why would anyone be interested in build automation? Anyway, I had worked on it for so long and you can check it out yourself in GitHub Actions.*
 
 ![auto-build](README/auto-build.png)
-
-## 🖼️ Screenshots
-![1](README/pics/1.png)
-![2](README/pics/2.png)
-![3](README/pics/4.png)
-![3](README/pics/3.png)
 
 ## 🎉 Credits
 Shoutout to my friends who have offered help in development and translation!
