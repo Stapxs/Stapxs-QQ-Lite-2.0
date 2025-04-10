@@ -1078,6 +1078,7 @@ msgid "合并转发消息"
 msgstr ""
 
 msgid "查看 {count} 条转发消息"
+msgstr "查看 {count} 条转发消息"
 
 msgid "浏览"
 msgstr ""
