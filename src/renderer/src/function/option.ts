@@ -651,4 +651,6 @@ export default {
     runAS,
     runASWEvent,
     remove,
+    clearGroupAssist,
+    groupAssistFunction
 }

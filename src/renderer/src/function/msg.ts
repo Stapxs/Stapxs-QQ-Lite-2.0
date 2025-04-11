@@ -56,6 +56,7 @@ import {
 } from './elements/information'
 import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
+import option from "./option"
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -1085,6 +1086,9 @@ const msgFunctons = {
                     updateLastestHistory(user)
                 }
             })
+
+            // 若开启收纳盒功能 则将相应群组放入收纳盒
+            option.clearGroupAssist(runtimeData.sysConfig.bubble_sort_user)
         }
     },
 
