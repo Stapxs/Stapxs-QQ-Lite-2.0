@@ -66,7 +66,16 @@ const configFunction: { [key: string]: (value: any) => void } = {
 }
 
 function clearGroupAssist(value: boolean) {
-    if(!value) {
+    // true 为关闭收纳盒，false 为打开收纳盒
+    groupAssistFunction(!value)
+}
+/**
+ * 切换收纳盒状态
+ * @param value 是否打开收纳盒
+ */
+function groupAssistFunction(value: boolean) {
+    if(value) {
+        // 打开收纳盒
         // 将 onMsgList 中的非置顶、没有开启消息通知的群挪到 GroupAssistList 里
         const noticeInfo = OptionFun.get('notice_group') ?? {}
         const noticeGroupIdList = noticeInfo[runtimeData.loginInfo.uin]
@@ -90,6 +99,24 @@ function clearGroupAssist(value: boolean) {
         })
         const sortedList = orderOnMsgList(newList)
         runtimeData.groupAssistList = sortedList
+    } else {
+        // 关闭收纳盒
+        // 将收纳盒中的群挪到 onMsgList 里
+        const groupAssistIdList = runtimeData.groupAssistList.map((item) => {
+            return item.group_id
+        })
+        const newList = runtimeData.groupAssistList.filter((item) => {
+            return groupAssistIdList.includes(item.group_id)
+        })
+        // 删除 groupAssistList 中的这些群
+        runtimeData.groupAssistList = runtimeData.groupAssistList.filter((item) => {
+            return !groupAssistIdList.includes(item.group_id)
+        })
+        // 将这些群添加到 onMsgList 中
+        runtimeData.onMsgList = runtimeData.onMsgList.concat(newList)
+        // 对 onMsgList 进行排序
+        const sortedList = orderOnMsgList(runtimeData.onMsgList)
+        runtimeData.onMsgList = sortedList
     }
 }
 
