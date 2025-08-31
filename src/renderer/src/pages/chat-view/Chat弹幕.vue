@@ -10,11 +10,11 @@
 <template>
     <div
         id="chat-pan"
-        :class="
-            'chat-pan' +
-                (runtimeData.tags.openSideBar ? ' open' : '') +
-                (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')
-        ">
+        :class="{
+            'chat-pan': true,
+            'open': runtimeData.tags.openSideBar,
+            'withBar': needBar()
+        }">
         <div class="danmu-pan">
             <vue-danmaku
                 ref="danmakuRef"
@@ -337,7 +337,7 @@
         SQCodeElem,
     } from '@renderer/function/elements/information'
     import { PopInfo, PopType } from '@renderer/function/base'
-    import { getTrueLang } from '@renderer/function/utils/systemUtil'
+    import { getTrueLang, needBar } from '@renderer/function/utils/systemUtil'
     import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
@@ -346,6 +346,7 @@
         props: ['chat', 'list', 'mumberInfo'],
         data() {
             return {
+                needBar,
                 backend,
                 opt: {
                     speeds: 140,

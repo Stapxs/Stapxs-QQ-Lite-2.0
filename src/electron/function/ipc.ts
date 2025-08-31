@@ -132,6 +132,29 @@ export function regIpcListener() {
             win.setPosition(point.x, point.y)
         }
     })
+    // 判断是否为平铺窗口管理器
+    ipcMain.handle('win:isTiling', () => {
+        const TILING_WMS = [
+            'i3',
+            'sway',
+            'bspwm',
+            'awesome',
+            'herbstluftwm',
+            'hyprland'
+        ]
+
+        // 仅在 Linux 下尝试读取环境变量
+        if (process.platform === 'linux') {
+            const wm =
+                process.env.XDG_CURRENT_DESKTOP?.toLowerCase() ||
+                process.env.DESKTOP_SESSION?.toLowerCase() ||
+                process.env.GDMSESSION?.toLowerCase() ||
+                ''
+            return TILING_WMS.includes(wm)
+        } else {
+            return false
+        }
+    })
     // 保存信息
     ipcMain.on('opt:store', (_, arg) => {
         store.set(arg.key, arg.value)

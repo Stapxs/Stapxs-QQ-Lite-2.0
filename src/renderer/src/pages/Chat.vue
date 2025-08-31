@@ -10,10 +10,12 @@
 -->
 
 <template>
-    <div id="chat-pan"
-        :class="'chat-pan' +
-            (runtimeData.tags.openSideBar ? ' open' : '') +
-            (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')"
+    <div ref="chat-pan"
+        :class="{
+            'chat-pan': true,
+            'open': runtimeData.tags.openSideBar,
+            'withBar': needBar()
+        }"
         :style="`background-image: url(${runtimeData.sysConfig.chat_background});`"
         @touchstart="chatMoveStartEvent"
         @touchmove="chatMoveEvent"
@@ -545,6 +547,7 @@ import {
     getTimeConfig,
     getTrueLang,
     getViewTime,
+    needBar,
 } from '@renderer/function/utils/systemUtil'
 import {
     getMsgRawTxt,

@@ -15,11 +15,11 @@
 <template>
     <div
         id="chat-pan"
-        :class="
-            'chat-pan' +
-                (runtimeData.tags.openSideBar ? ' open' : '') +
-                (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')
-        ">
+        :class="{
+            'chat-pan': true,
+            'open': runtimeData.tags.openSideBar,
+            'withBar': needBar()
+        }">
         <div
             id="shell-pan"
             class="shell-pan">
@@ -164,7 +164,6 @@
 </template>
 
 <script lang="ts">
-    import app from '@renderer/main'
     import SendUtil from '@renderer/function/sender'
     import packageInfo from '../../../../../package.json'
     import Option from '@renderer/function/option'
@@ -173,7 +172,7 @@
     import { Connector } from '@renderer/function/connect'
     import { defineComponent, markRaw } from 'vue'
     import { runtimeData } from '@renderer/function/msg'
-    import { getTrueLang } from '@renderer/function/utils/systemUtil'
+    import { getTrueLang, needBar } from '@renderer/function/utils/systemUtil'
     import {
         MsgItemElem,
         SQCodeElem,
@@ -197,6 +196,7 @@
         data() {
             return {
                 backend,
+                needBar,
                 tags: {
                     fullscreen: false,
                     fistget: true,

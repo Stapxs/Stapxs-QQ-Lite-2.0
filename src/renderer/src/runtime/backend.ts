@@ -15,6 +15,7 @@ export const backend = {
     platform: undefined as 'win32' | 'darwin' | 'linux' | 'android' | 'ios' | 'web' | undefined,
     release: '',
     proxy: undefined as number | undefined,
+    isTiling: false,
 
     function: undefined as IpcRenderer |
     {
@@ -51,10 +52,8 @@ export const backend = {
 
     /**
      * 初始化后端功能
-     *
-     * @returns {Promise<void>}
      */
-    async init() {
+    async init(): Promise<void> {
         const { $t } = app.config.globalProperties
         if (window.electron != undefined) {
             this.type = 'electron';
@@ -84,6 +83,10 @@ export const backend = {
         this.platform = await this.call(undefined, 'sys:getPlatform', true)
         this.release = await this.call(undefined, 'sys:getRelease', true)
         this.proxy  = await this.call(undefined, 'sys:runProxy', true)
+        if (this.platform == 'linux') {
+            this.isTiling = await this.call(undefined, 'win:isTiling', true)
+            console.log('是否为平铺窗口管理器：', this.isTiling)
+        }
         if(this.type == 'tauri' && !this.proxy) {
             logger.error(null, 'Tauri 代理服务似乎没有正常启动，此服务异常将会影响应用内的大部分外部资源的加载。')
             popInfo.add(PopType.ERR, $t('Tauri 代理服务似乎没有正常启动'), false)

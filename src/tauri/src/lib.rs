@@ -213,6 +213,7 @@ pub fn run() {
             commands::win::win_move,
             commands::win::win_open_dev_tools,
             commands::win::win_set_title,
+            commands::win::win_is_tiling,
             commands::opt::opt_get_system_info,
             commands::opt::opt_store,
             commands::opt::opt_save_all,
