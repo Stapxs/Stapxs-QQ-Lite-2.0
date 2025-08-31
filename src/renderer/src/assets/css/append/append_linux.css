@@ -87,15 +87,23 @@
     padding-top: 25px;
     height: calc(100% - 25px);
 }
+#app.tiling .opt-main > div:last-child {
+    padding-top: 15px;
+    height: calc(100% - 15px);
+}
 .pop-box > div:last-child {
     height: calc(100% - 20px);
     width: calc(100% - 20px);
     border-radius: 7px;
     margin: 10px;
 }
-
 .opt-main > div:first-child {
     margin-top: 20px;
+    margin-bottom: 20px;
+}
+#app.tiling .opt-main > div:first-child {
+    margin-top: 10px;
+    overflow-y: scroll;
 }
 
 @media (max-width: 700px) {
