@@ -126,6 +126,24 @@
                     style="width: 150px" type="text" @keyup="sendTestAppmsg">
             </div>
             <div v-if="dev" class="opt-item">
+                <font-awesome-icon :icon="['fas', 'window-restore']" />
+                <div>
+                    <span>{{ $t('强制窗口状态') }}</span>
+                    <span>{{ $t('喵喵喵，喵呜——') }}</span>
+                </div>
+                <select v-model="winState" @change="forceWinState">
+                    <option value="none">
+                        {{ $t('取消') }}
+                    </option>
+                    <option value="win">
+                        {{ $t('窗口') }}
+                    </option>
+                    <option value="tiling">
+                        {{ $t('平铺') }}
+                    </option>
+                </select>
+            </div>
+            <div v-if="dev" class="opt-item">
                 <font-awesome-icon :icon="['fas', 'trash']" />
                 <div>
                     <span>{{ $t('移除未使用的配置') }}</span>
@@ -233,6 +251,7 @@
     import { uptime } from '@renderer/main'
     import { loadJsonMap } from '@renderer/function/utils/appUtil'
     import { backend } from '@renderer/runtime/backend'
+    import win from '@renderer/runtime/win'
 
     export default defineComponent({
         name: 'ViewOptDev',
@@ -249,7 +268,8 @@
                 ws_text: '',
                 parse_text: '',
                 appmsg_text: '',
-                dev: import.meta.env.DEV
+                dev: import.meta.env.DEV,
+                winState: 'none' as 'none' | 'tiling' | 'win',
             }
         },
         mounted() {
@@ -616,6 +636,19 @@
                 }
                 runtimeData.popBoxList.push(popInfo)
             },
+            async forceWinState() {
+                switch (this.winState) {
+                    case 'none':
+                        win.tiling = await backend.call(undefined, 'win:isTiling', true)
+                        break
+                    case 'tiling':
+                        win.tiling = true
+                        break
+                    case 'win':
+                        win.tiling = false
+                        break
+                }
+            }
         },
     })
 </script>

@@ -5,7 +5,7 @@
         {{ ' / client: ' + appClient.type }}
         {{ ' / fps: ' + fps.value }}
     </div>
-    <div v-if="needBar()"
+    <div v-if="win.withBar"
         :class="'top-bar' + ((backend.platform == 'win32' && dev) ? ' win' : '')"
         name="appbar"
         data-tauri-drag-region="true">
@@ -225,7 +225,7 @@ import { runtimeData } from '@renderer/function/msg'
 import { BaseChatInfoElem } from '@renderer/function/elements/information'
 import { Notify } from './function/notify'
 import { updateBaseOnMsgList } from './function/utils/msgUtil'
-import { getDeviceType, needBar } from './function/utils/systemUtil'
+import { getDeviceType } from './function/utils/systemUtil'
 import { uptime } from '@renderer/main'
 
 import Options from '@renderer/pages/Options.vue'
@@ -234,6 +234,7 @@ import Messages from '@renderer/pages/Messages.vue'
 import Chat from '@renderer/pages/Chat.vue'
 import { backend } from './runtime/backend'
 import GlobalSessionSearchBar from './components/GlobalSessionSearchBar.vue'
+import win from './runtime/win'
 
 export default defineComponent({
     name: 'App',
@@ -247,7 +248,7 @@ export default defineComponent({
     data() {
         return {
             backend,
-            needBar,
+            win,
             appClient: backend,
             dev: import.meta.env.DEV,
             sse: import.meta.env.VITE_APP_SSE_MODE == 'true',
@@ -339,14 +340,6 @@ export default defineComponent({
                 'merge_forward_width_type',
                 Option.get('merge_forward_width_type'),
             )
-            if (needBar()) {
-                const app = document.getElementById('base-app')
-                if (app) app.classList.add('withBar')
-            }
-            if (backend.isTiling) {
-                const dom = document.getElementById('app')
-                if (dom) dom.classList.add('tiling')
-            }
             // 基础初始化完成
             logger.system('欢迎回来，开发者。Stapxs QQ Lite 正处于 ' + (this.dev ? 'development' : 'production') + ' 模式。正在为您加载更多功能。')
             // 加载移动平台特性

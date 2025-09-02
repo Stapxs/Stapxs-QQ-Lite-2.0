@@ -140,7 +140,7 @@ textarea:focus {
     transform: rotate(180deg);
     padding-bottom: 30px;
 }
-#base-app.withBar {
+body.with-bar #base-app {
     height: calc(100% - 40px);
     padding-top: 40px;
 }

@@ -18,7 +18,6 @@
         :class="{
             'chat-pan': true,
             'open': runtimeData.tags.openSideBar,
-            'withBar': needBar()
         }">
         <div
             id="shell-pan"
@@ -172,7 +171,7 @@
     import { Connector } from '@renderer/function/connect'
     import { defineComponent, markRaw } from 'vue'
     import { runtimeData } from '@renderer/function/msg'
-    import { getTrueLang, needBar } from '@renderer/function/utils/systemUtil'
+    import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import {
         MsgItemElem,
         SQCodeElem,
@@ -196,7 +195,6 @@
         data() {
             return {
                 backend,
-                needBar,
                 tags: {
                     fullscreen: false,
                     fistget: true,

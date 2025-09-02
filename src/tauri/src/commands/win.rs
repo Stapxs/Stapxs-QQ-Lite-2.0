@@ -10,14 +10,24 @@ pub fn win_close(app_handle: tauri::AppHandle) {
     }
 }
 
-#[tauri::command]
+#[command]
 pub fn win_minimize(window: tauri::Window) {
     window.minimize().unwrap();
 }
 
-#[tauri::command]
+#[command]
 pub fn win_maximize(window: tauri::Window) {
     window.maximize().unwrap();
+}
+
+#[command]
+pub fn win_unmaximize(window: tauri::Window) {
+    window.unmaximize().unwrap();
+}
+
+#[command]
+pub fn win_is_maximized(window: tauri::Window) -> bool {
+    return window.is_maximized().unwrap();
 }
 
 // #[command]

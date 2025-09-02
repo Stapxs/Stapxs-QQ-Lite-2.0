@@ -157,14 +157,23 @@ pub fn run() {
             // 其他窗口事件
             let window_clone_event = window.clone();
             window.on_window_event(move |event| {
-                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                    #[cfg(not(target_os = "macos"))] {
-                        window_clone_event.hide().unwrap();
+                match event {
+                    tauri::WindowEvent::CloseRequested { api, .. } => {
+                        #[cfg(not(target_os = "macos"))] {
+                            window_clone_event.hide().unwrap();
+                        }
+                        #[cfg(target_os = "macos")] {
+                            tauri::AppHandle::hide(window_clone_event.app_handle()).unwrap();
+                        }
+                        api.prevent_close();
                     }
-                    #[cfg(target_os = "macos")] {
-                        tauri::AppHandle::hide(window_clone_event.app_handle()).unwrap();
+                    tauri::WindowEvent::Resized { .. } => {
+						let _ = window_clone_event.emit(
+							"win:maximizedChanged",
+							window_clone_event.is_maximized().unwrap_or(false)
+						);
                     }
-                    api.prevent_close();
+                    _ => {}
                 }
             });
 
@@ -208,12 +217,14 @@ pub fn run() {
             commands::win::win_close,
             commands::win::win_minimize,
             commands::win::win_maximize,
+            commands::win::win_unmaximize,
             commands::win::win_always_top,
             commands::win::win_get_window_info,
             commands::win::win_move,
             commands::win::win_open_dev_tools,
             commands::win::win_set_title,
             commands::win::win_is_tiling,
+            commands::win::win_is_maximized,
             commands::opt::opt_get_system_info,
             commands::opt::opt_store,
             commands::opt::opt_save_all,

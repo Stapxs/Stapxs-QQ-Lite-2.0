@@ -1,4 +1,7 @@
 body {
+    transform: 10s;
+}
+body.margin {
     margin: 10px;
     border-radius: 7px;
     overflow: hidden;
@@ -7,16 +10,7 @@ body {
     height: calc(100% - 20px);
     border: 1px solid #00000059;
 }
-body.tiling {
-    margin: 0;
-    border-radius: 0;
-    overflow: hidden;
-    box-shadow: unset;
-    width: 100%;
-    height: 100%;
-    border: unset;
-}
-#base-app.withBar {
+body.with-bar #base-app {
     padding-top: 0;
     height: 100%;
 }
@@ -47,6 +41,7 @@ body.tiling {
 
 .top-bar {
     border-radius: 7px 7px 0 0;
+    margin-left: 20px;
     width: calc(100% - 20px);
     background: transparent;
     box-shadow: unset;
@@ -59,7 +54,7 @@ body.tiling {
     height: 14px;
 }
 
-.chat-pan.withBar {
+body.with-bar .chat-pan {
     height: calc(100% - 46px);
     top: 11px;
     margin-right: 10px;
@@ -84,10 +79,6 @@ body.tiling {
 }
 
 .opt-main > div:last-child {
-    padding-top: 25px;
-    height: calc(100% - 25px);
-}
-body.tiling .opt-main > div:last-child {
     padding-top: 15px;
     height: calc(100% - 15px);
 }
@@ -101,17 +92,26 @@ body.tiling .opt-main > div:last-child {
     margin-top: 20px;
     margin-bottom: 20px;
 }
-body.tiling .opt-main > div:first-child {
+body.margin .opt-main > div:last-child {
+    padding-top: 25px;
+    height: calc(100% - 25px);
+}
+
+.opt-main > div:first-child {
     margin-top: 10px;
     overflow-y: scroll;
 }
+body.margin .opt-main > div:first-child {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
 
 @media (max-width: 700px) {
-    .chat-pan.withBar {
+    body.with-bar .chat-pan {
         height: calc(100% - 105px) !important;
         left: 70px !important;
     }
-    .chat-pan.open.withBar {
+    body.with-bar .chat-pan.open {
         left: 90px !important;
     }
     .friend-list {

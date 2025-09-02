@@ -13,7 +13,6 @@
         :class="{
             'chat-pan': true,
             'open': runtimeData.tags.openSideBar,
-            'withBar': needBar()
         }">
         <div class="danmu-pan">
             <vue-danmaku
@@ -337,7 +336,7 @@
         SQCodeElem,
     } from '@renderer/function/elements/information'
     import { PopInfo, PopType } from '@renderer/function/base'
-    import { getTrueLang, needBar } from '@renderer/function/utils/systemUtil'
+    import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
@@ -346,7 +345,6 @@
         props: ['chat', 'list', 'mumberInfo'],
         data() {
             return {
-                needBar,
                 backend,
                 opt: {
                     speeds: 140,

@@ -24,9 +24,9 @@
 			"runtimeArgs": [
 				"--sourcemap"
 			],
-			"env": {
-				"REMOTE_DEBUGGING_PORT": "9222"
-			}
+			// "env": {
+			// 	"REMOTE_DEBUGGING_PORT": "9222"
+			// }
 		},
 		{
 			"type": "lldb",

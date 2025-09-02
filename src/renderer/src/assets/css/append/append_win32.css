@@ -5,7 +5,7 @@ body {
         sans-serif !important;
 }
 
-#base-app.withBar {
+body.with-bar #base-app {
     height: calc(100% - 35px);
     padding-top: 35px;
 }
@@ -34,7 +34,7 @@ body {
     padding-left: 5px;
 }
 
-.chat-pan.withBar {
+body.with-bar .chat-pan {
     left: 275px;
     top: 0;
     height: calc(100% - 20px);
@@ -59,12 +59,12 @@ body {
         padding-top: 25px !important;
         height: calc(100% - 37px) !important;
     }
-    .chat-pan.withBar {
+    body.with-bar .chat-pan {
         left: 60px !important;
         height: calc(100% - 75px);
         padding-top: 20px;
     }
-    .chat-pan.open.withBar {
+    body.with-bar .chat-pan.open {
         left: 80px !important;
     }
     .chat-info {
@@ -96,7 +96,7 @@ body {
 }
 
 @media (max-width: 500px) {
-    .chat-pan.withBar {
+    body.with-bar .chat-pan {
         padding-top: 0;
         left: 0 !important;
     }

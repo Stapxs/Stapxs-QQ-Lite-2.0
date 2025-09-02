@@ -14,7 +14,6 @@
         :class="{
             'chat-pan': true,
             'open': runtimeData.tags.openSideBar,
-            'withBar': needBar()
         }"
         :style="`background-image: url(${runtimeData.sysConfig.chat_background});`"
         @touchstart="chatMoveStartEvent"
@@ -547,7 +546,6 @@ import {
     getTimeConfig,
     getTrueLang,
     getViewTime,
-    needBar,
 } from '@renderer/function/utils/systemUtil'
 import {
     getMsgRawTxt,

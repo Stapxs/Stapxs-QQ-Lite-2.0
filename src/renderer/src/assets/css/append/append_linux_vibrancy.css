@@ -6,7 +6,7 @@
 .top-bar {
     width: calc(100% - 2px);
 }
-.chat-pan.withBar {
+body.with-bar .chat-pan {
     height: calc(100% - 27px);
     margin-right: 1px;
     top: 1px;

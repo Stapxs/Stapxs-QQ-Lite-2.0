@@ -98,6 +98,10 @@ export function regIpcListener() {
     ipcMain.on('win:maximize', () => {
         if (win) win.maximize()
     })
+    // 取消最大化
+    ipcMain.on('win:unmaximize', () => {
+        if (win) win.unmaximize()
+    })
     // 重启应用
     ipcMain.on('win:relaunch', () => {
         app.relaunch()
@@ -567,5 +571,18 @@ export function regIpcListener() {
         if(touchBarInstance) {
             touchBarInstance.flushFriendSearch(list)
         }
+    })
+
+    // 最大化相关
+    ipcMain.handle('win:isMaximized', () => {
+        if (!win) return false
+        return win.isMaximized()
+    })
+
+    win!.on('maximize', () => {
+        win!.webContents.send('win:maximizedChanged', true)
+    })
+    win!.on('unmaximize', () => {
+        win!.webContents.send('win:maximizedChanged', false)
     })
 }

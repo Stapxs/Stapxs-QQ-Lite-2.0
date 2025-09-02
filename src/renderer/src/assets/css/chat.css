@@ -24,7 +24,7 @@ input {
     right: 0;
     top: 0;
 }
-.chat-pan.withBar {
+body.with-bar .chat-pan {
     height: calc(100% - 40px);
     top: 40px;
 }
@@ -401,7 +401,7 @@ input {
     width: 100%;
     z-index: 10;
 }
-.msg-menu.withBar {
+body.with-bar .msg-menu {
     height: calc(100% + 40px);
     margin-top: -40px;
 }
@@ -1804,7 +1804,7 @@ div.tiny-session-body > div:nth-child(3) > div > svg {
         height: calc(100% - 75px - var(--safe-area-bottom));
         left: 80px !important;
     }
-    .chat-pan.withBar {
+    body.with-bar .chat-pan {
         height: calc(100% - 115px);
         top: 40px;
     }

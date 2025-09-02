@@ -12,7 +12,6 @@
             'chat-pan': true,
             'sys-not-pan': true,
             'open': runtimeData.tags.openSideBar,
-            'withBar': needBar()
         }">
         <div>
             <font-awesome-icon :icon="['fas', 'angle-left']" @click="exit" />
@@ -99,7 +98,7 @@
 
     import { runtimeData } from '@renderer/function/msg'
     import { Connector } from '@renderer/function/connect'
-    import { getTrueLang, needBar } from '@renderer/function/utils/systemUtil'
+    import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
@@ -108,7 +107,6 @@
         data() {
             return {
                 backend,
-                needBar,
                 trueLang: getTrueLang(),
                 runtimeData: runtimeData,
                 dev: import.meta.env.DEV,

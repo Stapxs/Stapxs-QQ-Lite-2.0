@@ -423,12 +423,3 @@ export async function getApi(url: string) {
         }
     }
 }
-
-export function needBar(): boolean {
-    if (backend.platform === 'win32')
-        return true
-    if (backend.platform === 'linux' && !backend.isTiling)
-        return true
-
-    return false
-}
