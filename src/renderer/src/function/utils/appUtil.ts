@@ -623,6 +623,13 @@ import { backend } from '@renderer/runtime/backend'
 export async function loadAppendStyle() {
     const platform = backend.platform
     logger.info('正在装载补充样式……')
+    // UI 2.0 附加样式
+    if (backend.isDesktop()) {
+        import('@renderer/assets/css/append/append_new.css').then(() => {
+            logger.info('UI 2.0 附加样式加载完成')
+        })
+    }
+
     if(platform != undefined) {
         import(`@renderer/assets/css/append/append_${platform}.css`)
             .then(() => {
@@ -666,12 +673,6 @@ export async function loadAppendStyle() {
         })
     }
 
-    // UI 2.0 附加样式
-    if (backend.isDesktop()) {
-        import('@renderer/assets/css/append/append_new.css').then(() => {
-            logger.info('UI 2.0 附加样式加载完成')
-        })
-    }
     // 透明 UI 附加样式
     let subVersion = backend.release?.split('.') as any
     subVersion = subVersion ? Number(subVersion[2]) : 0

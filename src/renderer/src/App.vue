@@ -292,67 +292,69 @@ export default defineComponent({
     mounted() {
         const logger = new Logger()
         window.moYu = () => { return '\x75\x6e\x64\x65\x66\x69\x6e\x65\x64' }
+
         // 页面加载完成后
-        window.onload = async () => {
-            if(import.meta.env.DEV) {
-                // eslint-disable-next-line
-                console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to sar-dos on stapxs-qq-lite.su ]')
-            } else {
-                // eslint-disable-next-line
-                console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to ssqq on stapxs-qq-lite.user ]')
-            }
-            // 初始化全局参数
-            app.config.globalProperties.$viewer = this.viewerBody
-            // 初始化波浪动画
-            runtimeData.tags.loginWaveTimer = this.waveAnimation(
-                document.getElementById('login-wave'),
-            )
-            // AMAP：初始化高德地图
-            window._AMapSecurityConfig = import.meta.env.VITE_APP_AMAP_SECRET
-            // =============================================================
-            // 初始化功能
-            App.createMenu() // Electron：创建菜单
-            App.createIpc() // Electron：创建 IPC 通信
-            // 加载开发者相关功能
-            if (this.dev) {
-                document.title = 'Stapxs QQ Lite (Dev)'
-                // 布局检查工具
-                Spacing.start()
-                // FPS 检查
-                this.rafLoop()
-            }
-            if(this.dev) {
-                logger.debug('stapxs-qq-lite.su:$/mnt/boot/dawnHunt/bin/core --pour /mnt/app/bin/main', true)
-                logger.system('[ dawnHuntCore Version: 1.0 Beta, dawnHuntDB: 2025-04-24 ]')
-            } else {
-                logger.debug('stapxs-qq-lite.user:$/mnt/app/bin/main', true)
-            }
-            logger.add(LogType.DEBUG, '系统配置', runtimeData.sysConfig)
-            // PS：重新再应用部分需要加载完成后才能应用的设置
-            Option.run('opt_dark', Option.get('opt_dark'))
-            Option.run('opt_auto_dark', Option.get('opt_auto_dark'))
-            Option.run('theme_color', Option.get('theme_color'))
-            Option.run(
-                'merge_forward_width_type',
-                Option.get('merge_forward_width_type'),
-            )
-            // 基础初始化完成
-            logger.system('欢迎回来，开发者。Stapxs QQ Lite 正处于 ' + (this.dev ? 'development' : 'production') + ' 模式。正在为您加载更多功能。')
-            // 加载移动平台特性
-            App.loadMobile()
-            // 加载额外样式
-            App.loadAppendStyle()
-            const baseApp = document.getElementById('base-app')
-            if (baseApp) {
-                baseApp.style.setProperty('--safe-area-bottom',
-                    (Option.get('fs_adaptation') > 0 ? Option.get('fs_adaptation') : 0) + 'px')
-                baseApp.style.setProperty('--safe-area-top', '0')
-                baseApp.style.setProperty('--safe-area-left', '0')
-                baseApp.style.setProperty('--safe-area-right', '0')
-                // Capacitor：移动端初始化安全区域
-                if (backend.isMobile()) {
-                    const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
-                    if (safeArea) {
+        if(import.meta.env.DEV) {
+            // eslint-disable-next-line
+            console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to sar-dos on stapxs-qq-lite.su ]')
+        } else {
+            // eslint-disable-next-line
+            console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to ssqq on stapxs-qq-lite.user ]')
+        }
+        // 初始化全局参数
+        app.config.globalProperties.$viewer = this.viewerBody
+        // 初始化波浪动画
+        runtimeData.tags.loginWaveTimer = this.waveAnimation(
+            document.getElementById('login-wave'),
+        )
+        // AMAP：初始化高德地图
+        window._AMapSecurityConfig = import.meta.env.VITE_APP_AMAP_SECRET
+        // =============================================================
+        // 初始化功能
+        App.createMenu() // Electron：创建菜单
+        App.createIpc() // Electron：创建 IPC 通信
+        // 加载开发者相关功能
+        if (this.dev) {
+            document.title = 'Stapxs QQ Lite (Dev)'
+            // 布局检查工具
+            Spacing.start()
+            // FPS 检查
+            this.rafLoop()
+        }
+        if(this.dev) {
+            logger.debug('stapxs-qq-lite.su:$/mnt/boot/dawnHunt/bin/core --pour /mnt/app/bin/main', true)
+            logger.system('[ dawnHuntCore Version: 1.0 Beta, dawnHuntDB: 2025-04-24 ]')
+        } else {
+            logger.debug('stapxs-qq-lite.user:$/mnt/app/bin/main', true)
+        }
+        logger.add(LogType.DEBUG, '系统配置', runtimeData.sysConfig)
+        // PS：重新再应用部分需要加载完成后才能应用的设置
+        Option.run('opt_dark', Option.get('opt_dark'))
+        Option.run('opt_auto_dark', Option.get('opt_auto_dark'))
+        Option.run('theme_color', Option.get('theme_color'))
+        Option.run(
+            'merge_forward_width_type',
+            Option.get('merge_forward_width_type'),
+        )
+        // 基础初始化完成
+        logger.system('欢迎回来，开发者。Stapxs QQ Lite 正处于 ' + (this.dev ? 'development' : 'production') + ' 模式。正在为您加载更多功能。')
+        // 加载移动平台特性
+        App.loadMobile()
+        // 加载额外样式
+        App.loadAppendStyle()
+        const baseApp = document.getElementById('base-app')
+        if (baseApp) {
+            baseApp.style.setProperty('--safe-area-bottom',
+                (Option.get('fs_adaptation') > 0 ? Option.get('fs_adaptation') : 0) + 'px')
+            baseApp.style.setProperty('--safe-area-top', '0')
+            baseApp.style.setProperty('--safe-area-left', '0')
+            baseApp.style.setProperty('--safe-area-right', '0')
+            // Capacitor：移动端初始化安全区域
+            if (backend.isMobile()) {
+                backend.call('SafeArea', 'getSafeArea', true)
+                    .then(safeArea=>{
+                        if (!safeArea) return
+
                         logger.add(LogType.DEBUG, '安全区域：', safeArea)
                         baseApp.style.setProperty('--safe-area-top', safeArea.top + 'px')
                         baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
@@ -360,121 +362,121 @@ export default defineComponent({
                         baseApp.style.setProperty('--safe-area-right', safeArea.right + 'px')
                         // 图片查看器安全区域
                         document.documentElement.style.setProperty('--safe-area--viewer-top', safeArea.top + 'px')
-                    }
-                }
-            }
-            // 加载密码保存和自动连接
-            loginInfo.address = runtimeData.sysConfig.address
-            if (
-                runtimeData.sysConfig.save_password &&
-                runtimeData.sysConfig.save_password != true
-            ) {
-                loginInfo.token = runtimeData.sysConfig.save_password
-                this.tags.savePassword = true
-            }
-            if (runtimeData.sysConfig.auto_connect == true) {
-                this.connect()
-            }
-            // 服务发现
-            backend.call('Onebot', 'sys:findService', false)
-            backend.call('OneBot', 'sys:frontLoaded', false)
-            // =============================================================
-            // 初始化完成
-            // 创建 popstate
-            if(backend.platform == 'web' && (getDeviceType() === 'Android' || getDeviceType() === 'iOS')) {
-                window.addEventListener('popstate', () => {
-                    if(!loginInfo.status || runtimeData.tags.openSideBar) {
-                        // 离开提醒
-                        const popInfo = {
-                            title: this.$t('提醒'),
-                            html: `<span>${this.$t('离开 Stapxs QQ Lite？')}</span>`,
-                            button: [
-                                {
-                                    text: this.$t('取消'),
-                                    fun: () => {
-                                        runtimeData.popBoxList.shift()
-                                        history.pushState('ssqqweb', '', location.href)
-                                    },
-                                },
-                                {
-                                    text: this.$t('离开'),
-                                    master: true,
-                                    fun: () => {
-                                        runtimeData.popBoxList.shift()
-                                        history.back()
-                                    },
-                                },
-                            ],
-                        }
-                        runtimeData.popBoxList.push(popInfo)
-                    } else {
-                        // 内部的页面返回处理，此处使用 watch backTimes 监听
-                        runtimeData.watch.backTimes += 1
-                        history.pushState('ssqqweb', '', location.href)
-                    }
-                });
-                if (history.state != 'ssqqweb') {
-                    history.pushState('ssqqweb', '', location.href)
-                }
-            }
-            // UM：加载 Umami 统计功能
-            if (!Option.get('close_ga') && !this.dev) {
-                const config = {
-                    baseUrl: import.meta.env.VITE_APP_MU_ADDRESS,
-                    websiteId: import.meta.env.VITE_APP_MU_ID
-                } as any
-                // 给页面添加一个来源域名方便在 electron 中获取
-                if(!backend.isWeb()) {
-                    config.hostName = backend.type + '.stapxs.cn'
-                }
-                Umami.initialize(config)
-            } else if (this.dev) {
-                logger.system('开发者，由于 Stapxs QQ Lite 运行在调试模式下，分析组件并未初始化 …… 系统将无法捕获开发者阁下的访问状态，请悉知。')
-            }
-            App.sendStatEvent('version',
-                import.meta.env.VITE_APP_CLIENT_TAG + ',' + packageInfo.version)
-            App.checkUpdate() // 检查更新
-            App.checkOpenTimes() // 检查打开次数
-            App.checkNotice() // 检查公告
-            // 加载愚人节附加
-            if (new Date().getMonth() == 3 && new Date().getDate() == 1) {
-                document.getElementById('connect_btn')?.classList.add('afd')
-            }
-            // 其他状态监听
-            this.$watch(() => runtimeData.baseOnMsgList, () => {
-                // macOS：刷新 Touch Bar 列表
-                if (backend.isDesktop()) {
-                    const list = [] as
-                        { id: number, name: string, image?: string }[]
-                    runtimeData.baseOnMsgList.forEach((item) => {
-                        list.push({
-                            id: item.user_id ? item.user_id : item.group_id,
-                            name: item.group_name ? item.group_name : item.remark === item.nickname ? item.nickname : item.remark + '（' + item.nickname + '）',
-                            image: item.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + item.user_id : 'https://p.qlogo.cn/gh/' + item.group_id + '/' + item.group_id + '/0'
-                        })
                     })
-                    backend.call(undefined, 'sys:flushOnMessage', false, list)
-                }
-
-                // 刷新列表
-                updateBaseOnMsgList()
-            }, { deep: true })
-            // 更新标题
-            const titleList = [
-                '也试试 Icalingua Plus Plus 吧！',
-                '点击阅读《社交功能限制提醒》',
-                '登录失败，Code 45',
-                '你好世界！',
-                '这只是个普通的彩蛋！'
-            ]
-            const title = titleList[Math.floor(Math.random() * titleList.length)]
-            if(backend.platform == 'web') {
-                document.title = title + '- Stapxs QQ Lite'
-            } else {
-                document.title = title
-                backend.call(undefined, 'win:setTitle', false, title)
             }
         }
+        // 加载密码保存和自动连接
+        loginInfo.address = runtimeData.sysConfig.address
+        if (
+            runtimeData.sysConfig.save_password &&
+            runtimeData.sysConfig.save_password != true
+        ) {
+            loginInfo.token = runtimeData.sysConfig.save_password
+            this.tags.savePassword = true
+        }
+        if (runtimeData.sysConfig.auto_connect == true) {
+            this.connect()
+        }
+        // 服务发现
+        backend.call('Onebot', 'sys:findService', false)
+        backend.call('OneBot', 'sys:frontLoaded', false)
+        // =============================================================
+        // 初始化完成
+        // 创建 popstate
+        if(backend.platform == 'web' && (getDeviceType() === 'Android' || getDeviceType() === 'iOS')) {
+            window.addEventListener('popstate', () => {
+                if(!loginInfo.status || runtimeData.tags.openSideBar) {
+                    // 离开提醒
+                    const popInfo = {
+                        title: this.$t('提醒'),
+                        html: `<span>${this.$t('离开 Stapxs QQ Lite？')}</span>`,
+                        button: [
+                            {
+                                text: this.$t('取消'),
+                                fun: () => {
+                                    runtimeData.popBoxList.shift()
+                                    history.pushState('ssqqweb', '', location.href)
+                                },
+                            },
+                            {
+                                text: this.$t('离开'),
+                                master: true,
+                                fun: () => {
+                                    runtimeData.popBoxList.shift()
+                                    history.back()
+                                },
+                            },
+                        ],
+                    }
+                    runtimeData.popBoxList.push(popInfo)
+                } else {
+                    // 内部的页面返回处理，此处使用 watch backTimes 监听
+                    runtimeData.watch.backTimes += 1
+                    history.pushState('ssqqweb', '', location.href)
+                }
+            });
+            if (history.state != 'ssqqweb') {
+                history.pushState('ssqqweb', '', location.href)
+            }
+        }
+        // UM：加载 Umami 统计功能
+        if (!Option.get('close_ga') && !this.dev) {
+            const config = {
+                baseUrl: import.meta.env.VITE_APP_MU_ADDRESS,
+                websiteId: import.meta.env.VITE_APP_MU_ID
+            } as any
+            // 给页面添加一个来源域名方便在 electron 中获取
+            if(!backend.isWeb()) {
+                config.hostName = backend.type + '.stapxs.cn'
+            }
+            Umami.initialize(config)
+        } else if (this.dev) {
+            logger.system('开发者，由于 Stapxs QQ Lite 运行在调试模式下，分析组件并未初始化 …… 系统将无法捕获开发者阁下的访问状态，请悉知。')
+        }
+        App.sendStatEvent('version',
+            import.meta.env.VITE_APP_CLIENT_TAG + ',' + packageInfo.version)
+        App.checkUpdate() // 检查更新
+        App.checkOpenTimes() // 检查打开次数
+        App.checkNotice() // 检查公告
+        // 加载愚人节附加
+        if (new Date().getMonth() == 3 && new Date().getDate() == 1) {
+            document.getElementById('connect_btn')?.classList.add('afd')
+        }
+        // 其他状态监听
+        this.$watch(() => runtimeData.baseOnMsgList, () => {
+            // macOS：刷新 Touch Bar 列表
+            if (backend.isDesktop()) {
+                const list = [] as
+                    { id: number, name: string, image?: string }[]
+                runtimeData.baseOnMsgList.forEach((item) => {
+                    list.push({
+                        id: item.user_id ? item.user_id : item.group_id,
+                        name: item.group_name ? item.group_name : item.remark === item.nickname ? item.nickname : item.remark + '（' + item.nickname + '）',
+                        image: item.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + item.user_id : 'https://p.qlogo.cn/gh/' + item.group_id + '/' + item.group_id + '/0'
+                    })
+                })
+                backend.call(undefined, 'sys:flushOnMessage', false, list)
+            }
+
+            // 刷新列表
+            updateBaseOnMsgList()
+        }, { deep: true })
+        // 更新标题
+        const titleList = [
+            '也试试 Icalingua Plus Plus 吧！',
+            '点击阅读《社交功能限制提醒》',
+            '登录失败，Code 45',
+            '你好世界！',
+            '这只是个普通的彩蛋！'
+        ]
+        const title = titleList[Math.floor(Math.random() * titleList.length)]
+        if(backend.platform == 'web') {
+            document.title = title + '- Stapxs QQ Lite'
+        } else {
+            document.title = title
+            backend.call(undefined, 'win:setTitle', false, title)
+        }
+
         // 页面关闭前
         window.onbeforeunload = () => {
             logger.system('开发者阁下—— 唔，阁下离开的太匆忙了！让我来帮开发者阁下收拾下东西吧。')

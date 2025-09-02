@@ -1362,8 +1362,8 @@ body.with-bar #base-app {
     }
     .friend-list > div:last-child.open > div:not(.list),
     .friend-list > div:last-child.open > div.list > div > div {
-        padding: 10px !important;
-        margin: 10px !important;
+        padding: 10px;
+        margin: 10px;
     }
     .friend-list > div:last-child.open > div > div,
     .friend-list > div:last-child.open > div.list > div > div > div {
@@ -1465,8 +1465,8 @@ body.with-bar #base-app {
     }
     .friend-list > div:last-child > div:not(.list),
     .friend-list > div:last-child > div.list > div > div {
-        padding: 10px !important;
-        margin: 10px !important;
+        padding: 10px;
+        margin: 10px;
     }
     .friend-list > div:first-child > div.small > span {
         display: flex !important;

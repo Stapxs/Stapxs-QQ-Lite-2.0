@@ -52,7 +52,6 @@ library.add(fas)
 library.add(faSquare)
 app.component('FontAwesomeIcon', FontAwesomeIcon)
 
-app.mount('#app')
 export default app
 export const uptime = new Date().getTime()
 

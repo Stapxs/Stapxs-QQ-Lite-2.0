@@ -115,30 +115,67 @@ body.margin .opt-main > div:first-child {
         left: 90px !important;
     }
     .friend-list {
+        background-color: var(--color-bg) !important;
+        justify-items: center;
         width: 60px !important;
     }
-    .friend-list > div:first-child {
-        margin: 15px 15px 0 8px !important;
-        margin-left: 0 !important;
+    .friend-list > div:nth-child(2) {
+        margin: unset;
+        width: unset;
+        padding-left: 6px !important;
+    }
+    .friend-list > div:first-child > div.small > span {
+        display: flex !important;
     }
     .friend-list > div:first-child > div.small > div {
-        width: 35px;
-        height: 35px;
-        margin-right: 0;
-    }
-    .friend-list.open > div:first-child > div.small > div {
-        height: 44px;
-        width: 44px;
+        display: none;
     }
     .friend-list > div:first-child > div.small {
-        margin-top: -20px;
-        margin-left: 5px;
-        margin-bottom: 5px;
+        margin: unset;
+        height: unset;
+    }
+    .friend-body {
+        padding: 4px !important;
+        margin: 4px 2px !important;
+    }
+
+    .friend-body > div.new {
+        width: 10px !important;
+        height: 10px !important;
+        right: 5px !important;
+        top: 5px !important;
+        margin: unset !important;
     }
 }
 
 @media (max-width: 500px) {
-    .friend-list > div:first-child {
-        margin: 15px 15px 0 0 !important;
+    .chat-pan {
+        width: calc(100% - 60px) !important;
+        left: 60px !important;
+    }
+
+    .friend-list > div:nth-child(2) {
+        margin: unset;
+        width: unset;
+        padding-left: 6px !important;
+    }
+    .friend-list > div:first-child > div.small > div {
+        display: none;
+    }
+    .friend-list > div:first-child > div.small {
+        margin: unset;
+        height: unset;
+    }
+    .friend-body {
+        padding: 4px !important;
+        margin: 4px 2px !important;
+    }
+
+    .friend-body > div.new {
+        width: 10px !important;
+        height: 10px !important;
+        right: 5px !important;
+        top: 5px !important;
+        margin: unset !important;
     }
 }

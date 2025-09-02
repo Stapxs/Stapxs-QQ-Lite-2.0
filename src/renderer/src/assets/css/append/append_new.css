@@ -149,7 +149,7 @@ body {
     font-size: 0.75rem;
 }
 .mumber-info > div:first-child > div > div > div > span {
-    font-size: 0.6rem;
+    font-size: 0.8rem;
 }
 
 .chat-pan {
@@ -265,7 +265,7 @@ body {
     width: 30px;
 }
 .message-body > span {
-    font-size: 0.6rem;
+    font-size: 0.8rem;
 }
 .message-body > a {
     font-size: 0.8rem;
