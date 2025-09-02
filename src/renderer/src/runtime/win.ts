@@ -1,22 +1,29 @@
 import { backend } from './backend'
-import { shallowRef, computed, watchEffect } from 'vue'
+import { shallowRef, computed, watchEffect, ComputedRef } from 'vue'
 
 export type WinAction = 'maximize' | 'minimize' | 'unmaximize' | 'close'
 
 const win = {
     _isTiling: shallowRef(false),
     _isMaximized: shallowRef(false),
-    _needBar: computed(()=>!win.tiling),
-    _needMargin: computed(()=>{
-        if (backend.platform === 'web') return false
-        if (win.tiling) return false
-        return !win.maximized
-    }),
+    _needBar: undefined as any as ComputedRef<boolean>,
+    _needMargin: undefined as any as ComputedRef<boolean>,
 
     /**
      * 初始化
      */
     async init() {
+        // computed 初始化
+        this._needBar = computed(()=>{
+            if (backend.isWeb()) return false
+            return !win.tiling
+        })
+        this._needMargin = computed(()=>{
+            if (backend.isWeb()) return false
+            if (win.tiling) return false
+            return !win.maximized
+        })
+
         if (backend.platform === 'linux')
             win.tiling = await backend.call(undefined, 'win:isTiling', true)
         // 最大化检测

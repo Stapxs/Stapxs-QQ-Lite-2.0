@@ -294,8 +294,6 @@ export default defineComponent({
         window.moYu = () => { return '\x75\x6e\x64\x65\x66\x69\x6e\x65\x64' }
         // 页面加载完成后
         window.onload = async () => {
-            await backend.init() // Desktop：初始化客户端功能
-
             if(import.meta.env.DEV) {
                 // eslint-disable-next-line
                 console.log('[ SSystem Bootloader Complete took ' + (new Date().getTime() - uptime) + 'ms, welcome to sar-dos on stapxs-qq-lite.su ]')
@@ -323,8 +321,6 @@ export default defineComponent({
                 // FPS 检查
                 this.rafLoop()
             }
-            // 加载设置项
-            runtimeData.sysConfig = await Option.load()
             if(this.dev) {
                 logger.debug('stapxs-qq-lite.su:$/mnt/boot/dawnHunt/bin/core --pour /mnt/app/bin/main', true)
                 logger.system('[ dawnHuntCore Version: 1.0 Beta, dawnHuntDB: 2025-04-24 ]')
