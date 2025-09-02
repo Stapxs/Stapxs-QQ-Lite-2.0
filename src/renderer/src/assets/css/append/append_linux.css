@@ -1,4 +1,4 @@
-#app {
+body {
     margin: 10px;
     border-radius: 7px;
     overflow: hidden;
@@ -7,7 +7,7 @@
     height: calc(100% - 20px);
     border: 1px solid #00000059;
 }
-#app.tiling {
+body.tiling {
     margin: 0;
     border-radius: 0;
     overflow: hidden;
@@ -87,7 +87,7 @@
     padding-top: 25px;
     height: calc(100% - 25px);
 }
-#app.tiling .opt-main > div:last-child {
+body.tiling .opt-main > div:last-child {
     padding-top: 15px;
     height: calc(100% - 15px);
 }
@@ -101,7 +101,7 @@
     margin-top: 20px;
     margin-bottom: 20px;
 }
-#app.tiling .opt-main > div:first-child {
+body.tiling .opt-main > div:first-child {
     margin-top: 10px;
     overflow-y: scroll;
 }
