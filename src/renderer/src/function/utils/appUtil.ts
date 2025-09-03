@@ -485,12 +485,6 @@ export async function loadMobile() {
                 default: break
             }
         })
-        // initial-scale 缩放固定为 0.9
-        const viewport = document.getElementById('viewport')
-        if (viewport) {
-            (viewport as any).content =
-                'width=device-width, initial-scale=0.9, maximum-scale=5, user-scalable=0'
-        }
         // 通知
         const permission = await backend.call('LocalNotifications', 'checkPermissions', true)
         const permissionStr = permission || permission.display
@@ -612,101 +606,9 @@ export async function loadMobile() {
     }
 }
 
-import horizontalCss from '@renderer/assets/css/append/mobile/append_mobile_horizontal.css?raw'
-import verticalCss from '@renderer/assets/css/append/mobile/append_mobile_vertical.css?raw'
 import { ActionType, LocalNotificationSchema } from '@capacitor/local-notifications'
 import { backend } from '@renderer/runtime/backend'
 // import windowsCss from '@renderer/assets/css/append/mobile/append_windows.css?raw'
-/**
-* 装载补充样式
-*/
-export async function loadAppendStyle() {
-    const platform = backend.platform
-    logger.info('正在装载补充样式……')
-    // UI 2.0 附加样式
-    if (backend.isDesktop()) {
-        import('@renderer/assets/css/append/append_new.css').then(() => {
-            logger.info('UI 2.0 附加样式加载完成')
-        })
-    }
-
-    if(platform != undefined) {
-        import(`@renderer/assets/css/append/append_${platform}.css`)
-            .then(() => {
-                logger.info(`${platform} 平台附加样式加载完成`)
-            })
-            .catch(() => {
-                logger.info('未找到对应平台的附加样式：' + platform)
-            })
-    }
-
-    // 添加手机端样式
-    const updateCss = (appendCss = '') => {
-        const cssStype = document.getElementById('mobile-css')
-
-        const width = window.innerWidth
-        const height = window.innerHeight
-        if(cssStype) {
-            if(width > 600) {
-                cssStype.innerHTML = (width > height ? horizontalCss : (horizontalCss + verticalCss)) + appendCss
-            } else {
-                cssStype.innerHTML = horizontalCss + verticalCss + appendCss
-            }
-        }
-
-        if(backend.isDesktop()) {
-            backend.call(undefined, 'win:maximize', false)
-            const topBar = document.getElementsByClassName('top-bar')[0] as HTMLElement
-            if(topBar) {
-                topBar.style.display = 'none'
-            }
-        }
-    }
-    if(backend.isMobile()) {
-        const styleTag = document.createElement('style')
-        styleTag.id = 'mobile-css'
-        document.head.appendChild(styleTag)
-        updateCss()
-        // 屏幕旋转事件处理
-        window.addEventListener('resize', () => {
-            updateCss()
-        })
-    }
-
-    // 透明 UI 附加样式
-    let subVersion = backend.release?.split('.') as any
-    subVersion = subVersion ? Number(subVersion[2]) : 0
-    if (backend.isDesktop() &&
-        (platform == 'darwin' || (platform == 'win32' && subVersion > 22621))) {
-        import('@renderer/assets/css/append/append_vibrancy.css').then(() => {
-            logger.info('透明 UI 附加样式加载完成')
-        })
-    }
-    if (backend.isDesktop() && platform == 'linux') {
-        const gnomeExtInfo = await backend.call(undefined, 'sys:getGnomeExt', true)
-        if (gnomeExtInfo) {
-            gnomeExtInfo.then((info: any) => {
-                if (
-                    info['enable-all'] == 'true' ||
-                    (info['whitelist'] != undefined &&
-                        info['whitelist'].indexOf('stapxs-qq-lite')) > 0
-                ) {
-                    import(
-                        '@renderer/assets/css/append/append_vibrancy.css'
-                    ).then(() => {
-                        logger.info('透明 UI 附加样式加载完成')
-                    })
-                    import(
-                        '@renderer/assets/css/append/append_linux_vibrancy.css'
-                    ).then(() => {
-                        logger.info('Linux 透明 UI 附加样式加载完成')
-                    })
-                }
-            })
-        }
-    }
-}
-
 /**
 * 初始化快速连接信息
 * @param address 地址

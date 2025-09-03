@@ -340,31 +340,6 @@ export default defineComponent({
         logger.system('欢迎回来，开发者。Stapxs QQ Lite 正处于 ' + (this.dev ? 'development' : 'production') + ' 模式。正在为您加载更多功能。')
         // 加载移动平台特性
         App.loadMobile()
-        // 加载额外样式
-        App.loadAppendStyle()
-        const baseApp = document.getElementById('base-app')
-        if (baseApp) {
-            baseApp.style.setProperty('--safe-area-bottom',
-                (Option.get('fs_adaptation') > 0 ? Option.get('fs_adaptation') : 0) + 'px')
-            baseApp.style.setProperty('--safe-area-top', '0')
-            baseApp.style.setProperty('--safe-area-left', '0')
-            baseApp.style.setProperty('--safe-area-right', '0')
-            // Capacitor：移动端初始化安全区域
-            if (backend.isMobile()) {
-                backend.call('SafeArea', 'getSafeArea', true)
-                    .then(safeArea=>{
-                        if (!safeArea) return
-
-                        logger.add(LogType.DEBUG, '安全区域：', safeArea)
-                        baseApp.style.setProperty('--safe-area-top', safeArea.top + 'px')
-                        baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
-                        baseApp.style.setProperty('--safe-area-left', safeArea.left + 'px')
-                        baseApp.style.setProperty('--safe-area-right', safeArea.right + 'px')
-                        // 图片查看器安全区域
-                        document.documentElement.style.setProperty('--safe-area--viewer-top', safeArea.top + 'px')
-                    })
-            }
-        }
         // 加载密码保存和自动连接
         loginInfo.address = runtimeData.sysConfig.address
         if (
