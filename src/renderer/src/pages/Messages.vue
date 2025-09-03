@@ -78,6 +78,7 @@
                     @contextmenu.prevent="listMenuShow($event, item)"
                     @click="userClick(item)"
                     @touchstart="showMenuStart($event, item)"
+                    @touchmove="showMenuMove"
                     @touchend="showMenuEnd" />
             </TransitionGroup>
         </div>
@@ -124,6 +125,7 @@
                     @contextmenu.prevent="listMenuShow($event, item)"
                     @click="userClick(item)"
                     @touchstart="showMenuStart($event, item)"
+                    @touchmove="showMenuMove"
                     @touchend="showMenuEnd" />
             </TransitionGroup>
         </div>
@@ -528,6 +530,9 @@
                         this.showMenu = false
                     }
                 }, 500)
+            },
+            showMenuMove() {
+                this.showMenu = false
             },
             showMenuEnd() {
                 this.showMenu = false

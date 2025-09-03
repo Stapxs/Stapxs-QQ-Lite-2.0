@@ -399,7 +399,7 @@ body.with-bar .chat-pan {
     height: calc(100% - var(--safe-area-bottom)) !important;
     top: 0;
     width: 100%;
-    z-index: 10;
+    z-index: 30;
 }
 body.with-bar .msg-menu {
     height: calc(100% + 40px);

@@ -579,12 +579,12 @@ pub fn sys_get_win_color() -> Option<String> {
 }
 
 // macOS：Touch Bar 支持
-// #[command]
-// pub fn sys_flush_on_message() -> String {
-//     return "".to_string();
-// }
+#[command]
+pub fn sys_flush_on_message() -> String {
+    return "".to_string();
+}
 
-// #[command]
-// pub fn sys_flush_friend_search() -> String {
-//     return "".to_string();
-// }
+#[command]
+pub fn sys_flush_friend_search() -> String {
+    return "".to_string();
+}

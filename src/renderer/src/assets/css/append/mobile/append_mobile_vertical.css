@@ -1,3 +1,5 @@
+/* 移动端附加样式（纵向） */
+
 .main-body > div {
     height: calc(100% - 75px - var(--safe-area-top) - var(--safe-area-bottom));
     padding-bottom: calc(75px + var(--safe-area-bottom));

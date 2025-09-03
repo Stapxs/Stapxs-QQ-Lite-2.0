@@ -307,6 +307,9 @@
             max-height: 30vh;
             height: fit-content;
         }
+        .dept-list-body {
+            width: 100%;
+        }
     }
 </style>
 <style>
