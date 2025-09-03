@@ -267,6 +267,21 @@
                 </label>
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('use_favicon_notice')" />
+                <font-awesome-icon :icon="['fas', 'bell']" />
+                <div>
+                    <span>{{ $t('在图标上显示通知') }}</span>
+                    <span>{{ $t('呜呜呜——图标都被遮挡的看不到了！') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="runtimeData.sysConfig.use_favicon_notice"
+                        type="checkbox" name="use_favicon_notice" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+            <div class="opt-item">
                 <font-awesome-icon :icon="['fas', 'arrows-rotate']" />
                 <div>
                     <span>{{ $t('不要点这个') }}</span>

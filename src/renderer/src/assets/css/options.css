@@ -148,35 +148,73 @@
 }
 
 .contributors-card {
+    background: rgba(var(--color-card-2-rgb), 0.5);
     align-items: flex-start !important;
-    background: var(--color-card-1);
     flex-direction: column;
-    padding: 0 10px;
+    border-radius: 7px;
+    padding: 10px;
+    width: 100%;
+}
+.contributors-card > div:first-child {
+    background: var(--color-main);
+    height: 100%;
+    width: 5px;
+}
+.contributors-card > span {
+    font-size: 0.9rem !important;
+    margin-bottom: 5px;
+    display: inline-block;
     width: 100%;
 }
 .contributors-card > div {
+    align-items: center;
     flex-wrap: wrap;
     display: flex;
-    align-items: center;
     width: 100%;
 }
-.contributors-card > div > div {
-    min-width: calc(20% - 20px);
-    aspect-ratio: 1;
-    margin: 10px;
-    background-size: 100%;
-    border-radius: 35px;
+.contributors-card > div:last-child {
+    padding: 10px;
+}
+.contributors-card > div > img {
+    border-radius: 30px;
+    margin-bottom: 5px;
+    margin-right: 5px;
     cursor: pointer;
+    height: 30px;
+    width: 30px;
+}
+.contributors-card > div > div {
+    margin: 10px !important;
+    background-size: 100%;
+    align-items: center;
+    border-radius: 7px;
+    aspect-ratio: 1;
+    cursor: pointer;
+    display: flex;
+    height: 25px;
+    width: 100%;
 }
 .contributors-card > div > div.me {
     outline: 2px solid var(--color-main);
     border: 1px solid var(--color-card-1);
     box-sizing: border-box;
 }
-.contributors-card > div > div.super-thanks {
-    outline: 2px dashed var(--color-main);
-    border: 1px solid var(--color-card-1);
-    box-sizing: border-box;
+.contributors-card > div > div > div {
+    flex-direction: column;
+    display: flex;
+    flex: 1;
+}
+.contributors-card > div > div img {
+    border-radius: 30px;
+    margin-right: 10px;
+    width: 30px;
+}
+.contributors-card > div > div span {
+    font-size: 0.8rem;
+}
+.contributors-card > div > div span:last-child {
+    color: var(--color-font-2);
+    font-size: 0.75rem;
 }
 
 .opt-tab {
@@ -197,37 +235,6 @@
 
 .opt-about {
     display: none !important;
-}
-
-.bcd-about {
-    padding: 5px 20px 10px 20px;
-    margin-bottom: 40px;
-    text-align: center;
-    margin-top: 20px;
-    cursor: pointer;
-    flex: 1;
-}
-
-.bcd-about > div {
-    margin: 20px auto;
-    width: 100%;
-}
-
-.bcd-about > div > div {
-    justify-content: flex-end;
-    display: flex;
-    height: 17px;
-}
-
-.bcd-about span {
-    color: var(--color-main);
-    font-size: 1rem;
-    font-weight: 300;
-}
-
-.bcd-about a {
-    color: var(--color-font-2);
-    font-size: 0.8rem;
 }
 
 .bcd-body {

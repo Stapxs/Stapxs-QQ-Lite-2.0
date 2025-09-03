@@ -156,7 +156,7 @@
             </div>
         </TransitionGroup>
         <Transition>
-            <div v-if="runtimeData.popBoxList.length > 0" class="pop-box">
+            <div v-if="runtimeData.popBoxList.length > 0" id="pop-box" class="pop-box">
                 <div :class="'pop-box-body ss-card' +
                          (runtimeData.popBoxList[0].full ? ' full' : '') +
                          (get('option_view_no_window') == true ? '' : ' window')"
@@ -214,6 +214,7 @@ import app from '@renderer/main'
 import Option from '@renderer/function/option'
 import Umami from '@stapxs/umami-logger-typescript'
 import * as App from './function/utils/appUtil'
+import anime from 'animejs'
 import packageInfo from '../../../package.json'
 
 import { defineComponent, defineAsyncComponent, markRaw } from 'vue'
@@ -687,6 +688,20 @@ export default defineComponent({
         popQuickClose(allow: boolean | undefined) {
             if (allow != false) {
                 runtimeData.popBoxList.shift()
+            } else {
+                const animeBody = document.getElementById('pop-box')
+                const timeLine = anime.timeline({ targets: animeBody })
+                // 使用 animejs 实现一个沿中心左右摇晃的动画，摇晃三次
+                timeLine.add({
+                    rotate: [
+                        { value: -1, duration: 75, easing: 'easeInOutSine' },
+                        { value: 1, duration: 150, easing: 'easeInOutSine' },
+                        { value: 0, duration: 75, easing: 'easeInOutSine' },
+                    ],
+                    duration: 200,
+                    easing: 'easeInOutSine',
+                    loop: 3,
+                })
             }
         },
 

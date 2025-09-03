@@ -32,6 +32,7 @@ export interface ContributorElem {
     url: string
     link: string
     title: string
+    contributions: number
     isMe: boolean
     isSuperThakns: boolean
 }

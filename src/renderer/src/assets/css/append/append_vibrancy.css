@@ -73,9 +73,6 @@ body {
     box-shadow: none !important;
     background: transparent;
 }
-.contributors-card {
-    background: rgba(var(--color-card-2-rgb), 0.7) !important;
-}
 .bcd-body {
     background: rgba(var(--color-card-rgb), 0.7) !important;
 }

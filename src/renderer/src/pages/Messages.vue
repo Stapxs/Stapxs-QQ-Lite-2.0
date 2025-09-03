@@ -195,6 +195,8 @@
         faGripLines,
     } from '@fortawesome/free-solid-svg-icons'
     import { Notify } from '@renderer/function/notify'
+    import { refreshFavicon } from '@renderer/function/favicon'
+    import { backend } from '@renderer/runtime/backend'
 
     export default defineComponent({
         name: 'VueMessages',
@@ -336,6 +338,8 @@
                         })
                     }
                 }
+                // 刷新 favicon
+                refreshFavicon()
             },
 
             /**
@@ -361,10 +365,13 @@
                         }
                         case 'readed':
                             this.readMsg(item)
+                            // 刷新 favicon
+                            refreshFavicon()
                             break
                         case 'remove': {
                             const id = item.user_id ? item.user_id : item.group_id
                             runtimeData.baseOnMsgList.delete(id)
+                            refreshFavicon()
                             break
                         }
                         case 'top':
@@ -487,7 +494,7 @@
              * 显示群收纳盒
              */
             showGroupAssistCheck() {
-                if(!this.showGroupAssist && runtimeData.chatInfo.show.id == 0) {
+                if(!this.showGroupAssist && runtimeData.chatInfo.show.id == 0 && backend.type != 'capacitor' ) {
                     // 如果没有打开聊天框，打开收纳盒中的第一个群；这么做主要是为了防止动画穿帮 😭
                     const assistGroup = document.getElementById('group-assist-message-list-body')
                     if(assistGroup && assistGroup.children.length > 0) {

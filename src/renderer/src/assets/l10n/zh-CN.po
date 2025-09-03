@@ -1173,7 +1173,7 @@ msgstr ""
 msgid "Stapxs QQ Lite 依赖的部分服务允许自行部署，此处只提供服务的来源；不保证所使用的服务来自官方。"
 msgstr ""
 
-msgid "第三方服务声明"
+msgid "三方服务声明"
 msgstr ""
 
 msgid "对方正在输入……"
@@ -1255,6 +1255,12 @@ msgid "获取历史记录失败"
 msgstr ""
 
 msgid "当前会话"
+msgstr ""
+
+msgid "在图标上显示通知"
+msgstr ""
+
+msgid "呜呜呜——图标都被遮挡的看不到了！"
 msgstr ""
 
 msgid "强制窗口状态"

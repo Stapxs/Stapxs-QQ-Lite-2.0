@@ -19,6 +19,7 @@ import {
     rgbToHsl,
 } from '@renderer/function/utils/systemUtil'
 import {
+    markRaw,
     toRaw,
     nextTick,
     Directive,
@@ -425,7 +426,7 @@ export function createIpc() {
             const popInfo = {
                 title: app.config.globalProperties.$t('关于') + ' ' +
                         app.config.globalProperties.$t('Stapxs QQ Lite'),
-                template: AboutPan,
+                template: markRaw(AboutPan),
                 allowQuickClose: false,
             }
             runtimeData.popBoxList.push(popInfo)
@@ -537,6 +538,7 @@ export async function loadMobile() {
         }
         // 键盘
         backend.call('Keyboard', 'setAccessoryBarVisible', false, { isVisible: false })
+        backend.call('Keyboard', 'setResizeMode', false, { mode: 'none' })
         backend.addListener('Keyboard', 'keyboardWillShow', async (info: KeyboardInfo) => {
             const keyboardHeight = info.keyboardHeight
 
@@ -548,49 +550,42 @@ export async function loadMobile() {
 
             const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
             const tabBar = document.getElementsByTagName('ul')[0]
-            // 如果键盘高度低于高度的 1/3 且是 iOS 设备
-            // PS：这种情况下是物理键盘输入模式，它不是个完整键盘
-            //     这种情况下比较头疼，不能让 vebview 调整高度会出现黑色区域
-            if(backend.platform == 'ios' && keyboardHeight < window.innerHeight / 3) {
-                // 修改 ResizeMode
-                backend.call('Keyboard', 'setResizeMode', false, { mode: 'none' })
-                // 这种情况下需要进行正常的底部避让，调整 --safe-area-bottom
+            // iOS 26 后键盘背景是半透明的，不能让 webview 调整高度，会漏出背景的黑色
+            // 干脆把所有的 iOS 版本处理方法都改为内部避让
+            if(backend.platform == 'ios') {
                 const baseApp = document.getElementById('base-app')
                 if (safeArea && baseApp) {
-                    baseApp.style.setProperty('--safe-area-bottom', (keyboardHeight - safeArea.bottom + 10) + 'px')
+                    baseApp.style.setProperty('--safe-area-bottom', (keyboardHeight - safeArea.bottom + 100) + 'px')
                 }
                 // 调整菜单高度
                 if(safeArea && tabBar) {
-                    tabBar.style.setProperty('padding-bottom', safeArea.bottom + 'px', 'important')
+                    tabBar.style.setProperty('padding-bottom', (keyboardHeight - safeArea.bottom + 100) + 'px', 'important')
                 }
-            } else if (tabBar) {
-                // 调整菜单高度
-                tabBar.style.setProperty('padding-bottom', '10px', 'important')
             }
 
             // 调整整个 HTML 的高度
             // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
             const html = document.getElementsByTagName('html')[0]
             if(html && backend.platform == 'android') {
-                const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
                 html.style.height = `calc(100% - ${keyboardHeight + safeArea.top}px)`
             }
         })
         backend.addListener('Keyboard', 'keyboardWillHide', async () => {
-            backend.call('Keyboard', 'setResizeMode', false, { mode: 'native' })
-            const baseApp = document.getElementById('base-app')
-            const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
-            if (safeArea && baseApp) {
-                baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
-            }
-
-            const tabBar = document.getElementsByTagName('ul')[0]
-            if(tabBar) {
-                tabBar.style.paddingBottom = ''
-            }
             const sendMore = document.getElementById('send-more')
             if(sendMore) {
                 sendMore.style.paddingBottom = 'var(--safe-area-bottom)'
+            }
+            if(backend.platform == 'ios') {
+                const baseApp = document.getElementById('base-app')
+                const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
+                if (safeArea && baseApp) {
+                    baseApp.style.setProperty('--safe-area-bottom', safeArea.bottom + 'px')
+                }
+
+                const tabBar = document.getElementsByTagName('ul')[0]
+                if(tabBar) {
+                    tabBar.style.paddingBottom = ''
+                }
             }
             // 调整整个 HTML 的高度
             // PS：仅用于解决 Android 在全屏沉浸式下键盘遮挡问题
@@ -711,7 +706,7 @@ function showReleaseLog(data: any, isUpdated: boolean) {
               },
           ]
     const popInfo = {
-        template: UpdatePan,
+        template: markRaw(UpdatePan),
         templateValue: toRaw(info),
         button: isUpdated? [
                   {
@@ -783,7 +778,7 @@ export function checkOpenTimes() {
     if (guide != guideVersion.toString()) {
         // 首次打开，显示首次打开引导信息
         const popInfo = {
-            template: WelPan,
+            template: markRaw(WelPan),
             allowClose: false,
             button: [],
         }

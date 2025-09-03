@@ -8,7 +8,7 @@
 
 <template>
     <div class="main">
-        <div v-if="type === undefined" class="ss-card power-by">
+        <div class="ss-card power-by">
             <img src="@renderer/assets/img/Vue.png"
                 alt="logo"
                 class="logo">
@@ -44,107 +44,110 @@
                     fill-opacity=".2" /></svg>
             </div>
         </div>
-        <div class="dept-list" :style="type === undefined ? '' : 'width: 100%;'">
-            <div v-if="type === undefined" class="ss-card info">
-                <font-awesome-icon :icon="['fas', 'circle-info']" />
-                <span id="deptLink">{{
-                    $t('你可以在项目仓库的依赖关系图中找到大部分依赖，而这里列出了一些不由包管理管理的依赖。')
-                }}</span>
-            </div>
-            <div v-else-if="type === 'service'" class="ss-card info">
-                <font-awesome-icon :icon="['fas', 'circle-info']" />
-                <span id="deptLink">{{
-                    $t('Stapxs QQ Lite 依赖的部分服务允许自行部署，此处只提供服务的来源；不保证所使用的服务来自官方。')
-                }}</span>
-            </div>
-
-            <div v-if="type === 'service'" class="dept">
-                <div class="ss-card jump-card"
-                    @click="openLink('https://lbs.amap.com/api/javascript-api/summary')">
-                    <header>
-                        <div />
-                        <div>高德地图<span>定位消息预览服务</span></div>
-                    </header>
-                    <font-awesome-icon :icon="['fas', 'angle-right']" />
+        <BcTab class="dept-list">
+            <div :name="$t('许可版权声明')" class="dept-list-body">
+                <div class="ss-card info">
+                    <font-awesome-icon :icon="['fas', 'circle-info']" />
+                    <span id="deptLink">{{
+                        $t('你可以在项目仓库的依赖关系图中找到大部分依赖，而这里列出了一些不由包管理管理的依赖。')
+                    }}</span>
                 </div>
-                <div v-if="backend.platform == 'web'"
-                    class="ss-card jump-card"
-                    @click="openLink('https://github.com/Stapxs/Stapxs-Web-API')">
-                    <header>
-                        <div />
-                        <div>Stapxs Web API<span>{{ $t('基础链接预览服务') }}</span></div>
-                    </header>
-                    <font-awesome-icon :icon="['fas', 'angle-right']" />
-                </div>
-                <template v-else>
+                <div class="dept">
                     <div class="ss-card jump-card"
-                        @click="openLink('https://gitlab.com/Binaryify/NeteaseCloudMusicApi')">
+                        @click="openLink('https://lbs.amap.com/api/javascript-api/summary')">
                         <header>
                             <div />
-                            <div>Netease Cloud Music API<span>{{ $t('网易云音乐预览信息服务') }}</span></div>
+                            <div>aMap<span>高德地图</span></div>
                         </header>
                         <font-awesome-icon :icon="['fas', 'angle-right']" />
                     </div>
                     <div class="ss-card jump-card"
-                        @click="openLink('https://api.bilibili.com')">
+                        @click="openLink('https://github.com/Stapxs/Border-Card-UI/tree/js-bcui')">
                         <header>
                             <div />
-                            <div>Bilibili API<span>{{ $t('Bilibili 预览信息服务') }}</span></div>
+                            <div>Border Card UI<span>bcui.js</span></div>
+                        </header>
+                        <div>Apache 2.0</div>
+                        <font-awesome-icon :icon="['fas', 'angle-right']" />
+                    </div>
+                    <div v-if="appClient.type == 'tauri'"
+                        class="ss-card jump-card"
+                        @click="openLink('https://github.com/deltachat/deltachat-desktop')">
+                        <header>
+                            <div />
+                            <div>DeltaChat<span>user-notify crates</span></div>
+                        </header>
+                        <div>GPL 3.0</div>
+                        <font-awesome-icon :icon="['fas', 'angle-right']" />
+                    </div>
+                    <div class="ss-card jump-card"
+                        @click="openLink('http://fontawesome.com')">
+                        <header><div />Font Awesome</header>
+                        <div>SIL OFL 1.1</div>
+                        <font-awesome-icon :icon="['fas', 'angle-right']" />
+                    </div>
+                    <div class="ss-card jump-card"
+                        @click="openLink('https://github.com/koishijs/QFace')">
+                        <header><div />QFace</header>
+                        <div>MIT</div>
+                        <font-awesome-icon :icon="['fas', 'angle-right']" />
+                    </div>
+                    <div class="ss-card jump-card"
+                        @click="openLink('https://github.com/SAWARATSUKI/KawaiiLogos')">
+                        <header>
+                            <div />
+                            <div>ServiceLogos<span>vue.js logo</span></div>
                         </header>
                         <font-awesome-icon :icon="['fas', 'angle-right']" />
                     </div>
-                </template>
-            </div>
-            <div v-else class="dept">
-                <div class="ss-card jump-card"
-                    @click="openLink('https://lbs.amap.com/api/javascript-api/summary')">
-                    <header>
-                        <div />
-                        <div>aMap<span>高德地图</span></div>
-                    </header>
-                    <font-awesome-icon :icon="['fas', 'angle-right']" />
-                </div>
-                <div class="ss-card jump-card"
-                    @click="openLink('https://github.com/Stapxs/Border-Card-UI/tree/js-bcui')">
-                    <header>
-                        <div />
-                        <div>Border Card UI<span>bcui.js</span></div>
-                    </header>
-                    <div>Apache 2.0</div>
-                    <font-awesome-icon :icon="['fas', 'angle-right']" />
-                </div>
-                <div v-if="appClient.type == 'tauri'"
-                    class="ss-card jump-card"
-                    @click="openLink('https://github.com/deltachat/deltachat-desktop')">
-                    <header>
-                        <div />
-                        <div>DeltaChat<span>user-notify crates</span></div>
-                    </header>
-                    <div>GPL 3.0</div>
-                    <font-awesome-icon :icon="['fas', 'angle-right']" />
-                </div>
-                <div class="ss-card jump-card"
-                    @click="openLink('http://fontawesome.com')">
-                    <header><div />Font Awesome</header>
-                    <div>SIL OFL 1.1</div>
-                    <font-awesome-icon :icon="['fas', 'angle-right']" />
-                </div>
-                <div class="ss-card jump-card"
-                    @click="openLink('https://github.com/koishijs/QFace')">
-                    <header><div />QFace</header>
-                    <div>MIT</div>
-                    <font-awesome-icon :icon="['fas', 'angle-right']" />
-                </div>
-                <div class="ss-card jump-card"
-                    @click="openLink('https://github.com/SAWARATSUKI/KawaiiLogos')">
-                    <header>
-                        <div />
-                        <div>ServiceLogos<span>vue.js logo</span></div>
-                    </header>
-                    <font-awesome-icon :icon="['fas', 'angle-right']" />
                 </div>
             </div>
-        </div>
+            <div :name="$t('三方服务声明')" class="dept-list-body">
+                <div class="ss-card info">
+                    <font-awesome-icon :icon="['fas', 'circle-info']" />
+                    <span id="deptLink">{{
+                        $t('Stapxs QQ Lite 依赖的部分服务允许自行部署，此处只提供服务的来源；不保证所使用的服务来自官方。')
+                    }}</span>
+                </div>
+                <div class="dept">
+                    <div class="ss-card jump-card"
+                        @click="openLink('https://lbs.amap.com/api/javascript-api/summary')">
+                        <header>
+                            <div />
+                            <div>高德地图<span>定位消息预览服务</span></div>
+                        </header>
+                        <font-awesome-icon :icon="['fas', 'angle-right']" />
+                    </div>
+                    <div v-if="backend.platform == 'web'"
+                        class="ss-card jump-card"
+                        @click="openLink('https://github.com/Stapxs/Stapxs-Web-API')">
+                        <header>
+                            <div />
+                            <div>Stapxs Web API<span>{{ $t('基础链接预览服务') }}</span></div>
+                        </header>
+                        <font-awesome-icon :icon="['fas', 'angle-right']" />
+                    </div>
+                    <template v-else>
+                        <div class="ss-card jump-card"
+                            @click="openLink('https://gitlab.com/Binaryify/NeteaseCloudMusicApi')">
+                            <header>
+                                <div />
+                                <div>Netease Cloud Music API<span>{{ $t('网易云音乐预览信息服务') }}</span></div>
+                            </header>
+                            <font-awesome-icon :icon="['fas', 'angle-right']" />
+                        </div>
+                        <div class="ss-card jump-card"
+                            @click="openLink('https://api.bilibili.com')">
+                            <header>
+                                <div />
+                                <div>Bilibili API<span>{{ $t('Bilibili 预览信息服务') }}</span></div>
+                            </header>
+                            <font-awesome-icon :icon="['fas', 'angle-right']" />
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </BcTab>
     </div>
 </template>
 
@@ -154,9 +157,13 @@
     import { runtimeData } from '@renderer/function/msg'
     import { backend } from '@renderer/runtime/backend'
 
+    import BcTab from 'vue3-bcui/packages/bc-tab'
+
     export default defineComponent({
         name: 'DepPan',
-        props: [ 'type' ],
+        components: {
+            BcTab,
+        },
         data() {
             return {
                 backend,
@@ -218,7 +225,10 @@
     }
 
     .dept-list {
-        width: 40vw;
+        margin-top: 15px;
+    }
+    .dept-list-body {
+        width: 45vw;
     }
 
     .info > svg {
@@ -297,5 +307,11 @@
             max-height: 30vh;
             height: fit-content;
         }
+    }
+</style>
+<style>
+    .dept-list > div:first-child {
+        margin-bottom: 5px !important;
+        box-shadow: none !important;
     }
 </style>

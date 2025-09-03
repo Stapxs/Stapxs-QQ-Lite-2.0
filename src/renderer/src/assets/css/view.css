@@ -826,9 +826,10 @@ body.with-bar #base-app {
 }
 .pop-box > div:last-child {
     background: var(--color-card-2);
+    height: calc(100% + 40px);
+    width: calc(100% + 40px);
     opacity: 0.7;
-    height: 100%;
-    width: 100%;
+    margin: -20px;
 }
 .pop-box-body {
     transform: translate(-50%, -50%);

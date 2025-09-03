@@ -129,7 +129,7 @@
                                         <font-awesome-icon :icon="['fas', 'file']" />
                                         {{ runtimeData.chatInfo.show.type == 'group' ? $t('群文件') : $t('离线文件') }}
                                     </a>
-                                    <p>{{ loadFileBase( item, item.name, data.message_id) }}</p>
+                                    <p>{{ loadFileBase( item, item.name ?? item.file_name, data.message_id) }}</p>
                                 </div>
                                 <i>{{ getSizeFromBytes(item.size ?? item.file_size) }}</i>
                             </div>
@@ -859,7 +859,7 @@ function getUserById(id: number): IUser | undefined {
                     file_id: data.file_id,
                     group_id: runtimeData.chatInfo.show.type == 'group' ? runtimeData.chatInfo.show.id : undefined,
                 },
-                    'downloadFile_' + message_id + '_' + btoa(encodeURIComponent(data.name)),
+                    'downloadFile_' + message_id + '_' + btoa(encodeURIComponent(data.name ?? data.file_name)),
                 )
             },
 

@@ -57,6 +57,7 @@ import {
 import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
 import { backend } from '@renderer/runtime/backend'
+import { refreshFavicon } from './favicon'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -1568,6 +1569,9 @@ function newMsg(_: string, data: any) {
             return
         }
 
+        // 刷新 favicon
+        refreshFavicon()
+
         // 显示消息 ============================================
         if (id === showId || info.target_id == showId) {
             // 如果有正在输入的提示，清除它
@@ -1584,7 +1588,7 @@ function newMsg(_: string, data: any) {
                     true,
                 )
             }
-            if (num === 5000) {
+            if (num === 495) {  // QED怎么能和芙兰无关？(◣_◢)吃我一发 QED [495年的波纹]
                 const popInfo = {
                     html: qed,
                     button: [
