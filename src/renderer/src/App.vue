@@ -1,10 +1,5 @@
 <template>
-    <div v-if="dev" :class="'dev-bar' + (backend.platform == 'win32' ? ' win' : '')">
-        Stapxs QQ Lite Development Mode
-        {{ backend.platform ? ' / platform: ' + backend.platform : '' }}
-        {{ ' / client: ' + appClient.type }}
-        {{ ' / fps: ' + fps.value }}
-    </div>
+
     <div v-if="win.withBar"
         :class="'top-bar' + ((backend.platform == 'win32' && dev) ? ' win' : '')"
         name="appbar"
@@ -12,10 +7,13 @@
         <div class="bar-button" @click="barMainClick()" />
         <div class="space" />
         <div class="controller">
-            <div class="min" @click="controllWin('minimize')">
+            <div class="min" @click="win.minimize()">
                 <font-awesome-icon :icon="['fas', 'minus']" />
             </div>
-            <div class="close" @click="controllWin('close')">
+            <div class="max" @click="win.switchMaximize()">
+                <font-awesome-icon :icon="['far', 'square']" />
+            </div>
+            <div class="close" @click="win.close()">
                 <font-awesome-icon :icon="['fas', 'xmark']" />
             </div>
         </div>
@@ -218,7 +216,7 @@ import Umami from '@stapxs/umami-logger-typescript'
 import * as App from './function/utils/appUtil'
 import packageInfo from '../../../package.json'
 
-import { defineComponent, defineAsyncComponent } from 'vue'
+import { defineComponent, defineAsyncComponent, markRaw } from 'vue'
 import { Connector, login as loginInfo } from '@renderer/function/connect'
 import { Logger, popList, PopInfo, LogType } from '@renderer/function/base'
 import { runtimeData } from '@renderer/function/msg'
@@ -248,7 +246,7 @@ export default defineComponent({
     data() {
         return {
             backend,
-            win,
+            win: markRaw(win),
             appClient: backend,
             dev: import.meta.env.DEV,
             sse: import.meta.env.VITE_APP_SSE_MODE == 'true',
@@ -462,13 +460,6 @@ export default defineComponent({
         }
     },
     methods: {
-        /**
-         * electron 窗口操作
-         */
-        controllWin(name: string) {
-            backend.call(undefined, 'win:' + name, false)
-        },
-
         /**
          * 发起连接
          */
