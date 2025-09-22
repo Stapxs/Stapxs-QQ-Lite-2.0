@@ -1,11 +1,12 @@
+import ViteYaml from '@modyfi/vite-plugin-yaml'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
-import ViteYaml from '@modyfi/vite-plugin-yaml'
 
-import { defineConfig, type PluginOption } from 'vite'
 import { resolve } from 'path'
-import { VitePWA } from 'vite-plugin-pwa'
 import { visualizer } from 'rollup-plugin-visualizer'
+import { defineConfig, type PluginOption } from 'vite'
+import { VitePWA } from 'vite-plugin-pwa'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 // https://vite.dev/config/
 /** @type {import('vite').UserConfig} */
@@ -28,7 +29,15 @@ export default defineConfig({
         vueDevTools(),
         ViteYaml(),
         VitePWA({ registerType: 'autoUpdate' }),
-        visualizer() as PluginOption
+        visualizer() as PluginOption,
+        viteStaticCopy({
+            targets: [
+                {
+                src: 'src/assets/img/qq-face/public/assets/qq_emoji/**/*',
+                dest: 'img/qqface',
+                },
+            ],
+        }),
     ],
     resolve: {
         alias: {

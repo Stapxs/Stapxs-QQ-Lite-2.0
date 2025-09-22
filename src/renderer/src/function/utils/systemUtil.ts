@@ -345,6 +345,16 @@ export function randomNum(minNum: number, maxNum: number) {
 }
 
 /**
+ * 从参数列表中随机选择一个元素
+ * @param args 参数列表
+ * @returns 随机选择的元素
+ */
+export function randomChoice<T>(...args: T[]): T{
+    const id = randomNum(0, args.length - 1)
+    return args[id]
+}
+
+/**
  * 获取显示的时间，由于获得的时间戳可能是秒级的，也可能是毫秒级的，所以需要判断
  * @param time
  * @param i0n

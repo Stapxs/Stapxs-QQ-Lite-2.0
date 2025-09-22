@@ -73,7 +73,9 @@
                 <template v-else-if="isSuperFaceMsg()">
                     <div class="msg-img face alone"
                         style="--width: 35vh">
-                        <Lottie :animation-link="Emoji.get(Number(data.message[0].id))!.superValue!" />
+                        <Lottie v-once
+                            :animation-link="Emoji.get(Number(data.message[0].id))!.superValue!"
+                            :title="Emoji.get(Number(data.message[0].id))!.description" />
                     </div>
                 </template>
                 <template v-else-if="!hasCard()">
@@ -1026,7 +1028,7 @@ function getUserById(id: number): IUser | undefined {
                 if (this.data.message.length !== 1) return false
                 const seg = this.data.message.at(0)
                 if (seg.type !== 'face') return
-                return Emoji.superList.includes(Number(seg.id))
+                return Emoji.allSuperList.has(Number(seg.id))
             },
 
             getMdHTML(str: string, id: string) {

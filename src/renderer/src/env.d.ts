@@ -24,3 +24,26 @@ declare module '*.po' {
     const value: string
     export default value
 }
+
+declare module '*.yaml' {
+    const content: any
+    export default content
+}
+
+declare module '*.yml' {
+    const content: any
+    export default content
+}
+
+declare module '@renderer/assets/img/qq-face/public/assets/qq_emoji/_index.json' {
+    const content: {
+        emojiId: string,
+        describe: '' | `/${string}`,
+        assets: {
+            type: number,
+            path: string,
+            name: string,
+        }[]
+    }[]
+    export default content
+}[]

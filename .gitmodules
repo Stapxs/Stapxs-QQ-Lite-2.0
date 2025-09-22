@@ -1,6 +1,7 @@
 [submodule "src/renderer/src/assets/img/qq-face"]
 	path = src/renderer/src/assets/img/qq-face
 	url = https://github.com/koishijs/QFace.git
+	branch = master
 [submodule "src/renderer/public/bcui"]
 	path = src/renderer/public/bcui
 	url = https://github.com/Stapxs/Border-Card-UI.git
