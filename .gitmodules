@@ -6,3 +6,7 @@
 	path = src/renderer/public/bcui
 	url = https://github.com/Stapxs/Border-Card-UI.git
 	branch = js-bcui
+[submodule "src/electron_ohos"]
+	path = src/electron_ohos
+	url = https://github.com/ohosvscode/ohos_electron_hap.git
+    ignore = dirty

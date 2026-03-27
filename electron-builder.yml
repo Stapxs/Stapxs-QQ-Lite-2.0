@@ -16,7 +16,7 @@ files:
     - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
     - '!{dist*/*,build/*,scripts/*}'
     - '!{scripts/*,dockerfile}'
-    - '!{ssqq.capacitor-onebot-connector,ssqq.npx-web-quick-start}/**/*'
+    - '!{ssqq.capacitor-onebot-connector,ssqq.npx-web-quick-start,ssqq.napcat-plugin}/**/*'
 
 asarUnpack:
     - resources/**

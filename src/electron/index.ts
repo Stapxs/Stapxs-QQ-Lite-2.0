@@ -2,6 +2,7 @@ import path from 'path'
 import Store from 'electron-store'
 import fs from 'fs'
 import log4js from 'log4js'
+import express from 'express'
 
 import windowStateKeeper from 'electron-window-state'
 import packageInfo from '../../package.json' with { type: 'json' }
@@ -11,6 +12,7 @@ import { Menu, session, app, protocol, BrowserWindow, Tray } from 'electron'
 import { touchBar } from './function/touchbar.ts'
 import { join } from 'path'
 
+const isOhos = (process.platform as any) === 'ohos'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const isPrimary = app.requestSingleInstanceLock()
 const logger = log4js.getLogger('background')
@@ -19,6 +21,16 @@ export let logLevel = isDevelopment ? 'debug' : 'info'
 protocol.registerSchemesAsPrivileged([
     { scheme: 'app', privileges: { secure: true, standard: true } }
 ])
+
+// Ohos 无法使用 log4js，覆写相关函数以避免报错
+if (isOhos) {
+    /* eslint-disable no-console */
+    logger.debug = console.debug
+    logger.info = console.info
+    logger.warn = console.warn
+    logger.error = console.error
+    /* eslint-enable no-console */
+}
 
 export let win = undefined as BrowserWindow | undefined
 export let touchBarInstance = undefined as touchBar | undefined
@@ -43,10 +55,9 @@ async function createWindow() {
         '|_____| |_| |__|__|__|  |__|__| CopyRight © Stapx Steve')
     console.log('=======================================================')
     console.log('日志等级:', logLevel)
+    console.log('启动平台：' + process.platform)
     /* eslint-enable no-console */
     logger.info('欢迎使用 Stapxs QQ Lite, 当前版本: ' + packageInfo.version)
-
-    logger.info('启动平台架构：' + process.platform)
     logger.info('正在创建窗体 ……')
     Menu.setApplicationMenu(null)
     // 创建窗口
@@ -100,11 +111,20 @@ async function createWindow() {
             transparent: true,
             frame: false
         }
+    } else if(isOhos) {
+        windowConfig = {
+            webPreferences: {
+                nodeIntegration: true,
+                contextIsolation: false
+            }
+        }
     }
     win = new BrowserWindow(windowConfig)
-    win.once('focus', () => { if (win) win.flashFrame(false) })
-    mainWindowState.manage(win)     // 窗口状态管理器
     logger.info('创建窗体完成')
+
+    win.once('focus', () => { if (win) win.flashFrame(false) })
+    // mainWindowState.manage(win)     // 窗口状态管理器
+
     // 注册 IPC 事务
     regIpcListener()
     // macOS：创建 TouchBar
@@ -113,6 +133,15 @@ async function createWindow() {
     if (isDev && process.env['ELECTRON_RENDERER_URL']) {
         win.loadURL(process.env['ELECTRON_RENDERER_URL'])
         // 打开开发者工具
+        win.webContents.openDevTools()
+    } else if(isOhos) {
+        // ohos 使用 express 静态服务器加载资源
+        const server = express()
+        server.use(express.static(path.join(__dirname, '../renderer')))
+        server.listen(27200, '127.0.0.1', () => {
+            logger.info('ohos 资源服务器已启动')
+        })
+        win.loadURL('http://127.0.0.1:27200')
         win.webContents.openDevTools()
     } else {
         win.loadURL('app://./index.html')
@@ -138,6 +167,12 @@ async function createWindow() {
             }
         })
     }
+
+    win.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+        /* eslint-disable no-console */
+        console.log('加载失败详情:', errorCode, errorDescription);
+        /* eslint-enable no-console */
+    });
 
     win.on('close', (e) => {
         e.preventDefault()
