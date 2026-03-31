@@ -94,6 +94,7 @@
     "eslint-plugin-vue": "^9.26.0",
     "js-file-downloader": "^1.1.25",
     "markdown-it": "^14.1.0",
+    "openpgp": "^6.2.2",
     "pofile": "^1.1.4",
     "rollup-plugin-visualizer": "^5.12.0",
     "spacingjs": "^1.0.8",

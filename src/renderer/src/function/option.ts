@@ -11,7 +11,10 @@
  */
 
 import app from '@renderer/main'
+import * as openpgp from 'openpgp'
+
 import languageConfig from '@renderer/assets/l10n/_l10nconfig.json'
+import ppk from '@renderer/assets/ssteam_ppk.asc?raw'
 
 import { i18n } from '@renderer/main'
 import { markRaw, defineAsyncComponent } from 'vue'
@@ -81,6 +84,7 @@ export const optDefault: { [key: string]: any } = {
     log_level: 'err',
     debug_msg: false,
     custom_css: '',
+    pass_key: '',
     // Glagame
     openai_api: '',
     openai_token: '',
@@ -128,6 +132,7 @@ const configFunction: { [key: string]: (value: any) => void } = {
     bubble_sort_user: clearGroupAssist,
     use_favicon_notice: setFaviconNotice,
     custom_css: injectCustomCss,
+    pass_key: checkPassKey,
     opt_ind_message: updateChatPan
 }
 
@@ -136,6 +141,53 @@ function updateChatPan() {
     runtimeData.tags.openSideBar = true
 }
 
+async function checkPassKey(value: string) {
+    if(!value || value.trim() === '') {
+        return
+    }
+
+    const publicKeyArmored = ppk.toString()
+    const publicKey = await openpgp.readKey({ armoredKey: publicKeyArmored })
+    const message = await openpgp.createMessage({ text: value })
+    const encrypted = await openpgp.encrypt({
+        message,
+        encryptionKeys: publicKey
+    })
+
+    const response = await fetch('https://api.stapxs.cn/ssqq/checkKey', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            key: encrypted,
+            timestamp: Number((Date.now() / 1000).toFixed(0))
+        })
+    })
+    const data = await response.json()
+
+    if(data && data.error) {
+        save('pass_key', '')
+        return
+    }
+
+    if(data && data.signature) {
+        const messageSign = await openpgp.createMessage({ text: 'SUCCESS' })
+        const signature = await openpgp.readSignature({ armoredSignature: data.signature })
+        const verificationResult = await openpgp.verify({
+            message: messageSign,
+            signature,
+            verificationKeys: publicKey
+        })
+        const sig = verificationResult.signatures[0]
+
+        await sig.verified.then(() => {
+            runtimeData.sysConfig.pass_key_valid = true
+        }).catch(() => {
+            save('pass_key', '')
+        })
+    }
+}
 
 function setFaviconNotice(_: boolean) {
     refreshFavicon()

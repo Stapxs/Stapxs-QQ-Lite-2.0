@@ -8,6 +8,23 @@
 <template>
     <div class="opt-page">
         <div v-if="!napcat" class="ss-card">
+            <header>{{ $t('扩展功能') }}</header>
+            <div class="tip">
+                {{
+                    $t('你可以通过赞助开发者来解锁一些额外的功能，这些功能大多为非功能性的外观、体验改进。')
+                }}
+            </div>
+            <div class="opt-item">
+                <font-awesome-icon :icon="['fas', 'paper-plane']" />
+                <div>
+                    <span>{{ $t('激活码') }}</span>
+                    <span>{{ $t('哔哔哔哔哔') }}</span>
+                </div>
+                <input v-model="runtimeData.sysConfig.pass_key" class="ss-input" style="width: 150px"
+                    type="password" @keyup="updatePassKey">
+            </div>
+        </div>
+        <div class="ss-card">
             <header>{{ $t('兼容选项') }}</header>
             <div class="tip">
                 {{
@@ -322,6 +339,12 @@
             this.updateCustomCssStatus()
         },
         methods: {
+            updatePassKey(event: KeyboardEvent) {
+                // 更新激活码
+                if (event.keyCode === 13) {
+                    runAS('pass_key', this.runtimeData.sysConfig.pass_key)
+                }
+            },
             sendTestWs(event: KeyboardEvent) {
                 // 发送测试 WS 消息
                 if (event.keyCode === 13 && this.ws_text !== '') {

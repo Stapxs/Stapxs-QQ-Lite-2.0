@@ -3,4 +3,5 @@
 
 src/tauri/crates/user-notify/** linguist-vendored -diff
 *.svg linguist-generated
+*.asc linguist-generated
 yarn.lock linguist-generated -diff
