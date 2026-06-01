@@ -553,12 +553,31 @@ export function updateLastestHistory(item: UserFriendElem & UserGroupElem) {
     )
 }
 
+export function addAllSessionsToBaseOnMsgList(list: (UserFriendElem & UserGroupElem)[]) {
+    const contactStore = useContactStore()
+    list.forEach((item) => {
+        const id = Number(item.user_id ?? item.group_id)
+        if (!Number.isFinite(id) || id <= 0) return
+        if (contactStore.baseOnMsgList.has(id)) return
+
+        contactStore.baseOnMsgList.set(id, {
+            ...item,
+            raw_msg: item.raw_msg ?? '',
+            raw_msg_base: item.raw_msg_base ?? '',
+            time: item.time ?? 0
+        })
+    })
+}
+
 /**
  * 刷新消息列表排序
  */
 export function updateBaseOnMsgList() {
     const contactStore = useContactStore()
     const settingsStore = useSettingsStore()
+    if (settingsStore.sysConfig.show_all_sessions === true) {
+        addAllSessionsToBaseOnMsgList(contactStore.userList)
+    }
     const allList = [...contactStore.baseOnMsgList.values()]
     // 先更具 item.always_top 是不是 true 拆为两个数组
     const topList = allList.filter((item) => item.always_top)
@@ -578,12 +597,30 @@ export function updateBaseOnMsgList() {
         }
         return b.time - a.time
     }
-    topList.sort(sortFun)
-    normalList.sort(sortFun)
+    const sortAllSessionsFun = (
+        a: UserFriendElem & UserGroupElem,
+        b: UserFriendElem & UserGroupElem,
+    ) => {
+        const timeA = Number(a.time ?? 0)
+        const timeB = Number(b.time ?? 0)
+        if (timeA !== timeB) return timeB - timeA
+
+        const pyA = a.py_start ?? ''
+        const pyB = b.py_start ?? ''
+        if (pyA !== pyB) return pyA.localeCompare(pyB)
+
+        const nameA = getShowName(a.group_name ?? a.nickname ?? '', a.remark ?? '')
+        const nameB = getShowName(b.group_name ?? b.nickname ?? '', b.remark ?? '')
+        return nameA.localeCompare(nameB)
+    }
+    topList.sort(settingsStore.sysConfig.show_all_sessions === true ? sortAllSessionsFun : sortFun)
+    normalList.sort(settingsStore.sysConfig.show_all_sessions === true ? sortAllSessionsFun : sortFun)
 
     let onMsgList = [] as any[]
     let groupAssistList = [] as any[]
-    if (settingsStore.sysConfig.bubble_sort_user) {
+    if (settingsStore.sysConfig.show_all_sessions === true) {
+        onMsgList = topList.concat(normalList)
+    } else if (settingsStore.sysConfig.bubble_sort_user) {
         // 将 normalList 进行拆分
         onMsgList = topList.concat(normalList.filter((item) => {
             return item.group_id && canGroupNotice(item.group_id) ||

@@ -40,6 +40,21 @@
                     </div>
                 </label>
             </div>
+            <div class="opt-item">
+                <div :class="checkDefault('show_all_sessions')" />
+                <font-awesome-icon :icon="['fas', 'address-book']" />
+                <div>
+                    <span>{{ $t('显示全部会话') }}</span>
+                    <span>{{ $t('在消息页显示全部好友和群；未开启时仍按最近会话和群收纳盒逻辑显示') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input v-model="settingsStore.sysConfig.show_all_sessions"
+                        type="checkbox" name="show_all_sessions" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
             <div v-if="!settingsStore.sysConfig.bubble_sort_user" class="opt-item">
                 <div :class="checkDefault('group_notice_type')" />
                 <font-awesome-icon :icon="['fas', 'user-group']" />

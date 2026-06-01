@@ -102,6 +102,7 @@ export const optDefault: { [key: string]: any } = {
     // Function
     close_notice: false,
     bubble_sort_user: true,
+    show_all_sessions: false,
     close_respond: false,
     msg_taill: '',
     quick_send: 'default',
@@ -151,6 +152,7 @@ const configFunction: { [key: string]: (value: any) => void } = {
     opt_always_top: viewAlwaysTop,
     opt_fast_animation: updateFarstAnimation,
     bubble_sort_user: clearGroupAssist,
+    show_all_sessions: clearGroupAssist,
     use_favicon_notice: setFaviconNotice,
     custom_css: injectCustomCss,
     opt_ind_message: updateChatPan
