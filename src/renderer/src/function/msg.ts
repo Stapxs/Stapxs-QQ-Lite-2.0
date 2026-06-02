@@ -23,7 +23,6 @@ import {
     getMsgData,
     parseMsgList,
     getMsgRawTxt,
-    addAllSessionsToBaseOnMsgList,
     updateBaseOnMsgList,
     updateLastestHistory,
     sendMsgAppendInfo,
@@ -1404,10 +1403,7 @@ function saveUser(msg: { [key: string]: any }, type: string) {
                 })
             }
         }
-        if (settingsStore.sysConfig.show_all_sessions === true) {
-            addAllSessionsToBaseOnMsgList(list)
-            updateBaseOnMsgList()
-        }
+        updateBaseOnMsgList()
         // 更新菜单
         updateMenu({
             parent: 'account',

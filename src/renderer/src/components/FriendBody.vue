@@ -21,13 +21,7 @@
             <div>
                 <p>{{ getShowName(data.group_name || data.nickname, data.remark) }}</p>
                 <div style="flex: 1" />
-                <a class="time">{{
-                    data.time !== undefined
-                        ? Intl.DateTimeFormat(trueLang, {
-                            hour: 'numeric',
-                            minute: 'numeric',
-                        }).format(new Date(data.time)) : ''
-                }}</a>
+                <a class="time">{{ formatSessionTime(data.time) }}</a>
             </div>
             <div>
                 <a v-if="data.highlight" class="highlight">
@@ -58,4 +52,30 @@ defineProps<{
 }>()
 
 const trueLang = getTrueLang()
+
+function isSameDate(a: Date, b: Date) {
+    return a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate()
+}
+
+function formatSessionTime(time: number | undefined) {
+    if (time === undefined) return ''
+
+    const date = new Date(time)
+    if (Number.isNaN(date.getTime())) return ''
+
+    if (isSameDate(date, new Date())) {
+        return Intl.DateTimeFormat(trueLang, {
+            hour: 'numeric',
+            minute: 'numeric',
+        }).format(date)
+    }
+
+    return Intl.DateTimeFormat(trueLang, {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+    }).format(date)
+}
 </script>

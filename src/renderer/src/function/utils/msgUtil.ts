@@ -553,6 +553,15 @@ export function updateLastestHistory(item: UserFriendElem & UserGroupElem) {
     )
 }
 
+function getSessionTime(item: UserFriendElem & UserGroupElem) {
+    const time = Number(item.time ?? 0)
+    return Number.isFinite(time) ? time : 0
+}
+
+function getSessionSortName(item: UserFriendElem & UserGroupElem) {
+    return item.py_start ?? getShowName(item.group_name ?? item.nickname ?? '', item.remark ?? '')
+}
+
 export function addAllSessionsToBaseOnMsgList(list: (UserFriendElem & UserGroupElem)[]) {
     const contactStore = useContactStore()
     list.forEach((item) => {
@@ -560,12 +569,18 @@ export function addAllSessionsToBaseOnMsgList(list: (UserFriendElem & UserGroupE
         if (!Number.isFinite(id) || id <= 0) return
         if (contactStore.baseOnMsgList.has(id)) return
 
-        contactStore.baseOnMsgList.set(id, {
+        const session = {
             ...item,
             raw_msg: item.raw_msg ?? '',
             raw_msg_base: item.raw_msg_base ?? '',
-            time: item.time ?? 0
-        })
+        } as UserFriendElem & UserGroupElem
+        if (item.time !== undefined) {
+            session.time = item.time
+        }
+        contactStore.baseOnMsgList.set(id, session)
+        if (session.time === undefined && !session.raw_msg) {
+            updateLastestHistory(session)
+        }
     })
 }
 
@@ -575,7 +590,8 @@ export function addAllSessionsToBaseOnMsgList(list: (UserFriendElem & UserGroupE
 export function updateBaseOnMsgList() {
     const contactStore = useContactStore()
     const settingsStore = useSettingsStore()
-    if (settingsStore.sysConfig.show_all_sessions === true) {
+    const showAll = settingsStore.sysConfig.show_all_sessions === true
+    if (showAll) {
         addAllSessionsToBaseOnMsgList(contactStore.userList)
     }
     const allList = [...contactStore.baseOnMsgList.values()]
@@ -601,20 +617,14 @@ export function updateBaseOnMsgList() {
         a: UserFriendElem & UserGroupElem,
         b: UserFriendElem & UserGroupElem,
     ) => {
-        const timeA = Number(a.time ?? 0)
-        const timeB = Number(b.time ?? 0)
+        const timeA = getSessionTime(a)
+        const timeB = getSessionTime(b)
         if (timeA !== timeB) return timeB - timeA
 
-        const pyA = a.py_start ?? ''
-        const pyB = b.py_start ?? ''
-        if (pyA !== pyB) return pyA.localeCompare(pyB)
-
-        const nameA = getShowName(a.group_name ?? a.nickname ?? '', a.remark ?? '')
-        const nameB = getShowName(b.group_name ?? b.nickname ?? '', b.remark ?? '')
-        return nameA.localeCompare(nameB)
+        return getSessionSortName(a).localeCompare(getSessionSortName(b))
     }
-    topList.sort(settingsStore.sysConfig.show_all_sessions === true ? sortAllSessionsFun : sortFun)
-    normalList.sort(settingsStore.sysConfig.show_all_sessions === true ? sortAllSessionsFun : sortFun)
+    topList.sort(showAll ? sortAllSessionsFun : sortFun)
+    normalList.sort(showAll ? sortAllSessionsFun : sortFun)
 
     let onMsgList = [] as any[]
     let groupAssistList = [] as any[]
