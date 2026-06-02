@@ -618,9 +618,7 @@ export function updateBaseOnMsgList() {
 
     let onMsgList = [] as any[]
     let groupAssistList = [] as any[]
-    if (settingsStore.sysConfig.show_all_sessions === true) {
-        onMsgList = topList.concat(normalList)
-    } else if (settingsStore.sysConfig.bubble_sort_user) {
+    if (settingsStore.sysConfig.bubble_sort_user) {
         // 将 normalList 进行拆分
         onMsgList = topList.concat(normalList.filter((item) => {
             return item.group_id && canGroupNotice(item.group_id) ||
