@@ -143,7 +143,7 @@
             </div>
             <div>
                 <span>{{ $t('群收纳盒') }}</span>
-                <a>{{ $t('群收纳盒将所有的群消息收进一个单独的群消息列表内并提供实时置顶新消息的功能；你可以关闭它来控制群消息的直接通知选项。') }}</a>
+                <a>{{ $t('群收纳盒将所有的群消息收进一个单独的群消息列表内并提供实时置顶新消息的功能；会话显示和群通知方式可以单独设置。') }}</a>
                 <div class="opt-item wel-opt-item">
                     <div>
                         <span>{{ $t('群收纳盒') }}</span>
@@ -157,7 +157,24 @@
                         </div>
                     </label>
                 </div>
-                <div v-if="!settingsStore.sysConfig.bubble_sort_user" class="opt-item wel-opt-item">
+                <div class="opt-item wel-opt-item">
+                    <div>
+                        <span>{{ $t('会话显示') }}</span>
+                        <span>{{ $t('控制消息页显示最近会话还是全部会话') }}</span>
+                    </div>
+                    <div class="select-wrapper">
+                        <select v-model="settingsStore.sysConfig.session_display_mode" style="width: 100%;"
+                            name="session_display_mode" title="session_display_mode" @change="save">
+                            <option value="recent">
+                                {{ $t('仅显示最近有消息的会话') }}
+                            </option>
+                            <option value="all">
+                                {{ $t('显示全部会话') }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+                <div class="opt-item wel-opt-item">
                     <div>
                         <span>{{ $t('群消息通知方式') }}</span>
                         <span>{{ $t('重要消息将始终发起应用内通知和系统通知') }}</span>

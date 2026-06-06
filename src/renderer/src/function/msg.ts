@@ -23,6 +23,7 @@ import {
     getMsgData,
     parseMsgList,
     getMsgRawTxt,
+    updateBaseOnMsgList,
     updateLastestHistory,
     sendMsgAppendInfo,
 } from '@renderer/function/utils/msgUtil'
@@ -734,13 +735,10 @@ const msgFunctions = {
                         msgPath.message_list.type,
                         msgPath.message_value,
                     )
-                    const raw = getMsgRawTxt(list[0])
-                    const { time } = list[0]
                     // 更新消息列表
                     const onmsg = contactStore.baseOnMsgList.get(Number(id))
                     if (onmsg) {
-                        onmsg.raw_msg = raw
-                        onmsg.time = getViewTime(Number(time))
+                        Object.assign(onmsg, formatMessageData(list[0], Boolean(onmsg.group_id)))
                         contactStore.baseOnMsgList.set(id, onmsg)
                     }
                 }
@@ -1374,6 +1372,9 @@ function saveUser(msg: { [key: string]: any }, type: string) {
             return 0
         })
         contactStore.userList = contactStore.userList.concat(list)
+        if (settingsStore.sysConfig.session_display_mode === 'all') {
+            updateBaseOnMsgList()
+        }
         // 刷新置顶列表
         const info = settingsStore.sysConfig.top_info as {
             [key: string]: number[]
@@ -1970,46 +1971,50 @@ function newMsg(_: string, data: any) {
             }
         }
 
-        // 群收纳箱 ============================================
-        if (settingsStore.sysConfig.bubble_sort_user) {
-            // 刷新群收纳箱列表
-            let getGroup = contactStore.baseOnMsgList.get(Number(id))
-            // ( 如果 是群组消息 && 群组没有开启通知 && 不是置顶的 ) 这种情况下将群消息添加到群收纳盒中
-            if (!getGroup) {
-                const getList = contactStore.userList.filter((item) => {
-                    return item.group_id === id
+        // 会话状态更新 ============================================
+        const isGroupMessage = data.message_type === 'group'
+        const isTempGroupMessage = data.sub_type === 'group'
+        const sessionId = Number(isTempGroupMessage ? sender : id)
+        let session = contactStore.baseOnMsgList.get(sessionId)
+        if (!session) {
+            if (isTempGroupMessage) {
+                session = {
+                    user_id: sender,
+                    nickname: app.config.globalProperties.$t('临时会话'),
+                    remark: data.sender.user_id,
+                    group_id: data.sender.group_id,
+                    group_name: '',
+                } as UserFriendElem & UserGroupElem
+            } else {
+                session = contactStore.userList.find((item) => {
+                    return item.user_id === id || item.group_id === id
                 })
-                getGroup = getList[0]
-            }
-            if (getGroup) {
-                getGroup.message_id = data.message_id
-                const name = data.sender.card && data.sender.card !== '' ? data.sender.card : data.sender.nickname
-                getGroup.raw_msg = name + ': ' + getMsgRawTxt(data)
-                getGroup.raw_msg_base = getMsgRawTxt(data)
-                getGroup.time = getViewTime(Number(data.time))
-                contactStore.baseOnMsgList.set(Number(id), getGroup)
             }
         }
-
-        const get = [...contactStore.baseOnMsgList.keys()].filter((item) => {
-            return (
-                Number(id) === item || Number(info.target_id) === item
-            )
-        })
+        if (session) {
+            Object.assign(session, formatMessageData(data, isGroupMessage))
+            if (sender != loginId && sender != 0 && id !== showId) {
+                if (!session.new_msg) {
+                    session.new_msg = true
+                    contactStore.newMsgCount++
+                }
+            }
+            if (id !== showId) {
+                if (data.atme) { session.highlight = $t('[有人@你]') }
+                if (data.atall) { session.highlight = $t('[@全体]') }
+                if (isImportant) { session.highlight = $t('[特別关心]') }
+            }
+            contactStore.baseOnMsgList.set(sessionId, session)
+        }
 
         // 通知判定 ============================================
-        // eslint-disable-next-line max-len
-        // (发送者不是自己 && (在特别关心列表里 || 发送者不是群组 || 开启了群组通知模式 || 群组 AT
-        //      || 群组 AT 全体 || 群组开启了通知)) 这些情况需要进行新消息处理
+        const groupNoticeType = settingsStore.sysConfig.group_notice_type
+        const groupPolicyAllowsNotice = groupNoticeType !== 'none' ||
+            data.atme || data.atall || isImportant || isGroupNotice
         if (
             sender != loginId &&
             sender != 0 &&
-            (isImportant ||
-                data.message_type !== 'group' ||
-                settingsStore.sysConfig.group_notice_type != 'none' ||
-                data.atme ||
-                data.atall ||
-                isGroupNotice)
+            (!isGroupMessage || groupPolicyAllowsNotice)
         ) {
             logger.add(LogType.DEBUG, '通知判定：', {
                 notShow: id !== showId,
@@ -2018,12 +2023,15 @@ function newMsg(_: string, data: any) {
                 isImportant: isImportant
             })
             // (发送者没有被打开 || 窗口没有焦点 || 窗口被最小化 || 在特别关心列表里) 这些情况需要进行消息通知
+            const forceGroupSystemNotice = isGroupMessage && groupNoticeType === 'all'
+            const forceImportantNotice = isImportant ||
+                (isGroupMessage && (data.atme || data.atall || isGroupNotice))
             if (
-                settingsStore.sysConfig.group_notice_type == 'all' ||
+                forceGroupSystemNotice ||
+                forceImportantNotice ||
                 id !== showId ||
                 !document.hasFocus() ||
-                document.hidden ||
-                isImportant
+                document.hidden
             ) {
                 // 准备消息内容
                 let raw = getMsgRawTxt(data)
@@ -2061,82 +2069,6 @@ function newMsg(_: string, data: any) {
                     new Notify().notify(msgInfo)
                 }
             }
-            // 如果发送者不在消息列表里，将它添加到消息列表里
-            if (get) {
-                // 如果消息子类是 group，那么是临时消息，需要进行特殊处理
-                if (data.sub_type === 'group') {
-                    // 手动创建一个用户信息，因为临时消息的用户不在用户列表里
-                    const user = {
-                        user_id: sender,
-                        // 因为临时消息没有返回昵称
-                        nickname: app.config.globalProperties.$t('临时会话'),
-                        remark: data.sender.user_id,
-                        new_msg: true,
-                        message_id: data.message_id,
-                        raw_msg: data.raw_message,
-                        time: data.time,
-                        group_id: data.sender.group_id,
-                        group_name: '',
-                    } as UserFriendElem & UserGroupElem
-                    contactStore.baseOnMsgList.set(Number(sender), user)
-                } else {
-                    const getList = contactStore.userList.filter((item) => {
-                        return item.user_id === id || item.group_id === id
-                    })
-
-                    const showUser = getList[0]
-                    const formatted = formatMessageData(data, data.message_type === 'group')
-                    Object.assign(showUser, formatted)
-                    contactStore.baseOnMsgList.set(Number(id), showUser)
-                }
-            }
-            if (id !== showId) {
-                const user = contactStore.baseOnMsgList.get(id)
-                if (user) {
-                    if (!user.new_msg) {
-                        user.new_msg = true
-                        contactStore.newMsgCount++
-                    }
-                    contactStore.baseOnMsgList.set(id, user)
-                }
-            }
-        }
-
-
-
-        // 消息列表 ============================================
-        // 刷新消息列表
-        if (!settingsStore.sysConfig.bubble_sort_user && data.message_type === 'group') {
-            const getList = contactStore.userList.filter((item) => {
-                return item.group_id === id
-            })
-            if (getList.length === 1) {
-                const showGroup = getList[0]
-                const formatted = formatMessageData(data, true)
-                Object.assign(showGroup, formatted)
-                contactStore.baseOnMsgList.set(Number(id), showGroup)
-            }
-        }
-        // 刷新消息
-        if (get) {
-            const item = contactStore.baseOnMsgList.get(Number(id))
-            if (item) {
-                item.message_id = data.message_id
-                if (data.message_type === 'group') {
-                    const name =
-                        data.sender.card && data.sender.card !== '' ? data.sender.card : data.sender.nickname
-                    item.raw_msg = name + ': ' + getMsgRawTxt(data)
-                } else {
-                    item.raw_msg = getMsgRawTxt(data)
-                }
-                item.time = getViewTime(Number(data.time))
-                if (id != showId) {
-                    if (data.atme) { item.highlight = $t('[有人@你]') }
-                    if (data.atall) { item.highlight = $t('[@全体]') }
-                    if (isImportant) { item.highlight = $t('[特別关心]') }
-                }
-                contactStore.baseOnMsgList.set(Number(id), item)
-            }
         }
     }
 }
@@ -2165,11 +2097,11 @@ function updateSysInfo(
 // ==============================================================
 
 function formatMessageData(data: any, isGroup: boolean) {
-    const name = data.sender.card && data.sender.card !== '' ? data.sender.card : data.sender.nickname
+    const name = data.sender?.card && data.sender.card !== '' ? data.sender.card : data.sender?.nickname
 
     return {
         message_id: data.message_id,
-        raw_msg: isGroup ? `${name}: ${getMsgRawTxt(data)}` : getMsgRawTxt(data),
+        raw_msg: isGroup && name ? `${name}: ${getMsgRawTxt(data)}` : getMsgRawTxt(data),
         time: getViewTime(Number(data.time)),
         raw_msg_base: getMsgRawTxt(data)
     }

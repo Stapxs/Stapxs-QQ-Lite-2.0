@@ -40,7 +40,26 @@
                     </div>
                 </label>
             </div>
-            <div v-if="!settingsStore.sysConfig.bubble_sort_user" class="opt-item">
+            <div class="opt-item">
+                <div :class="checkDefault('session_display_mode')" />
+                <font-awesome-icon :icon="['fas', 'address-book']" />
+                <div>
+                    <span>{{ $t('会话显示') }}</span>
+                    <span>{{ $t('控制消息页显示最近会话还是全部会话') }}</span>
+                </div>
+                <div class="select-wrapper">
+                    <select v-model="settingsStore.sysConfig.session_display_mode"
+                        name="session_display_mode" title="session_display_mode" @change="save">
+                        <option value="recent">
+                            {{ $t('仅显示最近有消息的会话') }}
+                        </option>
+                        <option value="all">
+                            {{ $t('显示全部会话') }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+            <div class="opt-item">
                 <div :class="checkDefault('group_notice_type')" />
                 <font-awesome-icon :icon="['fas', 'user-group']" />
                 <div>

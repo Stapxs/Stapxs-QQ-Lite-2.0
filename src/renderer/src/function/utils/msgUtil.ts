@@ -553,13 +553,47 @@ export function updateLastestHistory(item: UserFriendElem & UserGroupElem) {
     )
 }
 
+function getSessionId(item: UserFriendElem & UserGroupElem) {
+    return Number(item.user_id ?? item.group_id)
+}
+
+function getSessionTime(item: UserFriendElem & UserGroupElem) {
+    const time = Number(item.time ?? 0)
+    return Number.isFinite(time) ? time : 0
+}
+
+function getSessionSortName(item: UserFriendElem & UserGroupElem) {
+    return item.py_start ?? getShowName(item.group_name ?? item.nickname ?? '', item.remark ?? '')
+}
+
+function getSessionList() {
+    const contactStore = useContactStore()
+    const settingsStore = useSettingsStore()
+    const sessionMap = new Map<number, UserFriendElem & UserGroupElem>()
+
+    if (settingsStore.sysConfig.session_display_mode === 'all') {
+        contactStore.userList.forEach((item) => {
+            const id = getSessionId(item)
+            if (Number.isFinite(id) && id > 0) {
+                sessionMap.set(id, item)
+            }
+        })
+    }
+
+    contactStore.baseOnMsgList.forEach((item, id) => {
+        sessionMap.set(id, item)
+    })
+
+    return [...sessionMap.values()]
+}
+
 /**
  * 刷新消息列表排序
  */
 export function updateBaseOnMsgList() {
     const contactStore = useContactStore()
     const settingsStore = useSettingsStore()
-    const allList = [...contactStore.baseOnMsgList.values()]
+    const allList = getSessionList()
     // 先更具 item.always_top 是不是 true 拆为两个数组
     const topList = allList.filter((item) => item.always_top)
     const normalList = allList.filter((item) => !item.always_top)
@@ -570,13 +604,11 @@ export function updateBaseOnMsgList() {
         a: UserFriendElem & UserGroupElem,
         b: UserFriendElem & UserGroupElem,
     ) => {
-        if (a.time == b.time || a.time == undefined || b.time == undefined) {
-            if (a.py_start == undefined || b.py_start == undefined) {
-                return 0
-            }
-            return b.py_start.charCodeAt(0) - a.py_start.charCodeAt(0)
-        }
-        return b.time - a.time
+        const timeA = getSessionTime(a)
+        const timeB = getSessionTime(b)
+        if (timeA !== timeB) return timeB - timeA
+
+        return getSessionSortName(a).localeCompare(getSessionSortName(b))
     }
     topList.sort(sortFun)
     normalList.sort(sortFun)
@@ -586,11 +618,10 @@ export function updateBaseOnMsgList() {
     if (settingsStore.sysConfig.bubble_sort_user) {
         // 将 normalList 进行拆分
         onMsgList = topList.concat(normalList.filter((item) => {
-            return item.group_id && canGroupNotice(item.group_id) ||
-                item.user_id || item.new_msg || item.highlight
+            return item.user_id || item.new_msg || item.highlight
         }))
         groupAssistList = normalList.filter((item) => {
-            return item.group_id && !canGroupNotice(item.group_id)
+            return item.group_id
         })
     } else {
         onMsgList = topList.concat(normalList)
