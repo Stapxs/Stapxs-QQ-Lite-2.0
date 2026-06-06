@@ -608,7 +608,7 @@ export function updateBaseOnMsgList() {
         const timeB = getSessionTime(b)
         if (timeA !== timeB) return timeB - timeA
 
-        return getSessionSortName(a).localeCompare(getSessionSortName(b))
+        return getSessionSortName(b).localeCompare(getSessionSortName(a))
     }
     topList.sort(sortFun)
     normalList.sort(sortFun)
@@ -617,11 +617,14 @@ export function updateBaseOnMsgList() {
     let groupAssistList = [] as any[]
     if (settingsStore.sysConfig.bubble_sort_user) {
         // 将 normalList 进行拆分
-        onMsgList = topList.concat(normalList.filter((item) => {
+        const shouldShowInMainList = (item: UserFriendElem & UserGroupElem) => {
             return item.user_id || item.new_msg || item.highlight
+        }
+        onMsgList = topList.concat(normalList.filter((item) => {
+            return shouldShowInMainList(item)
         }))
         groupAssistList = normalList.filter((item) => {
-            return item.group_id
+            return item.group_id && !shouldShowInMainList(item)
         })
     } else {
         onMsgList = topList.concat(normalList)

@@ -1993,13 +1993,13 @@ function newMsg(_: string, data: any) {
         }
         if (session) {
             Object.assign(session, formatMessageData(data, isGroupMessage))
-            if (sender != loginId && sender != 0 && id !== showId) {
+            if (sender != loginId && sender != 0 && sessionId !== showId) {
                 if (!session.new_msg) {
                     session.new_msg = true
                     contactStore.newMsgCount++
                 }
             }
-            if (id !== showId) {
+            if (sessionId !== showId) {
                 if (data.atme) { session.highlight = $t('[有人@你]') }
                 if (data.atall) { session.highlight = $t('[@全体]') }
                 if (isImportant) { session.highlight = $t('[特別关心]') }
