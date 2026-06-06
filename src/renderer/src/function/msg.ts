@@ -2017,7 +2017,7 @@ function newMsg(_: string, data: any) {
             (!isGroupMessage || groupPolicyAllowsNotice)
         ) {
             logger.add(LogType.DEBUG, '通知判定：', {
-                notShow: id !== showId,
+                notShow: sessionId !== showId,
                 notFocus: !document.hasFocus(),
                 hidden: document.hidden,
                 isImportant: isImportant
@@ -2029,7 +2029,7 @@ function newMsg(_: string, data: any) {
             if (
                 forceGroupSystemNotice ||
                 forceImportantNotice ||
-                id !== showId ||
+                sessionId !== showId ||
                 !document.hasFocus() ||
                 document.hidden
             ) {
@@ -2051,7 +2051,7 @@ function newMsg(_: string, data: any) {
                     title: data.group_name ?? data.sender.nickname,
                     body:
                         data.message_type === 'group' ? data.sender.nickname + ':' + raw : raw,
-                    tag: `${id}/${data.message_id}`,
+                    tag: `${sessionId}/${data.message_id}`,
                     icon:
                         data.message_type === 'group' ? `https://p.qlogo.cn/gh/${id}/${id}/0` : `https://q1.qlogo.cn/g?b=qq&s=0&nk=${id}`,
                     image: undefined as any,
