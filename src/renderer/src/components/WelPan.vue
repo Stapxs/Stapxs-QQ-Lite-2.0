@@ -160,19 +160,15 @@
                 <div class="opt-item wel-opt-item">
                     <div>
                         <span>{{ $t('会话显示') }}</span>
-                        <span>{{ $t('控制消息页显示最近会话还是全部会话') }}</span>
+                        <span>{{ $t('关闭时仅显示最近会话，开启后显示全部会话') }}</span>
                     </div>
-                    <div class="select-wrapper">
-                        <select v-model="settingsStore.sysConfig.session_display_mode" style="width: 100%;"
-                            name="session_display_mode" title="session_display_mode" @change="save">
-                            <option value="recent">
-                                {{ $t('仅显示最近有消息的会话') }}
-                            </option>
-                            <option value="all">
-                                {{ $t('显示全部会话') }}
-                            </option>
-                        </select>
-                    </div>
+                    <label class="ss-switch">
+                        <input :checked="settingsStore.sysConfig.session_display_mode === 'all'"
+                            type="checkbox" name="session_display_mode" @change="toggleSessionDisplay">
+                        <div>
+                            <div />
+                        </div>
+                    </label>
                 </div>
                 <div class="opt-item wel-opt-item">
                     <div>
@@ -373,7 +369,7 @@
     import { ref } from 'vue'
     import { i18n } from '@renderer/main'
     import languages from '@renderer/assets/l10n/_l10nconfig.json'
-    import { runASWEvent as save } from '@renderer/function/option'
+    import { runAS, runASWEvent as save } from '@renderer/function/option'
     import { openLink, sendIdentifyData } from '@renderer/function/utils/appUtil'
     import { useSettingsStore } from '@renderer/state/settings'
     import { useUIStore } from '@renderer/state/ui'
@@ -417,6 +413,11 @@
 
     function setPage(name: string) {
         show.value = name
+    }
+
+    function toggleSessionDisplay(event: Event) {
+        const sender = event.target as HTMLInputElement
+        runAS('session_display_mode', sender.checked ? 'all' : 'recent')
     }
 </script>
 

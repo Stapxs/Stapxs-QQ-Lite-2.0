@@ -9,22 +9,7 @@
 <template>
     <div class="opt-page">
         <div class="ss-card">
-            <header>{{ $t('通知选项') }}</header>
-            <div class="opt-item">
-                <div :class="checkDefault('close_notice')" />
-                <font-awesome-icon :icon="['fas', 'volume-xmark']" />
-                <div>
-                    <span>{{ $t('禁用通知') }}</span>
-                    <span>{{ $t('好嘛 …… 不烦你 ……') }}</span>
-                </div>
-                <label class="ss-switch">
-                    <input v-model="settingsStore.sysConfig.close_notice"
-                        type="checkbox" name="close_notice" @change="save">
-                    <div>
-                        <div />
-                    </div>
-                </label>
-            </div>
+            <header>{{ $t('会话选项') }}</header>
             <div class="opt-item">
                 <div :class="checkDefault('bubble_sort_user')" />
                 <font-awesome-icon :icon="['fas', 'box-open']" />
@@ -45,19 +30,33 @@
                 <font-awesome-icon :icon="['fas', 'address-book']" />
                 <div>
                     <span>{{ $t('会话显示') }}</span>
-                    <span>{{ $t('控制消息页显示最近会话还是全部会话') }}</span>
+                    <span>{{ $t('关闭时仅显示最近会话，开启后显示全部会话') }}</span>
                 </div>
-                <div class="select-wrapper">
-                    <select v-model="settingsStore.sysConfig.session_display_mode"
-                        name="session_display_mode" title="session_display_mode" @change="save">
-                        <option value="recent">
-                            {{ $t('仅显示最近有消息的会话') }}
-                        </option>
-                        <option value="all">
-                            {{ $t('显示全部会话') }}
-                        </option>
-                    </select>
+                <label class="ss-switch">
+                    <input :checked="settingsStore.sysConfig.session_display_mode === 'all'"
+                        type="checkbox" name="session_display_mode" @change="toggleSessionDisplay">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+        </div>
+        <div class="ss-card">
+            <header>{{ $t('通知选项') }}</header>
+            <div class="opt-item">
+                <div :class="checkDefault('close_notice')" />
+                <font-awesome-icon :icon="['fas', 'volume-xmark']" />
+                <div>
+                    <span>{{ $t('禁用通知') }}</span>
+                    <span>{{ $t('好嘛 …… 不烦你 ……') }}</span>
                 </div>
+                <label class="ss-switch">
+                    <input v-model="settingsStore.sysConfig.close_notice"
+                        type="checkbox" name="close_notice" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
             </div>
             <div class="opt-item">
                 <div :class="checkDefault('group_notice_type')" />
@@ -472,6 +471,11 @@
         setTimeout(() => {
             ndv.value = false
         }, 300)
+    }
+
+    function toggleSessionDisplay(event: Event) {
+        const sender = event.target as HTMLInputElement
+        runAS('session_display_mode', sender.checked ? 'all' : 'recent')
     }
 
     function breakLineTip(event: Event) {
