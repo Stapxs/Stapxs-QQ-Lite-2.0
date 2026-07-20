@@ -33,6 +33,7 @@
     <img src="README/sponsor.png" width="600">
     </a>
 </p>
+https://www.ifdian.net/a/stapxs
 
 ## 社区版本
 以下是一些社区支持的版本，非常推荐大家试用：
