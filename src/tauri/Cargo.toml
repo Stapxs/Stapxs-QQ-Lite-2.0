@@ -1,6 +1,6 @@
 [package]
 name = "stapxs-qq-lite"
-version = "3.4.1"
+version = "3.5.0"
 description = "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。"
 authors = ["stapxs"]
 edition = "2024"
@@ -15,10 +15,10 @@ name = "ssqq_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = { version = "~2.6.3", features = [] }
 
 [dependencies]
-tauri = { version = "2.9", features = ["macos-private-api", "protocol-asset", "devtools", "tray-icon", "image-png"] }
+tauri = { version = "~2.11.5", features = ["macos-private-api", "protocol-asset", "devtools", "tray-icon", "image-png"] }
 tauri-plugin-opener = "2.5"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -55,7 +55,7 @@ tauri-plugin-clipboard-manager = "2.3.0"
 liquid-glass-rs = "0.1"
 cocoa = "0.26.0"
 objc2 = "0.6.1"
-tauri = { version = "2.9", features = ["macos-private-api"] }
+tauri = { version = "~2.11.5", features = ["macos-private-api"] }
 security-framework = "2.11"
 
 [target.'cfg(target_os="windows")'.dependencies]
@@ -65,6 +65,7 @@ windows-result = "0.3.2"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 secret-service = { version = "3", features = ["rt-tokio-crypto-rust"] }
+webkit2gtk = { version = "=2.0.2", features = ["v2_40"] }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))'.dependencies]
 tauri-plugin-window-state = "2.2.2"

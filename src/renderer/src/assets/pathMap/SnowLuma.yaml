@@ -1,0 +1,80 @@
+name: SnowLuma
+redirect: NapCat.Onebot
+
+# 消息列表
+message_list:
+    name: get_group_msg_history
+    private_name: get_friend_msg_history
+    source: $.data.messages[*]
+    pagerType: incremental
+    type: $.data
+    message_type:
+        user: private
+        group: group
+    list:
+        message_id: /message_id
+        seq_id: /real_seq
+        target_id: /target_id
+        message_type: /message_type
+        time: /time
+        post_type: /post_type
+        group_id: /group_id
+        sender: /sender
+        message: /message
+        raw_message: /raw_message
+
+# 获取收藏表情
+roaming_stamp:
+    name: fetch_custom_face
+    pagerType: full
+    reverse: true
+
+# 好友分组，暂不支持此功能
+friend_category:
+friend_list:
+    name: get_friend_list
+    source: $.data[*]
+    list:
+        class_id: null
+        class_name: null
+        user_id: /user_id
+        nickname: /nickname
+        remark: /remark
+        longNick: /longNick
+
+# QQ 空间
+get_qzone_feed:
+    name: get_qzone_feeds
+    source: $.data.feeds[*]
+    list:
+        id: /key
+        type: /appid
+        nickname: /nickname
+        uin: /uin
+        time: /time
+        html: /html
+get_qzone_msg:
+    name: get_qzone_msg_list
+    source: $.data.msglist[*]
+    list:
+        id: /key
+        type: /appid
+        nickname: /nickname
+        uin: /uin
+        time: /time
+        html: /html
+send_qzone_msg:
+    name: send_qzone_msg
+    source: $.data
+comment_qzone:
+    name: comment_qzone
+    source: $.data
+like_qzone:
+    name: like_qzone
+    source: $.data
+unlike_qzone:
+    name: unlike_qzone
+    source: $.data
+delete_qzone_msg:
+    name: delete_qzone_msg
+    source: $.data

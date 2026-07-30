@@ -110,6 +110,14 @@
                     }}</span>
                 </div>
                 <div class="dept">
+                    <div class="ss-card jump-card"
+                        @click="openLink('https://hitokoto.cn')">
+                        <header>
+                            <div />
+                            <div>Hitokoto<span>{{ $t('一言') }}</span></div>
+                        </header>
+                        <font-awesome-icon :icon="['fas', 'angle-right']" />
+                    </div>
                     <div v-if="backend.platform == 'web'"
                         class="ss-card jump-card"
                         @click="openLink('https://github.com/Stapxs/Stapxs-Web-API')">

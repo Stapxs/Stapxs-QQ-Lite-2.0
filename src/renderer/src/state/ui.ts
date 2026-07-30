@@ -19,6 +19,7 @@ export const useUIStore = defineStore('ui', () => {
         templateValue?: any
         data?: any
         full?: boolean
+        onClose?: () => void
         button?: {
             master?: boolean
             fun?: (value: any) => void

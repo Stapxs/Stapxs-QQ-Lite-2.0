@@ -21,13 +21,7 @@
             <div>
                 <p>{{ getShowName(data.group_name || data.nickname, data.remark) }}</p>
                 <div style="flex: 1" />
-                <a class="time">{{
-                    data.time !== undefined
-                        ? Intl.DateTimeFormat(trueLang, {
-                            hour: 'numeric',
-                            minute: 'numeric',
-                        }).format(new Date(data.time)) : ''
-                }}</a>
+                <a class="time">{{ formatSessionTime(data.time) }}</a>
             </div>
             <div>
                 <a v-if="data.highlight" class="highlight">
@@ -45,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { getTrueLang } from '@renderer/function/utils/systemUtil'
+import { formatSessionTime } from '@renderer/function/utils/systemUtil'
 import { getShowName } from '@renderer/function/utils/msgUtil'
 
 defineOptions({ name: 'FriendBody' })
@@ -57,5 +51,4 @@ defineProps<{
     from?: string
 }>()
 
-const trueLang = getTrueLang()
 </script>

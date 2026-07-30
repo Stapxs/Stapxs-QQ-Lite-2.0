@@ -268,7 +268,7 @@ export class Connector {
      */
     private static ReMap: Map<string, any> = new Map()
 
-    private static waitReturn(echo: string, timeout: number=5000): Promise<any> {
+    private static waitReturn(echo: string, timeout: number=50000): Promise<any> {
         return new Promise((resolve, reject) => {
             const startTime = Date.now()
 
@@ -404,7 +404,7 @@ export class Connector {
         const authStore = useAuthStore()
         const apiMap = authStore.jsonMap[api]
         if (!apiMap) {
-            logger.debug(`${authStore.jsonMap.name} 未适配 API ${api}`)
+            logger.debug(`${authStore.jsonMap.name} 未适配 API ${JSON.stringify(api)}`)
             return undefined
         }
 

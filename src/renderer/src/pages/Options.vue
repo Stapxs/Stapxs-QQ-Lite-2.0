@@ -7,7 +7,7 @@
  <!-- eslint-disable max-len -->
 
 <template>
-    <div class="opt-main">
+    <div :class="['opt-main', { 'opt-fast-animation': settingsStore.sysConfig.opt_fast_animation === true }]">
         <AboutPan show-u-i />
         <div>
             <BcTab v-show="show" :title="$t('设置')" class="opt-tab">
@@ -82,6 +82,7 @@
     import { ref, watch, onMounted, nextTick } from 'vue'
 
     import { i18n } from '@renderer/main'
+    import { useSettingsStore } from '@renderer/state/settings'
     import packageInfo from '../../../../package.json'
 
     import BcTab from 'vue3-bcui/packages/bc-tab'
@@ -96,6 +97,7 @@
     defineOptions({ name: 'ViewOption' })
 
     const $t = i18n.global.t
+    const settingsStore = useSettingsStore()
 
     const props = defineProps({
         show: Boolean,

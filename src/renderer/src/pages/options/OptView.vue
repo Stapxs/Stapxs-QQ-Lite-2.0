@@ -50,7 +50,7 @@
                 </div>
             </div>
         </div>
-        <div v-if=" !napcat" class="ss-card">
+        <div v-if="!napcat" class="ss-card">
             <header>{{ $t('主题与颜色') }}</header>
             <template v-if="settingsStore.sysConfig.opt_auto_gtk != true">
                 <div id="opt_view_dark" class="opt-item">
@@ -88,11 +88,15 @@
                         <div :class="checkDefault('theme_color')" />
                         <font-awesome-icon :icon="['fas', 'palette']" />
                         <div>
-                            <label for="theme_color_custom">{{ $t('主题色') }}</label>
+                            <label for="theme_color_custom" @click.prevent="themeColorChange">{{ $t('主题色') }}</label>
                             <span>{{ $t('换个心情 🎵 ~') }}</span>
                         </div>
                         <div class="theme-color-col">
-                            <input id="theme_color_custom" v-model="themeColorRaw" type="color">
+                            <input id="theme_color_custom"
+                                v-model="themeColorRaw"
+                                type="text"
+                                readonly
+                                @click.prevent="themeColorChange">
                             <label class="ss-radio" style="margin-left: 10px;">
                                 <input type="radio" name="theme_color"
                                     :checked="Number(settingsStore.sysConfig.theme_color) > 10"
@@ -172,11 +176,11 @@
                 </div>
                 <div class="file-choice">
                     <div class="choice-btn"
-                        @click="choiceImgRef?.click()">
+                        @click="setBackground">
                         {{
                             settingsStore.sysConfig.chat_background
                                 ? $t('更换背景')
-                                : $t('上传背景')
+                                : $t('选择背景')
                         }}
                         <input id="opt-view-chat-background"
                             ref="choiceImgRef"
@@ -184,8 +188,8 @@
                             style="display: none"
                             name="chat_background"
                             accept="image/*"
-                            @change="setBackground($event)">
-                        <label for="opt-view-chat-background" class="sr-only">{{ $t('上传背景图片') }}</label>
+                            @change="setBackgroundFromInput($event)">
+                        <label for="opt-view-chat-background" class="sr-only">{{ $t('选择背景图片') }}</label>
                     </div>
                     <div v-if="settingsStore.sysConfig.chat_background !== ''"
                         class="rm-btn"
@@ -202,10 +206,10 @@
                         <label for="opt-view-background-blur">{{ $t('背景模糊') }}</label>
                         <span>{{ $t('什么都看不见了（恼') }}</span>
                     </div>
-                    <div class="ss-range">
+                    <div class="ss-range" :style="{ '--range-precent': `${settingsStore.sysConfig.chat_background_blur}%` }">
                         <input id="opt-view-background-blur" v-model="settingsStore.sysConfig.chat_background_blur"
-                            :style="{ 'background-size': `${settingsStore.sysConfig.chat_background_blur}% 100%` }"
                             type="range" name="chat_background_blur" @input="save">
+                        <div />
                         <span :style="{ 'color': `var(--color-font${ settingsStore.sysConfig.chat_background_blur > 50 ? '-r' : ''})` }">
                             {{ settingsStore.sysConfig.chat_background_blur }}
                             px</span>
@@ -216,11 +220,11 @@
                         <label for="opt-view-background-opacity">{{ $t('背景透明度') }}</label>
                         <span>{{ $t('什么都看不见了（恼') }}</span>
                     </div>
-                    <div class="ss-range">
+                    <div class="ss-range" :style="{ '--range-precent': `${settingsStore.sysConfig.chat_background_blur}%` }">
                         <input id="opt-view-background-opacity" v-model="settingsStore.sysConfig.chat_background_blur"
-                            :style="{ 'background-size': `${settingsStore.sysConfig.chat_background_blur}% 100%` }"
                             type="range" max="100" name="chat_background_blur"
                             @input="save">
+                        <div />
                         <span :style="{ 'color': `var(--color-font${ settingsStore.sysConfig.chat_background_blur > 50 ? '-r' : ''})` }">
                             {{ settingsStore.sysConfig.chat_background_blur }}
                             %</span>
@@ -372,9 +376,8 @@
                     <label for="opt-view-initial-scale">{{ $t('缩放比例') }}</label>
                     <span>{{ $t('调整页面在移动端的缩放比例') }}</span>
                 </div>
-                <div class="ss-range">
+                <div class="ss-range" :style="{ '--range-precent': `${(initialScaleShow - 0.5) / 0.01}%` }">
                     <input id="opt-view-initial-scale" v-model="settingsStore.sysConfig.initial_scale"
-                        :style="{ 'background-size': `${(initialScaleShow - 0.5) / 0.01}% 100%` }"
                         type="range"
                         min="0.5"
                         max="1.5"
@@ -382,6 +385,7 @@
                         name="initial_scale"
                         @change="scaleSave"
                         @input="setInitialScaleShow">
+                    <div />
                     <span :style="{ 'color': `var(--color-font${initialScaleShow / 0.05 })` }">
                         {{ initialScaleShow }}</span>
                 </div>
@@ -395,9 +399,8 @@
                     <label for="opt-view-fs-adaptation">{{ $t('圆角适配') }}</label>
                     <span>{{ $t('适配全面屏设备防止四角出界') }}</span>
                 </div>
-                <div class="ss-range">
+                <div class="ss-range" :style="{ '--range-precent': `${(fsAdaptationShow / 50) * 100}%` }">
                     <input id="opt-view-fs-adaptation" v-model="settingsStore.sysConfig.fs_adaptation"
-                        :style="{ 'background-size': `${(fsAdaptationShow / 50) * 100}% 100%` }"
                         type="range"
                         min="0"
                         max="50"
@@ -405,6 +408,7 @@
                         name="fs_adaptation"
                         @change="save"
                         @input="setFsAdaptationShow">
+                    <div />
                     <span :style="{ 'color': `var(--color-font${fsAdaptationShow / 50 > 0.5 ? '-r' : ''})` }">
                         {{ fsAdaptationShow }} px
                     </span>
@@ -444,17 +448,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, toRaw, onMounted, useTemplateRef } from 'vue'
-import Option, { runASWEvent as save, checkDefault, runAS } from '../../function/option'
+import { markRaw, onMounted, ref, toRaw, useTemplateRef, watch } from 'vue'
+import Option, { run, runASWEvent as save, checkDefault, runAS } from '../../function/option'
 import { BrowserInfo, detect } from 'detect-browser'
 import { getDeviceType } from '@renderer/function/utils/systemUtil'
 
 import languages from '../../assets/l10n/_l10nconfig.json'
 import { sendIdentifyData } from '@renderer/function/utils/appUtil'
 import { backend } from '@renderer/runtime/backend'
+import {
+    rememberLocalImageUrl,
+    resolveLocalImageUrl,
+    saveBrowserBackgroundImage,
+    type LocalImageInfo,
+} from '@renderer/function/utils/backgroundUtil'
 import { i18n } from '@renderer/main'
 import { useSettingsStore } from '@renderer/state/settings'
 import { useUIStore } from '@renderer/state/ui'
+import ThemeColorPickerPan from '@renderer/components/ThemeColorPickerPan.vue'
 
 const settingsStore = useSettingsStore()
 const uiStore = useUIStore()
@@ -478,11 +489,17 @@ const initialScaleShow = ref(0.5)
 const fsAdaptationShow = ref(0)
 const usedIcon = ref('')
 const themeColorRaw = ref('')
+const themeColorDraft = ref('')
+const themeColorHistory = ref<string[]>([])
+
+const THEME_COLOR_HISTORY_KEY = 'theme_color_history'
+const THEME_COLOR_HISTORY_LIMIT = 12
 
 const choiceImgRef = useTemplateRef<HTMLInputElement>('choiceImgRef')
 
 onMounted(() => {
-    themeColorRaw.value = '#' + ('000000' + Number((settingsStore.sysConfig.theme_color || 0)).toString(16)).slice(-6)
+    themeColorRaw.value = getThemeColorRawValue()
+    themeColorHistory.value = loadThemeColorHistory()
     // 一次性初始化一次缩放级别
     const unwatch = watch(
         () => settingsStore.sysConfig,
@@ -504,6 +521,13 @@ onMounted(() => {
         })
         Onebot.getUsedIcon()
     }
+
+    watch(
+        () => settingsStore.sysConfig.theme_color,
+        () => {
+            themeColorRaw.value = getThemeColorRawValue()
+        },
+    )
 })
 
 function gaLanguage(event: Event) {
@@ -523,18 +547,150 @@ function gaColor(event: Event) {
 
 function themeColorChange(event: Event) {
     event.preventDefault()
+    const originThemeColorValue = Number(settingsStore.sysConfig.theme_color ?? 0)
+    themeColorDraft.value = getThemeColorRawValue()
+    uiStore.popBoxList.push({
+        title: $t('主题色'),
+        allowQuickClose: true,
+        onClose: () => {
+            restoreThemeColor(originThemeColorValue)
+        },
+        template: markRaw(ThemeColorPickerPan),
+        templateValue: {
+            modelValue: themeColorDraft.value,
+            onChange: (value: string) => {
+                themeColorDraft.value = normalizeHexColor(value)
+                run('theme_color', parseInt(themeColorDraft.value.slice(1), 16))
+            },
+            historyColors: themeColorHistory.value,
+        },
+        button: [
+            {
+                text: $t('取消'),
+                fun: () => {
+                    restoreThemeColor(originThemeColorValue)
+                    uiStore.popBoxList[0].onClose = undefined
+                    uiStore.popBoxList.shift()
+                },
+            },
+            {
+                text: $t('确认'),
+                master: true,
+                fun: () => {
+                    const saveColor = normalizeHexColor(themeColorDraft.value)
+                    themeColorRaw.value = saveColor
+                    themeColorHistory.value = saveThemeColorHistory(saveColor)
+                    uiStore.popBoxList[0].onClose = undefined
+                    runAS('theme_color', parseInt(saveColor.slice(1), 16))
+                    uiStore.popBoxList.shift()
+                },
+            },
+        ],
+    })
+}
 
-    const colorInput = document.getElementById(
-        'theme_color_custom',
-    ) as HTMLInputElement
-    if (colorInput) {
-        colorInput.click()
-        colorInput.onchange = (e) => {
-            const value = (e.target as HTMLInputElement).value
-            const saveValue = parseInt(value.replace('#', ''), 16)
-            runAS('theme_color', saveValue)
-        }
+function getThemeColorRawValue() {
+    const currentValue = Number(settingsStore.sysConfig.theme_color ?? 0)
+    if (currentValue > 10) {
+        return '#' + ('000000' + currentValue.toString(16)).slice(-6).toUpperCase()
     }
+    const cssColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--color-main')
+    return cssColorToHex(cssColor)
+}
+
+function restoreThemeColor(themeColorValue: number) {
+    run('theme_color', themeColorValue)
+    themeColorRaw.value = getThemeColorRawValue()
+}
+
+function loadThemeColorHistory() {
+    const cookieValue = getCookie(THEME_COLOR_HISTORY_KEY)
+    let storageValue = null as string | null
+    try {
+        storageValue = globalThis.localStorage?.getItem(THEME_COLOR_HISTORY_KEY) ?? null
+    } catch {
+        // ignore
+    }
+    const source = cookieValue ?? storageValue
+    if (!source) {
+        return []
+    }
+    try {
+        const parsed = JSON.parse(source)
+        if (!Array.isArray(parsed)) {
+            return []
+        }
+        return parsed
+            .map((item) => normalizeHexColor(String(item)))
+            .filter((item, index, list) => list.indexOf(item) === index)
+            .slice(0, THEME_COLOR_HISTORY_LIMIT)
+    } catch {
+        return []
+    }
+}
+
+function saveThemeColorHistory(color: string) {
+    const normalized = normalizeHexColor(color)
+    const nextHistory = [
+        normalized,
+        ...themeColorHistory.value.filter((item) => item !== normalized),
+    ].slice(0, THEME_COLOR_HISTORY_LIMIT)
+    const serialized = JSON.stringify(nextHistory)
+    setCookie(THEME_COLOR_HISTORY_KEY, serialized, 3650)
+    try {
+        globalThis.localStorage?.setItem(THEME_COLOR_HISTORY_KEY, serialized)
+    } catch {
+        // ignore
+    }
+    return nextHistory
+}
+
+function getCookie(name: string) {
+    if (typeof document === 'undefined') {
+        return null
+    }
+    const prefix = `${name}=`
+    const cookie = document.cookie
+        .split('; ')
+        .find((item) => item.startsWith(prefix))
+    return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : null
+}
+
+function setCookie(name: string, value: string, days: number) {
+    if (typeof document === 'undefined') {
+        return
+    }
+    const expires = new Date()
+    expires.setDate(expires.getDate() + days)
+    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`
+}
+
+function cssColorToHex(color: string) {
+    const value = color.trim()
+    if (value.startsWith('#')) {
+        return normalizeHexColor(value)
+    }
+    const match = value.match(/^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i)
+    if (!match) {
+        return '#FFFFFF'
+    }
+    return '#' + match.slice(1, 4).map((item) => {
+        return Number(item).toString(16).padStart(2, '0')
+    }).join('').toUpperCase()
+}
+
+function normalizeHexColor(color: string | undefined) {
+    const value = (color ?? '').trim()
+    const match = value.match(/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
+    if (!match) {
+        return '#FFFFFF'
+    }
+    const hex = match[1]
+    if (hex.length === 3) {
+        return '#' + hex.split('').map((item) => item + item).join('').toUpperCase()
+    }
+    return '#' + hex.toUpperCase()
 }
 
 function blurTip(event: Event) {
@@ -699,25 +855,29 @@ function changeIcon(name: string) {
 /**
  * 设置背景图片
  */
-function setBackground(event: Event) {
+async function setBackground() {
+    if (backend.isDesktop()) {
+        const image = await backend.call(undefined, 'sys:selectImage', true) as LocalImageInfo | null
+        if (!image) return
+        const imageUrl = await resolveLocalImageUrl(image)
+        settingsStore.sysConfig.chat_background = imageUrl
+        rememberLocalImageUrl(image.path, imageUrl)
+        Option.runAS('chat_background', imageUrl)
+        return
+    }
+    choiceImgRef.value?.click()
+}
+
+async function setBackgroundFromInput(event: Event) {
     const sender = event.target as HTMLInputElement
     const img = sender.files?.[0]
     if (!img) return
-    img.arrayBuffer().then((buffer) => {
-        // 使用更可靠的方式将二进制数据转换为 base64
-        const bytes = new Uint8Array(buffer)
-        let binary = ''
-        const chunkSize = 0x8000 // 32KB chunks to avoid call stack size exceeded
-        for (let i = 0; i < bytes.length; i += chunkSize) {
-            const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length))
-            // 使用 fromCodePoint 为每个字节生成字符并拼接，避免使用 apply 导致的参数长度问题
-            binary += Array.from(chunk, (b) => String.fromCodePoint(b)).join('')
-        }
-        const base64String = btoa(binary)
-        const imgSrc = `data:${img.type};base64,${base64String}`
-        settingsStore.sysConfig.chat_background = imgSrc
-        Option.runAS('chat_background', imgSrc)
-    })
+    const backgroundUrl = await saveBrowserBackgroundImage(img)
+    const imgSrc = URL.createObjectURL(img)
+    rememberLocalImageUrl(backgroundUrl, imgSrc)
+    settingsStore.sysConfig.chat_background = backgroundUrl
+    Option.runAS('chat_background', backgroundUrl)
+    sender.value = ''
 }
 
 /**

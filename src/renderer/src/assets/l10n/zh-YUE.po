@@ -1100,3 +1100,9 @@ msgstr ""
 
 msgid "收藏的表情"
 msgstr ""
+
+msgid "逐条转发"
+msgstr "逐條轉發"
+
+msgid "将按顺序逐条转发 {count} 条消息，是否继续？"
+msgstr "將按次序逐條轉發 {count} 條訊息，係咪繼續？"

@@ -146,7 +146,7 @@ html {
 .chat-pan > div.more > div:first-child {
     padding-bottom: 20px;
 }
-.chat-pan > div.more > div:first-child > div {
+.chat-pan > div.more > div:first-child > div:not(.img-pan) {
     border-radius: 999px;
 }
 .chat-pan > div.more > div:nth-child(2) {
@@ -184,15 +184,30 @@ html {
 .face-pan {
     padding-bottom: 80px;
 }
-.face-pan div.title {
-    margin-bottom: 10px;
-}
 .face-pan div.title > span{
     font-size: 1rem;
+}
+.face-pan div.system-face-bar {
+    height: 315px;
 }
 .base-face, .face-stickers {
     height: 290px;
     padding: 0;
+}
+.custom-face-bar .face {
+    margin: 0 10px;
+}
+.face > span {
+    width: 70px;
+    height: 70px;
+}
+.face > div {
+    width: 50px;
+    height: 50px;
+}
+.face > div > .emoji-face {
+    width: 30px;
+    height: 30px;
 }
 .img-sender {
     height: calc(100% - var(--safe-area-top) - calc(var(--safe-area-bottom) + 15px));
@@ -209,7 +224,6 @@ html {
 }
 .msg-img.alone {
     max-width: calc(100% + 30px);
-    margin: -10px -15px;
 }
 /* 设置面板 */
 .opt-tab {
@@ -328,5 +342,8 @@ html {
 @media (max-width: 500px) {
     .global-music-player {
         bottom: calc(70px + var(--safe-area-bottom)) !important;
+    }
+    .opt-tab .tab-body > div {
+        width: 100%;
     }
 }

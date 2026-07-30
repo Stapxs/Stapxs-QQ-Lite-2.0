@@ -51,7 +51,7 @@ textarea:focus {
 }
 
 .dev-bar {
-    transition: opacity 0.3s;
+    transition: opacity 0.3s, transform 0.4s;
     background: var(--color-bg-yellow);
     display: flex;
     align-items: end;
@@ -64,6 +64,9 @@ textarea:focus {
     padding: 10px 0;
     z-index: 100;
     height: calc(var(--safe-area-top) + 10px);
+}
+.dev-bar.onloading {
+    transform: translateY(-100%);
 }
 .dev-bar.win {
     background: transparent !important;
@@ -148,6 +151,25 @@ textarea:focus {
     color: #fff;
 }
 
+.load-view {
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    height: 100vh;
+    z-index: 99;
+    width: 100vw;
+    left: 0;
+    top: 0;
+}
+.load-view svg {
+    animation: rotate 1.5s linear infinite;
+    color: var(--color-font-r);
+    opacity: 0.5;
+    width: 5vw;
+    height: 100vh;
+}
 #app,
 #base-app {
     overflow: hidden;
@@ -166,6 +188,8 @@ textarea:focus {
 }
 
 .main-bg {
+    transition: transform 0.4s, opacity 0.8s;
+    opacity: 1;
     position: absolute;
     width: 100%;
     height: 100%;
@@ -173,14 +197,25 @@ textarea:focus {
     left: 0;
     z-index: -999;
 }
+.main-bg.onloading {
+    transform: scale(0.9);
+    opacity: 0;
+}
 
 .main-body {
+    transition: transform 0.4s, opacity 0.5s;
     flex-direction: row;
     margin-top: 0;
     display: flex;
     height: 100%;
+    opacity: 1;
+}
+.main-body.onloading {
+    transform: scale(0.9);
+    opacity: 0;
 }
 .main-body > ul {
+    transition: transform 0.4s;
     cursor: pointer;
     list-style-type: none;
     background: var(--color-card-2);
@@ -191,6 +226,9 @@ textarea:focus {
     min-width: 75px;
     padding: 0 0 calc(var(--safe-area-bottom) + 10px) 0;
     margin: 0;
+}
+.main-body > ul.onloading {
+    transform: translateX(-100%);
 }
 .side-bar-space {
     flex: 1;
@@ -921,33 +959,45 @@ textarea:focus {
 
 .ss-range {
     --range-dot-height: 26px;
+    --range-dot-border: 3px;
+    --range-dot-width: 3px;
     --range-height: 26px;
+
+    --range-width: calc(var(--range-dot-width) + calc(var(--range-dot-border) * 2));
+    --range-width-half: calc(var(--range-width) / 2);
+
+    position: relative;
     flex-direction: row !important;
     display: flex !important;
 }
 .ss-range input {
     background-image: linear-gradient(var(--color-main), var(--color-main));
+    background-size: calc(var(--range-precent) - var(--range-width)) 100%;
     background-color: var(--color-card-1);
     background-repeat: no-repeat;
     height: var(--range-height);
-    background-size: 0% 100%;
     border-radius: 7px;
+    cursor: pointer;
     min-width: 100%;
 
     -webkit-appearance: none;
     appearance: none;
 }
-.ss-range input::-webkit-slider-thumb,
-.ss-range input::-moz-range-thumb {
-    -webkit-appearance: none;
+.ss-range div {
+    margin-left: max(calc(var(--range-width-half) + 1px),
+        calc(var(--range-precent) - var(--range-width-half) - 1px));
 
-    height: calc(var(--range-dot-height) - 8px);
-    width: calc(var(--range-dot-height) - 8px);
+    border: var(--range-dot-border) solid var(--color-card);
     box-shadow: 0 0 5px var(--color-shader);
+    border-radius: var(--range-width-half);
+    height: var(--range-dot-height);
+    width: var(--range-dot-width);
     background: var(--color-main);
-    border: 5px solid #fff;
-    border-radius: 100%;
-    cursor: pointer;
+    transform: translateX(-50%);
+    pointer-events: none;
+    position: absolute;
+    z-index: 1;
+    top: 1px;
 }
 .ss-range span {
     line-height: var(--range-height);
@@ -955,6 +1005,13 @@ textarea:focus {
     color: var(--color-font);
     pointer-events: none;
     margin-left: -50%;
+}
+.ss-range input::-webkit-slider-thumb,
+.ss-range input::-moz-range-thumb {
+    opacity: 0;
+}
+.ss-range input::-webkit-slider-runnable-track {
+    opacity: 0;
 }
 
 .app-msg {
@@ -1690,6 +1747,9 @@ textarea:focus {
         flex-direction: row;
         min-width: 100% !important;
         z-index: 20;
+    }
+    .main-body > ul.onloading {
+        transform: translateY(100%);
     }
     .main-body > ul > li {
         margin-top: 0;

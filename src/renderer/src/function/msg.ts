@@ -50,6 +50,7 @@ import {
     UserFriendElem,
     UserGroupElem,
     MsgItemElem,
+    type Session,
 } from './elements/information'
 import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
@@ -66,6 +67,13 @@ import { useConnectionStore } from '@renderer/state/connection'
 import { useStickerStore } from '@renderer/state/sticker'
 import { useUIStore } from '@renderer/state/ui'
 import { useSettingsStore } from '@renderer/state/settings'
+import { useQzoneStore } from '@renderer/state/qzone'
+import {
+    getSessionId,
+    getMissingGroupPreviewSessions,
+    mergeEarlySessionContacts,
+    resolveIncomingSession,
+} from './utils/sessionUtil'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -83,6 +91,12 @@ let listLoadTimes = 0
 const logger = new Logger()
 let firstHeartbeatTime = -1
 let heartbeatTime = -1
+const MILLISECONDS_PER_SECOND = 1000
+const META_EVENT_WATCHDOG = {
+    // Give one missed heartbeat plus a small network/main-thread grace window before forcing a disconnect.
+    timeoutMultiplier: 2,
+    graceSeconds: 5,
+}
 let loginWaveTimer: any = null
 
 export function setLoginWaveTimer(timer: any) {
@@ -95,6 +109,70 @@ export function clearLoginWaveTimer() {
         loginWaveTimer = null
     }
 }
+
+const groupPreviewHydrator = (() => {
+    const intervalMs = 150
+    let queue: Session[] = []
+    let timer: ReturnType<typeof setTimeout> | undefined
+
+    function stop() {
+        if (timer) clearTimeout(timer)
+        timer = undefined
+    }
+
+    function tick() {
+        timer = undefined
+        const contactStore = useContactStore()
+        const session = queue.shift()
+        if (session) {
+            const sessionId = getSessionId(session)
+            if (
+                Number.isFinite(sessionId) &&
+                sessionId > 0 &&
+                !session.time &&
+                !session.raw_msg &&
+                !contactStore.baseOnMsgList.has(sessionId)
+            ) {
+                // userList 与 baseOnMsgList 共享同一个会话对象；历史响应会原地补全预览。
+                contactStore.baseOnMsgList.set(sessionId, session)
+                updateLastestHistory(session)
+            }
+        }
+
+        if (queue.length > 0) {
+            timer = setTimeout(tick, intervalMs)
+        }
+    }
+
+    function start() {
+        if (!timer && queue.length > 0) tick()
+    }
+
+    return {
+        scheduleMissingSessions() {
+            const contactStore = useContactStore()
+            const settingsStore = useSettingsStore()
+            if (settingsStore.sysConfig.session_display_mode !== 'all') return
+
+            const queuedIds = new Set(queue.map((item) => getSessionId(item)))
+            getMissingGroupPreviewSessions(
+                contactStore.userList,
+                contactStore.baseOnMsgList,
+            ).forEach((item) => {
+                const sessionId = getSessionId(item)
+                if (!queuedIds.has(sessionId)) {
+                    queue.push(item)
+                    queuedIds.add(sessionId)
+                }
+            })
+            start()
+        },
+        reset() {
+            stop()
+            queue = []
+        },
+    }
+})()
 
 function resolveContactPinyinName(item: UserFriendElem | UserGroupElem) {
     if ((item as UserFriendElem).group_id) {
@@ -179,13 +257,20 @@ function clearMetaEventWatchdog() {
     connectionStore.metaEventTimeoutTriggered = false
 }
 
-function refreshMetaEventWatchdog(interval: number) {
-    if (interval <= 0) return
+function refreshMetaEventWatchdog(intervalSeconds: number) {
+    if (intervalSeconds <= 0) return
 
     const connectionStore = useConnectionStore()
     if (connectionStore.metaEventWatchTimer) {
         clearTimeout(connectionStore.metaEventWatchTimer)
     }
+
+    const timeoutSeconds = Math.ceil(
+        Math.max(
+            intervalSeconds * META_EVENT_WATCHDOG.timeoutMultiplier,
+            intervalSeconds + META_EVENT_WATCHDOG.graceSeconds,
+        ),
+    )
 
     connectionStore.metaEventTimeoutTriggered = false
     connectionStore.metaEventWatchTimer = setTimeout(() => {
@@ -194,7 +279,30 @@ function refreshMetaEventWatchdog(interval: number) {
         connectionStore.metaEventWatchTimer = undefined
         logger.add(LogType.WS, '心跳包超时，准备断开连接')
         Connector.forceDisconnect('心跳包超时')
-    }, interval * 1000)
+    }, timeoutSeconds * MILLISECONDS_PER_SECOND)
+}
+
+function getObservedHeartbeatIntervalSeconds(msg: { [key: string]: any }) {
+    const currentHeartbeatTimeSeconds = Number(msg.time)
+    if (
+        firstHeartbeatTime > 0 &&
+        Number.isFinite(currentHeartbeatTimeSeconds) &&
+        currentHeartbeatTimeSeconds > firstHeartbeatTime
+    ) {
+        return currentHeartbeatTimeSeconds - firstHeartbeatTime
+    }
+
+    return -1
+}
+
+function getHeartbeatIntervalSeconds(msg: { [key: string]: any }) {
+    // OneBot heartbeat `interval` is reported in milliseconds; `time` is a Unix timestamp in seconds.
+    const reportedIntervalMilliseconds = Number(msg.interval)
+    if (Number.isFinite(reportedIntervalMilliseconds) && reportedIntervalMilliseconds > 0) {
+        return reportedIntervalMilliseconds / MILLISECONDS_PER_SECOND
+    }
+
+    return getObservedHeartbeatIntervalSeconds(msg)
 }
 
 export function dispatch(raw: string | { [k: string]: any }, echo?: string) {
@@ -249,7 +357,7 @@ const noticeFunctions = {
         }
         if (firstHeartbeatTime != -1 && heartbeatTime == -1) {
             // 计算心跳时间
-            heartbeatTime = msg.time - firstHeartbeatTime
+            heartbeatTime = getHeartbeatIntervalSeconds(msg)
         }
         // 记录心跳状态
         if (heartbeatTime != -1) {
@@ -601,12 +709,16 @@ const msgFunctions = {
             // 加载列表消息
             reloadUsers()
             reloadCookies()
+            // 尝试加载 QZore 列表
+            if (authStore.jsonMap.get_qzone_feed) {
+                Connector.send(authStore.jsonMap.get_qzone_feed.name, {}, 'getQzoneFeed')
+            }
         }
     },
 
     /**
      * 补充登录信息
-     * @deprecated 功能在后期更新中未被重构检查，可能存在问题
+     * @deprecated 此功能在 OICQ 后的 bot 中没有再实现，暂时保留
      */
     getMoreLoginInfo: (_: string, msg: { [key: string]: any }) => {
         const authStore = useAuthStore()
@@ -830,9 +942,10 @@ const msgFunctions = {
                     )
                     // 更新消息列表
                     const onmsg = contactStore.baseOnMsgList.get(Number(id))
-                    if (onmsg) {
+                    if (onmsg && list[0]) {
                         Object.assign(onmsg, formatMessageData(list[0], Boolean(onmsg.group_id)))
                         contactStore.baseOnMsgList.set(id, onmsg)
+                        updateBaseOnMsgList()
                     }
                 }
             } catch (e) {
@@ -893,7 +1006,6 @@ const msgFunctions = {
         const newEchoList = ['sendMsgBack', ...echoList.slice(4)]
         msgFunctions['sendMsgBack'](_, msg, newEchoList)
     },
-
     /**
      * 获取收藏表情
      */
@@ -1267,6 +1379,8 @@ const msgFunctions = {
                 }
             })
         }
+        // “显示全部会话”会包含 recent_contact 之外的群；限流补取这些群的最后一条历史。
+        groupPreviewHydrator.scheduleMissingSessions()
     },
 
     /**
@@ -1350,6 +1464,43 @@ const msgFunctions = {
     setMessageRead() {
         // do nothing
     },
+
+    /**
+     * 获取 QQ 空间推送列表
+     * @param _
+     * @param msg
+     */
+    getQzoneFeed: (_: string, msg: { [key: string]: any }) => {
+        const qzoneStore = useQzoneStore()
+        const list = getMsgData('get_qzone_feed', msg, msgPath.get_qzone_feed)
+        if (list) {
+            qzoneStore.state.currentView = 'feed'
+            qzoneStore.qzoneFeedList = list
+        }
+    },
+
+    /**
+     * 获取 QQ 空间“我的”列表
+     * @param _
+     * @param msg
+     */
+    getQzoneMsg: (_: string, msg: { [key: string]: any }) => {
+        const qzoneStore = useQzoneStore()
+        const list = getMsgData('get_qzone_msg', msg, msgPath.get_qzone_msg)
+        if (list) {
+            qzoneStore.state.currentView = 'my'
+            if (qzoneStore.state.myPagePos === 0) {
+                qzoneStore.qzoneFeedList = list
+            } else {
+                qzoneStore.qzoneFeedList = [
+                    ...qzoneStore.qzoneFeedList,
+                    ...list,
+                ]
+            }
+            qzoneStore.state.myHasMore = list.length >= qzoneStore.state.myPageSize
+        }
+        qzoneStore.state.myLoading = false
+    }
 } as {
     [key: string]: (
         name: string,
@@ -1452,8 +1603,16 @@ function saveUser(msg: { [key: string]: any }, type: string) {
             hydrateContactPinyinLater(list)
         }
         sortContactListByPinyin(list)
+        // 实时消息可能比联系人列表更早到达；用真实联系人资料接管临时会话，保留预览状态。
+        const didMergeEarlySessions = mergeEarlySessionContacts(
+            list,
+            contactStore.baseOnMsgList,
+        )
         contactStore.userList = contactStore.userList.concat(list)
-        if (settingsStore.sysConfig.session_display_mode === 'all') {
+        if (
+            settingsStore.sysConfig.session_display_mode === 'all' ||
+            didMergeEarlySessions
+        ) {
             updateBaseOnMsgList()
         }
         // 刷新置顶列表
@@ -1614,7 +1773,7 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
         chatStore.messageList.forEach((item) => {
             sendMsgAppendInfo(item)
         })
-        // 将消息列表的最后一条 raw_message 保存到用户列表中
+        // 将最新消息同步到会话列表；通过会话 Map 更新以触发 shallowRef 列表刷新。
         const lastMsg =
             chatStore.messageList[chatStore.messageList.length - 1]
         if (lastMsg) {
@@ -1624,14 +1783,17 @@ async function saveMsg(msg: any, append = undefined as undefined | string) {
                     item.user_id == chatStore.chatInfo.show.id
                 )
             })
-            if (user) {
-                if (chatStore.chatInfo.show.type == 'group') {
-                    user.raw_msg =
-                        lastMsg.sender.nickname + ': ' + getMsgRawTxt(lastMsg)
-                } else {
-                    user.raw_msg = getMsgRawTxt(lastMsg)
-                }
-                user.time = getViewTime(Number(lastMsg.time))
+            const sessionId = Number(chatStore.chatInfo.show.id)
+            const session = contactStore.baseOnMsgList.get(sessionId) ?? user
+            if (session) {
+                const preview = formatMessageData(
+                    lastMsg,
+                    chatStore.chatInfo.show.type == 'group',
+                )
+                if (user) Object.assign(user, preview)
+                Object.assign(session, preview)
+                contactStore.baseOnMsgList.set(sessionId, session)
+                updateBaseOnMsgList()
             }
         }
 
@@ -2127,9 +2289,12 @@ function newMsg(_: string, data: any) {
                     group_name: '',
                 } as UserFriendElem & UserGroupElem
             } else {
-                session = contactStore.userList.find((item) => {
-                    return item.user_id === id || item.group_id === id
-                })
+                session = resolveIncomingSession(
+                    contactStore.userList,
+                    sessionId,
+                    isGroupMessage,
+                    data.sender?.nickname,
+                )
             }
         }
         if (session) {
@@ -2151,6 +2316,7 @@ function newMsg(_: string, data: any) {
                 if (isImportant) { session.highlight = $t('[特別关心]') }
             }
             contactStore.baseOnMsgList.set(sessionId, session)
+            updateBaseOnMsgList()
         }
 
         // 通知判定 ============================================
@@ -2255,6 +2421,7 @@ export function resetRimtime(resetAll = false) {
     firstHeartbeatTime = -1
     heartbeatTime = -1
     clearMetaEventWatchdog()
+    groupPreviewHydrator.reset()
     if (resetAll) {
         // Reset auth store
         const authStore = useAuthStore()

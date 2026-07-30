@@ -560,14 +560,6 @@
     }
 </style>
 <style scoped>
-    .ss-range input::-webkit-slider-thumb,
-    .ss-range input::-moz-range-thumb {
-        opacity: 0;
-    }
-    .ss-range input::-webkit-slider-runnable-track {
-        opacity: 0;
-    }
-
     .chat-pan {
         background: var(--color-card-1);
     }

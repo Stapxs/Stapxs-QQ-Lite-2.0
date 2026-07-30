@@ -40,9 +40,6 @@ input {
     height: calc(100% - 25px);
     padding-top: 25px;
 }
-.card-info-pan-bg {
-    margin-top: -20px;
-}
 .chat-info {
     margin: calc(50vh - 20px) 0 0 50%;
 }

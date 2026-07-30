@@ -589,6 +589,31 @@ export function regIpcListener() {
         return null
     })
 
+    // 选择图片文件
+    ipcMain.handle('sys:selectImage', async () => {
+        const { dialog } = await import('electron')
+        const { pathToFileURL } = await import('url')
+        const result = await dialog.showOpenDialog({
+            title: '选择图片',
+            properties: ['openFile'],
+            filters: [
+                {
+                    name: 'Images',
+                    extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'],
+                },
+            ],
+        })
+
+        if (!result.canceled && result.filePaths.length > 0) {
+            const filePath = result.filePaths[0]
+            return {
+                path: filePath,
+                url: pathToFileURL(filePath).href,
+            }
+        }
+        return null
+    })
+
     // 获取本地表情列表
     ipcMain.handle('sys:getLocalEmojis', async (_, folderPath: string) => {
         const fs = await import('fs')

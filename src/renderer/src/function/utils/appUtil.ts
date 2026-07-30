@@ -587,12 +587,10 @@ export async function loadMobile() {
         backend.addListener('Keyboard', 'keyboardWillShow', async (info: KeyboardInfo) => {
             const keyboardHeight = info.keyboardHeight
 
-            console.log('键盘高度：', keyboardHeight)
-
             // 调整输入框高度
             const sendMore = document.getElementById('send-more')
             if (sendMore && keyboardHeight > window.innerHeight / 3) {
-                sendMore.style.paddingBottom = '10px'
+                sendMore.style.paddingBottom = '105px'
             }
 
             const safeArea = await backend.call('SafeArea', 'getSafeArea', true)
@@ -1200,13 +1198,13 @@ export function loadJsonMap(name: string) {
                         newMsgPath = (msgPathList[newMsgPathKey] as any).default
                     }
                     // 合并映射表
-                    Object.keys(msgPath).forEach((key) => {
-                        if (newMsgPath && key != 'name' && newMsgPath[key]) {
-                            if (msgPath)
-                                newMsgPath[key] = msgPath[key]
+                    if (newMsgPath) {
+                        msgPath = {
+                            ...newMsgPath,
+                            ...msgPath,
+                            name: msgPath.name,
                         }
-                    })
-                    msgPath = newMsgPath
+                    }
                     logger.system('非常抱歉开发者，已帮阁下将映射表重定向加载为 ：' + msgPath?.name + ' （慌张）')
                 }
             } else {

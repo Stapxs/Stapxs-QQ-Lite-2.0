@@ -16,7 +16,7 @@
             (uiStore.openSideBar ? ' open' : '') +
             (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')"
         :style="{
-            'background-image': `url(${!settingsStore.sysConfig.chat_more_blur ? settingsStore.sysConfig.chat_background : ''})`,
+            'background-image': toBackgroundImageStyle(!settingsStore.sysConfig.chat_more_blur ? settingsStore.sysConfig.chat_background : ''),
             'background-position': settingsStore.sysConfig.chat_background_align ?? 'center',
             'background-size': settingsStore.sysConfig.chat_background_fit ?? 'cover'
         }"
@@ -67,7 +67,7 @@
             <span>{{ $t('加载中') }}</span>
         </div>
         <!-- 消息显示区 -->
-        <div id="msgPan" class="chat"
+        <div id="msgPan" ref="msgPan" class="chat"
             style="scroll-behavior: smooth"
             @scroll="chatScroll($event, details[3].open)">
             <template v-if="!details[3].open">
@@ -141,7 +141,7 @@
                     </template>
                 </TransitionGroup>
             </template>
-            <span class="chat-padding">&nbsp;</span>
+            <span ref="chatPadding" class="chat-padding">&nbsp;</span>
         </div>
         <!-- 滚动到底部悬浮标志 -->
         <div class="new-msg"
@@ -153,7 +153,7 @@
             </div>
         </div>
         <!-- 底部区域 -->
-        <div id="send-more" class="more">
+        <div id="send-more" ref="sendMore" class="more">
             <!-- 功能附加 -->
             <div>
                 <div>
@@ -228,7 +228,11 @@
                 <!-- 多选指示器 -->
                 <div :class=" multipleSelectList.length > 0 ? 'select-tag show' : 'select-tag'">
                     <div>
-                        <font-awesome-icon :icon="['fas', 'share']" @click="showForWard" />
+                        <font-awesome-icon :icon="['fas', 'share-from-square']" @click="showForWard('individual-messages')" />
+                        <span>{{ $t('逐条转发') }}</span>
+                    </div>
+                    <div>
+                        <font-awesome-icon :icon="['fas', 'share']" @click="showForWard('merged-messages')" />
                         <span>{{ $t('合并转发') }}</span>
                     </div>
                     <div>
@@ -373,6 +377,7 @@
                             <label for="main-input" class="sr-only">{{ $t('消息输入框') }}</label>
                             <input
                                 id="main-input"
+                                ref="mainInput"
                                 v-model="msg"
                                 type="text"
                                 autocomplete="off"
@@ -395,6 +400,7 @@
                         <template v-else>
                             <label for="main-input-ex" class="sr-only">{{ $t('消息输入框') }}</label>
                             <textarea id="main-input-ex"
+                                ref="mainInput"
                                 v-model="msg"
                                 type="text"
                                 :disabled="uiStore.openSideBar"
@@ -508,7 +514,7 @@
             </div>
         </Teleport>
         <!-- 群 / 好友信息弹窗 -->
-        <Transition>
+        <Transition name="chat-info-float" :duration="{ enter: 300, leave: 200 }">
             <Info ref="infoRef" :chat="chat" :tags="tags"
                 @close="openChatInfoPan" />
         </Transition>
@@ -568,10 +574,12 @@ import {
     ref,
     watch,
     onMounted,
+    onBeforeUnmount,
     markRaw,
     nextTick,
     reactive,
     inject,
+    toRaw,
     useTemplateRef,
 } from 'vue'
 import { v4 as uuid } from 'uuid'
@@ -611,6 +619,7 @@ import {
     MenuEventData,
 } from '@renderer/function/elements/information'
 import { backend } from '@renderer/runtime/backend'
+import { toBackgroundImageStyle } from '@renderer/function/utils/backgroundUtil'
 import { dbGetBefore, dbGetBeforeByTime, dbSearchMessages } from '@renderer/function/utils/localHistoryUtil'
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from '@renderer/components/EmojiFace.vue'
@@ -642,8 +651,15 @@ const authStore = useAuthStore()
 const chatStore = useChatStore()
 const contactStore = useContactStore()
 const mergePan = useTemplateRef<InstanceType<typeof MergePan>>('mergePan')
+const msgPan = useTemplateRef<HTMLDivElement>('msgPan')
+const chatPadding = useTemplateRef<HTMLSpanElement>('chatPadding')
+const sendMore = useTemplateRef<HTMLDivElement>('sendMore')
+const mainInput = useTemplateRef<HTMLInputElement | HTMLTextAreaElement>('mainInput')
+
+type ForwardAction = 'single-message' | 'individual-messages' | 'merged-messages'
 
 const multipleSelectList = ref<string[]>([])
+const selectedForwardAction = ref<ForwardAction>('single-message')
 const tags = ref({
     sendTag: 'REFUSE' as 'READY' | 'PASS' | 'REFUSE',
     showBottomButton: true,
@@ -812,7 +828,7 @@ watch(() => chat, () => {
     multipleSelectList.value = []
     initMenuDisplay()
     nextTick(() => {
-        resizeMainInput()
+        scheduleResizeMainInput()
     })
     const history = useSessionHistoryStore()
     const sessionId = chat.show.id
@@ -820,13 +836,9 @@ watch(() => chat, () => {
     if (session) history.add(session)
 })
 
-watch(() => msg.value, (newMsg, oldMsgVal) => {
+watch(() => msg.value, (_newMsg, oldMsgVal) => {
     oldMsg.value = oldMsgVal
-    if (!newMsg) {
-        nextTick(() => {
-            resizeMainInput()
-        })
-    }
+    scheduleResizeMainInput()
 })
 
 onMounted(() => {
@@ -854,15 +866,106 @@ onMounted(() => {
         exitWin()
     })
     nextTick(() => {
-        resizeMainInput()
+        setupChatPaddingObserver()
+        scheduleResizeMainInput()
     })
 })
 
+onBeforeUnmount(() => {
+    if (resizeMainInputFrame !== null) {
+        cancelAnimationFrame(resizeMainInputFrame)
+        resizeMainInputFrame = null
+    }
+    if (chatPaddingFrame !== null) {
+        cancelAnimationFrame(chatPaddingFrame)
+        chatPaddingFrame = null
+    }
+    if (sendMoreResizeObserver !== null) {
+        sendMoreResizeObserver.disconnect()
+        sendMoreResizeObserver = null
+    }
+})
+
+let resizeMainInputFrame: number | null = null
+let chatPaddingFrame: number | null = null
+let sendMoreResizeObserver: ResizeObserver | null = null
+let chatPaddingAfterUpdate: Array<() => void> = []
+// scrollHeight includes a small browser-dependent inner gap for this textarea style.
+// Keep the existing compact visual height, but make the adjustment explicit.
+const TEXTAREA_SCROLL_HEIGHT_COMPACT_OFFSET = 4
+
+function scheduleResizeMainInput(target?: HTMLTextAreaElement | HTMLInputElement | null, keepBottom = false) {
+    // The template switches between input and textarea, so measure only after Vue
+    // has applied the branch and coalesce rapid input changes into one frame.
+    nextTick(() => {
+        if (resizeMainInputFrame !== null) {
+            cancelAnimationFrame(resizeMainInputFrame)
+        }
+        resizeMainInputFrame = requestAnimationFrame(() => {
+            resizeMainInputFrame = null
+            resizeMainInput(target ?? mainInput.value)
+            scheduleChatPaddingUpdate(keepBottom ? () => scrollBottom() : undefined)
+        })
+    })
+}
+
+function updateChatPadding() {
+    const morePan = sendMore.value
+    const padding = chatPadding.value
+    const chatPan = msgPan.value
+    if (!morePan || !padding || !chatPan) return
+
+    const contentBlocks = Array.from(morePan.children)
+        .flatMap(child => Array.from(child.children))
+        .filter((child): child is HTMLElement =>
+            child instanceof HTMLElement && child.offsetHeight > 0,
+        )
+    const contentTop = contentBlocks.length > 0? contentBlocks.reduce(
+            (top, child) => Math.min(top, child.getBoundingClientRect().top),
+            Number.POSITIVE_INFINITY,
+        ): morePan.getBoundingClientRect().top
+    const chatBottom = chatPan.getBoundingClientRect().bottom
+    padding.style.height = Math.max(0, chatBottom - contentTop) + 'px'
+}
+
+function scheduleChatPaddingUpdate(afterUpdate?: () => void) {
+    if (afterUpdate) {
+        chatPaddingAfterUpdate.push(afterUpdate)
+    }
+    if (chatPaddingFrame !== null) {
+        return
+    }
+    chatPaddingFrame = requestAnimationFrame(() => {
+        chatPaddingFrame = null
+        updateChatPadding()
+        const callbacks = chatPaddingAfterUpdate
+        chatPaddingAfterUpdate = []
+        callbacks.forEach(callback => callback())
+    })
+}
+
+function setupChatPaddingObserver() {
+    if (sendMoreResizeObserver !== null) return
+    const morePan = sendMore.value
+    if (!morePan || typeof ResizeObserver === 'undefined') {
+        scheduleChatPaddingUpdate()
+        return
+    }
+    sendMoreResizeObserver = new ResizeObserver(() => {
+        scheduleChatPaddingUpdate()
+    })
+    sendMoreResizeObserver.observe(morePan)
+    scheduleChatPaddingUpdate()
+}
+
 function resizeMainInput(target?: HTMLTextAreaElement | HTMLInputElement | null) {
-    let input = target ?? (document.getElementById('main-input') as HTMLTextAreaElement | HTMLInputElement | null)
-    input = input ?? (document.getElementById('main-input-ex') as HTMLTextAreaElement | HTMLInputElement | null)
+    const input = target ?? mainInput.value
     if (!input) return
     if (!Option.get('use_breakline')) {
+        input.style.height = ''
+        return
+    }
+    if (!(input instanceof HTMLTextAreaElement)) {
         input.style.height = ''
         return
     }
@@ -884,10 +987,26 @@ function resizeMainInput(target?: HTMLTextAreaElement | HTMLInputElement | null)
     if (!input.dataset.baseHeight) {
         input.dataset.baseHeight = String(minHeight)
     }
-    input.style.height = '0'
+
+    const oldTransition = input.style.transition
+    input.style.transition = 'none'
+    const oldOverflow = input.style.overflow
+
     const baseHeight = Number.parseFloat(input.dataset.baseHeight) || minHeight
-    const targetHeight = Math.max(input.scrollHeight, baseHeight)
-    input.style.height = targetHeight + 'px'
+    // Fast-path: if content is empty, reset directly to baseHeight without measuring
+    if (input.value === '') {
+        input.style.height = baseHeight + 'px'
+    } else {
+        // Set overflow:hidden so scrollHeight correctly reflects content height
+        input.style.overflow = 'hidden'
+        input.style.height = '0px'
+        const targetHeight = Math.max(input.scrollHeight - TEXTAREA_SCROLL_HEIGHT_COMPACT_OFFSET, baseHeight)
+        input.style.height = targetHeight + 'px'
+        input.style.overflow = oldOverflow
+    }
+
+    input.getBoundingClientRect()
+    input.style.transition = oldTransition
 }
 function jumpSearchMsg() {
     closeSearch()
@@ -1103,6 +1222,7 @@ function mainKey(event: KeyboardEvent) {
     }
 
     if (tags.value.sendTag == 'READY' && msg.value !== '') {
+        event.preventDefault()
         sendMsg()
     } else {
         if(event.key === 'Enter' &&
@@ -1181,6 +1301,7 @@ function mainKeyUp(event: KeyboardEvent) {
         tags.value.checkNewLineFlag = false
         if (msg.value == '\n'){
             msg.value = ''
+            scheduleResizeMainInput()
         }
     }
 
@@ -1525,6 +1646,7 @@ function consoleLogMsg() {
 function cancelForward() {
     forwardList.value = contactStore.userList
     tags.value.showForwardPan = false
+    selectedForwardAction.value = 'single-message'
     closeMsgMenu()
 }
 
@@ -1544,9 +1666,10 @@ function searchForward(event: Event) {
     )
 }
 
-function showForWard() {
+function showForWard(action: ForwardAction = 'single-message') {
+    selectedForwardAction.value = action
     tags.value.showForwardPan = true
-    const showList = Object.assign(contactStore.onMsgList).reverse()
+    const showList = [...contactStore.onMsgList].reverse()
     showList.forEach((item: any) => {
         const index = forwardList.value.indexOf(item)
         if (index > -1) {
@@ -1577,13 +1700,68 @@ function intoMultipleSelect() {
     closeMsgMenu()
 }
 
+function cloneMessagePayload<T>(payload: T): T {
+    const rawPayload = toRaw(payload)
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(rawPayload)
+        } catch {
+            return JSON.parse(JSON.stringify(rawPayload))
+        }
+    }
+    return JSON.parse(JSON.stringify(rawPayload))
+}
+
 function forwardMsg(data: UserFriendElem & UserGroupElem) {
-    const msgData = selectedMsg.value
+    const forwardAction = selectedForwardAction.value
+    const msgData = selectedMsg.value ? cloneMessagePayload(selectedMsg.value) : null
     const id = data.group_id ? data.group_id : data.user_id
-    if (multipleSelectList.value.length > 0 && msgData) {
-        const msgList = chatStore.messageList.filter((item) => {
-            return multipleSelectList.value.indexOf(item.message_id) >= 0
-        })
+    const targetId = String(id)
+    const targetType = data.group_id ? 'group' : 'user'
+    const msgList = chatStore.messageList.filter((item) => {
+        return multipleSelectList.value.includes(item.message_id)
+    })
+    const shouldPreShow = () =>
+        String(chat.show.id) === targetId && chat.show.type === targetType
+
+    if (forwardAction !== 'single-message' && msgList.length === 0) {
+        cancelForward()
+        return
+    }
+
+    if (forwardAction === 'individual-messages') {
+        const popInfo = {
+            title: $t('逐条转发'),
+            html: $t('将按顺序逐条转发 {count} 条消息，是否继续？', {
+                count: msgList.length,
+            }),
+            button: [
+                {
+                    text: $t('取消'),
+                    fun: () => {
+                        uiStore.popBoxList.shift()
+                    },
+                },
+                {
+                    text: $t('确定'),
+                    master: true,
+                    fun: () => {
+                        msgList.forEach((item) => {
+                            sendMsgRaw(
+                                targetId,
+                                targetType,
+                                cloneMessagePayload(item.message),
+                                shouldPreShow(),
+                            )
+                        })
+                        multipleSelectList.value = []
+                        uiStore.popBoxList.shift()
+                    },
+                },
+            ],
+        }
+        uiStore.popBoxList.push(popInfo)
+    } else if (forwardAction === 'merged-messages') {
         const jsonMsg = {
             app: 'com.tencent.multimsg',
             meta: {
@@ -1602,7 +1780,7 @@ function forwardMsg(data: UserFriendElem & UserGroupElem) {
                             }
                         }),
                     ],
-                    summary: $t('查看 {count} 条转发消息', { count: multipleSelectList.value.length }),
+                    summary: $t('查看 {count} 条转发消息', { count: msgList.length }),
                     resid: '',
                 },
             },
@@ -1637,15 +1815,16 @@ function forwardMsg(data: UserFriendElem & UserGroupElem) {
                                 id: item.message_id,
                                 user_id: item.sender.user_id,
                                 nickname: item.sender.nickname,
-                                content: item.message,
+                                content: cloneMessagePayload(item.message),
                             }
                         })
                         sendMsgRaw(
-                            chat.show.id,
-                            chat.show.type,
+                            targetId,
+                            targetType,
                             msgBody,
-                            true,
+                            shouldPreShow(),
                         )
+                        multipleSelectList.value = []
                         uiStore.popBoxList.shift()
                     },
                 },
@@ -1669,10 +1848,10 @@ function forwardMsg(data: UserFriendElem & UserGroupElem) {
                     master: true,
                     fun: () => {
                         sendMsgRaw(
-                            chat.show.id,
-                            chat.show.type,
-                            msgData.message,
-                            true,
+                            targetId,
+                            targetType,
+                            cloneMessagePayload(msgData.message),
+                            shouldPreShow(),
                         )
                         uiStore.popBoxList.shift()
                     },
@@ -2175,9 +2354,7 @@ function sendMsg(echo = 'sendMsgBack') {
     imgCache.value.clear()
     scrollBottom()
     cancelReply()
-    nextTick(() => {
-        resizeMainInput()
-    })
+    scheduleResizeMainInput(undefined, true)
 }
 
 function updateList(newLength: number, oldLength: number) {
@@ -2394,7 +2571,7 @@ function showJin() {
 
 async function handleInput(event: Event) {
     const input = event.target as HTMLInputElement
-    resizeMainInput(input)
+    scheduleResizeMainInput(input)
 
     const diff = getDifferencesWithRanges(msg.value, oldMsg.value)
     let { end, str } = { end: 0, str: '' }
@@ -2461,9 +2638,7 @@ function closeSearch() {
     details.value[3].open = !details.value[3].open
     msg.value = ''
     tags.value.search.list = reactive(list)
-    nextTick(() => {
-        resizeMainInput()
-    })
+    scheduleResizeMainInput()
 }
 
 function sendPoke(userId: number) {

@@ -243,7 +243,6 @@ body {
 .face-pan div.system-face-bar {
     height: calc(300px - 75px);
     overflow-y: scroll;
-    margin-top: 15px;
     width: 100%;
 }
 

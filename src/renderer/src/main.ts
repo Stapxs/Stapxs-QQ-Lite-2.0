@@ -10,7 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { fas } from '@fortawesome/free-solid-svg-icons'
 
-import { faSquare } from '@fortawesome/free-regular-svg-icons'
+import { faSquare, faHeart } from '@fortawesome/free-regular-svg-icons'
 
 import './assets/css/view.css'
 import './assets/css/chat.css'
@@ -49,7 +49,7 @@ app.use(createPinia())
 app.use(VueClipboard)
 
 library.add(fas)
-library.add(faSquare)
+library.add(faSquare, faHeart)
 app.component('FontAwesomeIcon', FontAwesomeIcon)
 
 app.mount('#app')

@@ -24,7 +24,7 @@
         <key>Key</key>
         <string>version</string>
         <key>DefaultValue</key>
-        <string>3.4.1</string>
+        <string>3.5.0</string>
         <key>IsSecure</key>
         <false/>
         <key>KeyboardType</key>

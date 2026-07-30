@@ -640,6 +640,33 @@ pub async fn sys_select_folder() -> Result<Option<String>, String> {
     }
 }
 
+/// 选择图片文件
+#[command]
+pub async fn sys_select_image() -> Result<Option<HashMap<String, String>>, String> {
+    use rfd::AsyncFileDialog;
+
+    let file = AsyncFileDialog::new()
+        .set_title("选择图片")
+        .add_filter("Images", &["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"])
+        .pick_file()
+        .await;
+
+    match file {
+        Some(handle) => {
+            let path = handle.path().to_string_lossy().to_string();
+            let mut image_info = HashMap::new();
+            image_info.insert("path".to_string(), path.clone());
+            image_info.insert("url".to_string(), path.clone());
+            info!("选择的图片路径: {}", path);
+            Ok(Some(image_info))
+        },
+        None => {
+            info!("用户取消了图片选择");
+            Ok(None)
+        }
+    }
+}
+
 /// 获取本地表情列表
 ///
 /// # 参数

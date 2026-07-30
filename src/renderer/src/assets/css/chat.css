@@ -430,6 +430,8 @@ input {
 }
 
 .merge-pan {
+    --merge-pan-width: 400px;
+
     align-items: stretch;
     flex-direction: row;
     position: absolute;
@@ -450,16 +452,17 @@ input {
     opacity: 0.7;
 }
 .merge-pan > div:last-child {
-    transition: width 0.4s;
+    transition: transform 0.3s ease;
+    transform: translateX(100%);
     overflow: hidden;
     min-width: unset;
     padding: 0;
-    width: 0;
-}
-.merge-pan.show > div:last-child {
     flex-direction: column;
     display: flex;
-    width: 450px;
+    width: var(--merge-pan-width);
+}
+.merge-pan.show > div:last-child {
+    transform: translateX(0);
 }
 .merge-pan > div:last-child > div:first-child {
     align-items: center;
@@ -602,10 +605,17 @@ input {
     height: 100%;
     width: 100%;
 }
-.card-info-pan-bg {
-    height: 100%;
-    opacity: 0.7;
-    width: 100%;
+.chat-info-float-enter-active,
+.chat-info-float-leave-active {
+    transition: none;
+}
+.chat-info-float-enter-active .chat-info {
+    animation: chatInfoPanelSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation-fill-mode: both;
+}
+.chat-info-float-leave-active .chat-info {
+    animation: chatInfoPanelSlideDown 0.2s cubic-bezier(0.4, 0, 0.6, 1);
+    animation-fill-mode: both;
 }
 .chat-info {
     overflow: hidden;
@@ -620,6 +630,31 @@ input {
     width: 50%;
     z-index: 1;
 }
+
+@keyframes chatInfoPanelSlideUp {
+    from {
+        transform: translate(-50%, -20%) scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes chatInfoPanelSlideDown {
+    from {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    to {
+        transform: translate(-50%, -5%) scale(0.98);
+        opacity: 0;
+    }
+}
+
 .chat-info header {
     letter-spacing: 0;
 }
@@ -1245,7 +1280,6 @@ input {
     padding: 0 10px;
     display: flex;
     align-items: center;
-    margin: 20px 0 5px 0;
 }
 .face-pan div.title > div {
     margin-right: 10px;
@@ -1939,6 +1973,15 @@ div.tiny-session-body > div:nth-child(3) > div > svg {
 }
 
 @media (max-width: 700px) {
+    /* 多选操作在窄屏下可横向滚动，避免操作项被裁切 */
+    .select-tag.show {
+        justify-content: flex-start;
+        overflow-x: auto;
+    }
+    .select-tag > div {
+        flex: 0 0 auto;
+        min-width: 64px;
+    }
     /* 消息面板 */
     .chat-pan {
         height: calc(100% - 75px - var(--safe-area-bottom));
@@ -1962,13 +2005,25 @@ div.tiny-session-body > div:nth-child(3) > div > svg {
     .chat-info-pan {
         height: calc(100% + 75px);
     }
+    .chat-info-float-enter-active .chat-info {
+        animation: none;
+        transition: transform 0.3s;
+    }
+    .chat-info-float-leave-active .chat-info {
+        animation: none;
+        transition: transform 0.2s;
+    }
+    .chat-info-float-enter-from .chat-info,
+    .chat-info-float-leave-to .chat-info {
+        transform: translateX(100%);
+    }
     /* AT 信息悬浮面板 */
     .mumber-info > div:first-child {
         max-width: 55%;
     }
     /* 合并转发消息面板 */
-    .merge-pan.show > div:last-child {
-        width: 90%;
+    .merge-pan {
+        --merge-pan-width: 90%;
     }
     /* 发送图片面板 */
     .img-sender > div.card {
@@ -2014,8 +2069,8 @@ div.tiny-session-body > div:nth-child(3) > div > svg {
         width: 60px;
     }
     /* 合并转发消息面板 */
-    .merge-pan.show > div:last-child {
-        width: 100%;
+    .merge-pan {
+        --merge-pan-width: 100%;
     }
     .merge-pan.show > div:last-child:hover {
         box-shadow: none;

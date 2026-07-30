@@ -1481,7 +1481,7 @@ msgstr ""
 msgid "透明超级加倍！在界面上使用更泛滥的透明和模糊"
 msgstr ""
 
-msgid "上传背景"
+msgid "选择背景"
 msgstr ""
 
 msgid "连接超时"
@@ -1839,4 +1839,79 @@ msgid "（未知）"
 msgstr ""
 
 msgid "（试听）"
+msgstr ""
+
+msgid "选择背景图片"
+msgstr ""
+
+msgid "会话选项"
+msgstr ""
+
+msgid "会话显示"
+msgstr ""
+
+msgid "关闭时仅显示最近会话，开启后显示全部会话"
+msgstr ""
+
+msgid "不自动加载图片"
+msgstr ""
+
+msgid "图片消息默认显示占位符，点击后再加载"
+msgstr ""
+
+msgid "消息渲染器"
+msgstr ""
+
+msgid "快速检查消息渲染组件"
+msgstr ""
+
+msgid "打开"
+msgstr ""
+
+msgid "选择图片"
+msgstr ""
+
+msgid "选择文件"
+msgstr ""
+
+msgid "消息输入框"
+msgstr ""
+
+msgid "音乐播放进度"
+msgstr ""
+
+msgid "点击加载图片"
+msgstr ""
+
+msgid "空间"
+msgstr ""
+
+msgid "QZone Feeds"
+msgstr ""
+
+msgid "我的"
+msgstr ""
+
+msgid "刷新"
+msgstr ""
+
+msgid "浏览"
+msgstr ""
+
+msgid "分享新鲜事..."
+msgstr ""
+
+msgid "等 {count} 人赞了"
+msgstr ""
+
+msgid "{count} 人赞了"
+msgstr ""
+
+msgid "搜索成员"
+msgstr ""
+
+msgid "逐条转发"
+msgstr ""
+
+msgid "将按顺序逐条转发 {count} 条消息，是否继续？"
 msgstr ""

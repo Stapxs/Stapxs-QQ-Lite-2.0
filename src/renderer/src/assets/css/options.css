@@ -341,6 +341,18 @@
     display: flex;
 }
 
+.opt-main:not(.opt-fast-animation) .opt-page > .ss-card {
+    opacity: 0;
+    transform: translateY(-15px);
+    animation: opt-item-enter 0.2s ease-out forwards;
+}
+
+.opt-main:not(.opt-fast-animation) .opt-page > .ss-card:nth-child(6n + 2) { animation-delay: 0.1s; }
+.opt-main:not(.opt-fast-animation) .opt-page > .ss-card:nth-child(6n + 3) { animation-delay: 0.15s; }
+.opt-main:not(.opt-fast-animation) .opt-page > .ss-card:nth-child(6n + 4) { animation-delay: 0.2s; }
+.opt-main:not(.opt-fast-animation) .opt-page > .ss-card:nth-child(6n + 5) { animation-delay: 0.25s; }
+.opt-main:not(.opt-fast-animation) .opt-page > .ss-card:nth-child(6n) { animation-delay: 0.3s; }
+
 .opt-item:hover {
     background: var(--color-card-2);
 }
@@ -436,14 +448,6 @@
 .opt-item div.ss-range span {
     font-size: 0.85rem;
 }
-.opt-item div.ss-range input::-webkit-slider-thumb,
-.opt-item div.ss-range input::-moz-range-thumb {
-    opacity: 0;
-}
-.opt-item div.ss-range input::-webkit-slider-runnable-track {
-    opacity: 0;
-}
-
 
 .opt-item > div.file-choice {
     display: flex;
@@ -618,6 +622,25 @@
 .account-info > div > span {
     color: var(--color-font-1-r);
     margin-right: 20px;
+}
+
+@keyframes opt-item-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .opt-main:not(.opt-fast-animation) .opt-page > .ss-card {
+        opacity: 1;
+        transform: none;
+        animation: none;
+    }
 }
 
 .account-info > div > div {

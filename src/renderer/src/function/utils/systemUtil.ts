@@ -512,9 +512,10 @@ export function randomChoice<T>(...args: T[]): T{
 }
 
 /**
- * 获取显示的时间，由于获得的时间戳可能是秒级的，也可能是毫秒级的，所以需要判断
- * @param time
- * @param i0n
+ * 将秒级或毫秒级 Unix 时间戳统一为毫秒。
+ * 已是毫秒的输入会原样返回，因此允许在显示边界重复规范化。
+ * @param time 秒级或毫秒级 Unix 时间戳
+ * @returns 毫秒级 Unix 时间戳
  */
 export function getViewTime(time: number) {
     if (time.toString().length === 10) {
@@ -522,6 +523,54 @@ export function getViewTime(time: number) {
     } else {
         return time
     }
+}
+
+/**
+ * 格式化会话列表中的最新消息时间。输入可为秒或毫秒，内部仅规范化一次；
+ * getViewTime 对已经由消息处理流程保存的毫秒值保持不变。
+ * 今天显示时间，本周显示星期和时间，更早的消息显示日期。
+ */
+export function formatSessionTime(time: number | undefined, now = new Date()) {
+    if (time === undefined) return ''
+
+    const viewTime = getViewTime(Number(time))
+    const date = new Date(viewTime)
+    if (!Number.isFinite(viewTime) || Number.isNaN(date.getTime())) return ''
+
+    const startOfToday = new Date(now)
+    startOfToday.setHours(0, 0, 0, 0)
+    const startOfTomorrow = new Date(startOfToday)
+    startOfTomorrow.setDate(startOfTomorrow.getDate() + 1)
+
+    const startOfWeek = new Date(startOfToday)
+    const daysSinceMonday = (startOfWeek.getDay() + 6) % 7
+    startOfWeek.setDate(startOfWeek.getDate() - daysSinceMonday)
+    const startOfNextWeek = new Date(startOfWeek)
+    startOfNextWeek.setDate(startOfNextWeek.getDate() + 7)
+
+    let config: Intl.DateTimeFormatOptions
+    if (date >= startOfToday && date < startOfTomorrow) {
+        config = {
+            hour: 'numeric',
+            minute: 'numeric',
+        }
+    } else if (date >= startOfWeek && date < startOfNextWeek) {
+        config = {
+            weekday: 'short',
+            hour: 'numeric',
+            minute: 'numeric',
+        }
+    } else {
+        config = {
+            month: 'short',
+            day: 'numeric',
+        }
+        if (date.getFullYear() !== now.getFullYear()) {
+            config.year = 'numeric'
+        }
+    }
+
+    return Intl.DateTimeFormat(getTrueLang(), config).format(date)
 }
 
 /**

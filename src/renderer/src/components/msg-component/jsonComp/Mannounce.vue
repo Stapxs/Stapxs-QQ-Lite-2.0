@@ -99,7 +99,13 @@ function viewImg(): void {
     opacity: 1 !important;
 }
 .bottom-bar {
-    margin: -10px -10px 10px -10px !important;
-    background: unset !important;
+    margin: -15px -10px 10px -10px !important;
+    background: var(--color-main) !important;
+    border-radius: 7px !important;
+    color: var(--color-font-r);
+}
+.bottom-bar > svg,
+.bottom-bar > span {
+    opacity: 1 !important;
 }
 </style>

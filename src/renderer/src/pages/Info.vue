@@ -225,7 +225,6 @@
                 </div>
             </div>
         </div>
-        <div class="card-info-pan-bg" />
     </div>
 </template>
 
