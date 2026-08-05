@@ -1,5 +1,6 @@
 import VueClipboard from 'vue-clipboard2'
 import packageInfo from '../../../package.json'
+import { applyBcuiTheme } from './function/utils/bcuiTheme'
 
 import App from './App.vue'
 
@@ -12,11 +13,9 @@ import { fas } from '@fortawesome/free-solid-svg-icons'
 
 import { faSquare, faHeart } from '@fortawesome/free-regular-svg-icons'
 
-import './assets/css/view.css'
-import './assets/css/chat.css'
-import './assets/css/msg.css'
-import './assets/css/options.css'
-import './assets/css/sys_notice.css'
+import 'vue3-bcui/base.css'
+import 'vue3-bcui/style.css'
+import 'vue3-bcui/themes.css'
 
 import { initAMapApiLoader } from '@vuemap/vue-amap'
 import { getPortableFileLang } from './function/utils/systemUtil'
@@ -44,15 +43,6 @@ export const i18n = createI18n({
 
 // 创建 App
 const app = createApp(App)
-app.use(i18n)
-app.use(createPinia())
-app.use(VueClipboard)
-
-library.add(fas)
-library.add(faSquare, faHeart)
-app.component('FontAwesomeIcon', FontAwesomeIcon)
-
-app.mount('#app')
 export default app
 export const uptime = new Date().getTime()
 
@@ -82,3 +72,20 @@ if(import.meta.env.DEV) {
     console.log('[ SSystem Bootloader Loading …… core/sardos-core ]')
 }
 console.log('[ SSystem Bootloader Loading …… core/ssqq-core ]')
+
+async function bootstrap() {
+    applyBcuiTheme('light')
+    await import('./styles/appStyles')
+
+    app.use(i18n)
+    app.use(createPinia())
+    app.use(VueClipboard)
+
+    library.add(fas)
+    library.add(faSquare, faHeart)
+    app.component('FontAwesomeIcon', FontAwesomeIcon)
+
+    app.mount('#app')
+}
+
+void bootstrap()

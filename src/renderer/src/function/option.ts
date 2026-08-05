@@ -28,6 +28,7 @@ import {
     getPortableFileLang,
     getTrueLang,
 } from '@renderer/function/utils/systemUtil'
+import { applyBcuiTheme } from '@renderer/function/utils/bcuiTheme'
 import { updateBaseOnMsgList } from './utils/msgUtil'
 import { backend } from '@renderer/runtime/backend'
 import { refreshFavicon } from './favicon'
@@ -428,48 +429,7 @@ function changeColorMode(mode: string) {
     } else {
         settingsStore.firstLoad = false
     }
-    // 切换颜色
-    const match_list = ['color-.*.css', 'prism-.*.css', 'append-.*.css']
-    const css_list = document.getElementsByTagName('link')
-    for (let i = 0; i < css_list.length; i++) {
-        const name = css_list[i].href
-        match_list.forEach((value) => {
-            if (name.match(value) != null) {
-                // 检查切换的文件是否可以被访问到
-                if (name != undefined) {
-                    let newName = name
-                    if (name.indexOf('dark') > -1) {
-                        newName = name.replace('dark', 'light')
-                    } else {
-                        newName = name.replace('light', 'dark')
-                    }
-                    const xhr = new XMLHttpRequest()
-                    xhr.open('HEAD', newName, false)
-                    xhr.send()
-                    if (xhr.status != 200) {
-                        // 无法访问到对应的颜色模式文件，放弃切换
-                        new PopInfo().add(
-                            PopType.ERR,
-                            '无法切换颜色模式：访问颜色模式文件失败。',
-                        )
-                        return
-                    }
-                }
-                const newLink = document.createElement('link')
-                newLink.setAttribute('rel', 'stylesheet')
-                newLink.setAttribute('type', 'text/css')
-                if (mode === 'dark') {
-                    newLink.setAttribute('href', name.replace('light', 'dark'))
-                } else {
-                    newLink.setAttribute('href', name.replace('dark', 'light'))
-                }
-                const head = document.getElementsByTagName('head').item(0)
-                if (head !== null) {
-                    head.replaceChild(newLink, css_list[i])
-                }
-            }
-        })
-    }
+    applyBcuiTheme(mode === 'dark' ? 'dark' : 'light')
     // 如果主题色模式是自定，则刷新系统主题色
     getRaw('theme_color').then((themeColor) => {
         if(themeColor && themeColor > 10) {
