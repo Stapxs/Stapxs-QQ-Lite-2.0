@@ -130,7 +130,7 @@
                             v-for="(item, index) in chat.info.group_notices ?? []"
                             :key="'bulletins-' + index"
                             :data="item"
-                            :index="index" />
+                            :index="Number(index)" />
                     </div>
                     <div v-if="!chat.info.group_notices || chat.info.group_notices.length === 0"
                         style="text-align: center; padding: 20px; color: var(--color-text-3);">
@@ -233,7 +233,7 @@ import app, { i18n } from '@renderer/main'
 import BulletinBody from '@renderer/components/BulletinBody.vue'
 import FileBody from '@renderer/components/FileBody.vue'
 import OptInfo from './options/OptInfo.vue'
-import BcTab from 'vue3-bcui/packages/bc-tab'
+import { Tab as BcTab } from 'vue3-bcui'
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 

@@ -155,7 +155,7 @@
     import { i18n } from '@renderer/main'
     import { openLink } from '@renderer/function/utils/appUtil'
     import { backend } from '@renderer/runtime/backend'
-    import BcTab from 'vue3-bcui/packages/bc-tab'
+    import { Tab as BcTab } from 'vue3-bcui'
 
     defineOptions({ name: 'DepPan' })
 

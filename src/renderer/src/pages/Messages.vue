@@ -189,8 +189,7 @@
     import { ref, onMounted, markRaw } from 'vue'
     import { i18n } from '@renderer/main'
     import FriendBody from '@renderer/components/FriendBody.vue'
-    import BcMenu from 'vue3-bcui/packages/bc-menu'
-    import Menu from 'vue3-bcui/packages/bc-menu/index'
+    import { Menu as BcMenu, type MenuApi, type MenuStatue } from 'vue3-bcui'
     import Option from '@renderer/function/option'
 
     import { useSettingsStore } from '@renderer/state/settings'
@@ -201,7 +200,6 @@
     import { getRaw as getOpt, run as runOpt } from '@renderer/function/option'
     import { changeGroupNotice, loadHistoryMessage } from '@renderer/function/utils/appUtil'
     import { PopInfo, PopType } from '@renderer/function/base'
-    import { MenuStatue } from 'vue3-bcui/packages/dist/types'
     import { library } from '@fortawesome/fontawesome-svg-core'
     import { login as loginInfo } from '@renderer/function/connect'
     import { canGroupNotice, getShowName } from '@renderer/function/utils/msgUtil'
@@ -237,12 +235,17 @@
         loadHistory: [data: any]
     }>()
 
+    type MessageMenuTarget = (UserFriendElem & UserGroupElem) | { user_id: number }
+    type MessageMenuApi = MenuApi & {
+        select?: MessageMenuTarget
+    }
+
     const trRead = ref(false)
     const listMenu = ref<MenuStatue>({
         show: false,
         point: { x: 0, y: 0 },
     })
-    const menu = Menu.append
+    const menu = BcMenu.append as MessageMenuApi
     const showMenu = ref(false)
     const showGroupAssist = ref(false)
 
@@ -423,45 +426,55 @@
             }, 200)
         }
         listMenu.value.show = false
+        if (!id) {
+            menu.select = undefined
+            return
+        }
+
+        if (id === 'clear_system_notice') {
+            clearSystemNotices()
+            menu.select = undefined
+            return
+        }
+
         const item = menu.select
-        if (id) {
-            switch (id) {
-                case 'read': {
-                    if(!item.new_msg) {
-                        item.new_msg = true
-                        contactStore.newMsgCount++
-                    }
-                    break
+        if (!item || !('new_msg' in item)) {
+            menu.select = undefined
+            return
+        }
+
+        switch (id) {
+            case 'read': {
+                if(!item.new_msg) {
+                    item.new_msg = true
+                    contactStore.newMsgCount++
                 }
-                case 'readed':
-                    readMsg(item)
-                    // 刷新 favicon
-                    refreshFavicon()
-                    break
-                case 'remove': {
-                    const id = item.user_id ? item.user_id : item.group_id
-                    contactStore.baseOnMsgList.delete(id)
-                    refreshFavicon()
-                    break
-                }
-                case 'top':
-                    saveTop(item, true)
-                    break
-                case 'canceltop':
-                    saveTop(item, false)
-                    break
-                case 'notice_open': {
-                    changeGroupNotice(item.group_id, true)
-                    break
-                }
-                case 'notice_close': {
-                    changeGroupNotice(item.group_id, false)
-                    break
-                }
-                case 'clear_system_notice': {
-                    clearSystemNotices()
-                    break
-                }
+                break
+            }
+            case 'readed':
+                readMsg(item)
+                // 刷新 favicon
+                refreshFavicon()
+                break
+            case 'remove': {
+                const id = item.user_id ? item.user_id : item.group_id
+                contactStore.baseOnMsgList.delete(id)
+                refreshFavicon()
+                break
+            }
+            case 'top':
+                saveTop(item, true)
+                break
+            case 'canceltop':
+                saveTop(item, false)
+                break
+            case 'notice_open': {
+                changeGroupNotice(item.group_id, true)
+                break
+            }
+            case 'notice_close': {
+                changeGroupNotice(item.group_id, false)
+                break
             }
         }
         menu.select = undefined

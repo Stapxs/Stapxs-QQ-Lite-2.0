@@ -49,12 +49,12 @@ type SetOptional<O extends Record<string, unknown>, T> = {
 type CreateOptionalKey<K extends string, Content> = Content extends Record<string, unknown>
     ? SetOptional<Content, undefined> extends infer R
         ? Empty extends R
-            ? { [P in K]?: R }
-            : { [P in K]: R }
+            ? Partial<Record<K, R>>
+            : Record<K, R>
         : never
     : Content extends undefined
-        ? { [P in K]?: Content }
-        : { [P in K]: Content }
+        ? Partial<Record<K, Content>>
+        : Record<K, Content>
 
 export type VueCompData<T extends Component> = {
     comp: T

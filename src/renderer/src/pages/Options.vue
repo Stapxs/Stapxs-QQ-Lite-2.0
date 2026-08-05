@@ -85,7 +85,7 @@
     import { useSettingsStore } from '@renderer/state/settings'
     import packageInfo from '../../../../package.json'
 
-    import BcTab from 'vue3-bcui/packages/bc-tab'
+    import { Tab as BcTab } from 'vue3-bcui'
     import OptAccount from './options/OptAccount.vue'
     import OptView from './options/OptView.vue'
     import OptDev from './options/OptDev.vue'
