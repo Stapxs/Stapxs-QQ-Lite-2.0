@@ -79,6 +79,10 @@ import {
     mergeEarlySessionContacts,
     resolveIncomingSession,
 } from './utils/sessionUtil'
+import {
+    getHistoryGeneration,
+    historyRequestTracker,
+} from './utils/historyRequest'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -609,6 +613,55 @@ const noticeFunctions = {
     },
 } as { [key: string]: (name: string, msg: { [key: string]: any }) => void }
 
+function handleChatHistoryResponse(
+    msg: { [key: string]: any },
+    echoList?: string[],
+    appendToTop = false,
+) {
+    const uiStore = useUIStore()
+    const chatStore = useChatStore()
+    const requestGeneration = getHistoryGeneration(echoList)
+    const isActiveRequest = () => requestGeneration === undefined ||
+        historyRequestTracker.isActive(requestGeneration, chatStore.chatInfo.show)
+
+    if (!isActiveRequest()) return
+    if (msg.data === null) {
+        new PopInfo().add(
+            PopType.ERR,
+            app.config.globalProperties.$t('获取历史记录失败'),
+        )
+        uiStore.loadHistoryFail = true
+        if (appendToTop) {
+            uiStore.historyBeforeTime = undefined
+            uiStore.nowGetHistory = false
+        }
+        return
+    }
+
+    if (!appendToTop) {
+        // 无论是否有本地预填充，都以网络数据替换（保证最新消息不遗漏）
+        saveMsg(msg, undefined, requestGeneration)
+        return
+    }
+
+    const pan = document.getElementById('msgPan')
+    if (!pan) return
+    const oldScrollHeight = pan.scrollHeight
+    saveMsg(msg, 'top', requestGeneration).then(() => {
+        if (!isActiveRequest()) return
+        nextTick(() => {
+            setTimeout(() => {
+                if (!isActiveRequest()) return
+                logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
+                pan.style.scrollBehavior = 'unset'
+                // 纠正滚动位置
+                pan.scrollTop = pan.scrollHeight - oldScrollHeight
+                pan.style.scrollBehavior = 'smooth'
+            }, 200);
+        })
+    })
+}
+
 const msgFunctions = {
     /**
      * 修改群成员信息回调
@@ -859,18 +912,8 @@ const msgFunctions = {
     /**
      * 保存聊天记录
      */
-    getChatHistoryFist: (_: string, msg: { [key: string]: any }) => {
-        const uiStore = useUIStore()
-        if (msg.data === null) {
-            new PopInfo().add(
-                PopType.ERR,
-                app.config.globalProperties.$t('获取历史记录失败'),
-            )
-            uiStore.loadHistoryFail = true
-            return
-        }
-        // 无论是否有本地预填充，都以网络数据替换（保证最新消息不遗漏）
-        saveMsg(msg)
+    getChatHistoryFist: (_: string, msg: { [key: string]: any }, echoList?: string[]) => {
+        handleChatHistoryResponse(msg, echoList)
     },
     getChatHistoryGapFill: (
         _: string,
@@ -879,13 +922,23 @@ const msgFunctions = {
     ) => {
         const authStore = useAuthStore()
         const chatStore = useChatStore()
-        // echo 格式：getChatHistoryGapFill_<anchorMsgId>
+        const requestGeneration = getHistoryGeneration(metaArgs)
+        if (requestGeneration !== undefined && !historyRequestTracker.isActive(
+            requestGeneration,
+            chatStore.chatInfo.show,
+        )) return
+
+        // echo 格式：getChatHistoryGapFill_<generation>_<anchorMsgId>
         // anchorMsgId 是 gap 之后第一条消息的 message_id（插入点）
-        const anchorMsgId = metaArgs?.[1]
+        const anchorMsgId = metaArgs?.[2]
         if (!anchorMsgId || msg.data === null) return
         const rawList = getMsgData('message_list', msg, msgPath.message_list)
         getMessageList(rawList)
             .then((list) => {
+                if (requestGeneration !== undefined && !historyRequestTracker.isActive(
+                    requestGeneration,
+                    chatStore.chatInfo.show,
+                )) return
                 if (!list || list.length === 0) return
                 const inserted = insertHistorySegmentAtAnchor(
                     chatStore.messageList,
@@ -899,33 +952,8 @@ const msgFunctions = {
             })
             .catch(() => {})
     },
-    getChatHistory: (_: string, msg: { [key: string]: any }) => {
-        const uiStore = useUIStore()
-        if (msg.data === null) {
-            new PopInfo().add(
-                PopType.ERR,
-                app.config.globalProperties.$t('获取历史记录失败'),
-            )
-            uiStore.loadHistoryFail = true
-            uiStore.historyBeforeTime = undefined
-            uiStore.nowGetHistory = false
-            return
-        }
-        const pan = document.getElementById('msgPan')
-        if (pan) {
-            const oldScrollHeight = pan.scrollHeight
-            saveMsg(msg, 'top').then(() => {
-                nextTick(() => {
-                    setTimeout(() => {
-                        logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
-                        pan.style.scrollBehavior = 'unset'
-                        // 纠正滚动位置
-                        pan.scrollTop = pan.scrollHeight - oldScrollHeight
-                        pan.style.scrollBehavior = 'smooth'
-                    }, 200);
-                })
-            })
-        }
+    getChatHistory: (_: string, msg: { [key: string]: any }, echoList?: string[]) => {
+        handleChatHistoryResponse(msg, echoList, true)
     },
 
     getChatHistoryOnMsg: (
@@ -1709,13 +1737,28 @@ function saveClassInfo(
     settingsStore.classes = list
 }
 
-async function saveMsg(msg: any, append = undefined as undefined | string) {
+async function saveMsg(
+    msg: any,
+    append = undefined as undefined | string,
+    requestGeneration?: number,
+) {
     const uiStore = useUIStore()
     const authStore = useAuthStore()
     const chatStore = useChatStore()
     const contactStore = useContactStore()
     const settingsStore = useSettingsStore()
+    const expectedSession = {
+        id: chatStore.chatInfo.show.id,
+        type: chatStore.chatInfo.show.type,
+    }
     let list = await normalizeMessagesFromPayload(msg)
+    const sessionIsCurrent = requestGeneration !== undefined? historyRequestTracker.isActive(
+            requestGeneration,
+            chatStore.chatInfo.show,
+        ): String(chatStore.chatInfo.show.id) === String(expectedSession.id) &&
+            chatStore.chatInfo.show.type === expectedSession.type
+    if (!sessionIsCurrent) return
+
     if (list != undefined) {
         const historyBeforeTime = Number(uiStore.historyBeforeTime)
         const hasHistoryBeforeTime = Number.isFinite(historyBeforeTime)
