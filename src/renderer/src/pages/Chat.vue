@@ -633,6 +633,7 @@ import { useChatStore } from '@renderer/state/chat'
 import { useContactStore } from '@renderer/state/contact'
 import {
     addUploadTask,
+    beginUploadFinalization,
     completeUploadTask,
     failUploadTask,
 } from '@renderer/components/FileManager.vue'
@@ -2258,8 +2259,14 @@ function sendFile(file: File, fileName: string | null) {
         }
 
         if (filePath) {
+            if (controller.signal.aborted) {
+                throw new DOMException('Upload cancelled', 'AbortError')
+            }
             const action = target.type === 'group'? streamMap.group_name: streamMap.private_name
             if (!action) throw new Error('当前 OneBot 映射缺少文件上传接口')
+            if (!beginUploadFinalization(taskId)) {
+                throw new DOMException('Upload cancelled', 'AbortError')
+            }
             const response = await Connector.callRawApi(action, {
                 group_id: target.type === 'group' ? target.id : undefined,
                 user_id: target.type !== 'group' ? target.id : undefined,
@@ -2286,6 +2293,9 @@ function sendFile(file: File, fileName: string | null) {
             chatStore.chatInfo.show.type !== target.type
         ) {
             throw new Error($t('会话已切换，请重新发送文件'))
+        }
+        if (!beginUploadFinalization(taskId)) {
+            throw new DOMException('Upload cancelled', 'AbortError')
         }
         onProgress(file.size, file.size)
         sendCache.value = []

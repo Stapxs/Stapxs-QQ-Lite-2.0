@@ -14,6 +14,17 @@ export type UploadFileStreamOptions = {
     completeTimeoutMs: number
 }
 
+const activeTransferStatuses = new Set([
+    'pending',
+    'downloading',
+    'uploading',
+    'finalizing',
+])
+
+export function isActiveTransferStatus(status: string): boolean {
+    return activeTransferStatuses.has(status)
+}
+
 export function getOneBotResponseError(response: any): string | undefined {
     if (response?.status === 'ok' && Number(response?.retcode ?? 0) === 0) {
         return undefined
@@ -78,6 +89,7 @@ export async function uploadFileStream(
             stream_id: options.streamId,
             is_complete: true,
         }, options.completeTimeoutMs)
+        throwIfAborted(signal)
         const completeError = getOneBotResponseError(completeResponse)
         if (completeError) throw new Error(completeError)
 

@@ -326,6 +326,7 @@ import { useContactStore } from '@renderer/state/contact'
 import { useAuthStore } from '@renderer/state/auth'
 import { Notify } from './function/notify'
 import { updateBaseOnMsgList } from './function/utils/msgUtil'
+import { isActiveTransferStatus } from './function/utils/fileTransferUtil'
 import { getDeviceType, getForegroundToneFromImageUrl } from './function/utils/systemUtil'
 import { uptime, i18n } from '@renderer/main'
 import { backend } from './runtime/backend'
@@ -396,7 +397,7 @@ const fps = shallowRef({
 const hasTransferTasks = computed(() => getDownloadTasks().length > 0 || getUploadTasks().length > 0)
 const hasActiveTransferTasks = computed(() => {
     return [...getDownloadTasks(), ...getUploadTasks()].some((task) => {
-        return ['pending', 'downloading', 'uploading'].includes(task.status)
+        return isActiveTransferStatus(task.status)
     })
 })
 const showFileManagerEntry = computed(() => {

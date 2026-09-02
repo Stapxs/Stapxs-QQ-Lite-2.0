@@ -62,7 +62,7 @@
     import { downloadFile } from '@renderer/function/utils/appUtil'
     import { backend } from '@renderer/runtime/backend'
 
-    export type TaskStatus = 'pending' | 'downloading' | 'uploading' | 'completed' | 'delegated' | 'failed' | 'cancelled'
+    export type TaskStatus = 'pending' | 'downloading' | 'uploading' | 'finalizing' | 'completed' | 'delegated' | 'failed' | 'cancelled'
 
     export interface TransferTask {
         id: string
@@ -320,6 +320,23 @@
     }
 
     /**
+     * 进入无法撤回的最终发送阶段，并移除取消入口。
+     */
+    export const beginUploadFinalization = (taskId: string) => {
+        const index = uploadTasksState.value.findIndex(t => t.id === taskId)
+        if (index === -1 || uploadTasksState.value[index].status !== 'uploading') {
+            return false
+        }
+        const task = { ...uploadTasksState.value[index] }
+        task.status = 'finalizing'
+        task.updatedAt = Date.now()
+        uploadTasksState.value[index] = task
+        uploadTasksState.value = [...uploadTasksState.value]
+        uploadCancelCallbacks.delete(taskId)
+        return true
+    }
+
+    /**
      * 标记上传任务失败（由外部调用）
      * @param taskId 任务ID
      * @param error 错误信息
@@ -344,7 +361,7 @@
      */
     export const cancelUploadTask = (taskId: string) => {
         const index = uploadTasksState.value.findIndex(t => t.id === taskId)
-        if (index !== -1) {
+        if (index !== -1 && uploadTasksState.value[index].status === 'uploading') {
             uploadCancelCallbacks.get(taskId)?.()
             uploadCancelCallbacks.delete(taskId)
             const task = { ...uploadTasksState.value[index] }
@@ -408,6 +425,7 @@
             pending: '等待中',
             downloading: '下载中',
             uploading: '上传中',
+            finalizing: '正在发送',
             completed: '已完成',
             delegated: '已交给浏览器',
             failed: '失败',

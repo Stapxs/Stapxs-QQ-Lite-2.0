@@ -265,7 +265,7 @@ export function downloadFile(
             url = 'https' + url.substring(url.indexOf('://'))
         }
     }
-    if (backend.isWeb()) {
+    if (backend.isWeb() || backend.type === 'capacitor') {
         const parsedUrl = new URL(url, document.location.href)
         if (
             ['http:', 'https:'].includes(parsedUrl.protocol) &&
@@ -318,9 +318,7 @@ export function downloadFile(
     } else {
         const nativeTaskId = taskId ?? uuid()
         const matchesTask = (data: any) => {
-            // 新的 Electron/Tauri 后端必须严格隔离并发任务。
-            // Capacitor 插件尚未携带 taskId，暂保留旧协议兼容。
-            return backend.type === 'capacitor'? !data?.taskId || data.taskId === nativeTaskId: data?.taskId === nativeTaskId
+            return data?.taskId === nativeTaskId
         }
         let disposed = false
         let started = false
@@ -361,20 +359,29 @@ export function downloadFile(
             backend.addListener(undefined, 'sys:downloadDone', completeCallback),
             backend.addListener(undefined, 'sys:downloadError', errorCallback),
         ]
-        void Promise.all(listenerHandles.map((handle) => handle.ready)).then((ready) => {
+        const startNativeDownload = () => {
             if (disposed || cancelRequested) return
-            if (ready.some((value) => !value)) {
-                cleanup()
-                onerror?.(new Error('下载监听器初始化失败'))
-                return
-            }
             started = true
             void backend.call(undefined, 'sys:download', false, {
                 downloadPath: url,
                 fileName: name,
                 taskId: nativeTaskId,
             })
-        })
+        }
+        if (backend.type === 'tauri') {
+            void Promise.all(listenerHandles.map((handle) => handle.ready)).then((ready) => {
+                if (disposed || cancelRequested) return
+                if (ready.some((value) => !value)) {
+                    cleanup()
+                    onerror?.(new Error('下载监听器初始化失败'))
+                    return
+                }
+                startNativeDownload()
+            })
+        } else {
+            // Electron listeners are synchronous.
+            startNativeDownload()
+        }
         return {
             cancel: () => {
                 cancelRequested = true

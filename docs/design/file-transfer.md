@@ -13,14 +13,18 @@ OneBot-specific upload extensions.
 - Prefer `file_upload_stream` only when the active OneBot path map advertises
   it. Chunks are sent sequentially so memory and WebSocket payload size remain
   bounded.
-- A failed or cancelled stream is reset on the OneBot side. The completed path
-  is passed immediately to the mapped group/private upload action.
+- A failed or cancelled stream is reset on the OneBot side. Cancellation is
+  checked again after stream finalization and before the completed path is
+  passed to the mapped group/private upload action.
 - Inline Base64 is a compatibility fallback for files no larger than 8 MiB.
   Larger files fail with an actionable error when streaming is unavailable;
   they must not be packed into one oversized WebSocket frame.
 - A transfer task becomes completed only after OneBot reports success. A
   rejected OneBot response is a failed task, even if the browser finished
   reading the source file.
+- The task enters a non-cancellable finalizing state immediately before the
+  mapped OneBot send action. Once that action starts, the protocol cannot
+  reliably retract the file, so the UI must not report a late cancellation.
 
 ## Download invariants
 
@@ -28,6 +32,7 @@ OneBot-specific upload extensions.
   cancellation, and failure events must be consumed only by the matching task.
 - Tauri download commands start only after every asynchronous event listener
   reports that it is ready; terminal events must not race listener setup.
+  Electron registers listeners synchronously.
 - Native backends reduce remote file names to a base name before joining them
   to the user-selected download directory.
 - Electron associates redirects through the complete URL chain, because the
@@ -43,8 +48,9 @@ OneBot-specific upload extensions.
 
 ## Compatibility boundaries
 
-- The current Capacitor download plugin uses the legacy unscoped event shape;
-  missing task IDs remain accepted only on that backend.
+- The bundled Capacitor connector has no native download command or terminal
+  events. Capacitor therefore uses the browser-managed path; cross-origin
+  downloads are delegated and cannot report reliable in-app progress.
 - Adding a streaming action to another OneBot implementation requires a path
   map entry with the action names and a safe chunk size. Do not infer support
   from a product name in UI code.
