@@ -120,14 +120,21 @@
 
     const trueLang = ref('zh-CN')
     const constList = ref<ContributorElem[]>([])
-    const sponsorList = ref<{
+
+    type Sponsor = {
         current_plan: string,
         last_pay_time: string,
         user: {
             name: string,
             avatar: string
         }
-    }[]>([])
+    }
+
+    type SponsorResponse = {
+        list?: Sponsor[] | null
+    }
+
+    const sponsorList = ref<Sponsor[]>([])
 
     function dependencies() {
         uiStore.popBoxList = []
@@ -199,8 +206,10 @@
         if(import.meta.env.VITE_APP_SPONSORS_DATA_API) {
             fetch(import.meta.env.VITE_APP_SPONSORS_DATA_API)
                 .then((response) => response.json())
-                .then((data: { [key: string]: string }) => {
-                    sponsorList.value = data.list as any
+                .then((data: SponsorResponse) => {
+                    if(Array.isArray(data.list)) {
+                        sponsorList.value = data.list
+                    }
                 })
         }
     })
