@@ -91,6 +91,7 @@ forward_msg:
         group_id: /group_id
         sender: /sender
         message: /message
+        content: /content # LLOneBot 的转发节点使用 content，解析前统一为 message
         raw_message: null
 # 消息基础信息
 message_info:
