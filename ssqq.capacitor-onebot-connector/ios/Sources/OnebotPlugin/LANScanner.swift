@@ -32,24 +32,20 @@ class LANScanner {
 
         for ptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
             let interface = ptr.pointee
-            let addrFamily = interface.ifa_addr.pointee.sa_family
-            if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
-                let name = String(cString: interface.ifa_name)
-                if name == "en0" { // Wi-Fi 网络
-                    let addr = interface.ifa_addr.pointee
-                    let mask = interface.ifa_netmask.pointee
-                    let ipAddr = withUnsafePointer(to: addr) { ptr in
-                        ptr.withMemoryRebound(to: sockaddr_in.self, capacity: 1) { $0.pointee.sin_addr }
-                    }
-                    let maskAddr = withUnsafePointer(to: mask) { ptr in
-                        ptr.withMemoryRebound(to: sockaddr_in.self, capacity: 1) { $0.pointee.sin_addr }
-                    }
-                    let ip = String(cString: inet_ntoa(ipAddr))
-                    let subnet = String(cString: inet_ntoa(maskAddr))
-                    addresses["ip"] = ip
-                    addresses["subnet"] = subnet
-                }
+            guard let addrPointer = interface.ifa_addr,
+                  let maskPointer = interface.ifa_netmask,
+                  addrPointer.pointee.sa_family == UInt8(AF_INET),
+                  String(cString: interface.ifa_name) == "en0" else {
+                continue
             }
+
+            let addr = addrPointer.withMemoryRebound(to: sockaddr_in.self, capacity: 1) { $0.pointee.sin_addr }
+            let mask = maskPointer.withMemoryRebound(to: sockaddr_in.self, capacity: 1) { $0.pointee.sin_addr }
+            let ip = String(cString: inet_ntoa(addr))
+            let subnet = String(cString: inet_ntoa(mask))
+            addresses["ip"] = ip
+            addresses["subnet"] = subnet
+            break
         }
 
         if let ip = addresses["ip"], let subnet = addresses["subnet"] {
@@ -60,8 +56,11 @@ class LANScanner {
 
     // 根据 IP 和子网掩码计算局域网地址范围，并检查范围大小
     private func calculateLANRange(ipAddress: String, subnetMask: String) -> [String]? {
-        func ipToUInt32(_ ip: String) -> UInt32 {
+        func ipToUInt32(_ ip: String) -> UInt32? {
             let components = ip.split(separator: ".").compactMap { UInt32($0) }
+            guard components.count == 4, components.allSatisfy({ $0 <= 255 }) else {
+                return nil
+            }
             return (components[0] << 24) | (components[1] << 16) | (components[2] << 8) | components[3]
         }
 
@@ -69,20 +68,35 @@ class LANScanner {
             return "\(value >> 24 & 0xFF).\(value >> 16 & 0xFF).\(value >> 8 & 0xFF).\(value & 0xFF)"
         }
 
-        let ip = ipToUInt32(ipAddress)
-        let mask = ipToUInt32(subnetMask)
-        let network = ip & mask
-        let broadcast = network | ~mask
-
-        var range = [String]()
-        for addr in (network + 1)..<broadcast { // 排除网络地址和广播地址
-            range.append(uint32ToIP(addr))
+        guard let ip = ipToUInt32(ipAddress), let mask = ipToUInt32(subnetMask) else {
+            logger.error("IP 地址或子网掩码格式无效。")
+            return nil
         }
 
-        // 检查地址范围大小，若大于阈值则放弃
-        if range.count > 1000 {
+        // IPv4 subnet masks must contain contiguous network bits.
+        let hostBits = ~mask
+        guard hostBits & (hostBits &+ 1) == 0 else {
+            logger.error("子网掩码无效，跳过扫描。")
+            return nil
+        }
+
+        let network = ip & mask
+        let broadcast = network | ~mask
+        guard broadcast > network else {
+            logger.error("局域网地址范围无效，跳过扫描。")
+            return nil
+        }
+
+        let hostCount = UInt64(broadcast) - UInt64(network) - 1
+        guard hostCount <= 1000 else {
             logger.error("局域网范围过大，跳过扫描。")
             return nil
+        }
+
+        var range = [String]()
+        range.reserveCapacity(Int(hostCount))
+        for addr in (network + 1)..<broadcast { // 排除网络地址和广播地址
+            range.append(uint32ToIP(addr))
         }
 
         return range
