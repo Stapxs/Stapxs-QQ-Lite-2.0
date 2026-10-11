@@ -431,6 +431,23 @@ export class Connector {
     }
 
     /**
+     * 调用不在 pathMap 中的 OneBot API 并等待对应 echo。
+     */
+    static async callRawApi(
+        action: string,
+        args: { [key: string]: any },
+        timeout = 50000,
+    ): Promise<any> {
+        const echo = uuid()
+        if(import.meta.env.VITE_APP_SSE_MODE == 'true') {
+            this.sendSeeMod(action, args, echo)
+        } else {
+            this.sendRaw(action, args, echo)
+        }
+        return this.waitReturn(echo, timeout)
+    }
+
+    /**
      * 发送 Websocket 消息
      * @param name 事件名
      * @param value 参数

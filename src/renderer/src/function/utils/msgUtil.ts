@@ -153,6 +153,18 @@ export function parseMsgList(
     if (!Array.isArray(list) || list.length === 0 || !list[0]) {
         return []
     }
+    // 转发节点可能使用 content（数组或 CQ 码），先统一字段再判断消息类型。
+    for (const item of list) {
+        if (item.content !== undefined) {
+            item.message ??= item.content
+            delete item.content
+            // LLOneBot 自带 sender；Lagrange 的节点使用顶层发送者字段。
+            item.sender ??= {
+                user_id: item.user_id,
+                nickname: item.nickname,
+            }
+        }
+    }
     // 判断消息类型
     if (typeof list[0].message == 'string') {
         uiStore.msgType = BotMsgType.CQCode
@@ -218,17 +230,6 @@ export function parseMsgList(
                             delete item.data
                         }
                     })
-                    // 其他处理
-                    if (list[i].content != undefined) {
-                        // 把 content 改成 message
-                        list[i].message = content
-                        delete list[i].content
-                        // 添加一个 sender.user_id 为 user_id
-                        list[i].sender = {
-                            user_id: list[i].user_id,
-                            nickname: list[i].nickname,
-                        }
-                    }
                 })
             })
             // 补充 infoList

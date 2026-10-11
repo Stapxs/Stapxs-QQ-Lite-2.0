@@ -11,6 +11,7 @@ import {
     Menu,
     MenuItemConstructorOptions,
     Notification as ELNotification,
+    type DownloadItem,
     shell,
 } from 'electron'
 import { runCommand } from './util.ts'
@@ -179,19 +180,31 @@ export function regIpcListener() {
         if (win) win.webContents.openDevTools()
     })
     // 下载文件 - 使用集中式处理器避免处理器累积
-    // 存储待处理的下载信息（key 为 downloadPath）
-    const pendingDownloads = new Map<string, string>() // downloadPath -> fileName
+    // 同一 URL 可能被重复下载，因此按 URL 保存等待队列。
+    const pendingDownloads = new Map<string, Array<{
+        taskId?: string,
+        fileName: string,
+    }>>()
+    const activeDownloads = new Map<string, DownloadItem>()
+    const cancelledDownloads = new Set<string>()
 
     // 注册一次 will-download 处理器
     if (win) {
         win.webContents.session.on('will-download', (_, item) => {
-            // 从 URL 中提取 downloadPath 作为标识
+            // 重定向后 getURL() 只包含最终地址，需要从完整 URL 链中找到原始任务。
             const downloadUrl = item.getURL()
-            const fileName = pendingDownloads.get(downloadUrl) || item.getFilename()
-            pendingDownloads.delete(downloadUrl)
+            const pendingUrl = item.getURLChain().find((url) => pendingDownloads.has(url))
+                ?? downloadUrl
+            const pendingQueue = pendingDownloads.get(pendingUrl)
+            const pending = pendingQueue?.shift()
+            if (pendingQueue?.length === 0) pendingDownloads.delete(pendingUrl)
+            const fileName = pending?.fileName || item.getFilename()
+            const taskId = pending?.taskId
+            if (taskId) activeDownloads.set(taskId, item)
+            const wasCancelled = taskId? cancelledDownloads.delete(taskId): false
 
             item.setSaveDialogOptions({
-                defaultPath: path.join(app.getPath('downloads'), fileName)
+                defaultPath: path.join(app.getPath('downloads'), path.basename(fileName) || 'download')
             })
 
             item.on('updated', (_, state) => {
@@ -199,20 +212,42 @@ export function regIpcListener() {
                     if (!item.isPaused()) {
                         if (win) {
                             win.webContents.send('sys:downloadBack', {
-                                lengthComputable: true,
+                                taskId,
+                                lengthComputable: item.getTotalBytes() > 0,
                                 loaded: item.getReceivedBytes(),
                                 total: item.getTotalBytes(),
                             })
-                            win.setProgressBar( item.getReceivedBytes() / item.getTotalBytes())
+                            const totalBytes = item.getTotalBytes()
+                            win.setProgressBar(totalBytes > 0? item.getReceivedBytes() / totalBytes: 2)
                         }
                     }
                 }
             })
-            item.on('done', () => {
+            item.on('done', (_, state) => {
                 win?.setProgressBar(-1)
-                logger.info('下载完成')
-                shell.showItemInFolder(item.getSavePath())
+                if (taskId) {
+                    activeDownloads.delete(taskId)
+                    cancelledDownloads.delete(taskId)
+                }
+                const payload = {
+                    taskId,
+                    loaded: item.getReceivedBytes(),
+                    total: item.getTotalBytes(),
+                }
+                if (state === 'completed') {
+                    logger.info('下载完成')
+                    win?.webContents.send('sys:downloadDone', payload)
+                    shell.showItemInFolder(item.getSavePath())
+                } else if (state === 'cancelled') {
+                    win?.webContents.send('sys:downloadCancel', payload)
+                } else {
+                    win?.webContents.send('sys:downloadError', {
+                        ...payload,
+                        error: `下载中断：${state}`,
+                    })
+                }
             })
+            if (wasCancelled) item.cancel()
         })
     }
 
@@ -224,8 +259,34 @@ export function regIpcListener() {
         const fileName = args.fileName
         if (win) {
             // 记录下载信息，供 will-download 处理器使用
-            pendingDownloads.set(downloadPath, fileName)
-            win.webContents.downloadURL(downloadPath)
+            let downloadKey = downloadPath
+            try {
+                downloadKey = new URL(downloadPath).href
+            } catch {
+                // Electron 会对无效 URL 给出更准确的下载错误。
+            }
+            const pendingQueue = pendingDownloads.get(downloadKey) ?? []
+            pendingQueue.push({ taskId: args.taskId, fileName })
+            pendingDownloads.set(downloadKey, pendingQueue)
+            try {
+                win.webContents.downloadURL(downloadPath)
+            } catch (error) {
+                pendingQueue.pop()
+                if (pendingQueue.length === 0) pendingDownloads.delete(downloadKey)
+                win.webContents.send('sys:downloadError', {
+                    taskId: args.taskId,
+                    error: error instanceof Error? error.message: String(error),
+                })
+            }
+        }
+    })
+    ipcMain.on('sys:cancelDownload', (_, args) => {
+        if (!args?.taskId) return
+        const item = activeDownloads.get(args.taskId)
+        if (item) {
+            item.cancel()
+        } else {
+            cancelledDownloads.add(args.taskId)
         }
     })
     // 发送通知

@@ -10,7 +10,6 @@
   "scripts": {
     "capacitor:copy:before": "capacitor-sync-version",
     "typecheck": "vue-tsc --noEmit -p tsconfig.web.json",
-    "typecheck:ts7-prep": "vue-tsc --noEmit -p tsconfig.web.json --stableTypeOrdering",
     "check": "yarn lint && yarn typecheck",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix",
     "lint:tauri": "cargo check --manifest-path src/tauri/Cargo.toml",
@@ -29,7 +28,8 @@
     "build:tauri": "cross-env DESKTOP=1 tauri build -c src/tauri/tauri.conf.json",
     "build:ios": "vite build && capacitor sync ios && sh ./scripts/build-export-ipa.sh",
     "build:android": "vite build && capacitor sync android && capacitor build android",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:file-transfer": "node --experimental-strip-types --test tests/file-transfer.test.mjs"
   },
   "workspaces": [
     "ssqq.capacitor-onebot-connector"

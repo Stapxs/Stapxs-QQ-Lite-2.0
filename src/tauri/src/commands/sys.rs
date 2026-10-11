@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ffi::CStr, fs::{self, File}, io::{self, Write}, path::PathBuf, process::Command, str::FromStr, sync::Arc, time::Duration};
+use std::{collections::{HashMap, HashSet}, ffi::CStr, fs::{self, File}, io::{self, Write}, path::PathBuf, process::Command, str::FromStr, sync::{Arc, Mutex}, time::Duration};
 use crate::{PROXY_PORT};
 
 use log::{debug, error, info};
@@ -8,7 +8,29 @@ use serde_json::Value;
 use tauri::{command, menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder}, AppHandle, Emitter, Manager, State};
 use tauri_plugin_opener::OpenerExt;
 use futures_util::StreamExt;
+use once_cell::sync::Lazy;
 use user_notify::NotificationManager;
+
+const DOWNLOAD_CANCELLED: &str = "download cancelled";
+static CANCELLED_DOWNLOADS: Lazy<Mutex<HashSet<String>>> =
+    Lazy::new(|| Mutex::new(HashSet::new()));
+
+fn is_download_cancelled(task_id: &Option<String>) -> bool {
+    task_id.as_ref().is_some_and(|id| {
+        CANCELLED_DOWNLOADS.lock().unwrap().contains(id)
+    })
+}
+
+fn clear_download_cancelled(task_id: &Option<String>) {
+    if let Some(id) = task_id {
+        CANCELLED_DOWNLOADS.lock().unwrap().remove(id);
+    }
+}
+
+#[command]
+pub fn sys_cancel_download(taskId: String) {
+    CANCELLED_DOWNLOADS.lock().unwrap().insert(taskId);
+}
 
 #[command]
 pub async fn sys_front_loaded(
@@ -143,7 +165,12 @@ pub async fn sys_get_api(data: String) -> Result<Value, String> {
 }
 
 #[command]
-pub async fn sys_download(app_handle: AppHandle, downloadPath: String, fileName: String) -> Result<(), String> {
+pub async fn sys_download(
+    app_handle: AppHandle,
+    downloadPath: String,
+    fileName: String,
+    taskId: Option<String>,
+) -> Result<(), String> {
     info!("下载文件：{:?}", downloadPath);
 
     let folder = rfd::FileDialog::new()
@@ -153,12 +180,20 @@ pub async fn sys_download(app_handle: AppHandle, downloadPath: String, fileName:
         Some(folder) => folder,
         None => {
             info!("用户取消了选择文件夹");
-            app_handle.emit("sys:downloadCancel", "").unwrap();
+            clear_download_cancelled(&taskId);
+            app_handle.emit("sys:downloadCancel", serde_json::json!({
+                "taskId": taskId.clone(),
+            })).unwrap();
             return Ok(());
         }
     };
 
-    let filepath = folder_path.join(fileName);
+    let safe_file_name = std::path::Path::new(&fileName)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .filter(|name| !name.is_empty())
+        .unwrap_or("download");
+    let filepath = folder_path.join(safe_file_name);
     debug!("下载文件路径: {:?}", filepath);
     // 检查文件是否存在
     if filepath.exists() {
@@ -170,50 +205,92 @@ pub async fn sys_download(app_handle: AppHandle, downloadPath: String, fileName:
             .show();
         if result != rfd::MessageDialogResult::Yes {
             info!("用户取消了下载");
-            app_handle.emit("sys:downloadCancel", "").unwrap();
+            clear_download_cancelled(&taskId);
+            app_handle.emit("sys:downloadCancel", serde_json::json!({
+                "taskId": taskId.clone(),
+            })).unwrap();
             return Ok(());
         }
     }
 
+    let mut output_opened = false;
     let result = async {
+        if is_download_cancelled(&taskId) {
+            return Err(io::Error::new(io::ErrorKind::Interrupted, DOWNLOAD_CANCELLED).into());
+        }
         let client = Client::new();
-        let response = client.get(downloadPath).send().await.map_err(|e| format!("请求失败: {}", e))?;
+        let response = client.get(downloadPath).send().await
+            .map_err(|e| format!("请求失败: {}", e))?
+            .error_for_status()
+            .map_err(|e| format!("请求失败: {}", e))?;
 
-        let total_size = response
-            .content_length()
-            .ok_or_else(|| {
-                io::Error::new(io::ErrorKind::Other, "无法获取文件大小")
-            })?;
+        let total_size = response.content_length().unwrap_or(0);
 
         let mut file = File::create(&filepath)?;
+        output_opened = true;
         let mut stream = response.bytes_stream();
 
         let mut downloaded: u64 = 0;
-        while let Some(item) = stream.next().await {
+        loop {
+            if is_download_cancelled(&taskId) {
+                return Err(io::Error::new(io::ErrorKind::Interrupted, DOWNLOAD_CANCELLED).into());
+            }
+            let item = tokio::select! {
+                item = stream.next() => item,
+                _ = tokio::time::sleep(Duration::from_millis(250)) => continue,
+            };
+            let Some(item) = item else { break };
             let chunk = item?;
             file.write_all(&chunk)?;
             downloaded += chunk.len() as u64;
 
-            let percent = downloaded as f64 / total_size as f64 * 100.0;
-            print!("\r已下载: {:.2}%", percent);
+            if total_size > 0 {
+                let percent = downloaded as f64 / total_size as f64 * 100.0;
+                print!("\r已下载: {:.2}%", percent);
+            }
             let mut payload: HashMap<&str, Value> = HashMap::new();
-            payload.insert("lengthComputable", true.into());
+            payload.insert("lengthComputable", (total_size > 0).into());
             payload.insert("loaded", downloaded.into());
             payload.insert("total", total_size.into());
+            payload.insert(
+                "taskId",
+                taskId.clone().map(Value::String).unwrap_or(Value::Null),
+            );
             app_handle.emit("sys:downloadBack", payload).unwrap();
             io::stdout().flush()?;
+        }
+        if is_download_cancelled(&taskId) {
+            return Err(io::Error::new(io::ErrorKind::Interrupted, DOWNLOAD_CANCELLED).into());
         }
 
         Ok::<_, Box<dyn std::error::Error>>(())
     }.await;
     if let Err(e) = result {
+        if output_opened {
+            let _ = fs::remove_file(&filepath);
+        }
+        if e.to_string() == DOWNLOAD_CANCELLED {
+            clear_download_cancelled(&taskId);
+            app_handle.emit("sys:downloadCancel", serde_json::json!({
+                "taskId": taskId,
+            })).unwrap();
+            return Ok(());
+        }
+        clear_download_cancelled(&taskId);
         error!("下载失败: {}", e);
-        app_handle.emit("sys:downloadError", e.to_string()).unwrap();
+        app_handle.emit("sys:downloadError", serde_json::json!({
+            "taskId": taskId.clone(),
+            "error": e.to_string(),
+        })).unwrap();
         return Err(e.to_string());
     }
 
     println!("\r");
+    clear_download_cancelled(&taskId);
     info!("下载完成: {:?}", filepath);
+    app_handle.emit("sys:downloadDone", serde_json::json!({
+        "taskId": taskId,
+    })).unwrap();
 
     return Ok(())
 }

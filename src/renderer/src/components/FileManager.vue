@@ -60,8 +60,9 @@
 <script lang="ts">
     import { ref } from 'vue'
     import { downloadFile } from '@renderer/function/utils/appUtil'
+    import { backend } from '@renderer/runtime/backend'
 
-    export type TaskStatus = 'pending' | 'downloading' | 'uploading' | 'completed' | 'failed' | 'cancelled'
+    export type TaskStatus = 'pending' | 'downloading' | 'uploading' | 'finalizing' | 'completed' | 'delegated' | 'failed' | 'cancelled'
 
     export interface TransferTask {
         id: string
@@ -85,6 +86,7 @@
 
     // 存储下载任务的取消回调
     const downloadCancelCallbacks = new Map<string, () => void>()
+    const uploadCancelCallbacks = new Map<string, () => void>()
 
     let taskCounter = 0
     const generateTaskId = () => {
@@ -136,13 +138,51 @@
         downloadTasksState.value.push(task)
         openPanel()
 
+        let handle: { cancel: () => void, cleanup: () => void } = {
+            cancel: () => undefined,
+            cleanup: () => undefined,
+        }
+
+        const finish = (
+            status: 'completed' | 'delegated' | 'failed' | 'cancelled',
+            error?: string,
+        ) => {
+            const index = downloadTasksState.value.findIndex(t => t.id === task.id)
+            if (index === -1) return
+            const oldStatus = downloadTasksState.value[index].status
+            if (['completed', 'delegated', 'failed', 'cancelled'].includes(oldStatus)) return
+
+            const currentTask = { ...downloadTasksState.value[index] }
+            currentTask.status = status
+            currentTask.error = error
+            currentTask.updatedAt = Date.now()
+            if (status === 'completed') {
+                currentTask.progress = 100
+                if (currentTask.fileSize > 0) {
+                    currentTask.downloaded = currentTask.fileSize
+                }
+            }
+            downloadTasksState.value[index] = currentTask
+            downloadTasksState.value = [...downloadTasksState.value]
+            downloadCancelCallbacks.delete(task.id)
+            handle.cleanup()
+
+            if (status === 'completed' || status === 'delegated') {
+                info.onComplete?.()
+            } else if (status === 'failed' && error) {
+                info.onError?.(error)
+            }
+        }
+
         // 处理进度回调
         const onprocess = (event: ProgressEvent & { [key: string]: any }) => {
             const index = downloadTasksState.value.findIndex(t => t.id === task.id)
             // 忽略已取消、已完成或不存在的任务
             if (index === -1 ||
                 downloadTasksState.value[index].status === 'cancelled' ||
-                downloadTasksState.value[index].status === 'completed') {
+                downloadTasksState.value[index].status === 'completed' ||
+                downloadTasksState.value[index].status === 'delegated' ||
+                downloadTasksState.value[index].status === 'failed') {
                 return undefined
             }
 
@@ -161,65 +201,44 @@
                 info.onProgress(currentTask.progress)
             }
 
-            // 下载完成
-            if (loaded >= total && total > 0) {
-                currentTask.status = 'completed'
-                currentTask.progress = 100
-                currentTask.updatedAt = Date.now()
-                downloadCancelCallbacks.delete(task.id)
-                // 清理监听器
-                cleanup()
-                if (info.onComplete) {
-                    info.onComplete()
-                }
-            }
-
             // 替换数组中的对象以触发响应式更新
             downloadTasksState.value[index] = currentTask
             downloadTasksState.value = [...downloadTasksState.value]
+
+            // Capacitor 插件尚未发送独立的完成事件。
+            if (backend.type === 'capacitor' && loaded >= total && total > 0) {
+                finish('completed')
+            }
 
             return undefined
         }
 
         // 处理取消回调
         const oncancel = (_: ProgressEvent & { [key: string]: any }) => {
-            const currentTask = downloadTasksState.value.find(t => t.id === task.id)
-            // 忽略已完成或已取消的任务
-            if (currentTask && currentTask.status !== 'completed' && currentTask.status !== 'cancelled') {
-                currentTask.status = 'cancelled'
-                currentTask.updatedAt = Date.now()
-                downloadCancelCallbacks.delete(task.id)
-                // 清理监听器
-                cleanup()
-                if (info.onError) {
-                    info.onError('下载已取消')
-                }
-            }
+            finish('cancelled', '下载已取消')
             return undefined
         }
 
-        // 存储取消回调以便后续调用
-        downloadCancelCallbacks.set(task.id, () => {
-            oncancel({} as ProgressEvent)
-        })
-
-        // 用于存储清理函数
-        let cleanup: () => void = () => {}
-
         // 开始下载
         try {
-            cleanup = downloadFile(info.url, info.fileName, onprocess, oncancel)
-        } catch (e) {
+            handle = downloadFile(
+                info.url,
+                info.fileName,
+                onprocess,
+                oncancel,
+                (mode) => finish(mode),
+                (error) => finish('failed', error.message),
+                task.id,
+            )
             const currentTask = downloadTasksState.value.find(t => t.id === task.id)
-            if (currentTask) {
-                currentTask.status = 'failed'
-                currentTask.error = String(e)
-                currentTask.updatedAt = Date.now()
+            if (currentTask?.status === 'downloading') {
+                downloadCancelCallbacks.set(task.id, () => {
+                    handle.cancel()
+                    oncancel({} as ProgressEvent)
+                })
             }
-            downloadCancelCallbacks.delete(task.id)
-            if (info.onError) {
-                info.onError(String(e))
-            }
+        } catch (e) {
+            finish('failed', String(e))
         }
 
         return task.id
@@ -229,7 +248,9 @@
         fileName: string,
         fileSize: number,
         // 执行上传的函数，接收 onProgress 回调
-        execute: (onProgress: (loaded: number, total: number) => void) => void
+        execute: (
+            onProgress: (loaded: number, total: number) => void,
+        ) => void | (() => void)
     }) => {
         const task: TransferTask = {
             id: generateTaskId(),
@@ -267,7 +288,12 @@
             uploadTasksState.value = [...uploadTasksState.value]
         }
 
-        info.execute(onProgress)
+        try {
+            const cancel = info.execute(onProgress)
+            if (cancel) uploadCancelCallbacks.set(task.id, cancel)
+        } catch (error) {
+            failUploadTask(task.id, String(error))
+        }
 
         return task.id
     }
@@ -289,7 +315,25 @@
             uploadTasksState.value[index] = task
             uploadTasksState.value = [...uploadTasksState.value]
             uploadCallbacks.delete(taskId)
+            uploadCancelCallbacks.delete(taskId)
         }
+    }
+
+    /**
+     * 进入无法撤回的最终发送阶段，并移除取消入口。
+     */
+    export const beginUploadFinalization = (taskId: string) => {
+        const index = uploadTasksState.value.findIndex(t => t.id === taskId)
+        if (index === -1 || uploadTasksState.value[index].status !== 'uploading') {
+            return false
+        }
+        const task = { ...uploadTasksState.value[index] }
+        task.status = 'finalizing'
+        task.updatedAt = Date.now()
+        uploadTasksState.value[index] = task
+        uploadTasksState.value = [...uploadTasksState.value]
+        uploadCancelCallbacks.delete(taskId)
+        return true
     }
 
     /**
@@ -307,6 +351,7 @@
             uploadTasksState.value[index] = task
             uploadTasksState.value = [...uploadTasksState.value]
             uploadCallbacks.delete(taskId)
+            uploadCancelCallbacks.delete(taskId)
         }
     }
 
@@ -316,7 +361,9 @@
      */
     export const cancelUploadTask = (taskId: string) => {
         const index = uploadTasksState.value.findIndex(t => t.id === taskId)
-        if (index !== -1) {
+        if (index !== -1 && uploadTasksState.value[index].status === 'uploading') {
+            uploadCancelCallbacks.get(taskId)?.()
+            uploadCancelCallbacks.delete(taskId)
             const task = { ...uploadTasksState.value[index] }
             task.status = 'cancelled'
             task.updatedAt = Date.now()
@@ -338,6 +385,7 @@
     }
 
     export const removeUploadTask = (taskId: string) => {
+        uploadCancelCallbacks.delete(taskId)
         const index = uploadTasksState.value.findIndex(t => t.id === taskId)
         if (index !== -1) {
             uploadTasksState.value.splice(index, 1)
@@ -377,7 +425,9 @@
             pending: '等待中',
             downloading: '下载中',
             uploading: '上传中',
+            finalizing: '正在发送',
             completed: '已完成',
+            delegated: '已交给浏览器',
             failed: '失败',
             cancelled: '已取消'
         }

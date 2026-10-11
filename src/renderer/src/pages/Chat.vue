@@ -631,7 +631,17 @@ import { useSettingsStore } from '@renderer/state/settings'
 import { useAuthStore } from '@renderer/state/auth'
 import { useChatStore } from '@renderer/state/chat'
 import { useContactStore } from '@renderer/state/contact'
-import { addUploadTask, failUploadTask } from '@renderer/components/FileManager.vue'
+import {
+    addUploadTask,
+    beginUploadFinalization,
+    completeUploadTask,
+    failUploadTask,
+} from '@renderer/components/FileManager.vue'
+import {
+    arrayBufferToBase64,
+    getOneBotResponseError,
+    uploadFileStream,
+} from '@renderer/function/utils/fileTransferUtil'
 
 defineOptions({ name: 'ViewChat' })
 
@@ -2190,6 +2200,7 @@ function selectFile(event: Event) {
                         text: $t('发送'),
                         fun: () => {
                             uiStore.popBoxList.shift()
+                            sendFile(file, fileName)
                         },
                     },
                     {
@@ -2211,40 +2222,108 @@ function selectFile(event: Event) {
 
 function sendFile(file: File, fileName: string | null) {
     const displayName = fileName ?? file.name ?? $t('未知文件')
-    const taskId = addUploadTask({
+    const target = {
+        id: chatStore.chatInfo.show.id,
+        type: chatStore.chatInfo.show.type,
+    }
+    const controller = new AbortController()
+    const streamMap = authStore.jsonMap.file_upload_stream
+    const inlineFileLimit = 8 * 1024 * 1024
+    let taskId = ''
+
+    const upload = async (onProgress: (loaded: number, total: number) => void) => {
+        let filePath: string | undefined
+        if (streamMap?.name && file.size > 0) {
+            try {
+                const mappedChunkSize = Number(streamMap.chunk_size)
+                filePath = await uploadFileStream(file, {
+                    action: streamMap.name,
+                    streamId: uuid(),
+                    fileName: displayName,
+                    chunkSize: Number.isFinite(mappedChunkSize) && mappedChunkSize > 0? Math.min(mappedChunkSize, 8 * 1024 * 1024): 4 * 1024 * 1024,
+                    fileRetentionMs: 30 * 60 * 1000,
+                    chunkTimeoutMs: 60 * 1000,
+                    completeTimeoutMs: 10 * 60 * 1000,
+                }, (action, params, timeout) => {
+                    return Connector.callRawApi(action, params, timeout)
+                }, onProgress, controller.signal)
+            } catch (error) {
+                if (controller.signal.aborted) throw error
+                if (file.size > inlineFileLimit) throw error
+                onProgress(0, file.size)
+                new Logger().error(
+                    error as Error,
+                    '分块上传不可用，回退到兼容模式',
+                )
+            }
+        }
+
+        if (filePath) {
+            if (controller.signal.aborted) {
+                throw new DOMException('Upload cancelled', 'AbortError')
+            }
+            const action = target.type === 'group'? streamMap.group_name: streamMap.private_name
+            if (!action) throw new Error('当前 OneBot 映射缺少文件上传接口')
+            if (!beginUploadFinalization(taskId)) {
+                throw new DOMException('Upload cancelled', 'AbortError')
+            }
+            const response = await Connector.callRawApi(action, {
+                group_id: target.type === 'group' ? target.id : undefined,
+                user_id: target.type !== 'group' ? target.id : undefined,
+                file: filePath,
+                name: displayName,
+                upload_file: true,
+            }, 10 * 60 * 1000)
+            const responseError = getOneBotResponseError(response)
+            if (responseError) throw new Error(responseError)
+            completeUploadTask(taskId)
+            return
+        }
+
+        if (file.size > inlineFileLimit) {
+            throw new Error($t('当前 OneBot 实现不支持分块上传此文件'))
+        }
+
+        const base64data = arrayBufferToBase64(await file.arrayBuffer())
+        if (controller.signal.aborted) {
+            throw new DOMException('Upload cancelled', 'AbortError')
+        }
+        if (
+            String(chatStore.chatInfo.show.id) !== String(target.id) ||
+            chatStore.chatInfo.show.type !== target.type
+        ) {
+            throw new Error($t('会话已切换，请重新发送文件'))
+        }
+        if (!beginUploadFinalization(taskId)) {
+            throw new DOMException('Upload cancelled', 'AbortError')
+        }
+        onProgress(file.size, file.size)
+        sendCache.value = []
+        imgCache.value.clear()
+        msg.value = ''
+        addSpecialMsg({
+            addText: true,
+            msgObj: {
+                type: 'file',
+                file: 'base64://' + base64data,
+                name: displayName,
+            },
+        })
+        sendMsg('sendFileBack_' + taskId)
+    }
+
+    taskId = addUploadTask({
         fileName: displayName,
         fileSize: file.size,
         execute: (onProgress) => {
-            const reader = new FileReader()
-            reader.onprogress = (event) => {
-                if (event.lengthComputable) {
-                    onProgress(event.loaded, event.total)
-                }
-            }
-            reader.readAsDataURL(file)
-            reader.onloadend = () => {
-                let base64data = reader.result as string
-                base64data = base64data.substring(
-                    base64data.indexOf('base64,') + 7,
-                    base64data.length,
-                )
-                sendCache.value = []
-                imgCache.value.clear()
-                msg.value = ''
-                addSpecialMsg({
-                    addText: true,
-                    msgObj: {
-                        type: 'file',
-                        file: 'base64://' + base64data,
-                        name: displayName,
-                    },
-                })
-                sendMsg('sendFileBack_' + taskId)
-            }
-            reader.onerror = () => {
-                failUploadTask(taskId, '文件读取失败')
-            }
-        }
+            void upload(onProgress).catch((error) => {
+                if (controller.signal.aborted) return
+                const message = error instanceof Error? error.message: String(error)
+                failUploadTask(taskId, message)
+                new PopInfo().add(PopType.ERR, $t('文件上传失败') + '：' + message)
+            })
+            return () => controller.abort()
+        },
     })
 }
 
