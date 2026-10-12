@@ -10,6 +10,16 @@ module.exports = {
         '@electron-toolkit/eslint-config-ts/eslint-recommended',
         '@vue/eslint-config-typescript/recommended',
     ],
+    parserOptions: {
+        // Force ESLint to use the workspace parser so TS6 support
+        // is not capped by nested parser versions from shared configs.
+        parser: {
+            ts: require.resolve('@typescript-eslint/parser'),
+            tsx: require.resolve('@typescript-eslint/parser'),
+            cts: require.resolve('@typescript-eslint/parser'),
+            mts: require.resolve('@typescript-eslint/parser'),
+        },
+    },
     rules: {
         // === 基础规则 ===
         // 忽略使用 any 类型的错误

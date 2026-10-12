@@ -395,7 +395,7 @@
 
 <script setup lang="ts">
     import { computed } from 'vue'
-    import BcTab from 'vue3-bcui/packages/bc-tab'
+    import { Tab as BcTab } from 'vue3-bcui'
 
     const downloadTasks = computed(() => downloadTasksState.value)
     const uploadTasks = computed(() => uploadTasksState.value)

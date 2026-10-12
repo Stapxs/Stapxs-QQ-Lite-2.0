@@ -80,6 +80,12 @@ import {
     mergeEarlySessionContacts,
     resolveIncomingSession,
 } from './utils/sessionUtil'
+import {
+    getHistoryGeneration,
+    historyRequestTracker,
+    isSameHistorySession,
+    type HistorySession,
+} from './utils/historyRequest'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -610,6 +616,66 @@ const noticeFunctions = {
     },
 } as { [key: string]: (name: string, msg: { [key: string]: any }) => void }
 
+function reportChatHistoryFailure(requestGeneration: number | undefined, appendToTop: boolean, error?: Error) {
+    const uiStore = useUIStore()
+    const chatStore = useChatStore()
+    if (!historyRequestTracker.isActive(requestGeneration, chatStore.chatInfo.show)) return
+
+    if (error) logger.error(error, '加载历史消息失败')
+    new PopInfo().add(PopType.ERR, app.config.globalProperties.$t('获取历史记录失败'))
+    uiStore.loadHistoryFail = true
+    if (appendToTop) {
+        uiStore.historyBeforeTime = undefined
+        uiStore.nowGetHistory = false
+    }
+}
+
+function persistMessageHistory(selfId: string | number, list: any[]) {
+    saveMessagesWithSideEffects(selfId, list).catch(error => {
+        logger.error(error, '保存本地历史消息失败')
+    })
+}
+
+function handleChatHistoryResponse(
+    msg: { [key: string]: any },
+    echoList?: string[],
+    appendToTop = false,
+) {
+    const chatStore = useChatStore()
+    const requestGeneration = getHistoryGeneration(echoList)
+    const isActiveRequest = () =>
+        historyRequestTracker.isActive(requestGeneration, chatStore.chatInfo.show)
+    const onError = (error: Error) => reportChatHistoryFailure(requestGeneration, appendToTop, error)
+
+    if (!isActiveRequest()) return
+    if (msg.data === null) {
+        reportChatHistoryFailure(requestGeneration, appendToTop)
+        return
+    }
+
+    if (!appendToTop) {
+        // 无论是否有本地预填充，都以网络数据替换（保证最新消息不遗漏）
+        saveMsg(msg, undefined, requestGeneration).catch(onError)
+        return
+    }
+
+    const pan = document.getElementById('msgPan')
+    const oldScrollHeight = pan?.scrollHeight ?? 0
+    saveMsg(msg, 'top', requestGeneration).then(() => {
+        if (!pan || !isActiveRequest()) return
+        nextTick(() => {
+            setTimeout(() => {
+                if (!isActiveRequest() || document.getElementById('msgPan') !== pan) return
+                logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
+                pan.style.scrollBehavior = 'unset'
+                // 纠正滚动位置
+                pan.scrollTop = pan.scrollHeight - oldScrollHeight
+                pan.style.scrollBehavior = 'smooth'
+            }, 200);
+        })
+    }).catch(onError)
+}
+
 const msgFunctions = {
     /**
      * 修改群成员信息回调
@@ -860,18 +926,8 @@ const msgFunctions = {
     /**
      * 保存聊天记录
      */
-    getChatHistoryFist: (_: string, msg: { [key: string]: any }) => {
-        const uiStore = useUIStore()
-        if (msg.data === null) {
-            new PopInfo().add(
-                PopType.ERR,
-                app.config.globalProperties.$t('获取历史记录失败'),
-            )
-            uiStore.loadHistoryFail = true
-            return
-        }
-        // 无论是否有本地预填充，都以网络数据替换（保证最新消息不遗漏）
-        saveMsg(msg)
+    getChatHistoryFist: (_: string, msg: { [key: string]: any }, echoList?: string[]) => {
+        handleChatHistoryResponse(msg, echoList)
     },
     getChatHistoryGapFill: (
         _: string,
@@ -880,13 +936,23 @@ const msgFunctions = {
     ) => {
         const authStore = useAuthStore()
         const chatStore = useChatStore()
-        // echo 格式：getChatHistoryGapFill_<anchorMsgId>
+        const requestGeneration = getHistoryGeneration(metaArgs)
+        if (!historyRequestTracker.isActive(
+            requestGeneration,
+            chatStore.chatInfo.show,
+        )) return
+
+        // echo 格式：getChatHistoryGapFill_<generation>_<anchorMsgId>
         // anchorMsgId 是 gap 之后第一条消息的 message_id（插入点）
-        const anchorMsgId = metaArgs?.[1]
+        const anchorMsgId = metaArgs?.[2]
         if (!anchorMsgId || msg.data === null) return
         const rawList = getMsgData('message_list', msg, msgPath.message_list)
         getMessageList(rawList)
             .then((list) => {
+                if (!historyRequestTracker.isActive(
+                    requestGeneration,
+                    chatStore.chatInfo.show,
+                )) return
                 if (!list || list.length === 0) return
                 const inserted = insertHistorySegmentAtAnchor(
                     chatStore.messageList,
@@ -896,37 +962,12 @@ const msgFunctions = {
                 if (inserted.length === chatStore.messageList.length) return
                 replaceMessageListInPlace(inserted)
                 // 同步存入本地 DB，以便下次直接从本地加载
-                saveMessagesWithSideEffects(authStore.loginInfo.uin, list)
+                persistMessageHistory(authStore.loginInfo.uin, list)
             })
             .catch(() => {})
     },
-    getChatHistory: (_: string, msg: { [key: string]: any }) => {
-        const uiStore = useUIStore()
-        if (msg.data === null) {
-            new PopInfo().add(
-                PopType.ERR,
-                app.config.globalProperties.$t('获取历史记录失败'),
-            )
-            uiStore.loadHistoryFail = true
-            uiStore.historyBeforeTime = undefined
-            uiStore.nowGetHistory = false
-            return
-        }
-        const pan = document.getElementById('msgPan')
-        if (pan) {
-            const oldScrollHeight = pan.scrollHeight
-            saveMsg(msg, 'top').then(() => {
-                nextTick(() => {
-                    setTimeout(() => {
-                        logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
-                        pan.style.scrollBehavior = 'unset'
-                        // 纠正滚动位置
-                        pan.scrollTop = pan.scrollHeight - oldScrollHeight
-                        pan.style.scrollBehavior = 'smooth'
-                    }, 200);
-                })
-            })
-        }
+    getChatHistory: (_: string, msg: { [key: string]: any }, echoList?: string[]) => {
+        handleChatHistoryResponse(msg, echoList, true)
     },
 
     getChatHistoryOnMsg: (
@@ -1778,6 +1819,61 @@ function updateSavedHistoryPreview() {
     const session = contactStore.baseOnMsgList.get(sessionId) ?? user
     if (!session) return
     const preview = formatMessageData(last, chatStore.chatInfo.show.type === 'group')
+    if (user) Object.assign(user, preview)
+    Object.assign(session, preview)
+    contactStore.baseOnMsgList.set(sessionId, session)
+    updateBaseOnMsgList()
+function isCurrentMessageSession(session: HistorySession, requestGeneration?: number): boolean {
+    const current = useChatStore().chatInfo.show
+    return requestGeneration === undefined? isSameHistorySession(session, current): historyRequestTracker.isActive(requestGeneration, current)
+}
+
+function isMessageListForCurrentSession(list: any[]): boolean {
+    const infoList = getMsgData('message_info', list[0], msgPath.message_info)
+    const info = infoList?.[0]
+    const id = info?.group_id ?? info?.private_id
+    return id === undefined || id == useChatStore().chatInfo.show.id
+}
+
+function applyHistoryMessageList(list: any[], append?: string): boolean {
+    const authStore = useAuthStore()
+    const chatStore = useChatStore()
+    const uiStore = useUIStore()
+    const settingsStore = useSettingsStore()
+
+    if (append === 'top' && authStore.jsonMap.message_list?.pagerType === 'full') {
+        append = undefined
+    }
+    if (append !== undefined && list.length < 1) {
+        uiStore.canLoadHistory = false
+        uiStore.historyBeforeTime = undefined
+        uiStore.nowGetHistory = false
+        return false
+    }
+
+    const shouldMerge = append !== undefined || (
+        settingsStore.sysConfig.enable_local_history &&
+        settingsStore.sysConfig.mixed_load_messages !== false
+    )
+    replaceMessageListInPlace(shouldMerge? mergeMessagesByIdAndTime(chatStore.messageList, list): list)
+    return true
+}
+
+function updateHistorySessionPreview() {
+    const chatStore = useChatStore()
+    const contactStore = useContactStore()
+    const lastMsg = chatStore.messageList[chatStore.messageList.length - 1]
+    if (!lastMsg) return
+
+    const user = contactStore.userList.find(item =>
+        item.group_id == chatStore.chatInfo.show.id ||
+        item.user_id == chatStore.chatInfo.show.id,
+    )
+    const sessionId = Number(chatStore.chatInfo.show.id)
+    const session = contactStore.baseOnMsgList.get(sessionId) ?? user
+    if (!session) return
+
+    const preview = formatMessageData(lastMsg, chatStore.chatInfo.show.type == 'group')
     if (user) Object.assign(user, preview)
     Object.assign(session, preview)
     contactStore.baseOnMsgList.set(sessionId, session)

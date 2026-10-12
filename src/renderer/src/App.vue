@@ -707,8 +707,10 @@ function changeChat(data: BaseChatInfoElem) {
         },
     }
     chatStore.mergeMessageList = undefined // 清空合并转发缓存
+    uiStore.nowGetHistory = false // 切换会话后，旧会话的分页请求不能阻止新会话加载
     uiStore.canLoadHistory = true // 重置终止加载标志
     uiStore.loadHistoryFail = false // 重置加载失败标志
+    uiStore.historyBeforeTime = undefined
     if (data.type == 'group') {
         // 获取自己在群内的资料
         Connector.send(

@@ -587,6 +587,7 @@ import {
 	scrollToMsg,
     downloadFile,
     loadHistory as loadHistoryFirst,
+    loadMoreHistoryMessages,
     shouldAutoFocus,
 	vMenu,
 	vMove,
@@ -625,6 +626,11 @@ import {
 import { backend } from '@renderer/runtime/backend'
 import { toBackgroundImageStyle } from '@renderer/function/utils/backgroundUtil'
 import { dbGetBefore, dbGetBeforeByTime, dbSearchMessages } from '@renderer/function/utils/localHistoryUtil'
+import {
+    createHistoryEcho,
+    historyRequestTracker,
+    type HistoryRequest,
+} from '@renderer/function/utils/historyRequest'
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from '@renderer/components/EmojiFace.vue'
 import { Img } from '@renderer/function/model/img'
@@ -1220,7 +1226,7 @@ function detectSeqGaps(msgs: any[]): string[] {
     return gaps
 }
 
-function fillSeqGaps(anchorMsgIds: string[]) {
+function fillSeqGaps(anchorMsgIds: string[], historyRequest: HistoryRequest) {
     const type = chatStore.chatInfo.show.type
     const id = chatStore.chatInfo.show.id
     let name: string
@@ -1238,7 +1244,11 @@ function fillSeqGaps(anchorMsgIds: string[]) {
                 message_id: anchorMsgId,
                 count: 20,
             },
-            'getChatHistoryGapFill_' + anchorMsgId,
+            createHistoryEcho(
+                'getChatHistoryGapFill',
+                historyRequest,
+                anchorMsgId,
+            ),
         )
     }
 }
