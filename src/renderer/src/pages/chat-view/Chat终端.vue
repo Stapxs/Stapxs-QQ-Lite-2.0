@@ -165,7 +165,6 @@
     import packageInfo from '../../../../../package.json'
 
     import { nextTick, ref, watch, onMounted, onUnmounted, markRaw } from 'vue'
-    import { Connector } from '@renderer/function/connect'
     import { useSettingsStore } from '@renderer/state/settings'
     import { getTrueLang } from '@renderer/function/utils/systemUtil'
     import {
@@ -182,6 +181,7 @@
         PopType,
     } from '@renderer/function/base'
     import { sendMsgRaw, getMsgRawTxt, getShowName } from '@renderer/function/utils/msgUtil'
+    import { loadMoreHistoryMessages } from '@renderer/function/utils/appUtil'
     import { backend } from '@renderer/runtime/backend'
     import { useUIStore } from '@renderer/state/ui'
     import { useAuthStore } from '@renderer/state/auth'
@@ -683,7 +683,7 @@
                         // 加载历史记录
                         case 'history': {
                             // 移除顶部的首次加载提示
-                            if (chatStore.messageList[0].commandOut) {
+                            if (chatStore.messageList[0]?.commandOut) {
                                 chatStore.messageList.shift()
                                 chatStore.messageList.shift()
                                 chatStore.messageList.shift()
@@ -692,37 +692,8 @@
                             // 加载历史消息
                             // 获取列表第一条消息 ID
                             const firstMsgId =
-                                chatStore.messageList[0].message_id ?? 0
-                            // 发起获取历史消息请求
-                            const type = chatStore.chatInfo.show.type
-                            const id = chatStore.chatInfo.show.id
-                            let name
-                            const fullPage =
-                                authStore.jsonMap.message_list
-                                    ?.pagerType == 'full'
-                            if (
-                                authStore.jsonMap.message_list &&
-                                type != 'group'
-                            ) {
-                                name =
-                                    authStore.jsonMap.message_list
-                                        .private_name
-                            } else {
-                                name = authStore.jsonMap.message_list.name
-                            }
-                            Connector.send(
-                                name ?? 'get_chat_history',
-                                {
-                                    group_id:
-                                        type == 'group' ? id : undefined,
-                                    user_id:
-                                        type != 'group' ? id : undefined,
-                                    message_id: firstMsgId,
-                                    count: fullPage? chatStore.messageList.length +
-                                          20: 20,
-                                },
-                                'getChatHistory',
-                            )
+                                chatStore.messageList[0]?.message_id ?? 0
+                            loadMoreHistoryMessages(firstMsgId)
                             break
                         }
                         default: {

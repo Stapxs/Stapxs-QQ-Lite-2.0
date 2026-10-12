@@ -587,6 +587,7 @@ import {
 	scrollToMsg,
     downloadFile,
     loadHistory as loadHistoryFirst,
+    loadMoreHistoryMessages,
     shouldAutoFocus,
 	vMenu,
 	vMove,
@@ -621,6 +622,11 @@ import {
 import { backend } from '@renderer/runtime/backend'
 import { toBackgroundImageStyle } from '@renderer/function/utils/backgroundUtil'
 import { dbGetBefore, dbGetBeforeByTime, dbSearchMessages } from '@renderer/function/utils/localHistoryUtil'
+import {
+    createHistoryEcho,
+    historyRequestTracker,
+    type HistoryRequest,
+} from '@renderer/function/utils/historyRequest'
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from '@renderer/components/EmojiFace.vue'
 import { Img } from '@renderer/function/model/img'
@@ -1052,6 +1058,12 @@ async function loadMoreHistory() {
         !uiStore.nowGetHistory &&
         uiStore.canLoadHistory !== false
     ) {
+        const historyRequest = historyRequestTracker.current()
+        if (!historyRequest || !historyRequestTracker.isActive(
+            historyRequest.generation,
+            chatStore.chatInfo.show,
+        )) return
+
         const firstMsgId = list[0].message_id
         const firstMsgTime = Number(list[0]?.time)
         const useMixedHistory =
@@ -1083,6 +1095,11 @@ async function loadMoreHistory() {
                 )
             }
             if (localMsgs.length > 0) {
+                if (!historyRequestTracker.isActive(
+                    historyRequest.generation,
+                    chatStore.chatInfo.show,
+                )) return
+
                 const existingIds = new Set(chatStore.messageList.map((m) => String(m.message_id ?? '')))
                 const addList = localMsgs.filter((m) => {
                     const msgId = String(m?.message_id ?? '')
@@ -1094,31 +1111,17 @@ async function loadMoreHistory() {
                 const boundary = list[addList.length] ?? list[addList.length - 1]
                 const seqGapAnchors = detectSeqGaps([...addList, boundary])
                 if (seqGapAnchors.length > 0) {
-                    fillSeqGaps(seqGapAnchors)
+                    fillSeqGaps(seqGapAnchors, historyRequest)
                 }
             }
         }
 
-        const fullPage =
-            authStore.jsonMap.message_list?.pagerType == 'full'
-        const type = chatStore.chatInfo.show.type
-        const id = chatStore.chatInfo.show.id
-        let name
-        if (authStore.jsonMap.message_list && type != 'group') {
-            name = authStore.jsonMap.message_list.private_name
-        } else {
-            name = authStore.jsonMap.message_list.name
-        }
-        Connector.send(
-            name ?? 'get_chat_history',
-            {
-                group_id: type == 'group' ? id : undefined,
-                user_id: type != 'group' ? id : undefined,
-                message_id: firstMsgId,
-                count: fullPage? chatStore.messageList.length + 20: 20,
-            },
-            'getChatHistory',
-        )
+        if (!historyRequestTracker.isActive(
+            historyRequest.generation,
+            chatStore.chatInfo.show,
+        )) return
+
+        loadMoreHistoryMessages(firstMsgId, 20, historyRequest)
     }
 }
 
@@ -1135,7 +1138,7 @@ function detectSeqGaps(msgs: any[]): string[] {
     return gaps
 }
 
-function fillSeqGaps(anchorMsgIds: string[]) {
+function fillSeqGaps(anchorMsgIds: string[], historyRequest: HistoryRequest) {
     const type = chatStore.chatInfo.show.type
     const id = chatStore.chatInfo.show.id
     let name: string
@@ -1153,7 +1156,11 @@ function fillSeqGaps(anchorMsgIds: string[]) {
                 message_id: anchorMsgId,
                 count: 20,
             },
-            'getChatHistoryGapFill_' + anchorMsgId,
+            createHistoryEcho(
+                'getChatHistoryGapFill',
+                historyRequest,
+                anchorMsgId,
+            ),
         )
     }
 }

@@ -334,9 +334,9 @@
 <script lang="ts" setup>
     import vueDanmaku from 'vue3-danmaku'
 
-    import { Connector } from '@renderer/function/connect'
     import { ref, onMounted, watch, useTemplateRef, nextTick } from 'vue'
     import { getMsgRawTxt, sendMsgRaw } from '@renderer/function/utils/msgUtil'
+    import { loadMoreHistoryMessages } from '@renderer/function/utils/appUtil'
     import { parseMsg } from '@renderer/function/sender'
     import {
         MsgItemElem,
@@ -505,31 +505,8 @@
         if (opt.value.loop) {
             // 如果弹幕列表长度是 20，请求更多消息
             if (props.list.length == 20) {
-                const type = chatStore.chatInfo.show.type
-                const id = chatStore.chatInfo.show.id
                 const firstMsgId = props.list[0].message_id ?? 0
-                let name
-                const fullPage =
-                    authStore.jsonMap.message_list?.pagerType ==
-                    'full'
-                if (
-                    authStore.jsonMap.message_list &&
-                    type != 'group'
-                ) {
-                    name = authStore.jsonMap.message_list.private_name
-                } else {
-                    name = authStore.jsonMap.message_list.name
-                }
-                Connector.send(
-                    name ?? 'get_chat_history',
-                    {
-                        group_id: type == 'group' ? id : undefined,
-                        user_id: type != 'group' ? id : undefined,
-                        message_id: firstMsgId,
-                        count: fullPage? chatStore.messageList.length + 10: 10,
-                    },
-                    'getChatHistory',
-                )
+                loadMoreHistoryMessages(firstMsgId, 10)
             }
             const list = props.list.map((data: any) => {
                 return {

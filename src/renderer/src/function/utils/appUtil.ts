@@ -45,6 +45,12 @@ import {
 } from 'vue'
 import { sendMsgRaw } from './msgUtil'
 import { dbGetLatest } from './localHistoryUtil'
+import {
+    createHistoryEcho,
+    historyRequestTracker,
+    isSameHistorySession,
+    type HistoryRequest,
+} from './historyRequest'
 import { parseMsg } from '../sender'
 import { Notify } from '../notify'
 
@@ -109,8 +115,16 @@ export function openLink(url: string) {
 export async function loadHistory(info: BaseChatInfoElem) {
     const authStore = useAuthStore()
     const chatStore = useChatStore()
+    const uiStore = useUIStore()
     const settingsStore = useSettingsStore()
+    const request = historyRequestTracker.begin(info)
+
     chatStore.messageList = []
+    uiStore.nowGetHistory = false
+    uiStore.canLoadHistory = true
+    uiStore.loadHistoryFail = false
+    uiStore.historyBeforeTime = undefined
+
     // 本地有数据时立即显示，同时仍发网络请求以获取最新消息（避免遗漏）
     if (
         settingsStore.sysConfig.enable_local_history &&
@@ -121,11 +135,27 @@ export async function loadHistory(info: BaseChatInfoElem) {
             info.id,
             20,
         )
+        if (!historyRequestTracker.isActive(
+            request.generation,
+            chatStore.chatInfo.show,
+        )) return
+
         if (localMsgs.length > 0) {
             chatStore.messageList = localMsgs
         }
     }
-    if (!loadHistoryMessage(info.id, info.type)) {
+
+    if (!historyRequestTracker.isActive(
+        request.generation,
+        chatStore.chatInfo.show,
+    )) return
+
+    if (!loadHistoryMessage(
+        info.id,
+        info.type,
+        20,
+        createHistoryEcho('getChatHistoryFist', request),
+    )) {
         new PopInfo().add(
             PopType.ERR,
             app.config.globalProperties.$t('加载历史消息失败'),
@@ -137,10 +167,17 @@ export function loadHistoryMessage(
     id: number,
     type: string,
     count = 20,
-    echo = 'getChatHistoryFist',
+    echo?: string,
+    messageId: string | number = 0,
 ) {
     const authStore = useAuthStore()
     const chatStore = useChatStore()
+    if (echo === undefined) {
+        const request = historyRequestTracker.current()
+        if (!request || !isSameHistorySession(request, { id, type }) ||
+            !historyRequestTracker.isActive(request.generation, chatStore.chatInfo.show)) return false
+        echo = createHistoryEcho('getChatHistoryFist', request)
+    }
     let name: string
     const fullPage = authStore.jsonMap.message_list?.pagerType == 'full'
     if (authStore.jsonMap.message_list && type != 'group') {
@@ -154,12 +191,33 @@ export function loadHistoryMessage(
         {
             group_id: type == 'group' ? id : undefined,
             user_id: type != 'group' ? id : undefined,
-            message_id: 0,
+            message_id: messageId,
             count: fullPage ? chatStore.messageList.length + count : count,
         },
         echo,
     )
     return true
+}
+
+/** Load an older page for the active chat, including alternate chat views. */
+export function loadMoreHistoryMessages(
+    messageId: string | number,
+    count = 20,
+    request: HistoryRequest | undefined = historyRequestTracker.current(),
+) {
+    const chatStore = useChatStore()
+    if (!request || !historyRequestTracker.isActive(
+        request.generation,
+        chatStore.chatInfo.show,
+    )) return false
+
+    return loadHistoryMessage(
+        Number(request.id),
+        request.type,
+        count,
+        createHistoryEcho('getChatHistory', request),
+        messageId,
+    )
 }
 
 /**
