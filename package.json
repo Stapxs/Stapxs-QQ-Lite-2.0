@@ -28,8 +28,7 @@
     "build:tauri": "cross-env DESKTOP=1 tauri build -c src/tauri/tauri.conf.json",
     "build:ios": "vite build && capacitor sync ios && sh ./scripts/build-export-ipa.sh",
     "build:android": "vite build && capacitor sync android && capacitor build android",
-    "preview": "vite preview",
-    "test:file-transfer": "node --experimental-strip-types --test tests/file-transfer.test.mjs"
+    "preview": "vite preview"
   },
   "workspaces": [
     "ssqq.capacitor-onebot-connector"
