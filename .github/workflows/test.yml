@@ -1,9 +1,7 @@
 # 测试构建发布
-name: build-nightly-app
+name: build-test-app
 on:
-    push:
-        branches:
-            - nightly
+    workflow_dispatch:
 
 jobs:
     # ========================= 准备项目 =========================
@@ -17,6 +15,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
               with:
+                  ref: dev
                   submodules: recursive
             # 初始化一些流程需要的环境变量
             - name: Init Env
@@ -30,11 +29,11 @@ jobs:
         needs: init
         strategy:
             matrix:
-                os: [windows-2022, ubuntu-22.04]
+                os: [windows-2022, ubuntu-22.04, ubuntu-22.04-arm]
 
         steps:
             - name: 安装构建依赖
-              if: matrix.os == 'ubuntu-22.04'
+              if: matrix.os == 'ubuntu-22.04' || matrix.os == 'ubuntu-22.04-arm'
               run: |
                   sudo apt-get update
                   sudo apt-get install -y libglib2.0-dev \
@@ -50,6 +49,7 @@ jobs:
             - name: 拉取代码
               uses: actions/checkout@v4
               with:
+                  ref: dev
                   submodules: recursive
             - name: 启用 Corepack
               run: corepack enable
@@ -76,13 +76,18 @@ jobs:
               run: yarn build:tauri -t x86_64-pc-windows-msvc -b nsis
             - name: 构建 Tauri 应用
               if: matrix.os == 'ubuntu-22.04'
-              run: yarn build:tauri -t x86_64-unknown-linux-gnu -b deb
+              run: yarn build:tauri -t x86_64-unknown-linux-gnu -b appimage,deb
+            - name: 构建 Tauri 应用
+              if: matrix.os == 'ubuntu-22.04-arm'
+              run: yarn build:tauri -t aarch64-unknown-linux-gnu -b appimage,deb
 
             - name: 准备产物目录
               if: matrix.os != 'windows-2022'
               run: |
                   mkdir -p upload
                   cp src/tauri/target/*/release/bundle/deb/*.deb upload/ || true
+                  cp src/tauri/target/*/release/bundle/appimage/*.AppImage upload/ || true
+                  cp src/tauri/target/*/release/bundle/dmg/*.dmg upload/ || true
 
             - name: 准备产物目录
               if: matrix.os == 'windows-2022'
