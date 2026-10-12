@@ -1293,7 +1293,7 @@ export function checkNotice() {
                                     template: markRaw(defineAsyncComponent(
                                         () => import(`@renderer/components/notice-component/${info.template}.vue`),
                                     )),
-                                    templateValue: markRaw(info.template_data ? info.template_data : {}),
+                                    templateValue: markRaw(info.template_data ?? {}),
                                     button: button
                                 }
                             } else {

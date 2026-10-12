@@ -38,7 +38,7 @@ export function arrayBufferToBase64(buffer: ArrayBuffer): string {
     const blockSize = 0x8000
     let binary = ''
     for (let offset = 0; offset < bytes.length; offset += blockSize) {
-        binary += String.fromCharCode(...bytes.subarray(offset, offset + blockSize))
+        binary += String.fromCodePoint(...bytes.subarray(offset, offset + blockSize))
     }
     return btoa(binary)
 }
@@ -67,9 +67,11 @@ export async function uploadFileStream(
             const start = chunkIndex * options.chunkSize
             const end = Math.min(start + options.chunkSize, file.size)
             const chunk = file.slice(start, end)
+            // eslint-disable-next-line no-await-in-loop -- Read one chunk at a time to keep memory usage bounded.
             const chunkData = arrayBufferToBase64(await chunk.arrayBuffer())
             throwIfAborted(signal)
 
+            // eslint-disable-next-line no-await-in-loop -- Wait for each chunk response to keep progress ordered and stop on failure.
             const response = await callAction(options.action, {
                 stream_id: options.streamId,
                 chunk_data: chunkData,

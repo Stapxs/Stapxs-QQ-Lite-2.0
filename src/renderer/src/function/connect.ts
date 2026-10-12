@@ -188,9 +188,7 @@ export class Connector {
                 url = appendAccessToken(withWebSocketProtocol(address, true), token)
             }
 
-            if (!websocket) {
-                websocket = new WebSocket(url)
-            }
+            websocket ??= new WebSocket(url)
 
             websocket.onopen = () => {
                 login.creating = false

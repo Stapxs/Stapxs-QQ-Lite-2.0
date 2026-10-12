@@ -599,7 +599,6 @@
     padding: calc(var(--radio-size) - 2px);
     height: 0 !important;
     width: 0 !important;
-    width: 0;
 }
 
 .account-info {
