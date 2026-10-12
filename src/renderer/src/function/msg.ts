@@ -655,13 +655,13 @@ function handleChatHistoryResponse(
 
     if (!appendToTop) {
         // 无论是否有本地预填充，都以网络数据替换（保证最新消息不遗漏）
-        saveMsg(msg, undefined, requestGeneration).catch(onError)
+        saveMsg(msg, undefined, isActiveRequest).catch(onError)
         return
     }
 
     const pan = document.getElementById('msgPan')
     const oldScrollHeight = pan?.scrollHeight ?? 0
-    saveMsg(msg, 'top', requestGeneration).then(() => {
+    saveMsg(msg, 'top', isActiveRequest).then(() => {
         if (!pan || !isActiveRequest()) return
         nextTick(() => {
             setTimeout(() => {
@@ -1823,6 +1823,8 @@ function updateSavedHistoryPreview() {
     Object.assign(session, preview)
     contactStore.baseOnMsgList.set(sessionId, session)
     updateBaseOnMsgList()
+}
+
 function isCurrentMessageSession(session: HistorySession, requestGeneration?: number): boolean {
     const current = useChatStore().chatInfo.show
     return requestGeneration === undefined? isSameHistorySession(session, current): historyRequestTracker.isActive(requestGeneration, current)
