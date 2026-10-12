@@ -68,6 +68,7 @@ import { ensurePinyinLoaded, getPinyin, isPinyinReady } from './utils/pinyin'
 import { useAuthStore } from '@renderer/state/auth'
 import { useContactStore } from '@renderer/state/contact'
 import { useChatStore } from '@renderer/state/chat'
+import { useQuotedMessagesStore } from '@renderer/state/quotedMessages'
 import { useConnectionStore } from '@renderer/state/connection'
 import { useStickerStore } from '@renderer/state/sticker'
 import { useUIStore } from '@renderer/state/ui'
@@ -1750,6 +1751,78 @@ function saveClassInfo(
     settingsStore.classes = list
 }
 
+export async function appendHistoryForQuotedMessage(msg: any, isActive: () => boolean) {
+    if (!isActive()) return
+    await saveMsg(msg, 'top', isActive, true)
+}
+
+async function saveMsg(msg: any, append = undefined as undefined | string, isActive = () => true, keepExisting = false) {
+    if (!isActive()) return
+    let list = await normalizeMessagesFromPayload(msg)
+    if (!isActive() || list == undefined || !isSavedMessageForCurrentChat(list)) return
+    const uiStore = useUIStore()
+    const authStore = useAuthStore()
+    const chatStore = useChatStore()
+    const beforeTime = Number(uiStore.historyBeforeTime)
+    const hasBoundary = Number.isFinite(beforeTime)
+    list = filterSavedHistory(list, append, beforeTime)
+    if (hasBoundary && append === 'top' && list.length === 0) {
+        uiStore.historyBeforeTime = undefined
+        uiStore.nowGetHistory = false
+        return
+    }
+    saveMessagesWithSideEffects(authStore.loginInfo.uin, list)
+    if (!applySavedMessages(list, append, keepExisting)) return
+    chatStore.messageList.forEach(item => sendMsgAppendInfo(item))
+    updateSavedHistoryPreview()
+    if (hasBoundary) uiStore.historyBeforeTime = undefined
+}
+
+function isSavedMessageForCurrentChat(list: any[]): boolean {
+    const infoList = getMsgData('message_info', list[0], msgPath.message_info)
+    const info = infoList?.[0]
+    const id = info?.group_id ?? info?.private_id
+    return id == null || String(id) === String(useChatStore().chatInfo.show.id)
+}
+
+function filterSavedHistory(list: any[], append: string | undefined, beforeTime: number): any[] {
+    const messages = list.filter(item => item.message.length > 0)
+    if (append !== 'top' || !Number.isFinite(beforeTime)) return messages
+    return messages.filter(item => Number.isFinite(Number(item.time)) && Number(item.time) <= beforeTime)
+}
+
+function applySavedMessages(list: any[], append: string | undefined, keepExisting: boolean): boolean {
+    const uiStore = useUIStore()
+    const authStore = useAuthStore()
+    const chatStore = useChatStore()
+    const settings = useSettingsStore().sysConfig
+    const replaceFullPage = append === 'top' && !keepExisting && authStore.jsonMap.message_list?.pagerType === 'full'
+    const isAppend = append !== undefined && !replaceFullPage
+    if (isAppend && list.length === 0) {
+        uiStore.canLoadHistory = false
+        uiStore.historyBeforeTime = undefined
+        return false
+    }
+    const mixed = settings.enable_local_history && settings.mixed_load_messages !== false
+    const messages = isAppend || mixed ? mergeMessagesByIdAndTime(chatStore.messageList, list) : list
+    replaceMessageListInPlace(messages)
+    return true
+}
+
+function updateSavedHistoryPreview() {
+    const chatStore = useChatStore()
+    const contactStore = useContactStore()
+    const last = chatStore.messageList[chatStore.messageList.length - 1]
+    if (!last) return
+    const user = contactStore.userList.find(item => item.group_id == chatStore.chatInfo.show.id || item.user_id == chatStore.chatInfo.show.id)
+    const sessionId = Number(chatStore.chatInfo.show.id)
+    const session = contactStore.baseOnMsgList.get(sessionId) ?? user
+    if (!session) return
+    const preview = formatMessageData(last, chatStore.chatInfo.show.type === 'group')
+    if (user) Object.assign(user, preview)
+    Object.assign(session, preview)
+    contactStore.baseOnMsgList.set(sessionId, session)
+    updateBaseOnMsgList()
 function isCurrentMessageSession(session: HistorySession, requestGeneration?: number): boolean {
     const current = useChatStore().chatInfo.show
     return requestGeneration === undefined? isSameHistorySession(session, current): historyRequestTracker.isActive(requestGeneration, current)
@@ -1805,46 +1878,6 @@ function updateHistorySessionPreview() {
     Object.assign(session, preview)
     contactStore.baseOnMsgList.set(sessionId, session)
     updateBaseOnMsgList()
-}
-
-async function saveMsg(
-    msg: any,
-    append = undefined as undefined | string,
-    requestGeneration?: number,
-) {
-    const uiStore = useUIStore()
-    const authStore = useAuthStore()
-    const chatStore = useChatStore()
-    const expectedSession = {
-        id: chatStore.chatInfo.show.id,
-        type: chatStore.chatInfo.show.type,
-    }
-    let list = await normalizeMessagesFromPayload(msg)
-    if (!isCurrentMessageSession(expectedSession, requestGeneration) || list === undefined) return
-    if (!isMessageListForCurrentSession(list)) return
-
-    const historyBeforeTime = Number(uiStore.historyBeforeTime)
-    const hasHistoryBeforeTime = Number.isFinite(historyBeforeTime)
-    list = list.filter((item: any) => item.message.length > 0)
-
-    // Mixed local/network pagination uses the original timestamp as its boundary.
-    if (hasHistoryBeforeTime && append === 'top') {
-        list = list.filter((item: any) => {
-            const time = Number(item?.time)
-            return Number.isFinite(time) && time <= historyBeforeTime
-        })
-        if (list.length < 1) {
-            uiStore.historyBeforeTime = undefined
-            uiStore.nowGetHistory = false
-            return
-        }
-    }
-
-    persistMessageHistory(authStore.loginInfo.uin, list)
-    if (!applyHistoryMessageList(list, append)) return
-    chatStore.messageList.forEach(item => sendMsgAppendInfo(item))
-    updateHistorySessionPreview()
-    if (hasHistoryBeforeTime) uiStore.historyBeforeTime = undefined
 }
 
 async function normalizeMessagesFromPayload(payload: any): Promise<any[] | undefined> {
@@ -2151,6 +2184,10 @@ function revokeMsg(_: string, msg: any) {
     // 在本地 DB 中标记撤回
     const msgId = msg.message_id
     dbRevokeMessage(authStore.loginInfo.uin, String(msgId))
+    if (String(chatId) === String(chatStore.chatInfo.show.id) &&
+        msg.notice_type.includes('group') === (chatStore.chatInfo.show.type === 'group')) {
+        useQuotedMessagesStore().revoke(msgId)
+    }
 
     // 寻找消息
     let msgGet = null as { [key: string]: any } | null
