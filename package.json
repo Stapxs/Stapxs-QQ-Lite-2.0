@@ -79,7 +79,7 @@
     "@rushstack/eslint-patch": "^1.10.3",
     "@stapxs/capacitor-sync-version": "^1.0.10",
     "@stapxs/umami-logger-typescript": "^1.0.15",
-    "@tauri-apps/cli": "~2.11.4",
+    "@tauri-apps/cli": "~2.12.1",
     "@types/jsonpath": "^0.2.4",
     "@types/node": "^20.14.8",
     "@types/semver": "^7.5.8",
