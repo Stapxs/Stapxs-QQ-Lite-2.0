@@ -627,6 +627,7 @@ import { toBackgroundImageStyle } from '@renderer/function/utils/backgroundUtil'
 import { dbGetBefore, dbGetBeforeByTime, dbSearchMessages } from '@renderer/function/utils/localHistoryUtil'
 import {
     createHistoryEcho,
+    historyRequestTracker,
     type HistoryRequest,
 } from '@renderer/function/utils/historyRequest'
 import Emoji from '@renderer/function/model/emoji'
@@ -1114,7 +1115,12 @@ async function loadMoreHistory(reply?: { isActive: () => boolean }) {
 }
 
 async function loadLocalOlderHistory(firstMsgId: string | number, firstMsgTime: number) {
+    const historyRequest = historyRequestTracker.current()
+    if (!historyRequest || !historyRequestTracker.isActive(
+        historyRequest.generation, chatStore.chatInfo.show)) return
     const local = Number.isFinite(firstMsgTime)? await dbGetBeforeByTime(authStore.loginInfo.uin, chatStore.chatInfo.show.id, firstMsgTime, 20): await dbGetBefore(authStore.loginInfo.uin, chatStore.chatInfo.show.id, String(firstMsgId), 20)
+    if (!historyRequestTracker.isActive(
+        historyRequest.generation, chatStore.chatInfo.show)) return
     if (local.length === 0) return
     const existingIds = new Set(chatStore.messageList.map(message => String(message.message_id ?? '')))
     const added = local.filter(message => {
@@ -1124,7 +1130,7 @@ async function loadLocalOlderHistory(firstMsgId: string | number, firstMsgTime: 
     if (added.length > 0) chatStore.messageList.splice(0, 0, ...added)
     const boundary = list[added.length] ?? list[added.length - 1]
     const gaps = detectSeqGaps([...added, boundary])
-    if (gaps.length > 0) fillSeqGaps(gaps)
+    if (gaps.length > 0) fillSeqGaps(gaps, historyRequest)
 }
 
 async function requestQuotedHistoryPage(action: string, params: Record<string, unknown>, isActive: () => boolean) {

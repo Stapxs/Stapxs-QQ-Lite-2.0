@@ -1,5 +1,5 @@
 <template>
-    <div v-if="success" class="msg-json" @click="openLink(parsedContent.jumpUrl)">
+    <div v-if="success" class="msg-json" @click="parsedContent.jumpUrl && openLink(parsedContent.jumpUrl)">
         <p>{{ parsedContent.title }}</p>
         <span>{{ parsedContent.desc }}</span>
         <img :src="parsedContent.img" alt="">
