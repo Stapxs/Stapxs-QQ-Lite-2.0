@@ -83,8 +83,6 @@ import {
 import {
     getHistoryGeneration,
     historyRequestTracker,
-    isSameHistorySession,
-    type HistorySession,
 } from './utils/historyRequest'
 
 const popInfo = new PopInfo()
@@ -1819,63 +1817,6 @@ function updateSavedHistoryPreview() {
     const session = contactStore.baseOnMsgList.get(sessionId) ?? user
     if (!session) return
     const preview = formatMessageData(last, chatStore.chatInfo.show.type === 'group')
-    if (user) Object.assign(user, preview)
-    Object.assign(session, preview)
-    contactStore.baseOnMsgList.set(sessionId, session)
-    updateBaseOnMsgList()
-}
-
-function isCurrentMessageSession(session: HistorySession, requestGeneration?: number): boolean {
-    const current = useChatStore().chatInfo.show
-    return requestGeneration === undefined? isSameHistorySession(session, current): historyRequestTracker.isActive(requestGeneration, current)
-}
-
-function isMessageListForCurrentSession(list: any[]): boolean {
-    const infoList = getMsgData('message_info', list[0], msgPath.message_info)
-    const info = infoList?.[0]
-    const id = info?.group_id ?? info?.private_id
-    return id === undefined || id == useChatStore().chatInfo.show.id
-}
-
-function applyHistoryMessageList(list: any[], append?: string): boolean {
-    const authStore = useAuthStore()
-    const chatStore = useChatStore()
-    const uiStore = useUIStore()
-    const settingsStore = useSettingsStore()
-
-    if (append === 'top' && authStore.jsonMap.message_list?.pagerType === 'full') {
-        append = undefined
-    }
-    if (append !== undefined && list.length < 1) {
-        uiStore.canLoadHistory = false
-        uiStore.historyBeforeTime = undefined
-        uiStore.nowGetHistory = false
-        return false
-    }
-
-    const shouldMerge = append !== undefined || (
-        settingsStore.sysConfig.enable_local_history &&
-        settingsStore.sysConfig.mixed_load_messages !== false
-    )
-    replaceMessageListInPlace(shouldMerge? mergeMessagesByIdAndTime(chatStore.messageList, list): list)
-    return true
-}
-
-function updateHistorySessionPreview() {
-    const chatStore = useChatStore()
-    const contactStore = useContactStore()
-    const lastMsg = chatStore.messageList[chatStore.messageList.length - 1]
-    if (!lastMsg) return
-
-    const user = contactStore.userList.find(item =>
-        item.group_id == chatStore.chatInfo.show.id ||
-        item.user_id == chatStore.chatInfo.show.id,
-    )
-    const sessionId = Number(chatStore.chatInfo.show.id)
-    const session = contactStore.baseOnMsgList.get(sessionId) ?? user
-    if (!session) return
-
-    const preview = formatMessageData(lastMsg, chatStore.chatInfo.show.type == 'group')
     if (user) Object.assign(user, preview)
     Object.assign(session, preview)
     contactStore.baseOnMsgList.set(sessionId, session)

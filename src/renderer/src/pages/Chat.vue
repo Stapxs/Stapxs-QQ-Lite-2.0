@@ -587,7 +587,6 @@ import {
 	scrollToMsg,
     downloadFile,
     loadHistory as loadHistoryFirst,
-    loadMoreHistoryMessages,
     shouldAutoFocus,
 	vMenu,
 	vMove,
@@ -628,7 +627,6 @@ import { toBackgroundImageStyle } from '@renderer/function/utils/backgroundUtil'
 import { dbGetBefore, dbGetBeforeByTime, dbSearchMessages } from '@renderer/function/utils/localHistoryUtil'
 import {
     createHistoryEcho,
-    historyRequestTracker,
     type HistoryRequest,
 } from '@renderer/function/utils/historyRequest'
 import Emoji from '@renderer/function/model/emoji'

@@ -336,7 +336,6 @@
 
     import { ref, onMounted, watch, useTemplateRef, nextTick } from 'vue'
     import { getMsgRawTxt, sendMsgRaw } from '@renderer/function/utils/msgUtil'
-    import { loadMoreHistoryMessages } from '@renderer/function/utils/appUtil'
     import { parseMsg } from '@renderer/function/sender'
     import {
         MsgItemElem,

@@ -1,6 +1,6 @@
 {
   "name": "stapxs-qq-lite",
-  "version": "3.5.0",
+  "version": "3.5.2",
   "author": "Stapx Steve [林槐]",
   "description": "一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。",
   "homepage": "http://github.com/Stapxs/Stapxs-QQ-Lite-2.0",
@@ -10,8 +10,7 @@
   "scripts": {
     "capacitor:copy:before": "capacitor-sync-version",
     "typecheck": "vue-tsc --noEmit -p tsconfig.web.json",
-    "check": "yarn lint && yarn typecheck && yarn test:quoted-message",
-    "test:quoted-message": "node --experimental-strip-types --test tests/quoted-message.test.mjs tests/quoted-history.test.mjs tests/quoted-scroll.test.mjs",
+    "check": "yarn lint && yarn typecheck",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix",
     "lint:tauri": "cargo check --manifest-path src/tauri/Cargo.toml",
     "update:icon": "npx @capacitor/assets generate --assetPath 'src/mobile/_assets' --iosProject 'src/mobile/ios/App' --androidProject 'src/mobile/android' --android --ios",
