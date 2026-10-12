@@ -1,5 +1,6 @@
 use std::{collections::{HashMap, HashSet}, ffi::CStr, fs::{self, File}, io::{self, Write}, path::PathBuf, process::Command, str::FromStr, sync::{Arc, Mutex}, time::Duration};
 use crate::{PROXY_PORT};
+use super::utils::download_file::DownloadFile;
 
 use log::{debug, error, info};
 use reqwest::Client;
@@ -213,7 +214,6 @@ pub async fn sys_download(
         }
     }
 
-    let mut output_opened = false;
     let result = async {
         if is_download_cancelled(&taskId) {
             return Err(io::Error::new(io::ErrorKind::Interrupted, DOWNLOAD_CANCELLED).into());
@@ -226,8 +226,7 @@ pub async fn sys_download(
 
         let total_size = response.content_length().unwrap_or(0);
 
-        let mut file = File::create(&filepath)?;
-        output_opened = true;
+        let mut file = DownloadFile::new(&filepath)?;
         let mut stream = response.bytes_stream();
 
         let mut downloaded: u64 = 0;
@@ -263,12 +262,10 @@ pub async fn sys_download(
             return Err(io::Error::new(io::ErrorKind::Interrupted, DOWNLOAD_CANCELLED).into());
         }
 
+        file.finish()?;
         Ok::<_, Box<dyn std::error::Error>>(())
     }.await;
     if let Err(e) = result {
-        if output_opened {
-            let _ = fs::remove_file(&filepath);
-        }
         if e.to_string() == DOWNLOAD_CANCELLED {
             clear_download_cancelled(&taskId);
             app_handle.emit("sys:downloadCancel", serde_json::json!({
