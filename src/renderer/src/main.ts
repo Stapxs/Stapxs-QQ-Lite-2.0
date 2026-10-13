@@ -74,14 +74,20 @@ if(import.meta.env.DEV) {
 console.log('[ SSystem Bootloader Loading …… core/ssqq-core ]')
 
 applyBcuiTheme('light')
-await import('./styles/appStyles')
 
-app.use(i18n)
-app.use(createPinia())
-app.use(VueClipboard)
+async function bootstrap() {
+    applyBcuiTheme('light')
+    await import('./styles/appStyles')
 
-library.add(fas)
-library.add(faSquare, faHeart)
-app.component('FontAwesomeIcon', FontAwesomeIcon)
+    app.use(i18n)
+    app.use(createPinia())
+    app.use(VueClipboard)
 
-app.mount('#app')
+    library.add(fas)
+    library.add(faSquare, faHeart)
+    app.component('FontAwesomeIcon', FontAwesomeIcon)
+
+    app.mount('#app')
+}
+
+void bootstrap()
