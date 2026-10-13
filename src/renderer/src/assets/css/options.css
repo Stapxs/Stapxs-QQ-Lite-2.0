@@ -591,12 +591,14 @@
 
 .ss-radio:hover > div:nth-child(2) {
     padding: calc((var(--radio-size) / 4) + 2px);
+    height: var(--radio-size) !important;
+    width: var(--radio-size) !important;
 }
 
 .ss-radio input:checked ~ div:nth-child(2) {
     padding: calc(var(--radio-size) - 2px);
-    height: 0;
-    width: 0;
+    height: 0 !important;
+    width: 0 !important;
 }
 
 .account-info {

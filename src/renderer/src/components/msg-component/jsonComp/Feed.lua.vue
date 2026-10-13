@@ -1,5 +1,5 @@
 <template>
-    <div v-if="success" class="msg-json" @click="openLink(parsedContent.jumpUrl)">
+    <div v-if="success" class="msg-json" @click="parsedContent.jumpUrl && openLink(parsedContent.jumpUrl)">
         <p>{{ parsedContent.title }}</p>
         <span>{{ parsedContent.desc }}</span>
         <img :src="parsedContent.img" alt="">
@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { Logger } from '@renderer/function/base';
+import { Logger, LogType } from '@renderer/function/base';
 import { openLink } from '@renderer/function/utils/appUtil'
 import * as z from 'zod'
 
@@ -59,6 +59,13 @@ function unpackNestedUrl(url: string): string | null {
     }
 }
 
+function getJumpUrl(jumpUrl: string | undefined, pcJumpUrl: string | undefined): string | undefined {
+    const url = jumpUrl || pcJumpUrl
+    if (url) {
+        return unpackNestedUrl(url) ?? url
+    } else return undefined
+}
+
 const feed = z
     .object({
         app: z.literal('com.tencent.feed.lua'),
@@ -68,16 +75,16 @@ const feed = z
                 title: z.string(),
                 tagIcon: z.string(),
                 tagName: z.string(),
-                forwardMessage: z.string(),
-                pcJumpUrl: z.string(),
+                forwardMessage: z.string().optional(),
+                pcJumpUrl: z.string().optional(),
+                jumpUrl: z.string().optional(),
             }),
         }),
         prompt: z.string(),
     })
     .transform((o) => ({
         title: o.meta.feed.title,
-        jumpUrl:
-            unpackNestedUrl(o.meta.feed.pcJumpUrl) ?? o.meta.feed.pcJumpUrl,
+        jumpUrl: getJumpUrl(o.meta.feed.jumpUrl, o.meta.feed.pcJumpUrl),
         img: o.meta.feed.cover,
         icon: o.meta.feed.tagIcon,
         name: o.meta.feed.tagName,
@@ -89,6 +96,9 @@ const parsedData = feed.safeParse(json)
 const success = parsedData.success
 const parsedContent = parsedData.data!
 if (!success) {
-    new Logger().error(parsedData.error, 'Card Parse Error')
+    new Logger().add(LogType.ERR, '卡片格式化失败：', {
+        error: JSON.parse(parsedData.error.message),
+        raw: json
+    })
 }
 </script>

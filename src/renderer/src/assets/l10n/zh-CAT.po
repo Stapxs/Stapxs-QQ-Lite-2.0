@@ -319,3 +319,15 @@ msgstr "逐条转发喵"
 
 msgid "将按顺序逐条转发 {count} 条消息，是否继续？"
 msgstr "将按顺序逐条转发 {count} 条消息喵，是否继续？"
+
+msgid "正在加载引用消息……"
+msgstr ""
+
+msgid "原消息暂不可用，点击重试"
+msgstr ""
+
+msgid "消息已撤回"
+msgstr ""
+
+msgid "跳转到引用消息"
+msgstr ""

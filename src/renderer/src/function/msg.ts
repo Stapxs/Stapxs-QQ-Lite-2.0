@@ -56,13 +56,19 @@ import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
 import { backend } from '@renderer/runtime/backend'
 import { dbRevokeMessage, saveMessagesWithSideEffects } from './utils/localHistoryUtil'
-import { addDownloadTask, completeUploadTask } from '@renderer/components/FileManager.vue'
+import {
+    addDownloadTask,
+    completeUploadTask,
+    failUploadTask,
+} from '@renderer/components/FileManager.vue'
+import { getOneBotResponseError } from './utils/fileTransferUtil'
 import { refreshFavicon } from './favicon'
 import { Img } from './model/img'
 import { ensurePinyinLoaded, getPinyin, isPinyinReady } from './utils/pinyin'
 import { useAuthStore } from '@renderer/state/auth'
 import { useContactStore } from '@renderer/state/contact'
 import { useChatStore } from '@renderer/state/chat'
+import { useQuotedMessagesStore } from '@renderer/state/quotedMessages'
 import { useConnectionStore } from '@renderer/state/connection'
 import { useStickerStore } from '@renderer/state/sticker'
 import { useUIStore } from '@renderer/state/ui'
@@ -74,6 +80,10 @@ import {
     mergeEarlySessionContacts,
     resolveIncomingSession,
 } from './utils/sessionUtil'
+import {
+    getHistoryGeneration,
+    historyRequestTracker,
+} from './utils/historyRequest'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -604,6 +614,70 @@ const noticeFunctions = {
     },
 } as { [key: string]: (name: string, msg: { [key: string]: any }) => void }
 
+function reportChatHistoryFailure(requestGeneration: number | undefined, appendToTop: boolean, error?: Error) {
+    const uiStore = useUIStore()
+    const chatStore = useChatStore()
+    if (!historyRequestTracker.isActive(requestGeneration, chatStore.chatInfo.show)) return
+
+    if (error) logger.error(error, '加载历史消息失败')
+    new PopInfo().add(PopType.ERR, app.config.globalProperties.$t('获取历史记录失败'))
+    uiStore.loadHistoryFail = true
+    if (appendToTop) {
+        uiStore.historyBeforeTime = undefined
+        uiStore.nowGetHistory = false
+    }
+}
+
+function persistMessageHistory(selfId: string | number, list: any[]) {
+    saveMessagesWithSideEffects(selfId, list).catch(error => {
+        logger.error(error, '保存本地历史消息失败')
+    })
+}
+
+function handleChatHistoryResponse(
+    msg: { [key: string]: any },
+    echoList?: string[],
+    appendToTop = false,
+) {
+    const chatStore = useChatStore()
+    const requestGeneration = getHistoryGeneration(echoList)
+    const isActiveRequest = () =>
+        historyRequestTracker.isActive(requestGeneration, chatStore.chatInfo.show)
+    const onError = (error: Error) => reportChatHistoryFailure(requestGeneration, appendToTop, error)
+
+    if (!isActiveRequest()) return
+    if (msg.data === null) {
+        reportChatHistoryFailure(requestGeneration, appendToTop)
+        return
+    }
+
+    if (!appendToTop) {
+        // 无论是否有本地预填充，都以网络数据替换（保证最新消息不遗漏）
+        saveMsg(msg, undefined, isActiveRequest).catch(onError)
+        return
+    }
+
+    const pan = document.getElementById('msgPan')
+    const oldScrollHeight = pan?.scrollHeight ?? 0
+    saveMsg(msg, 'top', isActiveRequest).then(() => {
+        if (!isActiveRequest()) return
+        const uiStore = useUIStore()
+        uiStore.nowGetHistory = false
+        uiStore.historyBeforeTime = undefined
+        if (!pan) return
+        nextTick(() => {
+            setTimeout(() => {
+                if (!isActiveRequest() || document.getElementById('msgPan') !== pan) return
+                logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
+                pan.style.scrollBehavior = 'unset'
+                // 纠正滚动位置
+                pan.scrollTop = pan.scrollHeight - oldScrollHeight
+                pan.style.scrollBehavior = 'smooth'
+            }, 200);
+        })
+    }).catch(onError)
+}
+
 const msgFunctions = {
     /**
      * 修改群成员信息回调
@@ -854,18 +928,8 @@ const msgFunctions = {
     /**
      * 保存聊天记录
      */
-    getChatHistoryFist: (_: string, msg: { [key: string]: any }) => {
-        const uiStore = useUIStore()
-        if (msg.data === null) {
-            new PopInfo().add(
-                PopType.ERR,
-                app.config.globalProperties.$t('获取历史记录失败'),
-            )
-            uiStore.loadHistoryFail = true
-            return
-        }
-        // 无论是否有本地预填充，都以网络数据替换（保证最新消息不遗漏）
-        saveMsg(msg)
+    getChatHistoryFist: (_: string, msg: { [key: string]: any }, echoList?: string[]) => {
+        handleChatHistoryResponse(msg, echoList)
     },
     getChatHistoryGapFill: (
         _: string,
@@ -874,13 +938,23 @@ const msgFunctions = {
     ) => {
         const authStore = useAuthStore()
         const chatStore = useChatStore()
-        // echo 格式：getChatHistoryGapFill_<anchorMsgId>
+        const requestGeneration = getHistoryGeneration(metaArgs)
+        if (!historyRequestTracker.isActive(
+            requestGeneration,
+            chatStore.chatInfo.show,
+        )) return
+
+        // echo 格式：getChatHistoryGapFill_<generation>_<anchorMsgId>
         // anchorMsgId 是 gap 之后第一条消息的 message_id（插入点）
-        const anchorMsgId = metaArgs?.[1]
+        const anchorMsgId = metaArgs?.[2]
         if (!anchorMsgId || msg.data === null) return
         const rawList = getMsgData('message_list', msg, msgPath.message_list)
         getMessageList(rawList)
             .then((list) => {
+                if (!historyRequestTracker.isActive(
+                    requestGeneration,
+                    chatStore.chatInfo.show,
+                )) return
                 if (!list || list.length === 0) return
                 const inserted = insertHistorySegmentAtAnchor(
                     chatStore.messageList,
@@ -890,37 +964,12 @@ const msgFunctions = {
                 if (inserted.length === chatStore.messageList.length) return
                 replaceMessageListInPlace(inserted)
                 // 同步存入本地 DB，以便下次直接从本地加载
-                saveMessagesWithSideEffects(authStore.loginInfo.uin, list)
+                persistMessageHistory(authStore.loginInfo.uin, list)
             })
             .catch(() => {})
     },
-    getChatHistory: (_: string, msg: { [key: string]: any }) => {
-        const uiStore = useUIStore()
-        if (msg.data === null) {
-            new PopInfo().add(
-                PopType.ERR,
-                app.config.globalProperties.$t('获取历史记录失败'),
-            )
-            uiStore.loadHistoryFail = true
-            uiStore.historyBeforeTime = undefined
-            uiStore.nowGetHistory = false
-            return
-        }
-        const pan = document.getElementById('msgPan')
-        if (pan) {
-            const oldScrollHeight = pan.scrollHeight
-            saveMsg(msg, 'top').then(() => {
-                nextTick(() => {
-                    setTimeout(() => {
-                        logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
-                        pan.style.scrollBehavior = 'unset'
-                        // 纠正滚动位置
-                        pan.scrollTop = pan.scrollHeight - oldScrollHeight
-                        pan.style.scrollBehavior = 'smooth'
-                    }, 200);
-                })
-            })
-        }
+    getChatHistory: (_: string, msg: { [key: string]: any }, echoList?: string[]) => {
+        handleChatHistoryResponse(msg, echoList, true)
     },
 
     getChatHistoryOnMsg: (
@@ -998,9 +1047,20 @@ const msgFunctions = {
         msg: { [key: string]: any },
         echoList: string[],
     ) => {
-        // 标记上传任务完成
+        let taskId: string | undefined
         if (echoList[1] === 'task' && echoList[2] && echoList[3]) {
-            const taskId = echoList[1] + '_' + echoList[2] + '_' + echoList[3]
+            taskId = echoList[1] + '_' + echoList[2] + '_' + echoList[3]
+        }
+        const error = getOneBotResponseError(msg)
+        if (error) {
+            if (taskId) failUploadTask(taskId, error)
+            popInfo.add(
+                PopType.ERR,
+                app.config.globalProperties.$t('文件上传失败') + '：' + error,
+            )
+            return
+        }
+        if (taskId) {
             completeUploadTask(taskId)
         }
         const newEchoList = ['sendMsgBack', ...echoList.slice(4)]
@@ -1146,40 +1206,12 @@ const msgFunctions = {
     /**
      * 下载文件（聊天中）
      */
-    downloadFile: (_: string, msg: { [key: string]: any }, echoList: string[]) => {
-        const data = getMsgData('file_download', msg, msgPath.file_download)[0]
-        const url = data.file_url
-
-        const fileName = decodeURIComponent(atob(echoList[2]))
-        const fileSize = data.file_size || 0
-
-        // 使用文件传输管理器下载
-        addDownloadTask({
-            fileName,
-            fileSize,
-            filePath: '',
-            url
-        })
-    },
+    downloadFile: startFileDownload,
 
     /**
      * 下载文件（群文件）
      */
-    downloadGroupFile: (_: string, msg: { [key: string]: any }, echoList: string[]) => {
-        const data = getMsgData('file_download', msg, msgPath.file_download)[0]
-        const url = data.file_url
-
-        const fileName = decodeURIComponent(atob(echoList[2]))
-        const fileSize = data.file_size || 0
-
-        // 使用文件传输管理器下载
-        addDownloadTask({
-            fileName,
-            fileSize,
-            filePath: '',
-            url
-        })
-    },
+    downloadGroupFile: startFileDownload,
 
     /**
      * 文件预览下载
@@ -1509,6 +1541,34 @@ const msgFunctions = {
     ) => void
 }
 
+function startFileDownload(
+    _: string,
+    msg: { [key: string]: any },
+    echoList: string[],
+) {
+    const data = getMsgData('file_download', msg, msgPath.file_download)?.[0]
+    const url = data?.file_url
+    if (!url) {
+        popInfo.add(
+            PopType.ERR,
+            app.config.globalProperties.$t('获取文件下载地址失败'),
+        )
+        return
+    }
+
+    const fileName = decodeURIComponent(atob(echoList[2]))
+    addDownloadTask({
+        fileName,
+        fileSize: data.file_size || 0,
+        filePath: '',
+        url,
+        onError: (error) => popInfo.add(
+            PopType.ERR,
+            app.config.globalProperties.$t('文件下载失败') + '：' + error,
+        ),
+    })
+}
+
 const handlers: Record<string, (payload: any, metaArgs?: string[]) => void> = {
     ...(Object.entries(msgFunctions).reduce((acc, [key, fn]) => ({
         ...acc,
@@ -1693,114 +1753,78 @@ function saveClassInfo(
     settingsStore.classes = list
 }
 
-async function saveMsg(msg: any, append = undefined as undefined | string) {
+export async function appendHistoryForQuotedMessage(msg: any, isActive: () => boolean) {
+    if (!isActive()) return
+    await saveMsg(msg, 'top', isActive, true)
+}
+
+async function saveMsg(msg: any, append = undefined as undefined | string, isActive = () => true, keepExisting = false) {
+    if (!isActive()) return
+    let list = await normalizeMessagesFromPayload(msg)
+    if (!isActive() || list == undefined || !isSavedMessageForCurrentChat(list)) return
     const uiStore = useUIStore()
     const authStore = useAuthStore()
     const chatStore = useChatStore()
-    const contactStore = useContactStore()
-    const settingsStore = useSettingsStore()
-    let list = await normalizeMessagesFromPayload(msg)
-    if (list != undefined) {
-        const historyBeforeTime = Number(uiStore.historyBeforeTime)
-        const hasHistoryBeforeTime = Number.isFinite(historyBeforeTime)
-
-        // 检查消息是否是当前聊天的消息
-        const firstMsg = list[0]
-        const infoList = getMsgData(
-            'message_info',
-            firstMsg,
-            msgPath.message_info,
-        )
-        if (infoList != undefined) {
-            const info = infoList[0]
-            const id = info.group_id ?? info.private_id
-            if (id != undefined && id != chatStore.chatInfo.show.id) {
-                return
-            }
-        }
-        // 将消息中 message 字段为空数组的消息过滤掉
-        list = list.filter((item: any) => {
-            return item.message.length > 0
-        })
-
-        // 上拉历史时按时间戳作为边界（兼容增量/全量两种分页模式）。
-        if (hasHistoryBeforeTime && append === 'top') {
-            list = list.filter((item: any) => {
-                const t = Number(item?.time)
-                return Number.isFinite(t) && t <= historyBeforeTime
-            })
-        }
-
-        // 处于上拉边界过滤时，若结果为空则保留当前列表，避免误清空。
-        if (hasHistoryBeforeTime && append === 'top' && list.length < 1) {
-            uiStore.historyBeforeTime = undefined
-            uiStore.nowGetHistory = false
-            return
-        }
-
-        // 保存到本地历史
-        saveMessagesWithSideEffects(authStore.loginInfo.uin, list)
-        // 如果分页不是增量的，就不使用追加
-        if (
-            append == 'top' &&
-            authStore.jsonMap.message_list?.pagerType == 'full'
-        ) {
-            append = undefined
-        }
-        // 追加处理
-        if (append != undefined) {
-            // 没有更旧的消息能加载了，禁用允许加载标志
-            if (list.length < 1) {
-                uiStore.canLoadHistory = false
-                uiStore.historyBeforeTime = undefined
-                return
-            }
-            const merged = mergeMessagesByIdAndTime(chatStore.messageList, list)
-            replaceMessageListInPlace(merged)
-        } else {
-            if (
-                settingsStore.sysConfig.enable_local_history &&
-                settingsStore.sysConfig.mixed_load_messages !== false
-            ) {
-                const merged = mergeMessagesByIdAndTime(chatStore.messageList, list)
-                replaceMessageListInPlace(merged)
-            } else {
-                replaceMessageListInPlace(list)
-            }
-        }
-        // 消息后处理
-        // PS: 部分消息类型可能需要获取附加内容，在此处进行处理
-        chatStore.messageList.forEach((item) => {
-            sendMsgAppendInfo(item)
-        })
-        // 将最新消息同步到会话列表；通过会话 Map 更新以触发 shallowRef 列表刷新。
-        const lastMsg =
-            chatStore.messageList[chatStore.messageList.length - 1]
-        if (lastMsg) {
-            const user = contactStore.userList.find((item) => {
-                return (
-                    item.group_id == chatStore.chatInfo.show.id ||
-                    item.user_id == chatStore.chatInfo.show.id
-                )
-            })
-            const sessionId = Number(chatStore.chatInfo.show.id)
-            const session = contactStore.baseOnMsgList.get(sessionId) ?? user
-            if (session) {
-                const preview = formatMessageData(
-                    lastMsg,
-                    chatStore.chatInfo.show.type == 'group',
-                )
-                if (user) Object.assign(user, preview)
-                Object.assign(session, preview)
-                contactStore.baseOnMsgList.set(sessionId, session)
-                updateBaseOnMsgList()
-            }
-        }
-
-        if (hasHistoryBeforeTime) {
-            uiStore.historyBeforeTime = undefined
-        }
+    const beforeTime = Number(uiStore.historyBeforeTime)
+    const hasBoundary = Number.isFinite(beforeTime)
+    list = filterSavedHistory(list, append, beforeTime)
+    if (hasBoundary && append === 'top' && list.length === 0) {
+        uiStore.historyBeforeTime = undefined
+        uiStore.nowGetHistory = false
+        return
     }
+    saveMessagesWithSideEffects(authStore.loginInfo.uin, list)
+    if (!applySavedMessages(list, append, keepExisting)) return
+    chatStore.messageList.forEach(item => sendMsgAppendInfo(item))
+    updateSavedHistoryPreview()
+    if (hasBoundary) uiStore.historyBeforeTime = undefined
+}
+
+function isSavedMessageForCurrentChat(list: any[]): boolean {
+    const infoList = getMsgData('message_info', list[0], msgPath.message_info)
+    const info = infoList?.[0]
+    const id = info?.group_id ?? info?.private_id
+    return id == null || String(id) === String(useChatStore().chatInfo.show.id)
+}
+
+function filterSavedHistory(list: any[], append: string | undefined, beforeTime: number): any[] {
+    const messages = list.filter(item => item.message.length > 0)
+    if (append !== 'top' || !Number.isFinite(beforeTime)) return messages
+    return messages.filter(item => Number.isFinite(Number(item.time)) && Number(item.time) <= beforeTime)
+}
+
+function applySavedMessages(list: any[], append: string | undefined, keepExisting: boolean): boolean {
+    const uiStore = useUIStore()
+    const authStore = useAuthStore()
+    const chatStore = useChatStore()
+    const settings = useSettingsStore().sysConfig
+    const replaceFullPage = append === 'top' && !keepExisting && authStore.jsonMap.message_list?.pagerType === 'full'
+    const isAppend = append !== undefined && !replaceFullPage
+    if (isAppend && list.length === 0) {
+        uiStore.canLoadHistory = false
+        uiStore.historyBeforeTime = undefined
+        return false
+    }
+    const mixed = settings.enable_local_history && settings.mixed_load_messages !== false
+    const messages = isAppend || mixed ? mergeMessagesByIdAndTime(chatStore.messageList, list) : list
+    replaceMessageListInPlace(messages)
+    return true
+}
+
+function updateSavedHistoryPreview() {
+    const chatStore = useChatStore()
+    const contactStore = useContactStore()
+    const last = chatStore.messageList[chatStore.messageList.length - 1]
+    if (!last) return
+    const user = contactStore.userList.find(item => item.group_id == chatStore.chatInfo.show.id || item.user_id == chatStore.chatInfo.show.id)
+    const sessionId = Number(chatStore.chatInfo.show.id)
+    const session = contactStore.baseOnMsgList.get(sessionId) ?? user
+    if (!session) return
+    const preview = formatMessageData(last, chatStore.chatInfo.show.type === 'group')
+    if (user) Object.assign(user, preview)
+    Object.assign(session, preview)
+    contactStore.baseOnMsgList.set(sessionId, session)
+    updateBaseOnMsgList()
 }
 
 async function normalizeMessagesFromPayload(payload: any): Promise<any[] | undefined> {
@@ -2107,6 +2131,10 @@ function revokeMsg(_: string, msg: any) {
     // 在本地 DB 中标记撤回
     const msgId = msg.message_id
     dbRevokeMessage(authStore.loginInfo.uin, String(msgId))
+    if (String(chatId) === String(chatStore.chatInfo.show.id) &&
+        msg.notice_type.includes('group') === (chatStore.chatInfo.show.type === 'group')) {
+        useQuotedMessagesStore().revoke(msgId)
+    }
 
     // 寻找消息
     let msgGet = null as { [key: string]: any } | null

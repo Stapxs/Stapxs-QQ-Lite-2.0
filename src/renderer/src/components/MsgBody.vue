@@ -10,7 +10,7 @@
 -->
 
 <template>
-    <div :id="'chat-' + data.message_id"
+    <div :id="(idPrefix ?? 'chat-') + data.message_id"
         ref="msgMain"
         v-menu.prevent="event => $emit('showMenu', event, data)"
         :class="[
@@ -247,22 +247,12 @@
                                 </div>
                             </div>
                         </template>
-                        <div v-else-if="item.type == 'reply'"
-                            v-show="type != 'body'"
-                            :class="isMe ? type == 'merge' ? 'msg-replay' : 'msg-replay me' : 'msg-replay'"
-                            @click="scrollToMsg(item.id)">
-                            <div>
-                                <span>{{ getMsgInfo(item.id) }}</span>
-                                <font-awesome-icon v-if="getMsgInfo(item.id) != ''" :icon="['fas', 'turn-up']" />
-                            </div>
-                            <MsgBody v-if="getMsg(item.id)"
-                                :data="getMsg(item.id, true)"
-                                :type="'body'"
-                                :global-me="isMe ? 'Y' : ''" />
-                            <a v-else class="msg-unknown">
-                                {{ getMsgStr(item.id) != '' ? getMsgStr(item.id) : $t('（查看回复消息）') }}
-                            </a>
-                        </div>
+                        <template v-else-if="item.type == 'reply'">
+                            <QuotePreview v-if="type != 'body'" :message-id="item.id"
+                                :source-id="data.message_id" :is-me="isMe && type != 'merge'"
+                                :remote="type != 'merge'"
+                                @scroll-to-msg="$emit('scrollToMsg', $event)" />
+                        </template>
                         <div v-else-if="item.type == 'poke'" v-once :class="showPock()">
                             <font-awesome-icon class="poke-hand" style="margin-right: 5px;" :icon="['fas', 'fa-hand-point-up']" />
                             {{ $t('戳了戳你') }}
@@ -386,7 +376,7 @@ import Option from '@renderer/function/option'
 import markdownit from 'markdown-it'
 
 import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
-import { watch, onMounted, nextTick, provide, inject, useTemplateRef, ref, toRaw } from 'vue'
+import { watch, onMounted, nextTick, provide, inject, useTemplateRef, ref } from 'vue'
 import { Connector } from '@renderer/function/connect'
 import { useSettingsStore } from '@renderer/state/settings'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
@@ -404,7 +394,6 @@ import { vUserTooltip } from '@renderer/function/tooltip'
 import {
     getForegroundToneGridFromImageUrl,
     getSizeFromBytes,
-    getTimeConfig,
     getTrueLang,
     getViewTime } from '@renderer/function/utils/systemUtil'
 import { linkView } from '@renderer/function/utils/linkViewUtil'
@@ -429,6 +418,7 @@ import { dbGetImage, hashUrl } from '@renderer/function/utils/localHistoryUtil'
 import JsonSegComp from './msg-component/JsonSegComp.vue'
 import XmlSegComp from './msg-component/XmlSegComp.vue'
 import VoiceMsg from './VoiceMsg.vue'
+import QuotePreview from './QuotePreview.vue'
 import { addMusic, MusicInfo } from './MusicPlayer.vue'
 
 type Msg = any
@@ -444,12 +434,14 @@ const {
     type,
     globalMe,
     imageListHeader,
+    idPrefix,
 } = defineProps<{
     data: any
     selected?: boolean
     type?: 'merge' | 'body'
     globalMe?: string
     imageListHeader?: Img | undefined
+    idPrefix?: string
 }>()
 
 provide('message-content', data)
@@ -610,10 +602,6 @@ function getAtName(item: { [key: string]: any }) {
         }
         return '@' + item.qq
     }
-}
-
-function scrollToMsg(id: string) {
-    emit('scrollToMsg', 'chat-' + id)
 }
 
 function imgStyle(length: number, at: number, isFace: boolean) {
@@ -872,76 +860,6 @@ function hiddenUserInfo() {
     if (chatStore.chatInfo.info.now_member_info !== undefined) {
         chatStore.chatInfo.info.now_member_info = undefined
     }
-}
-
-function getMsgInfo(message_id: string) {
-    const list = chatStore.messageList.filter((item) => {
-        return item.message_id == message_id
-    })
-    if (list.length === 1 && list[0].message.length > 0) {
-        const time = Intl.DateTimeFormat(trueLang,
-                getTimeConfig(new Date(getViewTime(list[0].time))))
-            .format(getViewTime(getViewTime(list[0].time)))
-        return (list[0].sender.nickname + ' ' + time)
-    }
-    else return ''
-
-}
-
-function getMsgStr(message_id: string) {
-    const list = chatStore.messageList.filter((item) => {
-        return item.message_id == message_id
-    })
-    if (list.length === 1) {
-        return getMsgRawTxt(list[0])
-    }
-    return ''
-}
-
-function getMsg(message_id: string, filter: boolean = false) {
-    const list = chatStore.messageList.filter((item) => {
-        return item.message_id == message_id
-    })
-    if (list.length === 1) {
-        const msg = toRaw(list[0])
-        const textFallbackTypes = new Set([
-            'video',
-            'record',
-            'file',
-            'json',
-            'xml',
-            'forward'
-        ])
-        const needTextFallback = (msg.message ?? []).some((seg: any) => textFallbackTypes.has(seg?.type))
-        if (needTextFallback) {
-            return filter ? null : false
-        }
-        if(filter) {
-            const mediaTypes = new Set([
-                'image',
-                'mface',
-                'forward',
-            ])
-            let hasMedia = false
-            const message = (msg.message ?? []).filter((seg: any) => {
-                if (!mediaTypes.has(seg?.type)) {
-                    return true
-                }
-                if (hasMedia) {
-                    return false
-                }
-                hasMedia = true
-                return true
-            })
-            return {
-                ...msg,
-                message,
-            }
-        } else {
-            return list[0]
-        }
-    }
-    return null
 }
 
 function downloadFile(fileData: any, message_id: string) {

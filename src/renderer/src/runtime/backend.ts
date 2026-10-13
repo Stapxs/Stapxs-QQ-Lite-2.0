@@ -11,6 +11,10 @@ const logger = new Logger()
 const popInfo = new PopInfo()
 
 type CapacitorPluginRegistry = Record<string, Record<string, (...args: any[]) => any>>
+type BackendListenerHandle = {
+    ready: Promise<boolean>
+    remove: () => void
+}
 
 export const backend = {
     type: 'web' as 'electron' | 'tauri' | 'capacitor' | 'web',
@@ -27,7 +31,7 @@ export const backend = {
         plugins: CapacitorPluginRegistry,
         vConsole: VConsole
     } | undefined,
-    listener: undefined as ((event: string, ...args: any[]) => void) | undefined,
+    listener: undefined as ((event: string, ...args: any[]) => any) | undefined,
 
     isDesktop() {
         return this.type == 'electron' || this.type == 'tauri'
@@ -264,17 +268,57 @@ export const backend = {
      * @param name 事件名称
      * @param callBack 回调函数
      */
-    addListener(type: string | undefined, name: string, callBack: (...args: any[]) => void) {
+    addListener(
+        type: string | undefined,
+        name: string,
+        callBack: (...args: any[]) => void,
+    ): BackendListenerHandle {
         if(this.listener) {
-            if(this.isDesktop()) {
+            if(this.type === 'electron') {
                 this.listener(name, callBack)
-                return
+                return {
+                    ready: Promise.resolve(true),
+                    remove: () => this.removeListener(type, name, callBack),
+                }
+            } else if(this.type === 'tauri') {
+                let active = true
+                let unlisten: (() => void) | undefined
+                const listenResult = this.listener(name, callBack)
+                const ready = Promise.resolve(listenResult)
+                    .then((callback) => {
+                        if (typeof callback !== 'function') return false
+                        if (active) {
+                            unlisten = callback
+                        } else {
+                            callback()
+                        }
+                        return true
+                    })
+                    .catch((error) => {
+                        logger.error(error as Error, `添加后端监听失败：${name}(${type})`)
+                        return false
+                    })
+                return {
+                    ready,
+                    remove: () => {
+                        active = false
+                        unlisten?.()
+                        unlisten = undefined
+                    },
+                }
             } else if(this.isMobile() && type) {
                 this.listener(type, name, callBack)
-                return
+                return {
+                    ready: Promise.resolve(true),
+                    remove: () => undefined,
+                }
             }
         }
         logger.error(null, `添加后端监听失败：${name}(${type})`)
+        return {
+            ready: Promise.resolve(false),
+            remove: () => undefined,
+        }
     },
 
     /**

@@ -19,3 +19,4 @@ notice_local.json
 *.tsbuildinfo
 .npmrc
 *.log*
+logs/**

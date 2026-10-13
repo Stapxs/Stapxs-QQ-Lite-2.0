@@ -62,7 +62,7 @@
             </div>
         </div>
         <!-- 加载中指示器 -->
-        <div :class=" 'loading' + (uiStore.nowGetHistory && uiStore.canLoadHistory ? ' show' : '')">
+        <div :class=" 'loading' + ((uiStore.nowGetHistory || replyLoading) && uiStore.canLoadHistory ? ' show' : '')">
             <font-awesome-icon :icon="['fas', 'spinner']" />
             <span>{{ $t('加载中') }}</span>
         </div>
@@ -104,7 +104,7 @@
                             :image-list-header="chatImg"
                             @click="msgClick($event, msgIndex)"
                             @show-menu="showMsgMeun"
-                            @scroll-to-msg="scrollToMsg"
+                            @scroll-to-msg="jumpToQuotedMessage"
                             @image-loaded="imgLoadedScroll"
                             @left-move="replyMsg"
                             @send-poke="sendPoke" />
@@ -587,6 +587,7 @@ import {
 	scrollToMsg,
     downloadFile,
     loadHistory as loadHistoryFirst,
+    loadMoreHistoryMessages,
     shouldAutoFocus,
 	vMenu,
 	vMove,
@@ -609,6 +610,10 @@ import {
 } from '@renderer/function/utils/msgUtil'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { Connector } from '@renderer/function/connect'
+import { appendHistoryForQuotedMessage } from '@renderer/function/msg'
+import { loadHistoryToQuotedMessage } from '@renderer/function/utils/quotedMessage'
+import { keepQuotedMessageInView } from '@renderer/function/utils/quotedScroll'
+import { useQuotedMessagesStore } from '@renderer/state/quotedMessages'
 import {
     BaseChatInfoElem,
     MsgItemElem,
@@ -621,6 +626,11 @@ import {
 import { backend } from '@renderer/runtime/backend'
 import { toBackgroundImageStyle } from '@renderer/function/utils/backgroundUtil'
 import { dbGetBefore, dbGetBeforeByTime, dbSearchMessages } from '@renderer/function/utils/localHistoryUtil'
+import {
+    createHistoryEcho,
+    historyRequestTracker,
+    type HistoryRequest,
+} from '@renderer/function/utils/historyRequest'
 import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from '@renderer/components/EmojiFace.vue'
 import { Img } from '@renderer/function/model/img'
@@ -631,7 +641,17 @@ import { useSettingsStore } from '@renderer/state/settings'
 import { useAuthStore } from '@renderer/state/auth'
 import { useChatStore } from '@renderer/state/chat'
 import { useContactStore } from '@renderer/state/contact'
-import { addUploadTask, failUploadTask } from '@renderer/components/FileManager.vue'
+import {
+    addUploadTask,
+    beginUploadFinalization,
+    completeUploadTask,
+    failUploadTask,
+} from '@renderer/components/FileManager.vue'
+import {
+    arrayBufferToBase64,
+    getOneBotResponseError,
+    uploadFileStream,
+} from '@renderer/function/utils/fileTransferUtil'
 
 defineOptions({ name: 'ViewChat' })
 
@@ -650,6 +670,21 @@ const settingsStore = useSettingsStore()
 const authStore = useAuthStore()
 const chatStore = useChatStore()
 const contactStore = useContactStore()
+const quotedMessages = useQuotedMessagesStore()
+const replyLoading = ref(false)
+let replyJump = 0
+let replyAnchor: ReturnType<typeof keepQuotedMessageInView> | undefined
+
+function cancelReplyJump() {
+    replyJump++
+    replyAnchor?.stop()
+    if (!replyLoading.value) return
+    replyLoading.value = false
+    uiStore.nowGetHistory = false
+    uiStore.historyBeforeTime = undefined
+}
+
+watch(() => quotedMessages.scopeVersion, cancelReplyJump, { flush: 'sync' })
 const mergePan = useTemplateRef<InstanceType<typeof MergePan>>('mergePan')
 const msgPan = useTemplateRef<HTMLDivElement>('msgPan')
 const chatPadding = useTemplateRef<HTMLSpanElement>('chatPadding')
@@ -872,6 +907,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+    cancelReplyJump()
     if (resizeMainInputFrame !== null) {
         cancelAnimationFrame(resizeMainInputFrame)
         resizeMainInputFrame = null
@@ -1021,7 +1057,7 @@ function chatScroll(event: Event, pass: boolean) {
     if(pass) return
 
     const body = event.target as HTMLDivElement
-    if (body.scrollTop === 0 && list.length > 0) {
+    if (body.scrollTop === 0 && list.length > 0 && !replyLoading.value) {
         loadMoreHistory()
     }
     if ((body.scrollTop + body.clientHeight + 10) >= body.scrollHeight) {
@@ -1037,79 +1073,152 @@ function chatScroll(event: Event, pass: boolean) {
     }
 }
 
-async function loadMoreHistory() {
-    if (
-        !uiStore.nowGetHistory &&
-        uiStore.canLoadHistory !== false
-    ) {
-        const firstMsgId = list[0].message_id
-        const firstMsgTime = Number(list[0]?.time)
-        const useMixedHistory =
-            settingsStore.sysConfig.enable_local_history &&
-            settingsStore.sysConfig.mixed_load_messages !== false
-        uiStore.nowGetHistory = true
-        if (useMixedHistory && Number.isFinite(firstMsgTime)) {
-            uiStore.historyBeforeTime = firstMsgTime
-        } else {
+async function loadMoreHistory(reply?: { isActive: () => boolean }) {
+    if (uiStore.nowGetHistory || uiStore.canLoadHistory === false || list.length === 0) return false
+    const firstMsgId = list[0].message_id
+    const firstMsgTime = Number(list[0]?.time)
+    const fullPage =
+        authStore.jsonMap.message_list?.pagerType == 'full'
+    const fullPageSize = fullPage? Math.min(chatStore.messageList.length + 20, 100): 20
+    const useMixedHistory =
+        settingsStore.sysConfig.enable_local_history &&
+        settingsStore.sysConfig.mixed_load_messages !== false
+    uiStore.nowGetHistory = true
+    if (useMixedHistory && Number.isFinite(firstMsgTime)) {
+        uiStore.historyBeforeTime = firstMsgTime
+    } else {
+        uiStore.historyBeforeTime = undefined
+    }
+    uiStore.loadHistoryFail = false
+
+    // Quote navigation pages from the network boundary. Local gap-fill callbacks
+    // are independent of this navigation and must not outlive its ownership.
+    if (useMixedHistory && !reply) {
+        const localHistory = loadLocalOlderHistory(firstMsgId, firstMsgTime)
+        const networkHistory = loadMoreHistoryMessages(firstMsgId, fullPageSize)
+        await localHistory
+        return networkHistory
+    }
+
+    const type = chatStore.chatInfo.show.type
+    const id = chatStore.chatInfo.show.id
+    let name
+    if (authStore.jsonMap.message_list && type != 'group') {
+        name = authStore.jsonMap.message_list.private_name
+    } else {
+        name = authStore.jsonMap.message_list.name
+    }
+    const params = {
+        group_id: type == 'group' ? id : undefined,
+        user_id: type != 'group' ? id : undefined,
+        message_id: firstMsgId,
+        count: fullPageSize,
+    }
+    if (!reply) return loadMoreHistoryMessages(firstMsgId, fullPageSize)
+    return requestQuotedHistoryPage(name ?? 'get_chat_history', params, reply.isActive)
+}
+
+async function loadLocalOlderHistory(firstMsgId: string | number, firstMsgTime: number) {
+    const historyRequest = historyRequestTracker.current()
+    if (!historyRequest || !historyRequestTracker.isActive(
+        historyRequest.generation, chatStore.chatInfo.show)) return
+    const local = Number.isFinite(firstMsgTime)? await dbGetBeforeByTime(authStore.loginInfo.uin, chatStore.chatInfo.show.id, firstMsgTime, 20): await dbGetBefore(authStore.loginInfo.uin, chatStore.chatInfo.show.id, String(firstMsgId), 20)
+    if (!historyRequestTracker.isActive(
+        historyRequest.generation, chatStore.chatInfo.show)) return
+    if (local.length === 0) return
+    const existingIds = new Set(chatStore.messageList.map(message => String(message.message_id ?? '')))
+    const added = local.filter(message => {
+        const id = String(message?.message_id ?? '')
+        return id.length === 0 || !existingIds.has(id)
+    })
+    if (added.length > 0) chatStore.messageList.splice(0, 0, ...added)
+    const boundary = list[added.length] ?? list[added.length - 1]
+    const gaps = detectSeqGaps([...added, boundary])
+    if (gaps.length > 0) fillSeqGaps(gaps, historyRequest)
+}
+
+async function requestQuotedHistoryPage(action: string, params: Record<string, unknown>, isActive: () => boolean) {
+    try {
+        const response = await Connector.callRawApi(action, params, 10000)
+        if (!isActive()) return false
+        if (response?.status !== 'ok' || Number(response.retcode ?? 0) !== 0 || response.data == null) {
+            throw new Error('History request failed')
+        }
+        await appendHistoryForQuotedMessage(response, isActive)
+        return isActive()
+    } catch (error) {
+        if (isActive()) {
+            new Logger().error(error as Error, 'Loading quoted message history failed')
+            uiStore.loadHistoryFail = true
+        }
+        return false
+    } finally {
+        if (isActive()) {
+            uiStore.nowGetHistory = false
             uiStore.historyBeforeTime = undefined
         }
-        uiStore.loadHistoryFail = false
-
-        if (useMixedHistory) {
-            let localMsgs = [] as any[]
-            if (Number.isFinite(firstMsgTime)) {
-                localMsgs = await dbGetBeforeByTime(
-                    authStore.loginInfo.uin,
-                    chatStore.chatInfo.show.id,
-                    firstMsgTime,
-                    20,
-                )
-            } else {
-                localMsgs = await dbGetBefore(
-                    authStore.loginInfo.uin,
-                    chatStore.chatInfo.show.id,
-                    firstMsgId,
-                    20,
-                )
-            }
-            if (localMsgs.length > 0) {
-                const existingIds = new Set(chatStore.messageList.map((m) => String(m.message_id ?? '')))
-                const addList = localMsgs.filter((m) => {
-                    const msgId = String(m?.message_id ?? '')
-                    return msgId.length === 0 || !existingIds.has(msgId)
-                })
-                if (addList.length > 0) {
-                    chatStore.messageList.splice(0, 0, ...addList)
-                }
-                const boundary = list[addList.length] ?? list[addList.length - 1]
-                const seqGapAnchors = detectSeqGaps([...addList, boundary])
-                if (seqGapAnchors.length > 0) {
-                    fillSeqGaps(seqGapAnchors)
-                }
-            }
-        }
-
-        const fullPage =
-            authStore.jsonMap.message_list?.pagerType == 'full'
-        const type = chatStore.chatInfo.show.type
-        const id = chatStore.chatInfo.show.id
-        let name
-        if (authStore.jsonMap.message_list && type != 'group') {
-            name = authStore.jsonMap.message_list.private_name
-        } else {
-            name = authStore.jsonMap.message_list.name
-        }
-        Connector.send(
-            name ?? 'get_chat_history',
-            {
-                group_id: type == 'group' ? id : undefined,
-                user_id: type != 'group' ? id : undefined,
-                message_id: firstMsgId,
-                count: fullPage? chatStore.messageList.length + 20: 20,
-            },
-            'getChatHistory',
-        )
     }
+}
+
+async function waitForHistoryIdle(isActive: () => boolean): Promise<boolean> {
+    if (!uiStore.nowGetHistory) return isActive()
+    return new Promise(resolve => {
+        const finish = (ready: boolean) => {
+            stop()
+            clearTimeout(timer)
+            resolve(ready)
+        }
+        const stop = watch(() => [uiStore.nowGetHistory, quotedMessages.scopeVersion, replyJump], () => {
+            if (!isActive()) finish(false)
+            else if (!uiStore.nowGetHistory) finish(true)
+        })
+        const timer = setTimeout(() => finish(false), 10000)
+    })
+}
+
+async function jumpToQuotedMessage(messageId: string) {
+    cancelReplyJump()
+    const pan = document.getElementById('msgPan')
+    if (!pan) return
+    const jump = replyJump
+    const scope = quotedMessages.scopeVersion
+    const isActive = () => jump === replyJump && scope === quotedMessages.scopeVersion && pan.isConnected
+    if (focusQuotedMessage(messageId, pan, isActive)) return
+    if (!quotedMessages.canRequest) return
+    replyLoading.value = true
+    tags.value.showBottomButton = true
+    try {
+        if (!await waitForHistoryIdle(isActive) || !isActive()) return
+        pan.scrollTop = 0
+        const result = await loadHistoryToQuotedMessage({
+            isActive,
+            hasTarget: () => {
+                const target = document.getElementById(messageId)
+                return target !== null && pan.contains(target)
+            },
+            boundary: () => list[0]?.message_id == null ? undefined : String(list[0].message_id),
+            loadOlder: () => loadMoreHistory({ isActive }),
+            rendered: async () => { await nextTick() },
+        })
+        if (!isActive()) return
+        if (result === 'found') focusQuotedMessage(messageId, pan, isActive)
+        else if (result === 'unavailable') new PopInfo().add(PopType.INFO, $t('无法定位上下文'))
+    } finally {
+        if (isActive()) replyLoading.value = false
+    }
+}
+
+function focusQuotedMessage(messageId: string, pan: HTMLElement, isActive: () => boolean): boolean {
+    const target = document.getElementById(messageId)
+    if (!target || !pan.contains(target) || !isActive()) return false
+    tags.value.showBottomButton = true
+    // Finish a long jump immediately; media layout changes must not interrupt it.
+    scrollToMsg(messageId, false, true, true)
+    replyAnchor = keepQuotedMessageInView({
+        pan, target, isActive,
+        onRelease: () => { replyAnchor = undefined },
+    })
+    return true
 }
 
 function detectSeqGaps(msgs: any[]): string[] {
@@ -1125,7 +1234,7 @@ function detectSeqGaps(msgs: any[]): string[] {
     return gaps
 }
 
-function fillSeqGaps(anchorMsgIds: string[]) {
+function fillSeqGaps(anchorMsgIds: string[], historyRequest: HistoryRequest) {
     const type = chatStore.chatInfo.show.type
     const id = chatStore.chatInfo.show.id
     let name: string
@@ -1143,7 +1252,11 @@ function fillSeqGaps(anchorMsgIds: string[]) {
                 message_id: anchorMsgId,
                 count: 20,
             },
-            'getChatHistoryGapFill_' + anchorMsgId,
+            createHistoryEcho(
+                'getChatHistoryGapFill',
+                historyRequest,
+                anchorMsgId,
+            ),
         )
     }
 }
@@ -1175,9 +1288,10 @@ function scrollToMsgLocal(message_id: string) {
 }
 
 function imgLoadedScroll(height: number) {
+    if (replyLoading.value || replyAnchor?.correct()) return
     const pan = document.getElementById('msgPan')
     if(pan) {
-        if(list.length <= 20 && !tags.value.showBottomButton) {
+        if(list.length <= 20 && !tags.value.showBottomButton && !replyLoading.value) {
             scrollBottom()
         } else {
             scrollTo(pan.scrollTop + height, false)
@@ -2190,6 +2304,7 @@ function selectFile(event: Event) {
                         text: $t('发送'),
                         fun: () => {
                             uiStore.popBoxList.shift()
+                            sendFile(file, fileName)
                         },
                     },
                     {
@@ -2211,40 +2326,108 @@ function selectFile(event: Event) {
 
 function sendFile(file: File, fileName: string | null) {
     const displayName = fileName ?? file.name ?? $t('未知文件')
-    const taskId = addUploadTask({
+    const target = {
+        id: chatStore.chatInfo.show.id,
+        type: chatStore.chatInfo.show.type,
+    }
+    const controller = new AbortController()
+    const streamMap = authStore.jsonMap.file_upload_stream
+    const inlineFileLimit = 8 * 1024 * 1024
+    let taskId = ''
+
+    const upload = async (onProgress: (loaded: number, total: number) => void) => {
+        let filePath: string | undefined
+        if (streamMap?.name && file.size > 0) {
+            try {
+                const mappedChunkSize = Number(streamMap.chunk_size)
+                filePath = await uploadFileStream(file, {
+                    action: streamMap.name,
+                    streamId: uuid(),
+                    fileName: displayName,
+                    chunkSize: Number.isFinite(mappedChunkSize) && mappedChunkSize > 0? Math.min(mappedChunkSize, 8 * 1024 * 1024): 4 * 1024 * 1024,
+                    fileRetentionMs: 30 * 60 * 1000,
+                    chunkTimeoutMs: 60 * 1000,
+                    completeTimeoutMs: 10 * 60 * 1000,
+                }, (action, params, timeout) => {
+                    return Connector.callRawApi(action, params, timeout)
+                }, onProgress, controller.signal)
+            } catch (error) {
+                if (controller.signal.aborted) throw error
+                if (file.size > inlineFileLimit) throw error
+                onProgress(0, file.size)
+                new Logger().error(
+                    error as Error,
+                    '分块上传不可用，回退到兼容模式',
+                )
+            }
+        }
+
+        if (filePath) {
+            if (controller.signal.aborted) {
+                throw new DOMException('Upload cancelled', 'AbortError')
+            }
+            const action = target.type === 'group'? streamMap.group_name: streamMap.private_name
+            if (!action) throw new Error('当前 OneBot 映射缺少文件上传接口')
+            if (!beginUploadFinalization(taskId)) {
+                throw new DOMException('Upload cancelled', 'AbortError')
+            }
+            const response = await Connector.callRawApi(action, {
+                group_id: target.type === 'group' ? target.id : undefined,
+                user_id: target.type !== 'group' ? target.id : undefined,
+                file: filePath,
+                name: displayName,
+                upload_file: true,
+            }, 10 * 60 * 1000)
+            const responseError = getOneBotResponseError(response)
+            if (responseError) throw new Error(responseError)
+            completeUploadTask(taskId)
+            return
+        }
+
+        if (file.size > inlineFileLimit) {
+            throw new Error($t('当前 OneBot 实现不支持分块上传此文件'))
+        }
+
+        const base64data = arrayBufferToBase64(await file.arrayBuffer())
+        if (controller.signal.aborted) {
+            throw new DOMException('Upload cancelled', 'AbortError')
+        }
+        if (
+            String(chatStore.chatInfo.show.id) !== String(target.id) ||
+            chatStore.chatInfo.show.type !== target.type
+        ) {
+            throw new Error($t('会话已切换，请重新发送文件'))
+        }
+        if (!beginUploadFinalization(taskId)) {
+            throw new DOMException('Upload cancelled', 'AbortError')
+        }
+        onProgress(file.size, file.size)
+        sendCache.value = []
+        imgCache.value.clear()
+        msg.value = ''
+        addSpecialMsg({
+            addText: true,
+            msgObj: {
+                type: 'file',
+                file: 'base64://' + base64data,
+                name: displayName,
+            },
+        })
+        sendMsg('sendFileBack_' + taskId)
+    }
+
+    taskId = addUploadTask({
         fileName: displayName,
         fileSize: file.size,
         execute: (onProgress) => {
-            const reader = new FileReader()
-            reader.onprogress = (event) => {
-                if (event.lengthComputable) {
-                    onProgress(event.loaded, event.total)
-                }
-            }
-            reader.readAsDataURL(file)
-            reader.onloadend = () => {
-                let base64data = reader.result as string
-                base64data = base64data.substring(
-                    base64data.indexOf('base64,') + 7,
-                    base64data.length,
-                )
-                sendCache.value = []
-                imgCache.value.clear()
-                msg.value = ''
-                addSpecialMsg({
-                    addText: true,
-                    msgObj: {
-                        type: 'file',
-                        file: 'base64://' + base64data,
-                        name: displayName,
-                    },
-                })
-                sendMsg('sendFileBack_' + taskId)
-            }
-            reader.onerror = () => {
-                failUploadTask(taskId, '文件读取失败')
-            }
-        }
+            void upload(onProgress).catch((error) => {
+                if (controller.signal.aborted) return
+                const message = error instanceof Error? error.message: String(error)
+                failUploadTask(taskId, message)
+                new PopInfo().add(PopType.ERR, $t('文件上传失败') + '：' + message)
+            })
+            return () => controller.abort()
+        },
     })
 }
 
@@ -2394,6 +2577,7 @@ function updateList(newLength: number, oldLength: number) {
     if (
         tags.value.showBottomButton &&
         !uiStore.nowGetHistory &&
+        !replyLoading.value &&
         oldLength > 0
     ) {
         if (NewMsgNum.value !== 0) {

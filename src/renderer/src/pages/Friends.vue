@@ -240,9 +240,7 @@
         emit('userClick', back)
         contactStore.baseOnMsgList.set(back.id, data)
         // 获取历史消息
-        if(!uiStore.nowGetHistory) {
-            emit('loadHistory', back)
-        }
+        emit('loadHistory', back)
         // 切换标签卡
         const barMsg = document.getElementById('bar-msg')
         if (barMsg !== null) {

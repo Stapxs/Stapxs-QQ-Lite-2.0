@@ -91,6 +91,7 @@ forward_msg:
         group_id: /group_id
         sender: /sender
         message: /message
+        content: /content # LLOneBot 的转发节点使用 content，解析前统一为 message
         raw_message: null
 # 消息基础信息
 message_info:
@@ -198,6 +199,12 @@ file_download:
     source: $.data
     list:
         file_url: /url
+# 分块上传文件，避免将大文件作为一条 Base64 WebSocket 消息发送
+file_upload_stream:
+    name: upload_file_stream
+    group_name: upload_group_file
+    private_name: upload_private_file
+    chunk_size: 4194304
 
 ## 群操作
 # 退出群聊

@@ -1,5 +1,6 @@
 import app from '@renderer/main'
 import FileDownloader from 'js-file-downloader'
+import { v4 as uuid } from 'uuid'
 import option from '@renderer/function/option'
 import semver from 'semver'
 import appInfo from '../../../../../package.json'
@@ -44,6 +45,12 @@ import {
 } from 'vue'
 import { sendMsgRaw } from './msgUtil'
 import { dbGetLatest } from './localHistoryUtil'
+import {
+    createHistoryEcho,
+    historyRequestTracker,
+    isSameHistorySession,
+    type HistoryRequest,
+} from './historyRequest'
 import { parseMsg } from '../sender'
 import { Notify } from '../notify'
 
@@ -54,7 +61,7 @@ const logger = new Logger()
  * 滚动到目标消息（不自动加载）
  * @param seqName DOM 名（chat-xx）
  */
-export function scrollToMsg(seqName: string, showAnimation: boolean, showHighlight = true): boolean {
+export function scrollToMsg(seqName: string, showAnimation: boolean, showHighlight = true, centerInView = false): boolean {
     const msg = document.getElementById(seqName)
     if (msg) {
         const pan = document.getElementById('msgPan')
@@ -64,7 +71,8 @@ export function scrollToMsg(seqName: string, showAnimation: boolean, showHighlig
             } else {
                 pan.style.scrollBehavior = 'smooth'
             }
-            pan.scrollTop = msg.offsetTop - msg.offsetHeight + 10
+            // A programmatic quote jump must not trigger scroll-at-zero paging.
+            pan.scrollTop = centerInView? Math.max(1, msg.offsetTop - (pan.clientHeight - msg.offsetHeight) / 2): msg.offsetTop - msg.offsetHeight + 10
             pan.style.scrollBehavior = 'smooth'
             if (showHighlight) {
                 msg.style.transition = 'background 1s'
@@ -108,8 +116,16 @@ export function openLink(url: string) {
 export async function loadHistory(info: BaseChatInfoElem) {
     const authStore = useAuthStore()
     const chatStore = useChatStore()
+    const uiStore = useUIStore()
     const settingsStore = useSettingsStore()
+    const request = historyRequestTracker.begin(info)
+
     chatStore.messageList = []
+    uiStore.nowGetHistory = false
+    uiStore.canLoadHistory = true
+    uiStore.loadHistoryFail = false
+    uiStore.historyBeforeTime = undefined
+
     // 本地有数据时立即显示，同时仍发网络请求以获取最新消息（避免遗漏）
     if (
         settingsStore.sysConfig.enable_local_history &&
@@ -120,11 +136,27 @@ export async function loadHistory(info: BaseChatInfoElem) {
             info.id,
             20,
         )
+        if (!historyRequestTracker.isActive(
+            request.generation,
+            chatStore.chatInfo.show,
+        )) return
+
         if (localMsgs.length > 0) {
             chatStore.messageList = localMsgs
         }
     }
-    if (!loadHistoryMessage(info.id, info.type)) {
+
+    if (!historyRequestTracker.isActive(
+        request.generation,
+        chatStore.chatInfo.show,
+    )) return
+
+    if (!loadHistoryMessage(
+        info.id,
+        info.type,
+        20,
+        createHistoryEcho('getChatHistoryFist', request),
+    )) {
         new PopInfo().add(
             PopType.ERR,
             app.config.globalProperties.$t('加载历史消息失败'),
@@ -136,10 +168,17 @@ export function loadHistoryMessage(
     id: number,
     type: string,
     count = 20,
-    echo = 'getChatHistoryFist',
+    echo?: string,
+    messageId: string | number = 0,
 ) {
     const authStore = useAuthStore()
     const chatStore = useChatStore()
+    if (echo === undefined) {
+        const request = historyRequestTracker.current()
+        if (!request || !isSameHistorySession(request, { id, type }) ||
+            !historyRequestTracker.isActive(request.generation, chatStore.chatInfo.show)) return false
+        echo = createHistoryEcho('getChatHistoryFist', request)
+    }
     let name: string
     const fullPage = authStore.jsonMap.message_list?.pagerType == 'full'
     if (authStore.jsonMap.message_list && type != 'group') {
@@ -153,12 +192,33 @@ export function loadHistoryMessage(
         {
             group_id: type == 'group' ? id : undefined,
             user_id: type != 'group' ? id : undefined,
-            message_id: 0,
+            message_id: messageId,
             count: fullPage ? chatStore.messageList.length + count : count,
         },
         echo,
     )
     return true
+}
+
+/** Load an older page for the active chat, including alternate chat views. */
+export function loadMoreHistoryMessages(
+    messageId: string | number,
+    count = 20,
+    request: HistoryRequest | undefined = historyRequestTracker.current(),
+) {
+    const chatStore = useChatStore()
+    if (!request || !historyRequestTracker.isActive(
+        request.generation,
+        chatStore.chatInfo.show,
+    )) return false
+
+    return loadHistoryMessage(
+        Number(request.id),
+        request.type,
+        count,
+        createHistoryEcho('getChatHistory', request),
+        messageId,
+    )
 }
 
 /**
@@ -253,7 +313,10 @@ export function downloadFile(
     name: string,
     onprocess: (event: ProgressEvent & { [key: string]: any }) => undefined,
     oncancel: (event: ProgressEvent & { [key: string]: any }) => undefined,
-): () => void {
+    oncomplete?: (mode: 'completed' | 'delegated') => void,
+    onerror?: (error: Error) => void,
+    taskId?: string,
+): { cancel: () => void, cleanup: () => void } {
     if (document.location.protocol == 'https:') {
         // 判断下载文件 URL 的协议
         // PS：Chrome 不会对 http 下载的文件进行协议升级
@@ -261,38 +324,133 @@ export function downloadFile(
             url = 'https' + url.substring(url.indexOf('://'))
         }
     }
-    if (backend.isWeb()) {
-        try {
-            new FileDownloader({
-                url: url,
-                autoStart: true,
-                process: onprocess,
-                nameCallback: function () {
-                    return name
-                },
-            })
-        } catch (e) {
-            logger.error(e as Error, '下载文件失败')
+    if (backend.isWeb() || backend.type === 'capacitor') {
+        const parsedUrl = new URL(url, document.location.href)
+        if (
+            ['http:', 'https:'].includes(parsedUrl.protocol) &&
+            parsedUrl.origin !== document.location.origin
+        ) {
+            // 跨域 XHR 下载既需要 CORS，又会先把整个文件缓冲进内存。
+            // 交给浏览器原生下载器可以流式落盘，也不会受应用超时影响。
+            const link = document.createElement('a')
+            link.href = url
+            link.download = name
+            link.rel = 'noopener'
+            link.target = '_blank'
+            link.style.display = 'none'
+            document.body.appendChild(link)
+            link.click()
+            setTimeout(() => link.remove(), 0)
+            oncomplete?.('delegated')
+            return {
+                cancel: () => undefined,
+                cleanup: () => link.remove(),
+            }
         }
-        return () => {} // Web 平台不需要清理
+
+        const downloader = new FileDownloader({
+            url: url,
+            autoStart: false,
+            timeout: 0,
+            process: onprocess,
+            nameCallback: function () {
+                return name
+            },
+        })
+        let cancelled = false
+        void downloader.start()
+            .then(() => oncomplete?.('completed'))
+            .catch((error) => {
+                if (cancelled) {
+                    oncancel({} as ProgressEvent)
+                } else {
+                    onerror?.(error instanceof Error? error: new Error(String(error)))
+                }
+            })
+        return {
+            cancel: () => {
+                cancelled = true
+                downloader.abort('Download cancelled')
+            },
+            cleanup: () => undefined,
+        }
     } else {
+        const nativeTaskId = taskId ?? uuid()
+        const matchesTask = (data: any) => {
+            return data?.taskId === nativeTaskId
+        }
+        let disposed = false
+        let started = false
+        let cancelRequested = false
+        let listenerHandles: ReturnType<typeof backend.addListener>[] = []
+        const cleanup = () => {
+            if (disposed) return
+            disposed = true
+            listenerHandles.forEach((handle) => handle.remove())
+        }
         // 创建命名回调函数以便后续移除
         const processCallback = (event: any, data: any) => {
-            onprocess(data || event.payload)
+            const payload = data || event.payload
+            if (matchesTask(payload)) onprocess(payload)
         }
         const cancelCallback = (event: any, data: any) => {
-            oncancel(data || event.payload)
+            const payload = data || event.payload
+            if (!matchesTask(payload)) return
+            cleanup()
+            oncancel(payload)
         }
-        backend.addListener(undefined, 'sys:downloadBack', processCallback)
-        backend.addListener(undefined, 'sys:downloadCancel', cancelCallback)
-        backend.call(undefined, 'sys:download', false, {
-            downloadPath: url,
-            fileName: name,
-        })
-        // 返回清理函数
-        return () => {
-            backend.removeListener(undefined, 'sys:downloadBack', processCallback)
-            backend.removeListener(undefined, 'sys:downloadCancel', cancelCallback)
+        const completeCallback = (event: any, data: any) => {
+            const payload = data || event.payload
+            if (!matchesTask(payload)) return
+            cleanup()
+            oncomplete?.('completed')
+        }
+        const errorCallback = (event: any, data: any) => {
+            const payload = data || event.payload
+            if (!matchesTask(payload)) return
+            const message = payload?.error || payload?.message || payload || '下载失败'
+            cleanup()
+            onerror?.(new Error(String(message)))
+        }
+        listenerHandles = [
+            backend.addListener(undefined, 'sys:downloadBack', processCallback),
+            backend.addListener(undefined, 'sys:downloadCancel', cancelCallback),
+            backend.addListener(undefined, 'sys:downloadDone', completeCallback),
+            backend.addListener(undefined, 'sys:downloadError', errorCallback),
+        ]
+        const startNativeDownload = () => {
+            if (disposed || cancelRequested) return
+            started = true
+            void backend.call(undefined, 'sys:download', false, {
+                downloadPath: url,
+                fileName: name,
+                taskId: nativeTaskId,
+            })
+        }
+        if (backend.type === 'tauri') {
+            void Promise.all(listenerHandles.map((handle) => handle.ready)).then((ready) => {
+                if (disposed || cancelRequested) return
+                if (ready.some((value) => !value)) {
+                    cleanup()
+                    onerror?.(new Error('下载监听器初始化失败'))
+                    return
+                }
+                startNativeDownload()
+            })
+        } else {
+            // Electron listeners are synchronous.
+            startNativeDownload()
+        }
+        return {
+            cancel: () => {
+                cancelRequested = true
+                if ((backend.type === 'electron' || backend.type === 'tauri') && started) {
+                    void backend.call(undefined, 'sys:cancelDownload', false, {
+                        taskId: nativeTaskId,
+                    })
+                }
+            },
+            cleanup,
         }
     }
 }
@@ -1135,7 +1293,7 @@ export function checkNotice() {
                                     template: markRaw(defineAsyncComponent(
                                         () => import(`@renderer/components/notice-component/${info.template}.vue`),
                                     )),
-                                    templateValue: markRaw(info.template_data ? info.template_data : {}),
+                                    templateValue: markRaw(info.template_data ?? {}),
                                     button: button
                                 }
                             } else {
