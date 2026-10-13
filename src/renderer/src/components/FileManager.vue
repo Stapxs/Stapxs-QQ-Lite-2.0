@@ -494,6 +494,7 @@
         flex-shrink: 0;
     }
     .task-icon svg {
+        color: var(--color-font-r);
         font-size: 0.9rem;
     }
     .task-info {

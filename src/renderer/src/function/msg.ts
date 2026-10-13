@@ -660,7 +660,11 @@ function handleChatHistoryResponse(
     const pan = document.getElementById('msgPan')
     const oldScrollHeight = pan?.scrollHeight ?? 0
     saveMsg(msg, 'top', isActiveRequest).then(() => {
-        if (!pan || !isActiveRequest()) return
+        if (!isActiveRequest()) return
+        const uiStore = useUIStore()
+        uiStore.nowGetHistory = false
+        uiStore.historyBeforeTime = undefined
+        if (!pan) return
         nextTick(() => {
             setTimeout(() => {
                 if (!isActiveRequest() || document.getElementById('msgPan') !== pan) return
