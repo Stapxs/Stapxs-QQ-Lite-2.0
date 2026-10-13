@@ -587,6 +587,7 @@ import {
 	scrollToMsg,
     downloadFile,
     loadHistory as loadHistoryFirst,
+    loadMoreHistoryMessages,
     shouldAutoFocus,
 	vMenu,
 	vMove,
@@ -1107,10 +1108,7 @@ async function loadMoreHistory(reply?: { isActive: () => boolean }) {
         message_id: firstMsgId,
         count: fullPage ? chatStore.messageList.length + 20 : 20,
     }
-    if (!reply) {
-        Connector.send(name ?? 'get_chat_history', params, 'getChatHistory')
-        return true
-    }
+    if (!reply) return loadMoreHistoryMessages(firstMsgId, fullPage ? chatStore.messageList.length + 20 : 20)
     return requestQuotedHistoryPage(name ?? 'get_chat_history', params, reply.isActive)
 }
 
