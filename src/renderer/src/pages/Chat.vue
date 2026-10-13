@@ -1077,6 +1077,9 @@ async function loadMoreHistory(reply?: { isActive: () => boolean }) {
     if (uiStore.nowGetHistory || uiStore.canLoadHistory === false || list.length === 0) return false
     const firstMsgId = list[0].message_id
     const firstMsgTime = Number(list[0]?.time)
+    const fullPage =
+        authStore.jsonMap.message_list?.pagerType == 'full'
+    const fullPageSize = fullPage? Math.min(chatStore.messageList.length + 20, 100): 20
     const useMixedHistory =
         settingsStore.sysConfig.enable_local_history &&
         settingsStore.sysConfig.mixed_load_messages !== false
@@ -1090,10 +1093,13 @@ async function loadMoreHistory(reply?: { isActive: () => boolean }) {
 
     // Quote navigation pages from the network boundary. Local gap-fill callbacks
     // are independent of this navigation and must not outlive its ownership.
-    if (useMixedHistory && !reply) await loadLocalOlderHistory(firstMsgId, firstMsgTime)
+    if (useMixedHistory && !reply) {
+        const localHistory = loadLocalOlderHistory(firstMsgId, firstMsgTime)
+        const networkHistory = loadMoreHistoryMessages(firstMsgId, fullPageSize)
+        await localHistory
+        return networkHistory
+    }
 
-    const fullPage =
-        authStore.jsonMap.message_list?.pagerType == 'full'
     const type = chatStore.chatInfo.show.type
     const id = chatStore.chatInfo.show.id
     let name
@@ -1106,9 +1112,9 @@ async function loadMoreHistory(reply?: { isActive: () => boolean }) {
         group_id: type == 'group' ? id : undefined,
         user_id: type != 'group' ? id : undefined,
         message_id: firstMsgId,
-        count: fullPage ? chatStore.messageList.length + 20 : 20,
+        count: fullPageSize,
     }
-    if (!reply) return loadMoreHistoryMessages(firstMsgId, fullPage ? chatStore.messageList.length + 20 : 20)
+    if (!reply) return loadMoreHistoryMessages(firstMsgId, fullPageSize)
     return requestQuotedHistoryPage(name ?? 'get_chat_history', params, reply.isActive)
 }
 
