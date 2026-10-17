@@ -25,6 +25,26 @@ export function isActiveTransferStatus(status: string): boolean {
     return activeTransferStatuses.has(status)
 }
 
+/**
+ * 为浏览器托管的跨域下载补全文件名。
+ * 跨域链接上的 download 属性会被浏览器忽略，文件名只能来自服务端；
+ * QQ 文件服务器（NapCat 返回的 ftn 链接）根据 fname 参数生成 Content-Disposition，
+ * 该参数为空时浏览器只能用 URL 路径命名，导致文件名和扩展名丢失。
+ */
+export function withDownloadFileName(url: URL, name: string): URL {
+    // 只处理 QQ 文件服务器，其他服务的 fname 可能另有含义或受签名保护
+    const isQQFileServer = url.hostname.endsWith('.ftn.qq.com') &&
+        url.pathname.startsWith('/ftn_handler/')
+    if (!name || !isQQFileServer || url.searchParams.get('fname') !== '') return url
+    // QQ 文件服务器不会把 + 还原为空格，不能用 URLSearchParams 的表单编码
+    const result = new URL(url.href)
+    result.search = url.search.replace(
+        /([?&])fname=(?=&|$)/,
+        (_, prefix: string) => `${prefix}fname=${encodeURIComponent(name)}`,
+    )
+    return result
+}
+
 export function getOneBotResponseError(response: any): string | undefined {
     if (response?.status === 'ok' && Number(response?.retcode ?? 0) === 0) {
         return undefined
