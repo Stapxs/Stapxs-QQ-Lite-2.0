@@ -45,6 +45,7 @@ import {
 } from 'vue'
 import { sendMsgRaw } from './msgUtil'
 import { dbGetLatest } from './localHistoryUtil'
+import { withDownloadFileName } from './fileTransferUtil'
 import {
     createHistoryEcho,
     historyRequestTracker,
@@ -333,7 +334,7 @@ export function downloadFile(
             // 跨域 XHR 下载既需要 CORS，又会先把整个文件缓冲进内存。
             // 交给浏览器原生下载器可以流式落盘，也不会受应用超时影响。
             const link = document.createElement('a')
-            link.href = url
+            link.href = withDownloadFileName(parsedUrl, name).href
             link.download = name
             link.rel = 'noopener'
             link.target = '_blank'
