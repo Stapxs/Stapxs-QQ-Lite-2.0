@@ -32,7 +32,10 @@ export function isActiveTransferStatus(status: string): boolean {
  * 该参数为空时浏览器只能用 URL 路径命名，导致文件名和扩展名丢失。
  */
 export function withDownloadFileName(url: URL, name: string): URL {
-    if (!name || url.searchParams.get('fname') !== '') return url
+    // 只处理 QQ 文件服务器，其他服务的 fname 可能另有含义或受签名保护
+    const isQQFileServer = url.hostname.endsWith('.ftn.qq.com') &&
+        url.pathname.startsWith('/ftn_handler/')
+    if (!name || !isQQFileServer || url.searchParams.get('fname') !== '') return url
     const result = new URL(url.href)
     result.searchParams.set('fname', name)
     return result
