@@ -11,6 +11,10 @@ const inlineImageTypes = new Set([
     'image/bmp',
 ])
 
+// 页面内部发起的拖动（如消息图片）会带上 Files 类型，用这个类型把它们排除。
+// 标记跟随拖动数据，拖动源中途被移除收不到 dragend 时也不会残留
+const internalDragType = 'application/x-ssqq-internal-drag'
+
 interface DroppedItem {
     kind: string
     getAsFile(): File | null
@@ -18,12 +22,23 @@ interface DroppedItem {
 }
 
 /**
- * 拖动内容是否包含系统文件；dragenter / dragover 阶段只能读取类型，读不到文件本身
+ * 在 dragstart 中标记页面内部发起的拖动
+ */
+export function markInternalDrag(
+    dataTransfer?: { setData(format: string, data: string): void } | null,
+) {
+    dataTransfer?.setData(internalDragType, '1')
+}
+
+/**
+ * 拖动内容是否包含从页面外拖入的系统文件；
+ * dragenter / dragover 阶段只能读取类型，读不到文件本身
  */
 export function hasDraggedFiles(
     dataTransfer?: { types?: ArrayLike<string> } | null,
 ): boolean {
-    return Array.from(dataTransfer?.types ?? []).includes('Files')
+    const types = Array.from(dataTransfer?.types ?? [])
+    return types.includes('Files') && !types.includes(internalDragType)
 }
 
 /**
@@ -61,7 +76,7 @@ export function isInlineImageFile(file: Pick<File, 'type'>): boolean {
  * dragleave，所以每次离开时顺带清理已脱离文档的元素。
  */
 export class FileDragTargets {
-    private targets = new Set<EventTarget>()
+    private readonly targets = new Set<EventTarget>()
 
     enter(target: EventTarget | null) {
         if (target) this.targets.add(target)
