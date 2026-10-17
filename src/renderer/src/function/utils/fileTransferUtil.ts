@@ -36,8 +36,12 @@ export function withDownloadFileName(url: URL, name: string): URL {
     const isQQFileServer = url.hostname.endsWith('.ftn.qq.com') &&
         url.pathname.startsWith('/ftn_handler/')
     if (!name || !isQQFileServer || url.searchParams.get('fname') !== '') return url
+    // QQ 文件服务器不会把 + 还原为空格，不能用 URLSearchParams 的表单编码
     const result = new URL(url.href)
-    result.searchParams.set('fname', name)
+    result.search = url.search.replace(
+        /([?&])fname=(?=&|$)/,
+        (_, prefix: string) => `${prefix}fname=${encodeURIComponent(name)}`,
+    )
     return result
 }
 
