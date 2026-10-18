@@ -1722,7 +1722,7 @@ export function useKeyboard(...args: [string, ...string[], () => boolean | undef
 
 function localStorageGetItem(key: string): string | null {
     if (backend.type === 'electron') {
-        return backend.callSync('opt:get', key)
+        return backend.callSync('opt:getLocal', key)
     } else {
         // eslint-disable-next-line no-restricted-globals
         return localStorage.getItem(key)
@@ -1731,7 +1731,7 @@ function localStorageGetItem(key: string): string | null {
 
 function localStorageSetItem(key: string, value: string): void {
     if (backend.type === 'electron') {
-        void backend.call(undefined, 'opt:store', false, { key, value })
+        backend.callSync('opt:store', { key, value })
     } else {
         // eslint-disable-next-line no-restricted-globals
         localStorage.setItem(key, value)
