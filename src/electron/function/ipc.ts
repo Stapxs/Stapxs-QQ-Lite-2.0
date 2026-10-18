@@ -23,6 +23,12 @@ import { execSync } from 'child_process'
 
 let connector = undefined as Connector | undefined
 const store = new Store()
+const localStore = new Store({ name: 'local-storage' })
+for (const key of ['recent-emojis-id', 'recent-custom-faces-id', 'recent-local-faces-id']) {
+    if (!localStore.has(key) && store.has(key)) {
+        localStore.set(key, store.get(key))
+    }
+}
 const logger = log4js.getLogger('ipc')
 let template = [] as any[]
 
@@ -149,8 +155,14 @@ export function regIpcListener() {
         }
     })
     // 保存信息
-    ipcMain.on('opt:store', (_, arg) => {
-        store.set(arg.key, arg.value)
+    ipcMain.on('opt:store', (event, arg) => {
+        try {
+            localStore.set(arg.key, arg.value)
+            event.returnValue = true
+        } catch {
+            logger.error('Failed to save local storage')
+            event.returnValue = false
+        }
     })
     // 保存设置
     // PS：升级至 electron 27 后 cookie 已完全无法持久化，只能进行保存
@@ -163,6 +175,9 @@ export function regIpcListener() {
     })
     ipcMain.on('opt:get', (event, arg) => {
         event.returnValue = store.get(arg)
+    })
+    ipcMain.on('opt:getLocal', (event, arg) => {
+        event.returnValue = localStore.get(arg)
     })
     // 重置设置
     ipcMain.on('opt:clearAll', (event) => {
