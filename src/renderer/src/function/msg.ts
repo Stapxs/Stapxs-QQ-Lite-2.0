@@ -1775,7 +1775,9 @@ async function saveMsg(msg: any, append = undefined as undefined | string, isAct
         return
     }
     const selfId = authStore.loginInfo.uin
-    saveMessagesWithSideEffects(selfId, list).then(() => revokeEmptyHistoryRecords(selfId, list))
+    saveMessagesWithSideEffects(selfId, list)
+        .then(() => revokeEmptyHistoryRecords(selfId, list))
+        .catch(error => logger.error(error as Error, '保存历史消息到本地失败'))
     if (!applySavedMessages(list, append, keepExisting)) return
     chatStore.messageList.forEach(item => sendMsgAppendInfo(item))
     updateSavedHistoryPreview()
