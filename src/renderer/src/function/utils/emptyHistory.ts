@@ -1,8 +1,10 @@
 /** 被撤回的历史消息在 NapCat 中表现为 message 为空数组的记录，但仍占用分页条数 */
+export function isEmptyHistoryRecord(message: any): boolean {
+    return Array.isArray(message?.message) && message.message.length === 0
+}
+
 export function isEmptyHistoryPage(messages: any[]): boolean {
-    return messages.length > 0 && messages.every(message =>
-        Array.isArray(message?.message) && message.message.length === 0,
-    )
+    return messages.length > 0 && messages.every(isEmptyHistoryRecord)
 }
 
 /** 全量分页模式下，最新一页全部为空记录时继续向前扩大窗口 */

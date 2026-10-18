@@ -62,7 +62,7 @@ import {
     failUploadTask,
 } from '@renderer/components/FileManager.vue'
 import { getOneBotResponseError } from './utils/fileTransferUtil'
-import { expandEmptyHistoryPage, isEmptyHistoryPage } from './utils/emptyHistory'
+import { expandEmptyHistoryPage, isEmptyHistoryPage, isEmptyHistoryRecord } from './utils/emptyHistory'
 import { refreshFavicon } from './favicon'
 import { Img } from './model/img'
 import { ensurePinyinLoaded, getPinyin, isPinyinReady } from './utils/pinyin'
@@ -1774,11 +1774,18 @@ async function saveMsg(msg: any, append = undefined as undefined | string, isAct
         uiStore.nowGetHistory = false
         return
     }
-    saveMessagesWithSideEffects(authStore.loginInfo.uin, list)
+    const selfId = authStore.loginInfo.uin
+    saveMessagesWithSideEffects(selfId, list).then(() => revokeEmptyHistoryRecords(selfId, list))
     if (!applySavedMessages(list, append, keepExisting)) return
     chatStore.messageList.forEach(item => sendMsgAppendInfo(item))
     updateSavedHistoryPreview()
     if (hasBoundary) uiStore.historyBeforeTime = undefined
+}
+
+/** 本地 DB 写入不会覆盖已有记录，被撤回的空记录需要单独把同 ID 的缓存标记为已撤回 */
+function revokeEmptyHistoryRecords(selfId: string | number, list: any[]) {
+    list.filter(isEmptyHistoryRecord)
+        .forEach(item => dbRevokeMessage(selfId, String(item.message_id)))
 }
 
 function isSavedMessageForCurrentChat(list: any[]): boolean {
@@ -1815,7 +1822,11 @@ function applySavedMessages(list: any[], append: string | undefined, keepExistin
 function updateSavedHistoryPreview() {
     const chatStore = useChatStore()
     const contactStore = useContactStore()
-    const last = chatStore.messageList[chatStore.messageList.length - 1]
+    // 最新几条被撤回时，以最近一条可读消息作为会话预览
+    let last: any
+    for (let i = chatStore.messageList.length - 1; i >= 0 && !last; i--) {
+        if (!isEmptyHistoryRecord(chatStore.messageList[i])) last = chatStore.messageList[i]
+    }
     if (!last) return
     const user = contactStore.userList.find(item => item.group_id == chatStore.chatInfo.show.id || item.user_id == chatStore.chatInfo.show.id)
     const sessionId = Number(chatStore.chatInfo.show.id)
@@ -2005,8 +2016,7 @@ function hasResolvableImageSource(msg: any): boolean {
 
 function shouldReplaceDuplicateMessage(existing: any, incoming: any): boolean {
     // 新的空记录（消息已被撤回）覆盖本地缓存中的旧内容
-    if (Array.isArray(incoming?.message) && incoming.message.length === 0 &&
-        Array.isArray(existing?.message) && existing.message.length > 0) return true
+    if (isEmptyHistoryRecord(incoming) && existing?.message?.length > 0) return true
     const settingsStore = useSettingsStore()
     if (!hasImageMessage(incoming)) return false
     if (existing?._from_local_db !== true) return false
