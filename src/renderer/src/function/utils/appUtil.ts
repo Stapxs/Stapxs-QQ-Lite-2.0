@@ -1731,7 +1731,7 @@ function localStorageGetItem(key: string): string | null {
 
 function localStorageSetItem(key: string, value: string): void {
     if (backend.type === 'electron') {
-        backend.callSync('opt:store', { key, value })
+        void backend.call(undefined, 'opt:store', false, { key, value })
     } else {
         // eslint-disable-next-line no-restricted-globals
         localStorage.setItem(key, value)
