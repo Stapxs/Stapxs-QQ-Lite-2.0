@@ -62,6 +62,7 @@ import {
     failUploadTask,
 } from '@renderer/components/FileManager.vue'
 import { getOneBotResponseError } from './utils/fileTransferUtil'
+import { expandEmptyHistoryPage, isEmptyHistoryPage } from './utils/emptyHistory'
 import { refreshFavicon } from './favicon'
 import { Img } from './model/img'
 import { ensurePinyinLoaded, getPinyin, isPinyinReady } from './utils/pinyin'
@@ -653,7 +654,7 @@ function handleChatHistoryResponse(
 
     if (!appendToTop) {
         // 无论是否有本地预填充，都以网络数据替换（保证最新消息不遗漏）
-        saveMsg(msg, undefined, isActiveRequest).catch(onError)
+        saveMsg(msg, undefined, isActiveRequest, false, true).catch(onError)
         return
     }
 
@@ -1758,9 +1759,9 @@ export async function appendHistoryForQuotedMessage(msg: any, isActive: () => bo
     await saveMsg(msg, 'top', isActive, true)
 }
 
-async function saveMsg(msg: any, append = undefined as undefined | string, isActive = () => true, keepExisting = false) {
+async function saveMsg(msg: any, append = undefined as undefined | string, isActive = () => true, keepExisting = false, expandEmpty = false) {
     if (!isActive()) return
-    let list = await normalizeMessagesFromPayload(msg)
+    let list = await normalizeMessagesFromPayload(msg, expandEmpty ? isActive : undefined)
     if (!isActive() || list == undefined || !isSavedMessageForCurrentChat(list)) return
     const uiStore = useUIStore()
     const authStore = useAuthStore()
@@ -1788,9 +1789,9 @@ function isSavedMessageForCurrentChat(list: any[]): boolean {
 }
 
 function filterSavedHistory(list: any[], append: string | undefined, beforeTime: number): any[] {
-    const messages = list.filter(item => item.message.length > 0)
-    if (append !== 'top' || !Number.isFinite(beforeTime)) return messages
-    return messages.filter(item => Number.isFinite(Number(item.time)) && Number(item.time) <= beforeTime)
+    // 被撤回的记录（message 为空）仍占用全量分页的条数，保留它们以便下一页请求能越过
+    if (append !== 'top' || !Number.isFinite(beforeTime)) return list
+    return list.filter(item => Number.isFinite(Number(item.time)) && Number(item.time) <= beforeTime)
 }
 
 function applySavedMessages(list: any[], append: string | undefined, keepExisting: boolean): boolean {
@@ -1827,9 +1828,36 @@ function updateSavedHistoryPreview() {
     updateBaseOnMsgList()
 }
 
-async function normalizeMessagesFromPayload(payload: any): Promise<any[] | undefined> {
+async function normalizeMessagesFromPayload(
+    payload: any,
+    expandEmpty?: () => boolean,
+): Promise<any[] | undefined> {
     const rawList = getMsgData('message_list', payload, msgPath.message_list)
-    return getMessageList(rawList)
+    const map = useAuthStore().jsonMap
+    const chat = useChatStore().chatInfo.show
+    const list = await getMessageList(rawList)
+    if (!expandEmpty || map.message_list?.pagerType !== 'full' || !list || !isEmptyHistoryPage(list)) return list
+    // 首屏历史全部是被撤回的空记录时，向前扩大窗口直到出现可读消息
+    const isActive = () => expandEmpty() && useAuthStore().jsonMap === map
+    const action = chat.type === 'group' ? map.message_list.name : map.message_list.private_name
+    return expandEmptyHistoryPage(list, async count => {
+        try {
+            const response = await Connector.callRawApi(action ?? 'get_chat_history', {
+                group_id: chat.type === 'group' ? chat.id : undefined,
+                user_id: chat.type !== 'group' ? chat.id : undefined,
+                message_id: 0,
+                count,
+            }, 10000)
+            if (!isActive()) return undefined
+            if (response?.status !== 'ok' || Number(response.retcode ?? 0) !== 0 || response.data == null) {
+                throw new Error('Empty history expansion failed')
+            }
+            return getMessageList(getMsgData('message_list', response, msgPath.message_list))
+        } catch (error) {
+            if (isActive()) logger.error(error as Error, '加载被撤回消息之前的历史失败')
+            return undefined
+        }
+    }, isActive)
 }
 
 export async function normalizeMessagesForPreview(payload: any): Promise<any[]> {
@@ -1976,6 +2004,9 @@ function hasResolvableImageSource(msg: any): boolean {
 }
 
 function shouldReplaceDuplicateMessage(existing: any, incoming: any): boolean {
+    // 新的空记录（消息已被撤回）覆盖本地缓存中的旧内容
+    if (Array.isArray(incoming?.message) && incoming.message.length === 0 &&
+        Array.isArray(existing?.message) && existing.message.length > 0) return true
     const settingsStore = useSettingsStore()
     if (!hasImageMessage(incoming)) return false
     if (existing?._from_local_db !== true) return false
