@@ -2150,16 +2150,21 @@ function revokeMsg(_: string, msg: any) {
         logger.add(LogType.UI, '没有找到这条被撤回的消息')
         return
     }
-
-    // 移除消息
-    chatStore.messageList.splice(msgIndex, 1)
+    // 重复的撤回事件：保留已有提示及其 originMsg（重新编辑）
+    if (msgGet.post_type === 'notice') return
 
     if (msgGet.sender.user_id === authStore.loginInfo.uin)
         msg.originMsg = msgGet
 
-    // 显示撤回提示
-    const list = chatStore.messageList
-    list.splice(msgIndex + 1, 0, msg)
+    // 撤回提示占用原消息的位置，并沿用其时间和序号参与排序，
+    // 否则提示会排到后面的消息之后，或在合并历史时被移到撤回时刻。
+    // 先清掉事件自带的序号，避免它优先于原消息的序号参与排序
+    msg.time = msgGet.time
+    for (const key of ['message_seq', 'seq_id', 'seq']) {
+        delete msg[key]
+        if (msgGet[key] !== undefined) msg[key] = msgGet[key]
+    }
+    chatStore.messageList.splice(msgIndex, 1, msg)
 }
 
 let qed_try_times = 0
