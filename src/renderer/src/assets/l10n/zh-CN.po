@@ -1927,3 +1927,12 @@ msgstr ""
 
 msgid "跳转到引用消息"
 msgstr ""
+
+msgid "松开以发送给 {name}"
+msgstr ""
+
+msgid "图片会加入输入框，其他文件将直接上传"
+msgstr ""
+
+msgid "暂不支持发送文件夹"
+msgstr ""

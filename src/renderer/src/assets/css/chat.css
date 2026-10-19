@@ -1747,6 +1747,54 @@ input {
     font-size: 0.8rem;
 }
 
+.file-drop-pan {
+    justify-content: center;
+    pointer-events: none;
+    align-items: center;
+    position: fixed;
+    display: flex;
+    z-index: 999;
+    inset: 0;
+}
+.file-drop-pan > div.bg {
+    background: var(--color-card-2);
+    position: absolute;
+    opacity: 0.7;
+    inset: 0;
+}
+.file-drop-pan > div.ss-card {
+    border: 2px dashed var(--color-main);
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    padding: 30px 40px;
+    max-width: 80%;
+    display: flex;
+    gap: 10px;
+}
+.file-drop-pan > div.ss-card > svg {
+    color: var(--color-main);
+    font-size: 2.5rem;
+}
+.file-drop-pan > div.ss-card > span {
+    color: var(--color-font);
+    overflow-wrap: anywhere;
+    font-size: 1.1rem;
+}
+.file-drop-pan > div.ss-card > a {
+    color: var(--color-font-2);
+    font-size: 0.85rem;
+}
+.file-drop-enter-active,
+.file-drop-leave-active {
+    transition: opacity 0.15s;
+}
+.file-drop-enter-from,
+.file-drop-leave-to {
+    opacity: 0;
+}
+
 .forward-pan {
     pointer-events: all;
     position: absolute;
