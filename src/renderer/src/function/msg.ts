@@ -62,6 +62,7 @@ import {
     failUploadTask,
 } from '@renderer/components/FileManager.vue'
 import { getOneBotResponseError } from './utils/fileTransferUtil'
+import { expandEmptyHistoryPage, isEmptyHistoryPage, isEmptyHistoryRecord } from './utils/emptyHistory'
 import { refreshFavicon } from './favicon'
 import { Img } from './model/img'
 import { ensurePinyinLoaded, getPinyin, isPinyinReady } from './utils/pinyin'
@@ -653,7 +654,7 @@ function handleChatHistoryResponse(
 
     if (!appendToTop) {
         // 无论是否有本地预填充，都以网络数据替换（保证最新消息不遗漏）
-        saveMsg(msg, undefined, isActiveRequest).catch(onError)
+        saveMsg(msg, undefined, isActiveRequest, false, true).catch(onError)
         return
     }
 
@@ -1758,9 +1759,9 @@ export async function appendHistoryForQuotedMessage(msg: any, isActive: () => bo
     await saveMsg(msg, 'top', isActive, true)
 }
 
-async function saveMsg(msg: any, append = undefined as undefined | string, isActive = () => true, keepExisting = false) {
+async function saveMsg(msg: any, append = undefined as undefined | string, isActive = () => true, keepExisting = false, expandEmpty = false) {
     if (!isActive()) return
-    let list = await normalizeMessagesFromPayload(msg)
+    let list = await normalizeMessagesFromPayload(msg, expandEmpty ? isActive : undefined)
     if (!isActive() || list == undefined || !isSavedMessageForCurrentChat(list)) return
     const uiStore = useUIStore()
     const authStore = useAuthStore()
@@ -1773,11 +1774,20 @@ async function saveMsg(msg: any, append = undefined as undefined | string, isAct
         uiStore.nowGetHistory = false
         return
     }
-    saveMessagesWithSideEffects(authStore.loginInfo.uin, list)
+    const selfId = authStore.loginInfo.uin
+    saveMessagesWithSideEffects(selfId, list)
+        .then(() => revokeEmptyHistoryRecords(selfId, list))
+        .catch(error => logger.error(error as Error, '保存历史消息到本地失败'))
     if (!applySavedMessages(list, append, keepExisting)) return
     chatStore.messageList.forEach(item => sendMsgAppendInfo(item))
     updateSavedHistoryPreview()
     if (hasBoundary) uiStore.historyBeforeTime = undefined
+}
+
+/** 本地 DB 写入不会覆盖已有记录，被撤回的空记录需要单独把同 ID 的缓存标记为已撤回 */
+function revokeEmptyHistoryRecords(selfId: string | number, list: any[]) {
+    list.filter(isEmptyHistoryRecord)
+        .forEach(item => dbRevokeMessage(selfId, String(item.message_id)))
 }
 
 function isSavedMessageForCurrentChat(list: any[]): boolean {
@@ -1788,9 +1798,9 @@ function isSavedMessageForCurrentChat(list: any[]): boolean {
 }
 
 function filterSavedHistory(list: any[], append: string | undefined, beforeTime: number): any[] {
-    const messages = list.filter(item => item.message.length > 0)
-    if (append !== 'top' || !Number.isFinite(beforeTime)) return messages
-    return messages.filter(item => Number.isFinite(Number(item.time)) && Number(item.time) <= beforeTime)
+    // 被撤回的记录（message 为空）仍占用全量分页的条数，保留它们以便下一页请求能越过
+    if (append !== 'top' || !Number.isFinite(beforeTime)) return list
+    return list.filter(item => Number.isFinite(Number(item.time)) && Number(item.time) <= beforeTime)
 }
 
 function applySavedMessages(list: any[], append: string | undefined, keepExisting: boolean): boolean {
@@ -1814,7 +1824,11 @@ function applySavedMessages(list: any[], append: string | undefined, keepExistin
 function updateSavedHistoryPreview() {
     const chatStore = useChatStore()
     const contactStore = useContactStore()
-    const last = chatStore.messageList[chatStore.messageList.length - 1]
+    // 最新几条被撤回时，以最近一条可读消息作为会话预览
+    let last: any
+    for (let i = chatStore.messageList.length - 1; i >= 0 && !last; i--) {
+        if (!isEmptyHistoryRecord(chatStore.messageList[i])) last = chatStore.messageList[i]
+    }
     if (!last) return
     const user = contactStore.userList.find(item => item.group_id == chatStore.chatInfo.show.id || item.user_id == chatStore.chatInfo.show.id)
     const sessionId = Number(chatStore.chatInfo.show.id)
@@ -1827,9 +1841,36 @@ function updateSavedHistoryPreview() {
     updateBaseOnMsgList()
 }
 
-async function normalizeMessagesFromPayload(payload: any): Promise<any[] | undefined> {
+async function normalizeMessagesFromPayload(
+    payload: any,
+    expandEmpty?: () => boolean,
+): Promise<any[] | undefined> {
     const rawList = getMsgData('message_list', payload, msgPath.message_list)
-    return getMessageList(rawList)
+    const map = useAuthStore().jsonMap
+    const chat = useChatStore().chatInfo.show
+    const list = await getMessageList(rawList)
+    if (!expandEmpty || map.message_list?.pagerType !== 'full' || !list || !isEmptyHistoryPage(list)) return list
+    // 首屏历史全部是被撤回的空记录时，向前扩大窗口直到出现可读消息
+    const isActive = () => expandEmpty() && useAuthStore().jsonMap === map
+    const action = chat.type === 'group' ? map.message_list.name : map.message_list.private_name
+    return expandEmptyHistoryPage(list, async count => {
+        try {
+            const response = await Connector.callRawApi(action ?? 'get_chat_history', {
+                group_id: chat.type === 'group' ? chat.id : undefined,
+                user_id: chat.type !== 'group' ? chat.id : undefined,
+                message_id: 0,
+                count,
+            }, 10000)
+            if (!isActive()) return undefined
+            if (response?.status !== 'ok' || Number(response.retcode ?? 0) !== 0 || response.data == null) {
+                throw new Error('Empty history expansion failed')
+            }
+            return getMessageList(getMsgData('message_list', response, msgPath.message_list))
+        } catch (error) {
+            if (isActive()) logger.error(error as Error, '加载被撤回消息之前的历史失败')
+            return undefined
+        }
+    }, isActive)
 }
 
 export async function normalizeMessagesForPreview(payload: any): Promise<any[]> {
@@ -1976,6 +2017,8 @@ function hasResolvableImageSource(msg: any): boolean {
 }
 
 function shouldReplaceDuplicateMessage(existing: any, incoming: any): boolean {
+    // 新的空记录（消息已被撤回）覆盖本地缓存中的旧内容
+    if (isEmptyHistoryRecord(incoming) && existing?.message?.length > 0) return true
     const settingsStore = useSettingsStore()
     if (!hasImageMessage(incoming)) return false
     if (existing?._from_local_db !== true) return false
