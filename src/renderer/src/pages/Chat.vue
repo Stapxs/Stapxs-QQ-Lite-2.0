@@ -594,7 +594,7 @@ import {
 	VMoveOptions,
 } from '@renderer/function/utils/appUtil'
 import {
-    copyToClipboard,
+    copyImageToClipboard,
     getTimeConfig,
     getTrueLang,
     getViewTime,
@@ -1669,8 +1669,8 @@ function showMsgMeun(event: MenuEventData, data: any) {
                 tags.value.menuDisplay.downloadImg = (
                     select as HTMLImageElement
                 ).src
-                if (backend.isDesktop())
-                    tags.value.menuDisplay.copyImg = true
+                tags.value.menuDisplay.copy = false
+                tags.value.menuDisplay.copyImg = true
             }
         }
         const pointX = event.x
@@ -2044,26 +2044,13 @@ async function copyImg() {
     const url = tags.value.menuDisplay.downloadImg
     if (!url) return
     closeMsgMenu()
-    const { blob, buffer } = await getImageUrlData(url)
     const popInfo = new PopInfo()
-    if(backend.type === 'tauri') {
-        try {
-            const Clipboard = await import('@tauri-apps/plugin-clipboard-manager')
-            await Clipboard.writeImage(buffer)
-            popInfo.add(PopType.INFO, $t('复制成功'))
-        } catch(e) {
-            popInfo.add(PopType.ERR, $t('复制失败'))
-            new Logger().error(e as unknown as Error, '复制图片失败')
-        }
-    } else {
-        const item = new ClipboardItem({ [blob.type]: blob })
-        try {
-            await copyToClipboard([item])
-            popInfo.add(PopType.INFO, $t('复制成功'))
-        } catch (e) {
-            popInfo.add(PopType.ERR, $t('复制失败'))
-            new Logger().error(e as unknown as Error, '复制图片失败')
-        }
+    try {
+        await copyImageToClipboard(() => getImageUrlData(url).then(data => data.blob))
+        popInfo.add(PopType.INFO, $t('复制成功'))
+    } catch (error) {
+        popInfo.add(PopType.ERR, $t('复制失败'))
+        new Logger().error(error as Error, '复制图片失败')
     }
 }
 
