@@ -661,8 +661,14 @@ export async function copyToClipboard(content: ClipboardItem[] | string) {
         await window.navigator.clipboard.write(content)
 }
 
+let imageClipboardGeneration = 0
+
 export async function copyImageToClipboard(createBlob: () => Promise<Blob | undefined>) {
+    const generation = ++imageClipboardGeneration
     const requireBlob = (blob: Blob | undefined) => {
+        if (generation !== imageClipboardGeneration) {
+            throw new DOMException('图片复制已被新的请求替代', 'AbortError')
+        }
         if (!blob) throw new Error('图片转换失败')
         return blob
     }
@@ -670,13 +676,15 @@ export async function copyImageToClipboard(createBlob: () => Promise<Blob | unde
     if (backend.type === 'tauri') {
         const blob = requireBlob(await createBlob())
         const Clipboard = await import('@tauri-apps/plugin-clipboard-manager')
-        await Clipboard.writeImage(new Uint8Array(await blob.arrayBuffer()))
+        const buffer = new Uint8Array(await blob.arrayBuffer())
+        requireBlob(blob)
+        await Clipboard.writeImage(buffer)
         return
     }
 
     if (typeof window.ClipboardItem !== 'function' ||
         typeof window.navigator.clipboard?.write !== 'function') {
-        throw new Error(i18n.global.t('当前环境不支持剪贴板操作'))
+        throw new TypeError(i18n.global.t('当前环境不支持剪贴板操作'))
     }
 
     const blob = Promise.resolve().then(createBlob).then(requireBlob)
