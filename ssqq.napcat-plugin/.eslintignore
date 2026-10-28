@@ -1,6 +1,0 @@
-node_modules
-dist
-.vite
-napcat-plugin-ssqq.zip
-*.zip
-**/webui/*.map
