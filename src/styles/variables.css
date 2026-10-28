@@ -1,0 +1,71 @@
+:root {
+  /* Font Family */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* Stapxs Theme Palette (Light Mode Default) */
+  --color-main: #f0f3f6;
+  --color-card-1: rgba(255, 255, 255, 0.85);
+  --color-card-2: #f7f9fa;
+  --color-card-hover: rgba(255, 255, 255, 0.95);
+  --color-font: #24292f;
+  --color-font-1: #24292f;
+  --color-font-2: #656d76;
+  --color-font-r: #ffffff;
+  --color-font-disabled: #8c959f;
+
+  /* Accents */
+  --color-blue: #316cf4;
+  --color-blue-hover: #2256ce;
+  --color-blue-light: #d3e1fc;
+  --color-green: #2da44e;
+  --color-green-light: #dafbe1;
+  --color-red: #cf222e;
+  --color-red-light: #ffebe9;
+  --color-yellow: #d68100;
+  --color-yellow-light: #fff8c5;
+
+  /* Shadow & Blur */
+  --color-shader: rgba(0, 0, 0, 0.08);
+  --color-shader-lg: rgba(0, 0, 0, 0.14);
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-hover: rgba(49, 108, 244, 0.4);
+  --glass-blur: blur(12px);
+
+  /* Dimensions & Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --sidebar-width: 68px;
+  --sidebar-mobile-height: 56px;
+}
+
+[data-theme='dark'] {
+  /* Stapxs Dark Mode Palette */
+  --color-main: #14171a;
+  --color-card-1: rgba(30, 34, 40, 0.85);
+  --color-card-2: #1e2228;
+  --color-card-hover: rgba(38, 43, 51, 0.95);
+  --color-font: #e6edf3;
+  --color-font-1: #e6edf3;
+  --color-font-2: #8b949e;
+  --color-font-r: #14171a;
+  --color-font-disabled: #6e7681;
+
+  /* Accents */
+  --color-blue: #4078f2;
+  --color-blue-hover: #588bf6;
+  --color-blue-light: rgba(64, 120, 242, 0.15);
+  --color-green: #3fb950;
+  --color-green-light: rgba(63, 185, 80, 0.15);
+  --color-red: #f85149;
+  --color-red-light: rgba(248, 81, 73, 0.15);
+  --color-yellow: #d29922;
+  --color-yellow-light: rgba(210, 153, 34, 0.15);
+
+  /* Shadow & Blur */
+  --color-shader: rgba(0, 0, 0, 0.35);
+  --color-shader-lg: rgba(0, 0, 0, 0.55);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-hover: rgba(88, 139, 246, 0.5);
+}

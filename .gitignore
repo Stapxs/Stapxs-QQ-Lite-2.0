@@ -20,3 +20,8 @@ notice_local.json
 .npmrc
 *.log*
 logs/**
+
+# Environment variables
+.env
+.env.*
+!.env.example
