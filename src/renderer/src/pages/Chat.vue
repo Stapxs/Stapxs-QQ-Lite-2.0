@@ -669,9 +669,12 @@ import {
 import {
     FileDragTargets,
     getDroppedFiles,
+    getTauriDroppedFiles,
     hasDraggedFiles,
     isInlineImageFile,
+    listenTauriDragDrop,
     markInternalDrag,
+    usesTauriDragDrop,
 } from '@renderer/function/utils/fileDropUtil'
 
 defineOptions({ name: 'ViewChat' })
@@ -2356,11 +2359,9 @@ const fileDragTargets = new FileDragTargets()
 let fileDropTimer: ReturnType<typeof setTimeout> | null = null
 
 /**
- * ignore：不是外部文件，或聊天面板不可见，交给浏览器默认处理
- * block：聊天面板可见但当前不能发送，阻止浏览器直接打开文件
+ * 聊天面板当前的文件拖放接收状态
  */
-function getFileDropState(event: DragEvent): 'ignore' | 'block' | 'accept' {
-    if (!hasDraggedFiles(event.dataTransfer)) return 'ignore'
+function getChatFileDropState(): 'ignore' | 'block' | 'accept' {
     // v-show 隐藏聊天面板（切换到其他标签页）时不接收
     if (!chatPan.value || chatPan.value.getClientRects().length === 0) return 'ignore'
     if (
@@ -2374,11 +2375,21 @@ function getFileDropState(event: DragEvent): 'ignore' | 'block' | 'accept' {
     return 'accept'
 }
 
+/**
+ * ignore：不是外部文件，或聊天面板不可见，交给浏览器默认处理
+ * block：聊天面板可见但当前不能发送，阻止浏览器直接打开文件
+ */
+function getFileDropState(event: DragEvent): 'ignore' | 'block' | 'accept' {
+    if (!hasDraggedFiles(event.dataTransfer)) return 'ignore'
+    return getChatFileDropState()
+}
+
 function showFileDrop() {
     fileDropActive.value = true
-    // 拖动期间浏览器会持续触发 dragover，停止触发说明拖动已离开或取消
+    // 拖动期间浏览器会持续触发 dragover，停止触发说明拖动已离开或取消；
+    // tauri 的 over 事件只在鼠标移动时触发，静止拖动时不应隐藏，超时相应放宽
     if (fileDropTimer) clearTimeout(fileDropTimer)
-    fileDropTimer = setTimeout(hideFileDrop, 1000)
+    fileDropTimer = setTimeout(hideFileDrop, usesTauriDragDrop() ? 5000 : 1000)
 }
 
 function hideFileDrop() {
@@ -2423,6 +2434,10 @@ function onFileDrop(event: DragEvent) {
     if (state === 'block') return
 
     const { files, folders } = getDroppedFiles(event.dataTransfer)
+    dispatchDroppedFiles(files, folders)
+}
+
+function dispatchDroppedFiles(files: File[], folders: number) {
     if (folders > 0) {
         new PopInfo().add(PopType.INFO, $t('暂不支持发送文件夹'))
     }
@@ -2449,12 +2464,85 @@ function onInternalDragStart(event: DragEvent) {
     markInternalDrag(event.dataTransfer)
 }
 
+// === Tauri 拖放事件（macOS / Windows） ===
+// Tauri 接管系统拖放后 HTML5 drop 事件不会触发，改用 tauri 拖放事件获取文件路径
+let tauriFileDropUnlisten: (() => void) | null = null
+let tauriFileDropListening = false
+let tauriDragHasFiles = false
+
+function onTauriDragEnter(paths: string[]) {
+    // macOS 页面内部拖动（如消息图片）也会触发无路径的拖放事件，按路径过滤
+    tauriDragHasFiles = paths.length > 0
+    onTauriDragOver()
+}
+
+function onTauriDragOver() {
+    if (!tauriDragHasFiles) return
+    const state = getChatFileDropState()
+    if (state === 'ignore') {
+        // 拖动中聊天面板被隐藏时，提示不能留在其他页面上
+        if (fileDropActive.value) hideFileDrop()
+    } else if (state === 'accept') {
+        showFileDrop()
+    } else {
+        hideFileDrop()
+    }
+}
+
+function onTauriDragLeave() {
+    tauriDragHasFiles = false
+    if (fileDropActive.value) hideFileDrop()
+}
+
+async function onTauriFileDrop(paths: string[]) {
+    const state = getChatFileDropState()
+    const hasFiles = tauriDragHasFiles
+    tauriDragHasFiles = false
+    hideFileDrop()
+    if (!hasFiles || paths.length === 0) return
+    if (state !== 'accept') return
+
+    const { files, folders, failed } = await getTauriDroppedFiles(paths)
+    if (failed > 0) {
+        new PopInfo().add(PopType.ERR, $t('读取拖入的文件失败'))
+    }
+    dispatchDroppedFiles(files, folders)
+}
+
+async function addTauriFileDropListener() {
+    tauriFileDropListening = true
+    try {
+        const unlisten = await listenTauriDragDrop({
+            enter: onTauriDragEnter,
+            over: onTauriDragOver,
+            leave: onTauriDragLeave,
+            drop: onTauriFileDrop,
+        })
+        // 等待注册期间组件可能已卸载
+        if (tauriFileDropListening) {
+            tauriFileDropUnlisten = unlisten
+        } else {
+            unlisten()
+        }
+    } catch (error) {
+        new Logger().error(error as Error, '注册 Tauri 拖放监听失败')
+    }
+}
+
+function removeTauriFileDropListener() {
+    tauriFileDropListening = false
+    tauriDragHasFiles = false
+    tauriFileDropUnlisten?.()
+    tauriFileDropUnlisten = null
+}
+
 function addFileDropListeners() {
     window.addEventListener('dragstart', onInternalDragStart, true)
     window.addEventListener('dragenter', onFileDragOver, true)
     window.addEventListener('dragover', onFileDragOver, true)
     window.addEventListener('dragleave', onFileDragLeave, true)
     window.addEventListener('drop', onFileDrop, true)
+    if (usesTauriDragDrop()) void addTauriFileDropListener()
 }
 
 function removeFileDropListeners() {
@@ -2463,6 +2551,7 @@ function removeFileDropListeners() {
     window.removeEventListener('dragover', onFileDragOver, true)
     window.removeEventListener('dragleave', onFileDragLeave, true)
     window.removeEventListener('drop', onFileDrop, true)
+    removeTauriFileDropListener()
     hideFileDrop()
 }
 //#endregion

@@ -1936,3 +1936,6 @@ msgstr ""
 
 msgid "暂不支持发送文件夹"
 msgstr ""
+
+msgid "读取拖入的文件失败"
+msgstr ""
