@@ -11,6 +11,7 @@
 
 <template>
     <div id="chat-pan"
+        ref="chatPan"
         v-move="chatMoveOptions"
         :class="'chat-pan' +
             (uiStore.openSideBar ? ' open' : '') +
@@ -424,6 +425,19 @@
         </div>
         <!-- 合并转发消息预览器 -->
         <MergePan ref="mergePan" />
+        <!-- 拖放文件提示 -->
+        <Teleport to="body">
+            <Transition name="file-drop">
+                <div v-if="fileDropActive" class="file-drop-pan">
+                    <div class="bg" />
+                    <div class="ss-card">
+                        <font-awesome-icon :icon="['fas', 'file-arrow-up']" />
+                        <span>{{ $t('松开以发送给 {name}', { name: chat.show.name }) }}</span>
+                        <a>{{ $t('图片会加入输入框，其他文件将直接上传') }}</a>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
         <!-- 消息右击菜单 -->
         <Teleport to="body">
             <div :class="'msg-menu' + (['linux', 'win32'].includes(backend.platform ?? '') ? ' withBar' : '')">
@@ -652,6 +666,13 @@ import {
     getOneBotResponseError,
     uploadFileStream,
 } from '@renderer/function/utils/fileTransferUtil'
+import {
+    FileDragTargets,
+    getDroppedFiles,
+    hasDraggedFiles,
+    isInlineImageFile,
+    markInternalDrag,
+} from '@renderer/function/utils/fileDropUtil'
 
 defineOptions({ name: 'ViewChat' })
 
@@ -686,6 +707,7 @@ function cancelReplyJump() {
 
 watch(() => quotedMessages.scopeVersion, cancelReplyJump, { flush: 'sync' })
 const mergePan = useTemplateRef<InstanceType<typeof MergePan>>('mergePan')
+const chatPan = useTemplateRef<HTMLDivElement>('chatPan')
 const msgPan = useTemplateRef<HTMLDivElement>('msgPan')
 const chatPadding = useTemplateRef<HTMLSpanElement>('chatPadding')
 const sendMore = useTemplateRef<HTMLDivElement>('sendMore')
@@ -904,10 +926,12 @@ onMounted(() => {
         setupChatPaddingObserver()
         scheduleResizeMainInput()
     })
+    addFileDropListeners()
 })
 
 onBeforeUnmount(() => {
     cancelReplyJump()
+    removeFileDropListeners()
     if (resizeMainInputFrame !== null) {
         cancelAnimationFrame(resizeMainInputFrame)
         resizeMainInputFrame = null
@@ -2292,37 +2316,156 @@ function selectFile(event: Event) {
     tags.value.showMoreDetail = false
     const sender = event.target as HTMLInputElement
     if (sender.files != null) {
-        const file = sender.files[0]
-        const fileName = file.name
-        const size = file.size
-        if (size > 1073741824) {
-            const popInfo = {
-                title: $t('提醒'),
-                html: `<span>${$t('文件大于 1GB。发送速度可能会非常缓慢；确认要发送吗？')}</span>`,
-                button: [
-                    {
-                        text: $t('发送'),
-                        fun: () => {
-                            uiStore.popBoxList.shift()
-                            sendFile(file, fileName)
-                        },
-                    },
-                    {
-                        text: $t('取消'),
-                        master: true,
-                        fun: () => {
-                            uiStore.popBoxList.shift()
-                        },
-                    },
-                ],
-            }
-            uiStore.popBoxList.push(popInfo)
-        } else {
-            sendFile(file, fileName)
-        }
+        confirmSendFile(sender.files[0])
         sender.value = ''
     }
 }
+
+function confirmSendFile(file: File) {
+    const fileName = file.name
+    if (file.size > 1073741824) {
+        const popInfo = {
+            title: $t('提醒'),
+            html: `<span>${$t('文件大于 1GB。发送速度可能会非常缓慢；确认要发送吗？')}</span>`,
+            button: [
+                {
+                    text: $t('发送'),
+                    fun: () => {
+                        uiStore.popBoxList.shift()
+                        sendFile(file, fileName)
+                    },
+                },
+                {
+                    text: $t('取消'),
+                    master: true,
+                    fun: () => {
+                        uiStore.popBoxList.shift()
+                    },
+                },
+            ],
+        }
+        uiStore.popBoxList.push(popInfo)
+    } else {
+        sendFile(file, fileName)
+    }
+}
+
+//#region == 拖放文件发送 ==================================================
+const fileDropActive = ref(false)
+const fileDragTargets = new FileDragTargets()
+let fileDropTimer: ReturnType<typeof setTimeout> | null = null
+
+/**
+ * ignore：不是外部文件，或聊天面板不可见，交给浏览器默认处理
+ * block：聊天面板可见但当前不能发送，阻止浏览器直接打开文件
+ */
+function getFileDropState(event: DragEvent): 'ignore' | 'block' | 'accept' {
+    if (!hasDraggedFiles(event.dataTransfer)) return 'ignore'
+    // v-show 隐藏聊天面板（切换到其他标签页）时不接收
+    if (!chatPan.value || chatPan.value.getClientRects().length === 0) return 'ignore'
+    if (
+        uiStore.openSideBar ||
+        uiStore.popBoxList.length > 0 ||
+        details.value[3].open ||
+        chat.info.me_info.shut_up_timestamp * 1000 > Date.now()
+    ) {
+        return 'block'
+    }
+    return 'accept'
+}
+
+function showFileDrop() {
+    fileDropActive.value = true
+    // 拖动期间浏览器会持续触发 dragover，停止触发说明拖动已离开或取消
+    if (fileDropTimer) clearTimeout(fileDropTimer)
+    fileDropTimer = setTimeout(hideFileDrop, 1000)
+}
+
+function hideFileDrop() {
+    fileDropActive.value = false
+    fileDragTargets.clear()
+    if (fileDropTimer) {
+        clearTimeout(fileDropTimer)
+        fileDropTimer = null
+    }
+}
+
+function onFileDragOver(event: DragEvent) {
+    const state = getFileDropState(event)
+    if (state === 'ignore') {
+        // 拖动中聊天面板被隐藏时，提示不能留在其他页面上
+        if (fileDropActive.value) hideFileDrop()
+        return
+    }
+    event.preventDefault()
+    if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = state === 'accept' ? 'copy' : 'none'
+    }
+    if (state === 'accept') {
+        fileDragTargets.enter(event.target)
+        showFileDrop()
+    } else {
+        hideFileDrop()
+    }
+}
+
+function onFileDragLeave(event: DragEvent) {
+    if (fileDropActive.value && !fileDragTargets.leave(event.target)) {
+        hideFileDrop()
+    }
+}
+
+function onFileDrop(event: DragEvent) {
+    const state = getFileDropState(event)
+    hideFileDrop()
+    if (state === 'ignore') return
+    event.preventDefault()
+    if (state === 'block') return
+
+    const { files, folders } = getDroppedFiles(event.dataTransfer)
+    if (folders > 0) {
+        new PopInfo().add(PopType.INFO, $t('暂不支持发送文件夹'))
+    }
+    const images = files.filter(isInlineImageFile)
+    for (const file of files) {
+        if (!images.includes(file)) confirmSendFile(file)
+    }
+    if (images.length > 0) void addDroppedImages(images)
+}
+
+async function addDroppedImages(images: File[]) {
+    // 逐张读取，保持图片在输入框中的拖入顺序
+    for (const image of images) {
+        try {
+            await setImg(image)
+        } catch (error) {
+            new Logger().error(error as Error, '读取拖入的图片失败')
+        }
+    }
+    toMainInput()
+}
+
+function onInternalDragStart(event: DragEvent) {
+    markInternalDrag(event.dataTransfer)
+}
+
+function addFileDropListeners() {
+    window.addEventListener('dragstart', onInternalDragStart, true)
+    window.addEventListener('dragenter', onFileDragOver, true)
+    window.addEventListener('dragover', onFileDragOver, true)
+    window.addEventListener('dragleave', onFileDragLeave, true)
+    window.addEventListener('drop', onFileDrop, true)
+}
+
+function removeFileDropListeners() {
+    window.removeEventListener('dragstart', onInternalDragStart, true)
+    window.removeEventListener('dragenter', onFileDragOver, true)
+    window.removeEventListener('dragover', onFileDragOver, true)
+    window.removeEventListener('dragleave', onFileDragLeave, true)
+    window.removeEventListener('drop', onFileDrop, true)
+    hideFileDrop()
+}
+//#endregion
 
 function sendFile(file: File, fileName: string | null) {
     const displayName = fileName ?? file.name ?? $t('未知文件')
@@ -2402,18 +2545,13 @@ function sendFile(file: File, fileName: string | null) {
             throw new DOMException('Upload cancelled', 'AbortError')
         }
         onProgress(file.size, file.size)
-        sendCache.value = []
-        imgCache.value.clear()
-        msg.value = ''
-        addSpecialMsg({
-            addText: true,
-            msgObj: {
-                type: 'file',
-                file: 'base64://' + base64data,
-                name: displayName,
-            },
-        })
-        sendMsg('sendFileBack_' + taskId)
+        // 文件单独作为一条消息发送，不动输入框里的草稿
+        sendParsedMsg(SendUtil.parseMsg('[SQ:0]', [{
+            type: 'file',
+            file: 'base64://' + base64data,
+            name: displayName,
+        }], []), 'sendFileBack_' + taskId)
+        scrollBottom()
     }
 
     taskId = addUploadTask({
@@ -2450,7 +2588,7 @@ async function setImg(file: File | null) {
                     compressedFile.size / 1024 / 1024 +
                     ' MB',
             )
-            setImg(compressedFile)
+            await setImg(compressedFile)
         } catch (error) {
             new Logger().error(error as Error, '图片压缩失败')
             popInfo.add(PopType.INFO, $t('压缩图片失败'))
@@ -2458,6 +2596,9 @@ async function setImg(file: File | null) {
         return
     }
 
+    // 读取完成后再一起写入占位和图片：读取期间发送的草稿不会带走占位，
+    // 读取结果也不会落进之后的消息
+    const dataURL = await fileToDataURL(file)
     const id = sendCache.value.length
     const data = {
         type: 'text',
@@ -2467,7 +2608,7 @@ async function setImg(file: File | null) {
         addText: true,
         msgObj: data,
     })
-    imgCache.value.set(id, await fileToDataURL(file))
+    imgCache.value.set(id, dataURL)
 }
 
 async function fileToDataURL(file: File): Promise<string> {
@@ -2514,6 +2655,17 @@ function sendMsg(echo = 'sendMsgBack') {
         sendCache.value,
         [],
     )
+    sendParsedMsg(parsedMsg, echo)
+    tags.value.checkNewLineFlag = true
+    msg.value = ''
+    sendCache.value = []
+    imgCache.value.clear()
+    scrollBottom()
+    cancelReply()
+    scheduleResizeMainInput(undefined, true)
+}
+
+function sendParsedMsg(parsedMsg: any, echo: string) {
     if (chat.show.temp) {
         sendMsgRaw(
             chat.show.id + '/' + chat.show.temp,
@@ -2531,13 +2683,6 @@ function sendMsg(echo = 'sendMsgBack') {
             echo,
         )
     }
-    tags.value.checkNewLineFlag = true
-    msg.value = ''
-    sendCache.value = []
-    imgCache.value.clear()
-    scrollBottom()
-    cancelReply()
-    scheduleResizeMainInput(undefined, true)
 }
 
 function updateList(newLength: number, oldLength: number) {
