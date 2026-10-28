@@ -37,8 +37,8 @@ export function markInternalDrag(
 export function hasDraggedFiles(
     dataTransfer?: { types?: ArrayLike<string> } | null,
 ): boolean {
-    const types = Array.from(dataTransfer?.types ?? [])
-    return types.includes('Files') && !types.includes(internalDragType)
+    const types = new Set(Array.from(dataTransfer?.types ?? []))
+    return types.has('Files') && !types.has(internalDragType)
 }
 
 /**
