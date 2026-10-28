@@ -1763,7 +1763,7 @@ input {
     inset: 0;
 }
 .file-drop-pan > div.ss-card {
-    border: 2px dashed var(--color-main);
+    box-shadow: 0 0 3px var(--color-shader);
     flex-direction: column;
     align-items: center;
     text-align: center;

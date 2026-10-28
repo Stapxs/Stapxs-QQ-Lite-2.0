@@ -18,6 +18,11 @@
     background: rgba(var(--color-card-1-rgb), 0.5);
 }
 
+.file-drop-pan > div.ss-card {
+    background-color: rgba(var(--color-card-rgb), 0.3);
+    backdrop-filter: blur(20px);
+}
+
 .friend-view > div:last-child {
     background: transparent;
     box-shadow: unset;
@@ -38,7 +43,6 @@
     background: var(--color-main);
     color: var(--color-font-r);
 }
-
 
 .chat-pan {
     background: transparent;
