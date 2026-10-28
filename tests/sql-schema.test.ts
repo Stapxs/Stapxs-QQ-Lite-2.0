@@ -10,7 +10,9 @@ describe('PostgreSQL SQL Schema & RLS Migrations', () => {
     expect(migrationSql).toContain('CREATE SCHEMA IF NOT EXISTS private;')
     expect(migrationSql).toContain('REVOKE ALL ON SCHEMA private FROM PUBLIC;')
     expect(migrationSql).toContain('REVOKE ALL ON SCHEMA private FROM anon;')
-    expect(migrationSql).toContain('REVOKE ALL ON SCHEMA private FROM authenticated;')
+    expect(migrationSql).toContain('GRANT USAGE ON SCHEMA private TO authenticated;')
+    expect(migrationSql).toContain('GRANT USAGE ON SCHEMA private TO service_role;')
+    expect(migrationSql).not.toContain('REVOKE ALL ON SCHEMA private FROM authenticated;')
   })
 
   it('defines all 4 required tables with proper foreign keys and constraints', () => {

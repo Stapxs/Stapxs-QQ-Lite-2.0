@@ -251,8 +251,30 @@
   gap: 4px;
 }
 
+.mobile-back-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--color-font);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+}
+
+.mobile-back-btn:hover {
+  background: var(--color-card-2);
+}
+
 /* Responsive Layout */
 @media (max-width: 700px) {
+  .mobile-back-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .app-container {
     flex-direction: column-reverse;
   }
@@ -292,6 +314,10 @@
   }
 
   .session-panel.hidden-mobile {
+    display: none;
+  }
+
+  .chat-container.hidden-mobile {
     display: none;
   }
 }

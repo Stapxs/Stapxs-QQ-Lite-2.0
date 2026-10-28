@@ -33,6 +33,9 @@ export const useChatStore = defineStore('chat', () => {
       // If there is a room and none active, activate the first one
       if (rooms.value.length > 0 && !activeRoom.value) {
         await selectRoom(rooms.value[0])
+      } else if (rooms.value.length === 0) {
+        activeRoom.value = null
+        roomMembers.value = []
       }
 
       return rooms.value
@@ -42,6 +45,14 @@ export const useChatStore = defineStore('chat', () => {
     } finally {
       loading.value = false
     }
+  }
+
+  function reset() {
+    rooms.value = []
+    activeRoom.value = null
+    roomMembers.value = []
+    loading.value = false
+    error.value = null
   }
 
   async function selectRoom(room: Room) {
@@ -103,5 +114,6 @@ export const useChatStore = defineStore('chat', () => {
     fetchRooms,
     selectRoom,
     fetchRoomMembers,
+    reset,
   }
 })

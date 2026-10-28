@@ -6,7 +6,7 @@
     <!-- Main Content Area -->
     <main class="main-content">
       <!-- Session / Room List Panel -->
-      <section class="session-panel">
+      <section class="session-panel" :class="{ 'hidden-mobile': mobileView === 'chat' }">
         <header class="session-header">
           <h2>Hội thoại</h2>
           <span class="ss-badge primary">1 Phòng</span>
@@ -25,7 +25,7 @@
               :room="room"
               :selected="activeRoom?.id === room.id"
               :member-count="roomMembers.length"
-              @click="chatStore.selectRoom(room)"
+              @click="handleSelectRoom(room)"
             />
           </template>
 
@@ -37,10 +37,18 @@
       </section>
 
       <!-- Active Chat Room Panel -->
-      <section class="chat-container">
+      <section class="chat-container" :class="{ 'hidden-mobile': mobileView === 'rooms' }">
         <!-- Room Header -->
         <header v-if="activeRoom" class="chat-header">
           <div class="chat-header-info">
+            <button
+              class="mobile-back-btn"
+              title="Quay lại danh sách phòng"
+              aria-label="Quay lại danh sách phòng"
+              @click="mobileView = 'rooms'"
+            >
+              <font-awesome-icon :icon="['fas', 'chevron-left']" />
+            </button>
             <div class="chat-header-avatar">
               PF
             </div>
@@ -151,6 +159,12 @@ const { rooms, activeRoom, roomMembers, loading } = storeToRefs(chatStore)
 
 const showAbout = ref(false)
 const showMembers = ref(false)
+const mobileView = ref<'rooms' | 'chat'>('rooms')
+
+function handleSelectRoom(room: any) {
+  chatStore.selectRoom(room)
+  mobileView.value = 'chat'
+}
 
 onMounted(async () => {
   await chatStore.fetchRooms()

@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '@/services/supabase'
 import type { Profile } from '@/types/database'
+import { useChatStore } from '@/stores/chat'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
@@ -58,14 +59,25 @@ export const useAuthStore = defineStore('auth', () => {
         await fetchProfile(sessionData.session.user.id)
       }
 
-      // Listen for auth state changes
-      supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      // Listen for auth state changes synchronously
+      // Supabase strictly warns against awaiting database queries inside onAuthStateChange callbacks,
+      // as it causes deadlocks and hangs token refresh cycles.
+      supabase.auth.onAuthStateChange((_event, newSession) => {
         session.value = newSession
         user.value = newSession?.user ?? null
-        if (newSession?.user) {
-          await fetchProfile(newSession.user.id)
+        const targetUserId = newSession?.user?.id
+        if (targetUserId) {
+          // Asynchronously schedule fetchProfile outside of the onAuthStateChange callback
+          setTimeout(async () => {
+            // Guard against stale response if user switched before profile returned
+            if (user.value?.id === targetUserId) {
+              await fetchProfile(targetUserId)
+            }
+          }, 0)
         } else {
           profile.value = null
+          const chatStore = useChatStore()
+          chatStore.reset()
         }
       })
     } catch (err: any) {
@@ -104,6 +116,8 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       if (data.session && data.user) {
+        const chatStore = useChatStore()
+        chatStore.reset()
         session.value = data.session
         user.value = data.user
         await fetchProfile(data.user.id)
@@ -119,18 +133,25 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function logout(): Promise<{ success: boolean }> {
+  async function logout(): Promise<{ success: boolean; error?: string }> {
     actionLoading.value = true
     error.value = null
     try {
-      await supabase.auth.signOut()
+      const { error: signOutError } = await supabase.auth.signOut()
+      if (signOutError) {
+        error.value = signOutError.message
+        return { success: false, error: signOutError.message }
+      }
       user.value = null
       session.value = null
       profile.value = null
+      const chatStore = useChatStore()
+      chatStore.reset()
       return { success: true }
     } catch (err: any) {
-      error.value = err.message || 'Lỗi khi đăng xuất.'
-      return { success: false }
+      const msg = err.message || 'Lỗi khi đăng xuất.'
+      error.value = msg
+      return { success: false, error: msg }
     } finally {
       actionLoading.value = false
     }

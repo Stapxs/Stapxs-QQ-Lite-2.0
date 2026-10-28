@@ -6,10 +6,13 @@
 -- 1. Create isolated 'private' schema for internal security helpers
 CREATE SCHEMA IF NOT EXISTS private;
 
--- Ensure schema 'private' is strictly hidden from PostgREST API and unprivileged roles
+-- Ensure schema 'private' is strictly hidden from PostgREST API and unprivileged roles.
+-- Note: 'authenticated' and 'service_role' require USAGE on schema 'private' so PostgreSQL
+-- can resolve functions like private.is_room_member() in RLS policies without permission errors.
 REVOKE ALL ON SCHEMA private FROM PUBLIC;
 REVOKE ALL ON SCHEMA private FROM anon;
-REVOKE ALL ON SCHEMA private FROM authenticated;
+GRANT USAGE ON SCHEMA private TO authenticated;
+GRANT USAGE ON SCHEMA private TO service_role;
 
 -- 2. Tables
 

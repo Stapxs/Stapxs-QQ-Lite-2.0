@@ -23,6 +23,7 @@ import {
   faClock,
   faXmark,
   faDoorClosed,
+  faChevronLeft,
 } from '@fortawesome/free-solid-svg-icons'
 
 import App from './App.vue'
@@ -49,6 +50,7 @@ library.add(
   faClock,
   faXmark,
   faDoorClosed,
+  faChevronLeft,
 )
 
 const app = createApp(App)

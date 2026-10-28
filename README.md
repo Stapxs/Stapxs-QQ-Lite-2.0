@@ -47,6 +47,12 @@
    INSERT INTO public.room_members (room_id, user_id, role)
    SELECT '00000000-0000-0000-0000-000000000001', id, 'member'
    FROM auth.users
+   WHERE email IN (
+     'user1@friends.local',
+     'user2@friends.local',
+     'user3@friends.local',
+     'user4@friends.local'
+   )
    ON CONFLICT (room_id, user_id) DO NOTHING;
    ```
 
