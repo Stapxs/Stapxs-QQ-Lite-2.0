@@ -1,0 +1,35 @@
+:root {
+    /* 卡片颜色 */
+    --color-bg: #F8F9FA;
+    --color-card: #FFFFFF;
+    --color-card-1: #F1F3F5;
+    --color-card-2: #e3e8ec;
+
+    --color-bg-rgb: 248, 249, 250;
+    --color-card-rgb: 255, 255, 255;
+    --color-card-1-rgb: 241, 243, 245;
+    --color-card-2-rgb: 227, 232, 236;
+
+    /* 字体颜色 */
+    --color-font: #50534F;
+    --color-font-1: #5c5f5a;
+    --color-font-2: #7d817c;
+
+    /* 字体颜色（反转） */
+    --color-font-r: var(--color-bg);
+    --color-font-1-r: var(--color-card);
+
+    /* 阴影颜色 */
+    --color-shader: #72727240;
+
+    /* 主题色 */
+    --color-main: #606E7A;
+
+    /* 内置主题色*/
+    --color-main-0: #606E7A;
+    --color-main-1: #92aa8a;
+    --color-main-2: #f0a1a8;
+    --color-main-3: #8076a3;
+    --color-main-4: #f9a633;
+    --color-main-5: #50534f;
+}

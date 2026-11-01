@@ -1,0 +1,14 @@
+:root {
+    --heroui-background: 0 0% 100%;
+    --tw-bg-opacity: .5 !important;
+
+    --color-main: #c8dafb;
+    --color-main-0: #c8dafb;
+    --color-font-r: var(--color-font);
+    --color-font-1-r: var(--color-font-1);
+
+    --color-bg: hsl(var(--heroui-background) / var(--heroui-background-opacity, var(--tw-bg-opacity)));
+    --color-card: hsl(var(--heroui-background) / var(--heroui-background-opacity, var(--tw-bg-opacity)));
+    --color-card-1: hsl(var(--heroui-background) / var(--heroui-background-opacity, var(--tw-bg-opacity)));
+    --color-card-2: hsl(var(--heroui-background) / var(--heroui-background-opacity, var(--tw-bg-opacity)));
+}
