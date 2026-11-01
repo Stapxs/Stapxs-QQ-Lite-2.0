@@ -1722,7 +1722,7 @@ export function useKeyboard(...args: [string, ...string[], () => boolean | undef
 
 function localStorageGetItem(key: string): string | null {
     if (backend.type === 'electron') {
-        return backend.callSync('opt:get', key)
+        return backend.callSync('opt:getLocal', key)
     } else {
         // eslint-disable-next-line no-restricted-globals
         return localStorage.getItem(key)
