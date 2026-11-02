@@ -28,7 +28,8 @@ win:
     executableName: Stapxs QQ Lite
     icon: build/icon-client-others.png
     legalTrademarks: Copyright © 2022-2026 Stapx Steve [林槐]
-    publisherName: stapxs
+    signtoolOptions:
+        publisherName: stapxs
 
 # macOS 配置
 mac:
@@ -61,13 +62,14 @@ linux:
     category: Network
     mimeTypes: [ application/x-stapxs-qq-lite ]
     desktop:
-        Type: Application
-        Name: Stapxs QQ Lite
-        GenericName: Stapxs QQ Lite Electron 客户端
-        Comment: 一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。
-        Terminal: false
-        Category: Network
-        Icon: stapxs-qq-lite
+        entry:
+            Type: Application
+            Name: Stapxs QQ Lite
+            GenericName: Stapxs QQ Lite Electron 客户端
+            Comment: 一个兼容 OneBot 协议的非官方 QQ 全平台客户端实现。
+            Terminal: 'false'
+            Categories: Network;
+            Icon: stapxs-qq-lite
 
 # 其他配置
 npmRebuild: false
