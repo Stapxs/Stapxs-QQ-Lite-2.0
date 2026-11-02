@@ -14,7 +14,7 @@
         <!-- 已退群 -->
         <template v-if="typeof userInfo === 'number'">
             <div>
-                <img :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + userInfo">
+                <img :src="getUserAvatar(userInfo, chatStore.chatInfo.show.type === 'user' ? authStore.jsonMap : undefined)">
                 <div>
                     <span name="id">{{ userInfo }}</span>
                     <div>

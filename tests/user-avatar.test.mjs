@@ -19,8 +19,8 @@ test('the shipped SnowLuma map identifies all three device peers', () => {
     const urls = Object.keys(device_contacts).map((id) => getUserAvatar(Number(id), snowluma))
     assert.equal(new Set(urls).size, 3)
     for (const url of urls) {
-        assert.ok(url.startsWith('data:image/svg+xml,'))
-        assert.match(decodeURIComponent(url), /<svg/)
+        assert.ok(url.startsWith('data:image/png;base64,'))
+        assert.deepEqual([...Buffer.from(url.split(',')[1], 'base64').subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10])
         assert.doesNotMatch(url, /qlogo/)
     }
 })

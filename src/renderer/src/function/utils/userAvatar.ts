@@ -1,29 +1,14 @@
-import { icon } from '@fortawesome/fontawesome-svg-core'
-import {
-    faDesktop,
-    faMobileScreenButton,
-    faTabletScreenButton,
-} from '@fortawesome/free-solid-svg-icons'
-
 interface AvatarPathMap {
     name?: string
     device_contacts?: Record<string, string>
 }
 
-const deviceAvatars = {
-    computer: faDesktop,
-    phone: faMobileScreenButton,
-    tablet: faTabletScreenButton,
+// Pre-rendered Font Awesome device icons. PNG also works in native image consumers.
+const deviceImages: Record<string, string> = {
+    'computer': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAACXBIWXMAAAsTAAALEwEAmpwYAAADuElEQVR4nO2dTWtVVxSGl5OqpQ5aUFqp+NHSiYMOOqh/oSD4MxSqSNVg4k32mlkFE9e6iQFH/ga1EP0DfrVUS1Nsk6x1jaATAzppow48Zd+gUhrNjTn3Ls897wPvMMk+77P3vifs5BwiogKhyA4ggCCAokvACqD4IrAFUT2zPCfG7n3GYgdZ7QqLeRJbZPUC8RU7yF0lNUtiU0nte55ofUqdMnD67qak/iOr/YOyvZQJl8T+ZvGTPDH90VvL57H5XUn9dxTvXVnpudtG897OZctvnJndxmoPUb53eZvNHc98/p/yD+nMehb7FeV7rz7jfmGe/uD11qN2BOV7T28wkvjhpfIvtDaw2AIEeG8FqD/KOw+x2F6U7yEZaba+o6Q+DgEeIiCJaRZwGQI8RoDaRWL1Wx19gdhCUjuP2IodrOIz9RYltdsd2rrd8a/TNSetplMIKB8ICAYCgoGAYCAgGAgIBgKCgYBgICAYCAgGAoKBgGAgIBgICAYCgoGAYCAgGAgIBgKCgYBgICAYCAgGAoKBgGAgIBgICAYCgoGAYCAgGAgIBgKCgYBgICAYCAgGAvpSgPhfIzr3DTK3Yge5q9IFIN6Nf1OFAA6cXBCgsSsbAhQCiugSsAI0vghsQVrP4DNAIaCILgErQOu+BYn/HD0Qrmly98TiP0UPhOsa8Uv5kWXnwgei9Ux+Xh+NqO+LHgjXNWJ7ic8/+JDFn4QPRuuVpPb4h9H7G18eIAxFD4hrltT0gVcnONlEEvsjelBcn0y/mv0v4dHZL/EIY+9++WILDZ35YtmzTB63r1jtz/dghhR9GfG54bHZ3W89UObR+5+0b03Fn4cPWPsk4s/zLefg5PzHHZ/sL71Nw4aS2HVsTf5OT0dntWvtG5yx+V0dF/9GIRdaG7LBXma46V+vdfbl79HrceeuqB9g9WNrFZDEjkZfR2VJ4jfXvgfbjejrqCSNM7PbktiLElbACz7b2hF9PZUjNX2gxDuRY1RX8uxr7+Xik6t890CrLAH5e63mZ7fHKna0MeHbqbIUxTpu+nBSf1biTC56mTz2pNbI10JVg8UGowvk8kQcpyrB4/Nb++nln0lsMb/clKoCS+tAdGlctoSm76eqwGKnogvjsiN2iqpCPx7wJLUhqgqsrT3RhXHJGTnr31KVSGJX+2b2i01R1eDJuS1J/bfo8nitEbszpDObqYrkv7honynkt3SLP61O6f50acw2+L+z2y5QIBTZAQQQBFB0CVgBFF8EtiCqZ8IHUNQ5/wKFZ/CUXFy/XQAAAABJRU5ErkJggg==',
+    'phone': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAACXBIWXMAAAsTAAALEwEAmpwYAAADKElEQVR4nO3dTU4UQRjG8d47ceVCFOMRZKV4A43IPRRcuRuYqgOITL3DLMR4Atd+XIQAjnnfRkPiFpAFBMiYanBhMsAg0/U09PNPKiHKYrp+XTXVbDrLsqx/wTFUcwvf7/mgsy7oVxd0zYvuerH+1Ri6W3zmoF+c6IyX3viw1/0/8zlSgObbn3ed6LITO8BPpI1kONEjL/Zxrmv3Kw3g2zbtxXbQE+bLGzst0eeVBHBir07uFPQk9UtfDUFnKwXQ6uRPfdBD9OT4lAhtm64EQNzzr/m20x+IEGy7ubgxBgfwYh/Qk+FxK2EZCnBy1DysL4AdxB0ABhC/eNGT4NEj6EsYQHxQgU+AoAHsEw5ArAefAEEPXcdtQcF+4yfAoCPOAXIFXOjDZlckf7nrIsBlIwA4AoAjADgCgCMAOAKAIwA4AoAjADgCgCMAOAKAIwA4AoAjADgCgCMAOAKAIwA4AoAjADgCgCMAOAKAIwA4AoAjADgCgCMAOAKAIwA4AoAjADgCgCMAOAKAIwA4AoAjADgCgCMAOAKAIwA4AoAjADgCgCMAOAKAIwA4AoAjADgCgCMAOAKAIwA4AoAjADgCgLu2ANd1ZAQwAqDvQs8VgJ8Izy0IPxkeMPgdIARId8cF23NBpdW2R6/f/LoRR/zZB+3E/+MKKBVAN+c79uDU83s7n4i/wy2opDt//ozJ/wch8UqoxXeACyrZkDmxJQKMGqGjD4cF8JJPEmDUAN2VxtAA3ZVGXQB2KgkgvZvptkbbhgG4YN/qvgW5oGv1eJln0E4lv4SRL/N0ojMJL3QvHjHPvfvb+YQT20+2AkRf4FaA9MbjS42TIYhunoWQ+kEM/kLnYwR9nw7A4kXvH28x+WRx2umuNFrt/HH8t5R3fjGCvhtwHyQGWPpxJ+lpSCoygm35bn4bDnC8CvIndXq3vBM98kGnTtkJ0wMUCEFniw9Wg8l3ojOnzQMM4ARhKj6YoCfJlzWCbbU6+uysOYACFAgL67fiH87Sno6s5LveDpzocnNxY+y864cD/C0ez+IZ2Yl99qKrV+n98674rLoaH7LiNQw4ao4M4A9WMEwaXFkq8QAAAABJRU5ErkJggg==',
+    'tablet': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAACXBIWXMAAAsTAAALEwEAmpwYAAADQUlEQVR4nO2dzU5TURDHu5e4ciGK8RFkpfgGGpH3UHDlDuyZBxDpmdKFGJ/AtR8vQgBrZoqGxC0iCwgSzLnUBJDW9hbzv/fy/yWTENqQOfM7H3PYnFqtVjvqET1ZWPxyS6LNhWifQrR1UdsV9aPLFbabjT3ax6A2K9qe6FezfnUeWMD8q283g9pKUD/AF8ALFUHtUNTfLbT89n8RIA2fEfUd9ECl+LFTV3t8oQKC+rOuYfTgjsoQWa2izV2IgHqz81Ci/UIPSsoooeEzIwlIez63Hc8vIfqP+aXN8dwCRP0teiZJySM1LbkEdFtNbj06qgA/SDvJ0ALSwYuePVKViPZ0aAHpggFPXCsS0d8PL0C9DU9cqxK2MfwWFP0nPnGvRKRa5lkBQ0XtkiHD14cCLhIKAEMBYCgADAWAoQAwFACGAsBQABgKAEMBYCgADAWAoQAwFACGAsBQABgKAEMBYCgADAWAoQAwFACGAsBQABgKAEMBYCgADAWAoQAwFACGAsBQABgKAEMBYCgADAWAoQAwFACGAsBQABgKAEMBYCgADAWAoQAwFACGAsBQABgKAEMBYCgADAWAoQAwFACGAsBQABgKAEMBYAongOEUIAWeCFwBSgHwWShcAfhCCLcgfDEEENU5A6LvhWhab/i95y+/X0mRfpZozfQZPL9qC7CtF02/07M3b3Qm03fweVZRQPS9fsU/JaGAK6H0AkI0HfSWGtSX0flWToA07e6gAkQ7U/B8KyegtTo2sIDW6lgVBOyUVoC2r8LzPfOsbZ6X9D6jE5eKbEEh2nr5H/OM1iztIZznMc+gNluwQeylFvOfs7/RmQzq+/B8T0RQe5LjDGhPpMeI0cnLqbCtfhKKeBHL/aDz8V5qb9ADkL8HtH+8xXSmsm6ntTpWb3Tup98VbeZnEe11d37kELD89UbhuiEtUUTfllbnem4B3Y7iAd+W9xwr1Q4l2vSJHTKfgExCtLnsD6JnlJYjUq1SE3PmiMovoCthOl0o0IOTokf07XrTHp3TI4wmIJOwuHEt/VOseN2RwyPVJKitzC9tjvdo0kYX8IfUVqXeNqh/ELW1y/j+fMjGbGvpkpVq0W01+3FunX8DiWE4r1crBP8AAAAASUVORK5CYII='
 }
-
-const deviceImages = Object.fromEntries(
-    Object.entries(deviceAvatars).map(([kind, definition]) => [
-        kind,
-        'data:image/svg+xml,' + encodeURIComponent(
-            icon(definition, { styles: { color: '#7f91de' } }).html.join(''),
-        ),
-    ]),
-)
 
 /** Device peers use protocol IDs, not QQ account numbers accepted by qlogo. */
 export function getUserAvatar(userId: number | string, pathMap?: AvatarPathMap) {

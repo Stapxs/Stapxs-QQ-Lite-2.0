@@ -3,6 +3,8 @@ import path from 'path'
 import os from 'os'
 import log4js from 'log4js'
 import axios from 'axios'
+import { fileURLToPath } from 'node:url'
+import { cacheNotificationIcon } from './notificationIcon.ts'
 
 import {
     ipcMain,
@@ -11,6 +13,7 @@ import {
     Menu,
     MenuItemConstructorOptions,
     Notification as ELNotification,
+    nativeImage,
     type DownloadItem,
     shell,
 } from 'electron'
@@ -315,11 +318,15 @@ export function regIpcListener() {
 
         const userId = data.tag.split('/')[0]
         const msgId = data.tag.split('/')[1]
+        const iconUrl = cacheNotificationIcon(
+            data.icon ?? '',
+            path.join(app.getPath('temp'), 'stapxs-qq-notification-icons'),
+        )
 
         let showData = {
             title: data.title,
             body: data.body,
-            icon: data.icon,
+            icon: iconUrl.startsWith('file:')? nativeImage.createFromPath(fileURLToPath(iconUrl)): iconUrl,
         } as Electron.NotificationConstructorOptions
         if (process.platform === 'darwin') {
             showData = {
@@ -340,7 +347,7 @@ export function regIpcListener() {
                 <toast launch="stapx-qq-lite:action=click" activationType="protocol">
                     <visual>
                         <binding template="ToastGeneric">
-                            <image placement="appLogoOverride" hint-crop="circle" src="${(data.icon as string).replaceAll('&', '&amp;')}"/>
+                            <image placement="appLogoOverride" hint-crop="circle" src="${iconUrl.replaceAll('&', '&amp;')}"/>
                             <text>${data.title}</text>
                             <text>${data.body}</text>
                         </binding>

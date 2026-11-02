@@ -1100,7 +1100,7 @@ onMounted(() => {
             document.getElementById('connect_btn')?.classList.add('afd')
         }
         // 其他状态监听
-        watch(() => contactStore.baseOnMsgList, () => {
+        watch([() => contactStore.baseOnMsgList, () => authStore.jsonMap], () => {
             // macOS：刷新 Touch Bar 列表
             if (backend.isDesktop()) {
                 const list = [] as
