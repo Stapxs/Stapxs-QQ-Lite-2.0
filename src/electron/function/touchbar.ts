@@ -121,10 +121,14 @@ export class touchBar {
     async newMessage(data: NotifyInfo) {
         let image
         if(data.icon) {
-            const response = await axios.get(data.icon, {
-                responseType: 'arraybuffer'
-            })
-            image = nativeImage.createFromBuffer(response.data)
+            if (data.icon.startsWith('data:image/png;base64,')) {
+                image = nativeImage.createFromDataURL(data.icon)
+            } else {
+                const response = await axios.get(data.icon, {
+                    responseType: 'arraybuffer'
+                })
+                image = nativeImage.createFromBuffer(response.data)
+            }
             image = image.resize({ width: 25, height: 25 })
         }
         this.msgList[data.tag] = {

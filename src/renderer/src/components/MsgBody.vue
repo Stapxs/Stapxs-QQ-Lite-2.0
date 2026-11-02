@@ -29,7 +29,7 @@
             <img v-menu.prevent="event => $emit('showMenu', event, data)"
                 v-user-tooltip="() => getUserById(data.sender.user_id)"
                 name="avatar"
-                :src="'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.sender.user_id"
+                :src="getUserAvatar(data.sender.user_id, chatStore.chatInfo.show.type === 'user' ? authStore.jsonMap : undefined)"
                 :alt="data.sender.card ? data.sender.card : data.sender.nickname"
                 @dblclick="sendPoke">
             <div v-if="data.fake_msg == true"
@@ -372,6 +372,7 @@
 </template>
 
 <script setup lang="ts">
+import { getUserAvatar } from '@renderer/function/utils/userAvatar'
 import Option from '@renderer/function/option'
 import markdownit from 'markdown-it'
 

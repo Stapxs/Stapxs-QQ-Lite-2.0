@@ -26,7 +26,7 @@
         <!-- 聊天基本信息 -->
         <div class="info">
             <font-awesome-icon class="back" :icon="['fas', 'angle-left']" @click="exitWin" />
-            <img :src="chat.show.avatar">
+            <img :src="chat.show.type === 'user' ? getUserAvatar(chat.show.id, authStore.jsonMap) : chat.show.avatar">
             <div class="info">
                 <p>
                     {{ chat.show.name }}
@@ -549,7 +549,7 @@
                             <img loading="lazy"
                                 :title="getShowName(data.group_name || data.nickname, data.remark)"
                                 :src="data.user_id ?
-                                    'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id :
+                                    getUserAvatar(data.user_id, authStore.jsonMap) :
                                     'https://p.qlogo.cn/gh/' + data.group_id + '/' + data.group_id + '/0'">
                             <div>
                                 <p>
@@ -573,6 +573,7 @@
 </template>
 
 <script setup lang="ts">
+import { getUserAvatar } from '@renderer/function/utils/userAvatar'
 import app from '@renderer/main'
 import { i18n } from '@renderer/main'
 import SendUtil from '@renderer/function/sender'
