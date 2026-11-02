@@ -283,6 +283,10 @@ textarea:focus {
     height: 100%;
 }
 
+#qzoneTab {
+    background: var(--color-bg);
+}
+
 .home-body {
     background: var(--color-bg);
     justify-content: center;

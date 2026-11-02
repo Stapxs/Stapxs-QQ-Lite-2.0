@@ -2,6 +2,10 @@
     background: none !important;
 }
 
+#qzoneTab {
+    background: transparent;
+}
+
 ::-webkit-scrollbar {
     background: rgba(var(--color-card-rgb), 0.3);
 }
