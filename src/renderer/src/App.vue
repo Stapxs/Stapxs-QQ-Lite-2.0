@@ -347,6 +347,7 @@ import GlobalSessionSearchBar from './components/GlobalSessionSearchBar.vue'
 import NtViewer from './components/ViewerCom.vue'
 import Tooltips from './components/tooltip/Tooltips.vue'
 import { useQzoneStore } from './state/qzone'
+import { getUserAvatar } from '@renderer/function/utils/userAvatar'
 
 // 注册组件实例
 const ntViewer = shallowRef<InstanceType<typeof NtViewer> | null>(null)
@@ -1108,7 +1109,7 @@ onMounted(() => {
                     list.push({
                         id: item.user_id ? item.user_id : item.group_id,
                         name: item.group_name ? item.group_name : item.remark === item.nickname ? item.nickname : item.remark + '（' + item.nickname + '）',
-                        image: item.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + item.user_id : 'https://p.qlogo.cn/gh/' + item.group_id + '/' + item.group_id + '/0'
+                        image: item.user_id ? getUserAvatar(item.user_id, authStore.jsonMap) : 'https://p.qlogo.cn/gh/' + item.group_id + '/' + item.group_id + '/0'
                     })
                 })
                 backend.call(undefined, 'sys:flushOnMessage', false, list)
