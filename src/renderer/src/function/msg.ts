@@ -75,6 +75,7 @@ import { useStickerStore } from '@renderer/state/sticker'
 import { useUIStore } from '@renderer/state/ui'
 import { useSettingsStore } from '@renderer/state/settings'
 import { useQzoneStore } from '@renderer/state/qzone'
+import { getUserAvatar } from '@renderer/function/utils/userAvatar'
 import {
     getSessionId,
     getMissingGroupPreviewSessions,
@@ -2438,7 +2439,7 @@ function newMsg(_: string, data: any) {
                         data.message_type === 'group' ? data.sender.nickname + ':' + raw : raw,
                     tag: `${sessionId}/${data.message_id}`,
                     icon:
-                        data.message_type === 'group' ? `https://p.qlogo.cn/gh/${id}/${id}/0` : `https://q1.qlogo.cn/g?b=qq&s=0&nk=${id}`,
+                        data.message_type === 'group' ? `https://p.qlogo.cn/gh/${id}/${id}/0` : getUserAvatar(id, authStore.jsonMap),
                     image: undefined as any,
                     type: data.group_id ? 'group' : 'user',
                     is_important: isImportant,
