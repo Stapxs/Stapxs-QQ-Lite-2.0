@@ -64,7 +64,7 @@
                                 @click.stop="resetModify" />
                             <font-awesome-icon :icon="['fas', 'download']"
                                 @click.stop="download" />
-                            <font-awesome-icon v-if="canCors" :icon="['fas', 'clipboard']"
+                            <font-awesome-icon :icon="['fas', 'clipboard']"
                                 @click.stop="copy" />
                             <hr>
                             <font-awesome-icon :icon="['fas', 'share']"
@@ -176,10 +176,10 @@
 </template>
 
 <script setup lang="ts">
-import { PopInfo, PopType } from '@renderer/function/base'
+import { Logger, PopInfo, PopType } from '@renderer/function/base'
 import { mousemoveMask } from '@renderer/function/input'
 import { Img } from '@renderer/function/model/img'
-import { copyToClipboard } from '@renderer/function/utils/systemUtil'
+import { copyImageToClipboard } from '@renderer/function/utils/systemUtil'
 import {
 	downloadFile,
     vEsc,
@@ -487,8 +487,14 @@ async function download() {
  * 复制图片
  */
 async function copy() {
-    const blob = await getBlob()
-    await copyBlob(blob)
+    const popInfo = new PopInfo()
+    try {
+        await copyImageToClipboard(getBlob)
+        popInfo.add(PopType.INFO, $t('复制成功'))
+    } catch (error) {
+        popInfo.add(PopType.ERR, $t('复制失败'))
+        new Logger().error(error as Error, '复制图片失败')
+    }
 }
 /**
  * 设置旋转角度
@@ -599,9 +605,7 @@ function editFinish() {
  * 复制编辑结果
  */
 async function editCopy() {
-    // 复制到剪切板
-    const blob = await getBlob()
-    await copyBlob(blob)
+    await copy()
 }
 //#endregion
 
@@ -1235,23 +1239,8 @@ function getImgCursorClassByTool(): string {
     }
 }
 
-/**
- * 将dataUrl复制到剪贴板
- * @param dataUrl
- */
-async function copyBlob(blob?: Blob) {
-    if (!blob) {
-        new PopInfo().add(PopType.ERR, $t('复制失败'))
-        return
-    }
-    await copyToClipboard([
-        new window.ClipboardItem({ 'image/png': blob })
-    ])
-    new PopInfo().add(PopType.INFO, $t('复制成功'))
-}
-
-async function getBlob(): Promise<Blob|undefined> {
-    return new Promise((resolve) => {
+async function getBlob(): Promise<Blob> {
+    return new Promise((resolve, reject) => {
         let tmpUrl
         if (edit.value)
             tmpUrl = canvas.value!.toDataURL('image/png')
@@ -1260,7 +1249,7 @@ async function getBlob(): Promise<Blob|undefined> {
         const tmpImg = new Image()
         const newCanvas = document.createElement('canvas')
         const newCtx = newCanvas.getContext('2d')
-        if (!newCtx) return resolve(undefined)
+        if (!newCtx) return reject(new Error('无法获取 Canvas 上下文'))
 
         if (modify.rotate % 180 === 0) {
             newCanvas.width = currentImgInfo.value!.width
@@ -1270,19 +1259,23 @@ async function getBlob(): Promise<Blob|undefined> {
             newCanvas.height = currentImgInfo.value!.width
         }
 
-        if (canCors)
-            tmpImg.crossOrigin = 'anonymous'
-        tmpImg.src = tmpUrl
+        tmpImg.crossOrigin = 'anonymous'
         tmpImg.onload = () => {
-            newCtx.translate(newCanvas.width / 2, newCanvas.height / 2)
-            newCtx.rotate(modify.rotate * Math.PI / 180)
-            newCtx.drawImage(tmpImg, -tmpImg.width / 2, -tmpImg.height / 2)
+            try {
+                newCtx.translate(newCanvas.width / 2, newCanvas.height / 2)
+                newCtx.rotate(modify.rotate * Math.PI / 180)
+                newCtx.drawImage(tmpImg, -tmpImg.width / 2, -tmpImg.height / 2)
 
-            newCanvas.toBlob((blob) => {
-                if (!blob) return resolve(undefined)
-                resolve(blob)
-            })
+                newCanvas.toBlob((blob) => {
+                    if (!blob) return reject(new Error('图片转换失败'))
+                    resolve(blob)
+                }, 'image/png')
+            } catch (error) {
+                reject(error)
+            }
         }
+        tmpImg.onerror = () => reject(new Error('图片加载失败'))
+        tmpImg.src = tmpUrl
     })
 }
 
