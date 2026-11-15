@@ -80,6 +80,9 @@
 .message.merge > div.message-body {
     max-width: calc(100% - 50px);
 }
+.message.merge > .message-body > header {
+    letter-spacing: normal;
+}
 .message.revoke {
     display: none;
 }
