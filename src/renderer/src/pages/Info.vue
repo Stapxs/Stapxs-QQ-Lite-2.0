@@ -61,18 +61,8 @@
                         <span>{{ $t('其他信息') }}</span>
                     </header>
                     <div class="outher">
-                        <span v-if="chat.info.user_info.birthday_year">{{ $t('生日') }}:
-                            <span>
-                                {{ Intl.DateTimeFormat(trueLang, {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric',
-                                }).format(new Date(
-                                    `${chat.info.user_info.birthday_year}-${
-                                        chat.info.user_info.birthday_month}-${
-                                        chat.info.user_info.birthday_day}`,
-                                )) }}
-                            </span>
+                        <span v-if="birthdayText">{{ $t('生日') }}:
+                            <span>{{ birthdayText }}</span>
                         </span>
                         <span v-if="chat.info.user_info.country">{{ $t('地区') }}:
                             <span>
@@ -239,7 +229,7 @@ import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
 import { Connector } from '@renderer/function/connect'
 import { PopInfo, PopType } from '@renderer/function/base'
-import { toRaw, ref, nextTick } from 'vue'
+import { computed, toRaw, ref, nextTick } from 'vue'
 import { delay, getTrueLang } from '@renderer/function/utils/systemUtil'
 import { useAuthStore } from '@renderer/state/auth'
 import { useContactStore } from '@renderer/state/contact'
@@ -271,6 +261,21 @@ const { t: $t } = i18n.global
 
 // Constants
 const trueLang = getTrueLang()
+const birthdayText = computed(() => {
+    const info = props.chat.info.user_info
+    const year = Number(info.birthday_year)
+    const month = Number(info.birthday_month)
+    const day = Number(info.birthday_day)
+    if (!Number.isInteger(year) || year < 1000 || year > 9999 ||
+        !Number.isInteger(month) || month < 1 || month > 12 ||
+        !Number.isInteger(day) || day < 1 || day > 31) return ''
+
+    const date = new Date(Date.UTC(year, month - 1, day))
+    if (date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return ''
+    return Intl.DateTimeFormat(trueLang, {
+        year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC',
+    }).format(date)
+})
 
 // Reactive state
 const number_cache = ref<any[]>([])
