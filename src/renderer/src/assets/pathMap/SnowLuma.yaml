@@ -1,6 +1,12 @@
 name: SnowLuma
 redirect: NapCat.Onebot
 
+# Dataline device peers are reserved OneBot IDs, not real QQ accounts.
+device_contacts:
+    2113929217: computer
+    2113929218: phone
+    2113929219: tablet
+
 # 消息列表
 message_list:
     name: get_group_msg_history

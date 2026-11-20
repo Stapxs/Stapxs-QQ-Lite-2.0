@@ -105,7 +105,8 @@
                         <div v-if="!napcat" class="login-pan-card ss-card">
                             <font-awesome-icon :icon="['fas', 'circle-nodes']" />
                             <p>{{ $t('连接到 OneBot') }}</p>
-                            <form @submit.prevent @submit="connect">
+                            <form @submit.prevent @submit="connect"
+                                @vue:before-unmount="hideConnectionFields">
                                 <template v-if="loginInfo.quickLogin == null || loginInfo.quickLogin.length == 0">
                                     <!-- 地址输入区域 -->
                                     <div v-if="!sse" class="address-input-container">
@@ -313,7 +314,7 @@ import * as App from './function/utils/appUtil'
 import anime from 'animejs'
 import packageInfo from '../../../package.json'
 
-import { computed, watch, onMounted, onUnmounted, shallowReactive, shallowRef, provide } from 'vue'
+import { computed, watch, onMounted, onUnmounted, shallowReactive, shallowRef, provide, type VNode } from 'vue'
 import { Connector, login as loginInfo, loadConnectionHistory, loadConnectionFromHistory, deleteConnectionHistory, decodeStoredToken } from '@renderer/function/connect'
 import { Logger, popList, PopInfo, LogType } from '@renderer/function/base'
 import { setLoginWaveTimer } from '@renderer/function/msg'
@@ -346,6 +347,7 @@ import GlobalSessionSearchBar from './components/GlobalSessionSearchBar.vue'
 import NtViewer from './components/ViewerCom.vue'
 import Tooltips from './components/tooltip/Tooltips.vue'
 import { useQzoneStore } from './state/qzone'
+import { getUserAvatar } from '@renderer/function/utils/userAvatar'
 
 // 注册组件实例
 const ntViewer = shallowRef<InstanceType<typeof NtViewer> | null>(null)
@@ -629,6 +631,15 @@ function changeTab(_: string, view: string, show: boolean) {
         }
     }
 }
+function hideConnectionFields(vnode: VNode) {
+    // Password managers may keep their icons outside the form. Notify their
+    // input-style observers before Vue removes the whole login subtree.
+    const form = vnode.el as HTMLFormElement | null
+    form?.querySelectorAll('input').forEach((input) => {
+        input.style.display = 'none'
+    })
+}
+
 function barMainClick() {
     if (loginInfo.status) {
         changeTab('信息', 'Messages', true)
@@ -1089,7 +1100,7 @@ onMounted(() => {
             document.getElementById('connect_btn')?.classList.add('afd')
         }
         // 其他状态监听
-        watch(() => contactStore.baseOnMsgList, () => {
+        watch([() => contactStore.baseOnMsgList, () => authStore.jsonMap], () => {
             // macOS：刷新 Touch Bar 列表
             if (backend.isDesktop()) {
                 const list = [] as
@@ -1098,7 +1109,7 @@ onMounted(() => {
                     list.push({
                         id: item.user_id ? item.user_id : item.group_id,
                         name: item.group_name ? item.group_name : item.remark === item.nickname ? item.nickname : item.remark + '（' + item.nickname + '）',
-                        image: item.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + item.user_id : 'https://p.qlogo.cn/gh/' + item.group_id + '/' + item.group_id + '/0'
+                        image: item.user_id ? getUserAvatar(item.user_id, authStore.jsonMap) : 'https://p.qlogo.cn/gh/' + item.group_id + '/' + item.group_id + '/0'
                     })
                 })
                 backend.call(undefined, 'sys:flushOnMessage', false, list)

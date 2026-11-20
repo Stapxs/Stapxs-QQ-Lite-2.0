@@ -451,10 +451,10 @@ export function sendMsgRaw(
         preShowMsg.forEach((item: any) => {
             // 对 base64 图片做特殊处理
             if (item.type == 'image') {
-                if (item.file.startsWith('base64://')) {
+                if (typeof item.file === 'string' && item.file.startsWith('base64://')) {
                     const b64Str = (item.file as string).substring(9)
                     item.url = 'data:image/png;base64,' + b64Str
-                } else {
+                } else if (!item.url) {
                     item.url = item.file
                 }
             }
@@ -886,6 +886,8 @@ export async function getImageUrlData(imageUrl: string): Promise<{ buffer: Uint8
 export function isDeleteMsg(msg: any): boolean {
     const authStore = useAuthStore()
     if (!['message', 'message_sent'].includes(msg.post_type)) return false
+    // 历史中 message 为空的记录（已被撤回）无论发送者是谁都显示为不可用
+    if (Array.isArray(msg.message) && msg.message.length === 0) return true
     if (msg.sender.user_id !== authStore.loginInfo.uin) return false
     if (msg.raw_message !== '&#91;已删除&#93;') return false
     return true

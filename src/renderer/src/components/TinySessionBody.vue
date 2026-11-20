@@ -17,7 +17,7 @@
         <div />
         <img loading="lazy"
             :title="getShowName(session.group_name || session.nickname, session.remark)"
-            :src="session.user_id ? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + session.user_id :
+            :src="session.user_id ? getUserAvatar(session.user_id, authStore.jsonMap) :
                 'https://p.qlogo.cn/gh/' + session.group_id + '/' + session.group_id + '/0'">
         <div>
             <p>
@@ -37,6 +37,10 @@
 <script setup lang="ts">
 import { UserGroupElem, UserFriendElem } from '@renderer/function/elements/information'
 import { getShowName } from '@renderer/function/utils/msgUtil'
+import { getUserAvatar } from '@renderer/function/utils/userAvatar'
+import { useAuthStore } from '@renderer/state/auth'
+
+const authStore = useAuthStore()
 
 type Session = UserGroupElem & UserFriendElem
 

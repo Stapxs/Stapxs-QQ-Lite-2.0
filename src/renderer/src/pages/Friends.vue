@@ -138,6 +138,7 @@
 </template>
 
 <script setup lang="ts">
+    import { getUserAvatar } from '@renderer/function/utils/userAvatar'
     import { ref, onMounted } from 'vue'
     import { vAutoFocus } from '@renderer/function/utils/appUtil'
 
@@ -157,6 +158,7 @@
     import { useSettingsStore } from '@renderer/state/settings'
     import { useContactStore } from '@renderer/state/contact'
     import { useChatStore } from '@renderer/state/chat'
+    import { useAuthStore } from '@renderer/state/auth'
 
     defineOptions({ name: 'ViewFriends' })
 
@@ -164,6 +166,7 @@
     const settingsStore = useSettingsStore()
     const contactStore = useContactStore()
     const chatStore = useChatStore()
+    const authStore = useAuthStore()
     const { list } = defineProps<{ list: (UserFriendElem & UserGroupElem)[] }>()
     const emit = defineEmits<{
         userClick: [data: BaseChatInfoElem]
@@ -232,7 +235,7 @@
             type: data.user_id ? 'user' : 'group',
             id: data.user_id ? data.user_id : data.group_id,
             name: getShowName(data),
-            avatar: data.user_id? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' + data.user_id: 'https://p.qlogo.cn/gh/' +
+            avatar: data.user_id? getUserAvatar(data.user_id, authStore.jsonMap): 'https://p.qlogo.cn/gh/' +
                   data.group_id + '/' + data.group_id + '/0',
             jump: sender.dataset.jump,
         } as BaseChatInfoElem

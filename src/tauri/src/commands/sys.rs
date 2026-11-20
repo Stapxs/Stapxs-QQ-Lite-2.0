@@ -828,3 +828,47 @@ pub async fn sys_read_file_as_base64(data: String) -> Result<String, String> {
     // 返回纯 base64 字符串
     Ok(base64_string)
 }
+
+/// 批量获取路径信息（拖放文件区分文件夹与文件、获取文件大小）
+#[command]
+pub fn sys_stat_paths(data: Vec<String>) -> Vec<HashMap<String, Value>> {
+    data.iter()
+        .map(|path| {
+            let mut info = HashMap::new();
+            match fs::metadata(path) {
+                Ok(meta) => {
+                    info.insert("is_dir".to_string(), Value::Bool(meta.is_dir()));
+                    info.insert("size".to_string(), Value::from(meta.len()));
+                    info.insert("ok".to_string(), Value::Bool(true));
+                },
+                Err(e) => {
+                    info.insert("is_dir".to_string(), Value::Bool(false));
+                    info.insert("size".to_string(), Value::from(0u64));
+                    info.insert("ok".to_string(), Value::Bool(false));
+                    info.insert("error".to_string(), Value::from(e.to_string()));
+                },
+            }
+            info
+        })
+        .collect()
+}
+
+/// 按范围读取文件内容并返回 base64（拖放的大文件分块上传用）
+#[command]
+pub async fn sys_read_file_range(path: String, start: u64, length: u64) -> Result<String, String> {
+    use base64::{engine::general_purpose, Engine as _};
+    use std::io::{Read, Seek, SeekFrom};
+
+    if length == 0 {
+        return Ok(String::new());
+    }
+
+    let mut file = File::open(&path).map_err(|e| format!("打开文件失败: {}", e))?;
+    let mut buffer = vec![0u8; length as usize];
+    file.seek(SeekFrom::Start(start))
+        .map_err(|e| format!("定位文件读取位置失败: {}", e))?;
+    file.read_exact(&mut buffer)
+        .map_err(|e| format!("读取文件失败: {}", e))?;
+
+    Ok(general_purpose::STANDARD.encode(&buffer))
+}

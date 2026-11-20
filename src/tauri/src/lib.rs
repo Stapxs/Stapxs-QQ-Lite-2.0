@@ -232,6 +232,8 @@ pub fn run() {
             commands::sys::sys_select_image,
             commands::sys::sys_get_local_emojis,
             commands::sys::sys_read_file_as_base64,
+            commands::sys::sys_stat_paths,
+            commands::sys::sys_read_file_range,
             commands::onebot::onebot_connect,
             commands::onebot::onebot_send,
             commands::onebot::onebot_close,

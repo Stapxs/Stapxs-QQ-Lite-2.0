@@ -2,6 +2,10 @@
     background: none !important;
 }
 
+#qzoneTab {
+    background: transparent;
+}
+
 ::-webkit-scrollbar {
     background: rgba(var(--color-card-rgb), 0.3);
 }
@@ -16,6 +20,11 @@
 }
 .pop-box-body > div.button {
     background: rgba(var(--color-card-1-rgb), 0.5);
+}
+
+.file-drop-pan > div.ss-card {
+    background-color: rgba(var(--color-card-rgb), 0.3);
+    backdrop-filter: blur(20px);
 }
 
 .friend-view > div:last-child {
@@ -38,7 +47,6 @@
     background: var(--color-main);
     color: var(--color-font-r);
 }
-
 
 .chat-pan {
     background: transparent;

@@ -203,6 +203,7 @@
     import { library } from '@fortawesome/fontawesome-svg-core'
     import { login as loginInfo } from '@renderer/function/connect'
     import { canGroupNotice, getShowName } from '@renderer/function/utils/msgUtil'
+    import { getUserAvatar } from '@renderer/function/utils/userAvatar'
 
     import {
         faThumbTack,
@@ -269,8 +270,7 @@
                 type: data.user_id ? 'user' : 'group',
                 id: id,
                 name: getShowName(data.group_name || data.nickname, data.remark),
-                avatar: data.user_id? 'https://q1.qlogo.cn/g?b=qq&s=0&nk=' +
-                      data.user_id: 'https://p.qlogo.cn/gh/' +
+                avatar: data.user_id? getUserAvatar(data.user_id, authStore.jsonMap):'https://p.qlogo.cn/gh/' +
                       data.group_id + '/' + data.group_id + '/0',
             }
             if (props.chat.id != back.id) {
