@@ -451,10 +451,10 @@ export function sendMsgRaw(
         preShowMsg.forEach((item: any) => {
             // 对 base64 图片做特殊处理
             if (item.type == 'image') {
-                if (item.file.startsWith('base64://')) {
+                if (typeof item.file === 'string' && item.file.startsWith('base64://')) {
                     const b64Str = (item.file as string).substring(9)
                     item.url = 'data:image/png;base64,' + b64Str
-                } else {
+                } else if (!item.url) {
                     item.url = item.file
                 }
             }

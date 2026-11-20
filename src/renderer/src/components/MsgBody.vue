@@ -118,14 +118,21 @@
                                     {{ imageLoading(getImageKey(Number(index), item.url)) ? $t('加载中') : $t('点击加载图片') }}
                                 </span>
                             </div>
-                            <img v-show="!shouldShowImagePlaceholder(item, Number(index))"
+                            <div v-if="!shouldShowImagePlaceholder(item, Number(index)) && failedImageSources[index] === getImgSrc(item.url)"
+                                class="msg-image-load-failure">
+                                <font-awesome-icon :icon="['fas', 'image']" />
+                                <span>{{ $t('加载图片失败') }}</span>
+                                <a :href="getImgSrc(item.url)" target="_blank" rel="noopener noreferrer">{{ $t('预览图片') }}</a>
+                            </div>
+                            <img v-else-if="!shouldShowImagePlaceholder(item, Number(index))"
+                                :key="getImgSrc(item.url)"
                                 :title="(!item.summary || item.summary == '') ? $t('预览图片') : item.summary"
                                 :alt="$t('图片')"
                                 :class=" imgStyle(data.message.length, Number(index), isFace(item))"
                                 :src="getImgSrc(item.url)"
                                 data-type="image"
                                 @load="imageLoaded"
-                                @error="imgLoadFail"
+                                @error="failedImageSources[index] = getImgSrc(item.url)"
                                 @click="imgClick(item.url)">
                         </template>
                         <template v-else-if="item.type == 'face'">
@@ -504,6 +511,7 @@ const senderInfo = ref(null as any)
 const trueLang = getTrueLang()
 const textIndex = ref({} as { [key: string]: number })
 const resolvedImages = ref({} as Record<string, string>)
+const failedImageSources = ref<Record<number, string>>({})
 const manualImageLoads = ref({} as Record<string, boolean>)
 const pendingImageLoads = ref({} as Record<string, boolean>)
 
