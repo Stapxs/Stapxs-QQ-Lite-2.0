@@ -573,8 +573,10 @@ function getImgSrc(url: string): string {
 }
 
 function getImagePreviewHref(source: string): string | undefined {
+    if (!source?.trim()) return undefined
+
     try {
-        const url = new URL(source)
+        const url = new URL(source, document.baseURI)
         return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : undefined
     } catch {
         return undefined
