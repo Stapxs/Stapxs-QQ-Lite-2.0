@@ -131,8 +131,12 @@
                                 :class=" imgStyle(data.message.length, Number(index), isImageFace(item))"
                                 :src="getImgSrc(item.url)"
                                 data-type="image"
+                                role="button"
+                                tabindex="0"
                                 @load="imageLoaded"
                                 @error="failedImageSources[index] = getImgSrc(item.url)"
+                                @keydown.enter.prevent="imgClick(item.url)"
+                                @keydown.space.prevent="imgClick(item.url)"
                                 @click="imgClick(item.url)">
                         </template>
                         <template v-else-if="item.type == 'face'">

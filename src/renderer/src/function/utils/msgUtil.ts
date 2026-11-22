@@ -520,7 +520,7 @@ export function sendMsgRaw(
                 newResult.type = item.type
                 newResult.data = item
                 delete newResult.data.type
-                if (authStore.jsonMap.name === 'NapCat.Onebot' &&
+                if (authStore.jsonMap.image_send_sub_type === true &&
                     newResult.type === 'image' && item.sub_type == null && item.subType != null) {
                     newResult.data.sub_type = item.subType
                     delete newResult.data.subType
