@@ -109,7 +109,7 @@
                         <template v-else-if="item.type == 'image'">
                             <div v-show="shouldShowImagePlaceholder(item, Number(index))"
                                 :title="$t('点击加载图片')"
-                                :class="imgStyle(data.message.length, Number(index), isFace(item)) + ' msg-img-placeholder'"
+                                :class="imgStyle(data.message.length, Number(index), isImageFace(item)) + ' msg-img-placeholder'"
                                 @click="loadImage(item, Number(index))">
                                 <font-awesome-icon
                                     :icon="['fas', imageLoading(getImageKey(Number(index), item.url)) ? 'spinner' : 'image']"
@@ -128,7 +128,7 @@
                                 :key="getImgSrc(item.url)"
                                 :title="(!item.summary || item.summary == '') ? $t('预览图片') : item.summary"
                                 :alt="$t('图片')"
-                                :class=" imgStyle(data.message.length, Number(index), isFace(item))"
+                                :class=" imgStyle(data.message.length, Number(index), isImageFace(item))"
                                 :src="getImgSrc(item.url)"
                                 data-type="image"
                                 @load="imageLoaded"
@@ -389,7 +389,7 @@ import { Connector } from '@renderer/function/connect'
 import { useSettingsStore } from '@renderer/state/settings'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { StringifyOptions } from 'querystring'
-import { getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
+import { getMsgRawTxt, isImageFace, pokeAnime } from '@renderer/function/utils/msgUtil'
 import {
     isRobot,
     openLink,
@@ -1077,15 +1077,6 @@ function openMerge(){
     mergeData.imageList = imgList
 
     chatStore.mergeMsgStack.push(mergeData)
-}
-
-function isFace(item: any) {
-    if (item.asface) return true
-    else if (item.subType == 7) return true
-    else if (item.subType == 1) return true
-    else if (item.sub_type == 7) return true
-    else if (item.sub_type == 1) return true
-    return false
 }
 
 //#endregion
