@@ -318,6 +318,8 @@ export function regIpcListener() {
 
         const userId = data.tag.split('/')[0]
         const msgId = data.tag.split('/')[1]
+        // 通知驻留：通知将保持显示直到被处理
+        const isPersist = data.is_persist === true
         const iconUrl = cacheNotificationIcon(
             data.icon ?? '',
             path.join(app.getPath('temp'), 'stapxs-qq-notification-icons'),
@@ -342,9 +344,12 @@ export function regIpcListener() {
             }
         }
         if (process.platform === 'win32') {
+            // 驻留通知使用 reminder 场景，横幅将持续显示直到被处理
+            //（要求通知带有操作项，上面的快速回复满足条件）
+            const scenario = isPersist ? 'scenario="reminder" ' : ''
             showData = {
                 toastXml: `
-                <toast launch="stapx-qq-lite:action=click" activationType="protocol">
+                <toast ${scenario}launch="stapx-qq-lite:action=click" activationType="protocol">
                     <visual>
                         <binding template="ToastGeneric">
                             <image placement="appLogoOverride" hint-crop="circle" src="${iconUrl.replaceAll('&', '&amp;')}"/>
@@ -364,6 +369,12 @@ export function regIpcListener() {
             }
         }
         if (process.platform === 'linux') {
+            if (isPersist) {
+                showData = {
+                    ...showData,
+                    timeoutType: 'never',
+                }
+            }
             if (data.is_important) {
                 showData = {
                     ...showData,

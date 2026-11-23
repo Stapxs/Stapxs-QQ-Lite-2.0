@@ -1,6 +1,7 @@
 import app from '@renderer/main'
 import { NotifyInfo, NotificationElem } from './elements/system'
 import { jumpToChat } from './utils/appUtil'
+import { get as getOption } from './option'
 import {
     LocalNotificationSchema,
     DeliveredNotifications
@@ -12,6 +13,14 @@ export class Notify {
     private static userNotifyList: { [key: string]: number } = {}
     // Web 端端通知列表，key tag
     private static notifyList: { [key: string]: Notification } = {}
+
+    /**
+     * 获取通知驻留选项
+     * @returns 是否驻留
+     */
+    private static isPersist(): boolean {
+        return getOption('notice_persist') === true
+    }
 
     /**
      * 发送一条通知
@@ -33,6 +42,8 @@ export class Notify {
             // 关闭之前的通知
             this.closeAll(userId)
         }
+        // 通知驻留判定
+        info.is_persist = Notify.isPersist()
         // 发送消息
         if (backend.isDesktop()) {
             backend.call(undefined, 'sys:sendNotice', false, backend.type == 'tauri' ? { data: info } : info)
@@ -79,8 +90,10 @@ export class Notify {
      * @param info 通知信息
      */
     public notifySingle(info: NotifyInfo) {
+        // 通知驻留判定
+        info.is_persist = Notify.isPersist()
         if (backend.isDesktop()) {
-            backend.call(undefined, 'sys:sendNotice', false, info)
+            backend.call(undefined, 'sys:sendNotice', false, backend.type == 'tauri' ? { data: info } : info)
         } else if (backend.isMobile()) {
                 const data = {
                     title: info.title,
@@ -205,7 +218,8 @@ export class Notify {
         // 构建通知
         let notificationTile = ''
         const notificationBody = {} as NotificationElem
-        notificationBody.requireInteraction = true
+        // 通知驻留：开启后通知将持续显示直到被处理
+        notificationBody.requireInteraction = info.is_persist === true
         notificationTile = info.title
         notificationBody.body = info.body
         notificationBody.tag = info.tag

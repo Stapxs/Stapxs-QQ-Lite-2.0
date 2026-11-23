@@ -7,7 +7,7 @@ use std::{
 
 use async_trait::async_trait;
 use image::ImageReader;
-use notify_rust::{ActionResponse, CloseReason, Hint, Urgency, handle_action};
+use notify_rust::{ActionResponse, CloseReason, Hint, Timeout, Urgency, handle_action};
 use tokio::sync::RwLock;
 
 use crate::{NotificationBuilder, NotificationHandle, NotificationManager, NotificationResponse};
@@ -220,6 +220,13 @@ impl NotificationManager for NotificationManagerXdg {
         notification
             .urgency(Urgency::Normal)
             .hint(Hint::Transient(false))
+            // persistent notifications never expire,
+            // the user has to close them manually
+            .timeout(if builder.persistent {
+                Timeout::Never
+            } else {
+                Timeout::Default
+            })
             // default ation is needed otherwise the notification is not clickable
             .action("default", "default");
         //.action("open", "Open");

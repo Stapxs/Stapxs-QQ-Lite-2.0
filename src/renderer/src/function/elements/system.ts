@@ -67,6 +67,10 @@ export interface NotifyInfo {
     image?: string
     type: string
     is_important: boolean
+    /**
+     * 通知驻留：通知显示后将保持驻留，直到用户处理或关闭它
+     */
+    is_persist?: boolean
 }
 
 export interface NoticeBodyV3 {

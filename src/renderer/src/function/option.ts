@@ -103,6 +103,7 @@ export const optDefault: { [key: string]: any } = {
     opt_no_auto_load_image: false,
     // Function
     close_notice: false,
+    notice_persist: false,
     bubble_sort_user: true,
     session_display_mode: 'recent' as 'recent' | 'all',
     close_respond: false,

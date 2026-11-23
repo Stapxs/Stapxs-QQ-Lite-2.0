@@ -258,6 +258,12 @@ msgstr "停用通知"
 msgid "好嘛 …… 不烦你 ……"
 msgstr "遠離煩人巴打 :sosad:"
 
+msgid "通知驻留"
+msgstr "通知駐留"
+
+msgid "开启后通知将持续显示，直到你处理它才会消失"
+msgstr "開啟之後通知會一直顯示，直到你處理佢先會消失"
+
 msgid "调试"
 msgstr "Debug"
 

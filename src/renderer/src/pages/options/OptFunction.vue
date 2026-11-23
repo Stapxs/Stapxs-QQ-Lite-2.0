@@ -59,6 +59,21 @@
                 </label>
             </div>
             <div class="opt-item">
+                <div :class="checkDefault('notice_persist')" />
+                <font-awesome-icon :icon="['fas', 'thumbtack']" />
+                <div>
+                    <label for="opt-function-notice-persist">{{ $t('通知驻留') }}</label>
+                    <span>{{ $t('开启后通知将持续显示，直到你处理它才会消失') }}</span>
+                </div>
+                <label class="ss-switch">
+                    <input id="opt-function-notice-persist" v-model="settingsStore.sysConfig.notice_persist"
+                        type="checkbox" name="notice_persist" @change="save">
+                    <div>
+                        <div />
+                    </div>
+                </label>
+            </div>
+            <div class="opt-item">
                 <div :class="checkDefault('group_notice_type')" />
                 <font-awesome-icon :icon="['fas', 'user-group']" />
                 <div>

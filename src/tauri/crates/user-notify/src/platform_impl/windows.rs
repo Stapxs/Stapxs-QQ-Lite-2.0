@@ -446,9 +446,17 @@ impl NotificationManager for NotificationManagerWindows {
 
         let toast_xml = XmlDocument::new()?;
         // https://learn.microsoft.com/uwp/schemas/tiles/toastschema/schema-root
+        // persistent notifications use the reminder scenario, so the toast
+        // stays on screen until the user dismisses it (the toast always
+        // carries the category actions, satisfying the reminder requirements)
+        let scenario_xml = if builder.persistent {
+            r#"scenario="reminder""#
+        } else {
+            ""
+        };
         toast_xml
             .LoadXml(&HSTRING::from(format!(
-                r#"<toast duration="short" {launch_options}>
+                r#"<toast duration="short" {scenario_xml} {launch_options}>
                     <visual>
                         <binding template="ToastGeneric">
                             {title_xml}

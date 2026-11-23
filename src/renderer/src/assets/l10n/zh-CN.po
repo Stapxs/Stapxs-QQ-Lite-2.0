@@ -258,6 +258,12 @@ msgstr ""
 msgid "好嘛 …… 不烦你 ……"
 msgstr ""
 
+msgid "通知驻留"
+msgstr ""
+
+msgid "开启后通知将持续显示，直到你处理它才会消失"
+msgstr ""
+
 msgid "调试"
 msgstr ""
 

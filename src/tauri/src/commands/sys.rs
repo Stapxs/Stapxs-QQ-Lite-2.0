@@ -351,6 +351,13 @@ pub async fn sys_send_notice(
             .set_xdg_category(user_notify::XdgNotificationCategory::ImReceived);
     }
 
+    // 通知驻留：通知将保持显示直到被处理
+    let is_persist = data
+        .get("is_persist")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    notification = notification.set_persistent(is_persist);
+
     manager.send_notification(notification).await.map_err(|e| {
         error!("发送通知失败: {:?}", e);
         e.to_string()

@@ -17,6 +17,7 @@ pub struct NotificationBuilder {
     pub(crate) xdg_category: Option<XdgNotificationCategory>,
     pub(crate) xdg_app_name: Option<String>,
     pub(crate) user_info: Option<HashMap<String, String>>,
+    pub(crate) persistent: bool,
 }
 
 impl NotificationBuilder
@@ -141,6 +142,20 @@ where
     /// - linux: on linux we emulate this by storing this info inside of NotificationManager
     pub fn set_user_info(mut self, user_info: HashMap<String, String>) -> Self {
         self.user_info = Some(user_info);
+        self
+    }
+
+    /// set whether the notification stays on screen until the user dismisses it
+    /// instead of closing automatically after the default timeout
+    ///
+    /// ## Platform Specific
+    /// - MacOS: not supported, the banner duration is controlled by the system notification settings
+    /// - Windows: [`<toast scenario="reminder" />`](https://learn.microsoft.com/en-us/uwp/schemas/tiles/toastschema/element-toast)
+    ///   (requires the toast to have at least one action or input, otherwise Windows reverts to a normal toast)
+    /// - Linux / XDG: sets the expire timeout to never
+    ///   ([expire_timeout](https://specifications.freedesktop.org/notification-spec/latest/ar01s02.html))
+    pub fn set_persistent(mut self, persistent: bool) -> Self {
+        self.persistent = persistent;
         self
     }
 }
