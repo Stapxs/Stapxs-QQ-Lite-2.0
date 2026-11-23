@@ -252,6 +252,19 @@
     opacity: 0.5;
 }
 
+.msg-image-preview {
+    display: block;
+    height: auto;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+}
+.msg-image-preview:focus-visible > img {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
 .msg-img {
     margin: 5px 0;
     border-radius: 7px;
@@ -278,6 +291,8 @@
     max-width: 30vh
 }
 .msg-img-placeholder {
+    background: none;
+    font: inherit;
     border: 1px dashed var(--color-card-2) !important;
     min-width: 180px;
     min-height: 110px;
@@ -308,7 +323,7 @@
     color: var(--color-font-1-r);
 }
 /* 长图优化样式 */
-div:has(> .msg-img.long-img)::after {
+:is(div, .msg-image-preview):has(> .msg-img.long-img)::after {
     content: '长图';
     color: #434343;
     background: rgba(var(--color-card-2-rgb), 0.5);
@@ -323,7 +338,7 @@ div:has(> .msg-img.long-img)::after {
     font-size: 0.65rem;
     backdrop-filter: blur(20px);
 }
-div:has(> .msg-img.long-img.light)::after {
+:is(div, .msg-image-preview):has(> .msg-img.long-img.light)::after {
     color: #dbdbdb;
 }
 .msg-img.long-img {

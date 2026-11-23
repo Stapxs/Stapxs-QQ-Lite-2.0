@@ -107,9 +107,10 @@
                             @load="imageLoaded"
                             @error="imgLoadFail">
                         <template v-else-if="item.type == 'image'">
-                            <div v-show="shouldShowImagePlaceholder(item, Number(index))"
+                            <button v-show="shouldShowImagePlaceholder(item, Number(index))"
+                                type="button"
                                 :title="$t('点击加载图片')"
-                                :class="imgStyle(data.message.length, Number(index), isFace(item)) + ' msg-img-placeholder'"
+                                :class="imgStyle(data.message.length, Number(index), isImageFace(item)) + ' msg-img-placeholder'"
                                 @click="loadImage(item, Number(index))">
                                 <font-awesome-icon
                                     :icon="['fas', imageLoading(getImageKey(Number(index), item.url)) ? 'spinner' : 'image']"
@@ -117,23 +118,27 @@
                                 <span>
                                     {{ imageLoading(getImageKey(Number(index), item.url)) ? $t('加载中') : $t('点击加载图片') }}
                                 </span>
-                            </div>
+                            </button>
                             <div v-if="!shouldShowImagePlaceholder(item, Number(index)) && failedImageSources[index] === getImgSrc(item.url)"
                                 class="msg-image-load-failure">
                                 <font-awesome-icon :icon="['fas', 'image']" />
                                 <span>{{ $t('加载图片失败') }}</span>
                                 <a :href="getImgSrc(item.url)" target="_blank" rel="noopener noreferrer">{{ $t('预览图片') }}</a>
                             </div>
-                            <img v-else-if="!shouldShowImagePlaceholder(item, Number(index))"
+                            <button v-else-if="!shouldShowImagePlaceholder(item, Number(index))"
                                 :key="getImgSrc(item.url)"
-                                :title="(!item.summary || item.summary == '') ? $t('预览图片') : item.summary"
-                                :alt="$t('图片')"
-                                :class=" imgStyle(data.message.length, Number(index), isFace(item))"
-                                :src="getImgSrc(item.url)"
-                                data-type="image"
-                                @load="imageLoaded"
-                                @error="failedImageSources[index] = getImgSrc(item.url)"
+                                type="button"
+                                class="msg-image-preview"
+                                :aria-label="item.summary || $t('预览图片')"
                                 @click="imgClick(item.url)">
+                                <img :title="item.summary || $t('预览图片')"
+                                    :alt="$t('图片')"
+                                    :class="imgStyle(data.message.length, Number(index), isImageFace(item))"
+                                    :src="getImgSrc(item.url)"
+                                    data-type="image"
+                                    @load="imageLoaded"
+                                    @error="failedImageSources[index] = getImgSrc(item.url)">
+                            </button>
                         </template>
                         <template v-else-if="item.type == 'face'">
                             <EmojiFace :emoji="Emoji.get(Number(item.id))" class="msg-face" />
@@ -389,7 +394,7 @@ import { Connector } from '@renderer/function/connect'
 import { useSettingsStore } from '@renderer/state/settings'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { StringifyOptions } from 'querystring'
-import { getMsgRawTxt, pokeAnime } from '@renderer/function/utils/msgUtil'
+import { getMsgRawTxt, isImageFace, pokeAnime } from '@renderer/function/utils/msgUtil'
 import {
     isRobot,
     openLink,
@@ -1077,15 +1082,6 @@ function openMerge(){
     mergeData.imageList = imgList
 
     chatStore.mergeMsgStack.push(mergeData)
-}
-
-function isFace(item: any) {
-    if (item.asface) return true
-    else if (item.subType == 7) return true
-    else if (item.subType == 1) return true
-    else if (item.sub_type == 7) return true
-    else if (item.sub_type == 1) return true
-    return false
 }
 
 //#endregion

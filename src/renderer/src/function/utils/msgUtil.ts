@@ -242,6 +242,11 @@ export function parseMsgList(
     return list
 }
 
+export function isImageFace(item: Record<string, any>): boolean {
+    return Boolean(item.asface) || item.subType == 7 || item.subType == 1 ||
+        item.sub_type == 7 || item.sub_type == 1
+}
+
 /**
  * 将消息对象处理为扁平字符串
  * @param message 待处理的消息对象
@@ -293,10 +298,17 @@ export function getMsgRawTxt(data: any): string {
                 case 'bface':
                     back += message[i].text
                     break
-                case 'image':
-                    back +=
-                        (!message[i].summary || message[i].summary == '') ? '[' + $t('图片') + ']' : message[i].summary
+                case 'image': {
+                    const image = message[i]
+                    const imageLabel = '[' + $t('图片') + ']'
+                    const summary = image.summary
+                    if (isImageFace(image) && (!summary || summary === '[图片]' || summary === imageLabel)) {
+                        back += '[' + $t('动画表情') + ']'
+                    } else {
+                        back += summary || imageLabel
+                    }
                     break
+                }
                 case 'record':
                     back += '[' + $t('语音') + ']'
                     break
@@ -508,6 +520,11 @@ export function sendMsgRaw(
                 newResult.type = item.type
                 newResult.data = item
                 delete newResult.data.type
+                if (authStore.jsonMap.image_send_sub_type === true &&
+                    newResult.type === 'image' && item.sub_type == null && item.subType != null) {
+                    newResult.data.sub_type = item.subType
+                    delete newResult.data.subType
+                }
                 // 特殊处理，如果 newResult.data 里有 _type 字段，给它改成 type
                 if (newResult.data._type != undefined) {
                     newResult.data.type = newResult.data._type

@@ -4,6 +4,7 @@
 
 # Bot 名称
 name: NapCat.Onebot
+image_send_sub_type: true
 
 # Bot 版本信息
 version_info: $.data
