@@ -1,6 +1,10 @@
 import type { Session } from '../elements/information'
 
 export function getSessionId(item: Session) {
+    const userId = Number(item.user_id)
+    if (Number.isFinite(userId) && userId > 0) return userId
+    const groupId = Number(item.group_id)
+    if (Number.isFinite(groupId) && groupId > 0) return groupId
     return Number(item.user_id ?? item.group_id)
 }
 
@@ -112,8 +116,8 @@ export function isSessionMenuTarget(item: unknown): item is Session {
     const record = item as Record<string, unknown>
     if ('is_system_notice' in record && record.is_system_notice === true) return false
     if ('user_id' in record && Number(record.user_id) === -10000) return false
-    const groupId = 'group_id' in record ? Number(record.group_id) : NaN
-    const userId = 'user_id' in record ? Number(record.user_id) : NaN
+    const groupId = 'group_id' in record ? Number(record.group_id) : Number.NaN
+    const userId = 'user_id' in record ? Number(record.user_id) : Number.NaN
     return (Number.isFinite(groupId) && groupId > 0) ||
         (Number.isFinite(userId) && userId > 0)
 }
@@ -131,32 +135,35 @@ export function hasAccountSessionId(
     return Array.isArray(rawList) && rawList.some((entry) => Number(entry) === targetId)
 }
 
+function cloneAccountSessionMap(map: unknown): Record<string, number[]> {
+    const nextMap: Record<string, number[]> = {}
+    if (!map || typeof map !== 'object' || Array.isArray(map)) {
+        return nextMap
+    }
+    for (const [key, value] of Object.entries(map as Record<string, unknown>)) {
+        if (Array.isArray(value)) {
+            nextMap[key] = value
+                .map(Number)
+                .filter((num) => Number.isFinite(num) && num > 0)
+        }
+    }
+    return nextMap
+}
+
 export function toggleAccountSessionId(
     map: unknown,
     uin: number | string | undefined,
     sessionId: number | string,
     enabled: boolean,
 ): Record<string, number[]> {
-    const nextMap: Record<string, number[]> = {}
-    if (map && typeof map === 'object' && !Array.isArray(map)) {
-        for (const [key, value] of Object.entries(map as Record<string, unknown>)) {
-            if (Array.isArray(value)) {
-                nextMap[key] = value
-                    .map(Number)
-                    .filter((num) => Number.isFinite(num) && num > 0)
-            }
-        }
-    }
+    const nextMap = cloneAccountSessionMap(map)
     const accountKey = uin == null ? '' : String(uin)
     const targetId = Number(sessionId)
     if (!accountKey || !Number.isFinite(targetId) || targetId <= 0) {
         return nextMap
     }
 
-    const deduped: number[] = []
-    for (const num of nextMap[accountKey] ?? []) {
-        if (!deduped.includes(num)) deduped.push(num)
-    }
+    const deduped = Array.from(new Set(nextMap[accountKey] ?? []))
     if (enabled) {
         if (!deduped.includes(targetId)) {
             deduped.push(targetId)

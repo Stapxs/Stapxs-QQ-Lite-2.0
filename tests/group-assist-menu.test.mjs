@@ -2,10 +2,18 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import {
+    getSessionId,
     hasAccountSessionId,
     isSessionMenuTarget,
     toggleAccountSessionId,
 } from '../src/renderer/src/function/utils/sessionUtil.ts'
+
+test('getSessionId resolves valid group_id even when user_id is 0', () => {
+    assert.equal(getSessionId({ user_id: 0, group_id: 123456 }), 123456)
+    assert.equal(getSessionId({ group_id: 123456 }), 123456)
+    assert.equal(getSessionId({ user_id: 234567 }), 234567)
+    assert.equal(getSessionId({ user_id: -10000 }), -10000)
+})
 
 test('isSessionMenuTarget accepts folded groups and friends without new_msg property', () => {
     // Folded group under default config (bubble_sort_user=true, group_notice_type='none') has no new_msg key
@@ -72,8 +80,24 @@ test('Messages.vue uses isSessionMenuTarget and toggleAccountSessionId instead o
         'utf8',
     )
 
-    assert.doesNotMatch(messagesSource, /'new_msg' in item/)
-    assert.doesNotMatch(messagesSource, /topList\.indexOf\(props\.chat\.show\.id\)/)
-    assert.match(messagesSource, /isSessionMenuTarget\(item\)/)
-    assert.match(messagesSource, /toggleAccountSessionId\(/)
+    const listMenuCloseMatch = messagesSource.match(
+        /function listMenuClose[\s\S]*?(?=\n\s*\/\*\*\s*\n\s*\* 保存置顶信息)/,
+    )
+    assert.ok(listMenuCloseMatch, 'listMenuClose function should exist in Messages.vue')
+    const listMenuCloseBody = listMenuCloseMatch[0]
+    const guardMatch = listMenuCloseBody.match(
+        /const item = menu\.select[\s\S]*?switch \(id\)/,
+    )
+    assert.ok(guardMatch, 'listMenuClose should guard menu.select before switching on id')
+    assert.match(guardMatch[0], /if \(!isSessionMenuTarget\(item\)\)/)
+    assert.doesNotMatch(guardMatch[0], /new_msg/)
+
+    const saveTopMatch = messagesSource.match(
+        /function saveTop[\s\S]*?(?=\n\s*\/\*\*\s*\n\s*\* 显示列表菜单)/,
+    )
+    assert.ok(saveTopMatch, 'saveTop function should exist in Messages.vue')
+    const saveTopBody = saveTopMatch[0]
+    assert.doesNotMatch(saveTopBody, /props\.chat\.show\.id/)
+    assert.match(saveTopBody, /getSessionId\(item\)/)
+    assert.match(saveTopBody, /toggleAccountSessionId\(/)
 })

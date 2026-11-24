@@ -221,14 +221,31 @@ export function registerExtraOptionItem(cardId: string, item: ExtraOptionItem) {
         const key = item.optionKey
         if (Object.prototype.hasOwnProperty.call(item, 'defaultValue')) {
             if (optDefault[key] === undefined) {
-                optDefault[key] = item.defaultValue
+                optDefault[key] = cloneOptionDefault(item.defaultValue)
             }
             if (cacheConfigs && cacheConfigs[key] === undefined) {
-                cacheConfigs[key] = item.defaultValue
+                cacheConfigs[key] = cloneOptionDefault(item.defaultValue)
                 saveAll()
             }
         }
     }
+}
+
+function cloneOptionDefault<T>(value: T): T {
+    if (Array.isArray(value)) {
+        return value.map((item) => cloneOptionDefault(item)) as T
+    }
+    if (value && typeof value === 'object') {
+        const proto = Object.getPrototypeOf(value)
+        if (proto === Object.prototype || proto === null) {
+            const cloned: Record<string, any> = {}
+            for (const [k, v] of Object.entries(value)) {
+                cloned[k] = cloneOptionDefault(v)
+            }
+            return cloned as T
+        }
+    }
+    return value
 }
 
 function updateChatPan() {
@@ -578,14 +595,7 @@ function loadOptData(data: { [key: string]: any }) {
     Object.keys(optDefault).forEach((key) => {
         if (options[key] === undefined) {
             optChanged = true
-            const fallback = optDefault[key]
-            if (Array.isArray(fallback)) {
-                options[key] = [...fallback]
-            } else if (fallback && typeof fallback === 'object') {
-                options[key] = { ...fallback }
-            } else {
-                options[key] = fallback
-            }
+            options[key] = cloneOptionDefault(optDefault[key])
         }
     })
     // 删除不存在的设置项
