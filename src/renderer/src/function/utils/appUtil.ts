@@ -46,6 +46,7 @@ import {
 import { sendMsgRaw } from './msgUtil'
 import { dbGetLatest } from './localHistoryUtil'
 import { withDownloadFileName } from './fileTransferUtil'
+import { toggleAccountSessionId } from './sessionUtil'
 import {
     createHistoryEcho,
     historyRequestTracker,
@@ -1450,24 +1451,13 @@ export function sendIdentifyData(data: { [key: string]: any }) {
 */
 export function changeGroupNotice(group_id: number, open: boolean) {
     const authStore = useAuthStore()
-    const noticeInfo = option.get('notice_group') ?? {}
-    const list = noticeInfo[authStore.loginInfo.uin]
-    if (open) {
-        if (list) {
-            list.push(group_id)
-        } else {
-            noticeInfo[authStore.loginInfo.uin] = [group_id]
-        }
-        option.save('notice_group', noticeInfo)
-    } else {
-        if (list) {
-            const index = list.indexOf(group_id)
-            if (index >= 0) {
-                list.splice(index, 1)
-            }
-        }
-        option.save('notice_group', noticeInfo)
-    }
+    const nextNoticeInfo = toggleAccountSessionId(
+        option.get('notice_group'),
+        authStore.loginInfo.uin,
+        group_id,
+        open,
+    )
+    option.save('notice_group', nextNoticeInfo)
 }
 
 /**

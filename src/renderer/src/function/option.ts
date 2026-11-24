@@ -578,7 +578,14 @@ function loadOptData(data: { [key: string]: any }) {
     Object.keys(optDefault).forEach((key) => {
         if (options[key] === undefined) {
             optChanged = true
-            options[key] = optDefault[key]
+            const fallback = optDefault[key]
+            if (Array.isArray(fallback)) {
+                options[key] = [...fallback]
+            } else if (fallback && typeof fallback === 'object') {
+                options[key] = { ...fallback }
+            } else {
+                options[key] = fallback
+            }
         }
     })
     // 删除不存在的设置项
@@ -678,7 +685,9 @@ export function getRaw(name: string) {
  * @param value 设置项值
  */
 export function save(name: string, value: any) {
+    if (!cacheConfigs) cacheConfigs = {}
     cacheConfigs[name] = value
+    useSettingsStore().sysConfig[name] = value
     saveAll()
 }
 export function saveAll(config = {} as { [key: string]: any }) {
@@ -701,7 +710,7 @@ export function saveAll(config = {} as { [key: string]: any }) {
 
     // electron：将配置保存
     if (backend.isDesktop()) {
-        const saveConfig = config
+        const saveConfig: Record<string, any> = {}
         Object.keys(config).forEach((key) => {
             const isObject = typeof config[key] == 'object'
             saveConfig[key] = isObject ? JSON.stringify(config[key]): config[key]

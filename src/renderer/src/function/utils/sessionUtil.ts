@@ -106,3 +106,64 @@ export function mergeEarlySessionContacts(
     })
     return didMerge
 }
+
+export function isSessionMenuTarget(item: unknown): item is Session {
+    if (!item || typeof item !== 'object') return false
+    const record = item as Record<string, unknown>
+    if ('is_system_notice' in record && record.is_system_notice === true) return false
+    if ('user_id' in record && Number(record.user_id) === -10000) return false
+    const groupId = 'group_id' in record ? Number(record.group_id) : NaN
+    const userId = 'user_id' in record ? Number(record.user_id) : NaN
+    return (Number.isFinite(groupId) && groupId > 0) ||
+        (Number.isFinite(userId) && userId > 0)
+}
+
+export function hasAccountSessionId(
+    map: unknown,
+    uin: number | string | undefined,
+    sessionId: number | string,
+): boolean {
+    if (!map || typeof map !== 'object' || Array.isArray(map)) return false
+    const accountKey = uin == null ? '' : String(uin)
+    const targetId = Number(sessionId)
+    if (!accountKey || !Number.isFinite(targetId) || targetId <= 0) return false
+    const rawList = (map as Record<string, unknown>)[accountKey]
+    return Array.isArray(rawList) && rawList.some((entry) => Number(entry) === targetId)
+}
+
+export function toggleAccountSessionId(
+    map: unknown,
+    uin: number | string | undefined,
+    sessionId: number | string,
+    enabled: boolean,
+): Record<string, number[]> {
+    const nextMap: Record<string, number[]> = {}
+    if (map && typeof map === 'object' && !Array.isArray(map)) {
+        for (const [key, value] of Object.entries(map as Record<string, unknown>)) {
+            if (Array.isArray(value)) {
+                nextMap[key] = value
+                    .map(Number)
+                    .filter((num) => Number.isFinite(num) && num > 0)
+            }
+        }
+    }
+    const accountKey = uin == null ? '' : String(uin)
+    const targetId = Number(sessionId)
+    if (!accountKey || !Number.isFinite(targetId) || targetId <= 0) {
+        return nextMap
+    }
+
+    const deduped: number[] = []
+    for (const num of nextMap[accountKey] ?? []) {
+        if (!deduped.includes(num)) deduped.push(num)
+    }
+    if (enabled) {
+        if (!deduped.includes(targetId)) {
+            deduped.push(targetId)
+        }
+        nextMap[accountKey] = deduped
+    } else {
+        nextMap[accountKey] = deduped.filter((num) => num !== targetId)
+    }
+    return nextMap
+}
