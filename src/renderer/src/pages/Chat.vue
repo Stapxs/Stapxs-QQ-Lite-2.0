@@ -69,7 +69,6 @@
         </div>
         <!-- 消息显示区 -->
         <div id="msgPan" ref="msgPan" class="chat"
-            style="scroll-behavior: smooth"
             @scroll="chatScroll($event, details[3].open)">
             <template v-if="!details[3].open">
                 <div v-if="!uiStore.canLoadHistory" class="note note-nomsg">
@@ -83,7 +82,9 @@
                 <!-- 时间戳，在下滑加载的时候会显示，方便在大段的相连消息上让用户知道消息时间 -->
                 <NoticeBody v-if="uiStore.nowGetHistory && list.length > 0"
                     :data="{ sub_type: 'time', time: list[0].time }" />
-                <TransitionGroup :name="settingsStore.sysConfig.opt_fast_animation ? '' : 'msglist'" tag="div">
+                <TransitionGroup ref="msgListGroup"
+                    :name="settingsStore.sysConfig.opt_fast_animation || suppressListMoveAnimation ? '' : 'msglist'"
+                    tag="div">
                     <template v-for="(msgIndex, index) in list">
                         <!-- 时间戳 -->
                         <NoticeBody
@@ -120,6 +121,7 @@
             <template v-else>
                 <!-- 搜索消息结果显示 -->
                 <TransitionGroup
+                    ref="searchListGroup"
                     :name="settingsStore.sysConfig.opt_fast_animation ? '' : 'msglist'"
                     tag="div">
                     <template v-for="(msgIndex, index) in tags.search.list">
@@ -595,11 +597,13 @@ import {
     reactive,
     inject,
     toRaw,
+    TransitionGroup,
     useTemplateRef,
 } from 'vue'
 import { v4 as uuid } from 'uuid'
 import {
 	scrollToMsg,
+    registerChatScrollJumpHandler,
     downloadFile,
     loadHistory as loadHistoryFirst,
     loadMoreHistoryMessages,
@@ -628,6 +632,10 @@ import { Connector } from '@renderer/function/connect'
 import { appendHistoryForQuotedMessage } from '@renderer/function/msg'
 import { loadHistoryToQuotedMessage } from '@renderer/function/utils/quotedMessage'
 import { keepQuotedMessageInView } from '@renderer/function/utils/quotedScroll'
+import {
+    classifyMessageListChange,
+    createChatScrollAnchor,
+} from '@renderer/function/utils/chatScrollAnchor'
 import { useQuotedMessagesStore } from '@renderer/state/quotedMessages'
 import {
     BaseChatInfoElem,
@@ -713,6 +721,8 @@ watch(() => quotedMessages.scopeVersion, cancelReplyJump, { flush: 'sync' })
 const mergePan = useTemplateRef<InstanceType<typeof MergePan>>('mergePan')
 const chatPan = useTemplateRef<HTMLDivElement>('chatPan')
 const msgPan = useTemplateRef<HTMLDivElement>('msgPan')
+const msgListGroup = useTemplateRef<InstanceType<typeof TransitionGroup>>('msgListGroup')
+const searchListGroup = useTemplateRef<InstanceType<typeof TransitionGroup>>('searchListGroup')
 const chatPadding = useTemplateRef<HTMLSpanElement>('chatPadding')
 const sendMore = useTemplateRef<HTMLDivElement>('sendMore')
 const mainInput = useTemplateRef<HTMLInputElement | HTMLTextAreaElement>('mainInput')
@@ -787,6 +797,27 @@ const forwardList = ref(contactStore.userList)
 const chatImg = ref<any>(undefined)
 const trueLang = getTrueLang()
 const isDev = import.meta.env.DEV
+const suppressListMoveAnimation = ref(false)
+let searchJumpTimer: ReturnType<typeof setTimeout> | null = null
+let trimReloadPending = false
+const scrollAnchor = createChatScrollAnchor({
+    getPan: () => msgPan.value,
+    getContent: () =>
+        ((details.value[3].open ? searchListGroup.value : msgListGroup.value) as any)?.$el ?? null,
+    getBottomInset: () => {
+        const pan = msgPan.value
+        const paddingBottom =
+            pan && typeof window !== 'undefined' ? Number.parseFloat(window.getComputedStyle(pan).paddingBottom) || 0 : 0
+        return Math.max(chatPadding.value?.offsetHeight ?? 0, paddingBottom)
+    },
+    isSuspended: () => replyLoading.value || Boolean(replyAnchor) || details.value[3].open,
+    onPinnedChange: (pinned) => {
+        if (pinned) {
+            NewMsgNum.value = 0
+            tags.value.showBottomButton = false
+        }
+    },
+})
 
 //#region == 窗口移动相关 ==================================================
 const chatMoveOptions: VMoveOptions<HTMLDivElement> = {
@@ -883,12 +914,20 @@ function resetState() {
 }
 
 watch(() => chat, () => {
+    if (searchJumpTimer !== null) {
+        clearTimeout(searchJumpTimer)
+        searchJumpTimer = null
+    }
+    trimReloadPending = false
+    suppressListMoveAnimation.value = false
     resetState()
+    scrollAnchor.reset(true)
     sendCache.value = []
     imgCache.value.clear()
     multipleSelectList.value = []
     initMenuDisplay()
     nextTick(() => {
+        scrollAnchor.refreshObservers()
         scheduleResizeMainInput()
     })
     const history = useSessionHistoryStore()
@@ -896,6 +935,34 @@ watch(() => chat, () => {
     const session = [...contactStore.userList].find(i => (i.user_id ?? i.group_id) === sessionId)
     if (session) history.add(session)
 })
+
+watch(
+    () => details.value[3].open,
+    (isSearchOpen) => {
+        if (isSearchOpen) {
+            if (!scrollAnchor.isPinnedToBottom()) {
+                scrollAnchor.capture()
+            }
+            return
+        }
+        nextTick(() => {
+            scrollAnchor.refreshObservers()
+            scrollAnchor.reconcile()
+        })
+    },
+    { flush: 'sync' },
+)
+
+watch(
+    () => [uiStore.nowGetHistory, uiStore.canLoadHistory, uiStore.loadHistoryFail],
+    () => {
+        nextTick(() => {
+            if (!details.value[3].open && !scrollAnchor.isPinnedToBottom()) {
+                scrollAnchor.reconcile()
+            }
+        })
+    },
+)
 
 watch(() => msg.value, (_newMsg, oldMsgVal) => {
     oldMsg.value = oldMsgVal
@@ -908,10 +975,18 @@ onMounted(() => {
     const session = [...contactStore.userList].find(i => (i.user_id ?? i.group_id) === sessionId)
     if (session) history.add(session)
 
-    updateList(list.length, 0)
+    registerChatScrollJumpHandler((target, options) => {
+        if (details.value[3].open) return false
+        return scrollAnchor.scrollToTarget(target, options)
+    })
+
+    updateList(
+        list.map((item) => item.message_id + '_' + item.fake_msg),
+        [],
+    )
     watch(() => list.map((item) => item.message_id + '_' + item.fake_msg),
         (newIds, oldIds = []) => {
-            updateList(newIds.length, oldIds.length)
+            updateList(newIds, oldIds)
         },
     )
     watch(() => chat.info.jin_info.list.length, () => {
@@ -927,6 +1002,7 @@ onMounted(() => {
         exitWin()
     })
     nextTick(() => {
+        scrollAnchor.attach()
         setupChatPaddingObserver()
         scheduleResizeMainInput()
     })
@@ -935,6 +1011,12 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     cancelReplyJump()
+    registerChatScrollJumpHandler(null)
+    if (searchJumpTimer !== null) {
+        clearTimeout(searchJumpTimer)
+        searchJumpTimer = null
+    }
+    scrollAnchor.detach()
     removeFileDropListeners()
     if (resizeMainInputFrame !== null) {
         cancelAnimationFrame(resizeMainInputFrame)
@@ -990,6 +1072,7 @@ function updateChatPadding() {
         ): morePan.getBoundingClientRect().top
     const chatBottom = chatPan.getBoundingClientRect().bottom
     padding.style.height = Math.max(0, chatBottom - contentTop) + 'px'
+    scrollAnchor.reconcile()
 }
 
 function scheduleChatPaddingUpdate(afterUpdate?: () => void) {
@@ -1073,26 +1156,40 @@ function resizeMainInput(target?: HTMLTextAreaElement | HTMLInputElement | null)
     input.style.transition = oldTransition
 }
 function jumpSearchMsg() {
+    const targetId = selectedMsg.value?.message_id
+    const sessionId = chat.show.id
+    const sessionType = chat.show.type
     closeSearch()
-    setTimeout(() => {
-        if (!selectedMsg.value) return
-        scrollToMsg('chat-' + selectedMsg.value?.message_id, true)
+    if (searchJumpTimer !== null) {
+        clearTimeout(searchJumpTimer)
+    }
+    searchJumpTimer = setTimeout(() => {
+        searchJumpTimer = null
+        if (!targetId) return
+        if (chat.show.id !== sessionId || chat.show.type !== sessionType) return
+        scrollToMsgLocal('chat-' + targetId)
         closeMsgMenu()
     }, 100)
 }
 
 function chatScroll(event: Event, pass: boolean) {
-    if(pass) return
+    if (pass) return
 
+    scrollAnchor.handleScroll()
     const body = event.target as HTMLDivElement
-    if (body.scrollTop === 0 && list.length > 0 && !replyLoading.value) {
+    if (
+        body.scrollTop === 0 &&
+        body.scrollHeight > body.clientHeight + 1 &&
+        !scrollAnchor.isPinnedToBottom() &&
+        list.length > 0 &&
+        !replyLoading.value
+    ) {
         loadMoreHistory()
     }
-    if ((body.scrollTop + body.clientHeight + 10) >= body.scrollHeight) {
+    if (scrollAnchor.isPinnedToBottom()) {
         NewMsgNum.value = 0
         tags.value.showBottomButton = false
-    }
-    if (
+    } else if (
         body.scrollTop <
             body.scrollHeight - body.clientHeight * 2 &&
         tags.value.showBottomButton !== true
@@ -1103,6 +1200,9 @@ function chatScroll(event: Event, pass: boolean) {
 
 async function loadMoreHistory(reply?: { isActive: () => boolean }) {
     if (uiStore.nowGetHistory || uiStore.canLoadHistory === false || list.length === 0) return false
+    if (!reply) {
+        scrollAnchor.setPinnedToBottom(false)
+    }
     const firstMsgId = list[0].message_id
     const firstMsgTime = Number(list[0]?.time)
     const fullPage =
@@ -1214,9 +1314,11 @@ async function jumpToQuotedMessage(messageId: string) {
     if (focusQuotedMessage(messageId, pan, isActive)) return
     if (!quotedMessages.canRequest) return
     replyLoading.value = true
+    scrollAnchor.setPinnedToBottom(false)
     tags.value.showBottomButton = true
     try {
         if (!await waitForHistoryIdle(isActive) || !isActive()) return
+        pan.style.scrollBehavior = 'auto'
         pan.scrollTop = 0
         const result = await loadHistoryToQuotedMessage({
             isActive,
@@ -1239,12 +1341,16 @@ async function jumpToQuotedMessage(messageId: string) {
 function focusQuotedMessage(messageId: string, pan: HTMLElement, isActive: () => boolean): boolean {
     const target = document.getElementById(messageId)
     if (!target || !pan.contains(target) || !isActive()) return false
+    scrollAnchor.setPinnedToBottom(false)
     tags.value.showBottomButton = true
     // Finish a long jump immediately; media layout changes must not interrupt it.
     scrollToMsg(messageId, false, true, true)
     replyAnchor = keepQuotedMessageInView({
         pan, target, isActive,
-        onRelease: () => { replyAnchor = undefined },
+        onRelease: () => {
+            replyAnchor = undefined
+            scrollAnchor.capture()
+        },
     })
     return true
 }
@@ -1289,42 +1395,28 @@ function fillSeqGaps(anchorMsgIds: string[], historyRequest: HistoryRequest) {
     }
 }
 
-function scrollTo(where: number | undefined, showAnimation = true) {
-    const pan = document.getElementById('msgPan')
-    if (pan !== null && where) {
-        if (showAnimation === false) {
-            pan.style.scrollBehavior = 'unset'
-        } else {
-            pan.style.scrollBehavior = 'smooth'
-        }
-        pan.scrollTop = where
-        pan.style.scrollBehavior = 'smooth'
-    }
-}
-
 function scrollBottom(showAnimation = false) {
-    const pan = document.getElementById('msgPan')
-    if (pan !== null) {
-        scrollTo(pan.scrollHeight, showAnimation)
-    }
+    scrollAnchor.scrollToBottom(showAnimation)
 }
 
-function scrollToMsgLocal(message_id: string) {
+function scrollToMsgLocal(message_id: string): boolean {
+    const pan = msgPan.value ?? document.getElementById('msgPan')
+    const target = document.getElementById(message_id)
+    if (!pan || !target || !pan.contains(target)) {
+        new PopInfo().add(PopType.INFO, $t('无法定位上下文'))
+        return false
+    }
+    scrollAnchor.setPinnedToBottom(false)
     if (!scrollToMsg(message_id, true)) {
         new PopInfo().add(PopType.INFO, $t('无法定位上下文'))
+        return false
     }
+    return true
 }
 
-function imgLoadedScroll(height: number) {
+function imgLoadedScroll(_height?: number) {
     if (replyLoading.value || replyAnchor?.correct()) return
-    const pan = document.getElementById('msgPan')
-    if(pan) {
-        if(list.length <= 20 && !tags.value.showBottomButton && !replyLoading.value) {
-            scrollBottom()
-        } else {
-            scrollTo(pan.scrollTop + height, false)
-        }
-    }
+    scrollAnchor.reconcile()
 }
 
 function mainKey(event: KeyboardEvent) {
@@ -2775,7 +2867,13 @@ function sendParsedMsg(parsedMsg: any, echo: string) {
     }
 }
 
-function updateList(newLength: number, oldLength: number) {
+function updateList(newIds: string[], oldIds: string[]) {
+    const newLength = newIds.length
+    const oldLength = oldIds.length
+    const changeKind = classifyMessageListChange(oldIds, newIds)
+    if (newLength <= 200) {
+        trimReloadPending = false
+    }
     if (oldLength == 0 && newLength > 0) {
         const name =
             authStore.jsonMap.set_message_read?.name ?? undefined
@@ -2809,25 +2907,27 @@ function updateList(newLength: number, oldLength: number) {
         }
     }
 
+    const wasPinned = scrollAnchor.isPinnedToBottom()
     if (
-        tags.value.showBottomButton &&
-        !uiStore.nowGetHistory &&
-        !replyLoading.value &&
-        oldLength > 0
+        !wasPinned &&
+        (changeKind === 'append' || changeKind === 'mixed') &&
+        !replyLoading.value
     ) {
+        const addedCount = Math.max(1, newLength - oldLength)
         if (NewMsgNum.value !== 0) {
-            NewMsgNum.value =
-                NewMsgNum.value + Math.abs(newLength - oldLength)
+            NewMsgNum.value = NewMsgNum.value + addedCount
         } else {
-            NewMsgNum.value = Math.abs(newLength - oldLength)
+            NewMsgNum.value = addedCount
         }
+        tags.value.showBottomButton = true
     }
     if (
         list.length > 200 &&
         !uiStore.nowGetHistory &&
-        !tags.value.showBottomButton
+        wasPinned &&
+        !trimReloadPending
     ) {
-        chatStore.messageList = []
+        trimReloadPending = true
         const info = {
             type: chat.show.type,
             id: chat.show.id,
@@ -2835,31 +2935,65 @@ function updateList(newLength: number, oldLength: number) {
             avatar: chat.show.avatar,
             jump: chat.show.jump,
         } as BaseChatInfoElem
-        loadHistoryFirst(info)
-        uiStore.nowGetHistory = true
+        loadHistoryFirst(info, { clearBeforeLoad: false })
     }
 
-    const pan = document.getElementById('msgPan')
+    const pan = msgPan.value ?? document.getElementById('msgPan')
     if (pan !== null) {
-        const height = pan.scrollHeight
+        if (changeKind === 'prepend' || changeKind === 'replace') {
+            suppressListMoveAnimation.value = true
+        }
+        if ((changeKind === 'prepend' || !wasPinned) && oldLength > 0) {
+            scrollAnchor.capture()
+        }
         nextTick(() => {
-            const newPan = document.getElementById('msgPan')
+            const newPan = msgPan.value ?? document.getElementById('msgPan')
+            let consumedInitialJump = false
             if (newPan !== null) {
-                if (uiStore.nowGetHistory) {
-                    scrollTo(
-                        newPan.scrollHeight - height,
-                        false,
-                    )
-                }
-                if (!uiStore.nowGetHistory) {
-                    if (!tags.value.showBottomButton) {
-                        scrollTo(newPan.scrollHeight)
+                if (changeKind === 'initial') {
+                    if (chatStore.chatInfo.show?.jump) {
+                        new Logger().debug(
+                            '进入跳转至消息：' +
+                                chatStore.chatInfo.show.jump,
+                        )
+                        const jumped = scrollToMsgLocal(
+                            'chat-' + chatStore.chatInfo.show.jump,
+                        )
+                        chatStore.chatInfo.show.jump = undefined
+                        consumedInitialJump = true
+                        if (!jumped) {
+                            scrollAnchor.scrollToBottom(false)
+                        }
+                    } else {
+                        scrollAnchor.scrollToBottom(false)
                     }
-                    if (oldLength <= 0) {
-                        scrollTo(newPan.scrollHeight, false)
+                } else if (changeKind === 'prepend') {
+                    scrollAnchor.refreshObservers()
+                    scrollAnchor.reconcile()
+                } else if (changeKind === 'append') {
+                    if (wasPinned) {
+                        scrollAnchor.scrollToBottom(true)
+                    } else {
+                        scrollAnchor.reconcile()
+                    }
+                } else if (changeKind === 'replace' || changeKind === 'mixed') {
+                    if (wasPinned) {
+                        scrollAnchor.scrollToBottom(false)
+                    } else {
+                        scrollAnchor.reconcile()
                     }
                 }
-                uiStore.nowGetHistory = false
+            }
+
+            if (suppressListMoveAnimation.value) {
+                const releaseMove = () => {
+                    suppressListMoveAnimation.value = false
+                }
+                if (typeof requestAnimationFrame === 'function') {
+                    requestAnimationFrame(releaseMove)
+                } else {
+                    setTimeout(releaseMove, 0)
+                }
             }
 
             const getImgList = () => {
@@ -2880,6 +3014,7 @@ function updateList(newLength: number, oldLength: number) {
             }
             chatImg.value = Img.fromList(getImgList())
             if (
+                !consumedInitialJump &&
                 chatStore.chatInfo.show &&
                 chatStore.chatInfo.show.jump
             ) {

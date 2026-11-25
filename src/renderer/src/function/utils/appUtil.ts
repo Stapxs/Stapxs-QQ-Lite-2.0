@@ -58,6 +58,19 @@ import { Notify } from '../notify'
 const popInfo = new PopInfo()
 const logger = new Logger()
 
+type ChatScrollJumpHandler = (
+    target: HTMLElement,
+    options: { smooth: boolean; centerInView: boolean },
+) => boolean
+
+let chatScrollJumpHandler: ChatScrollJumpHandler | null = null
+
+export function registerChatScrollJumpHandler(
+    handler: ChatScrollJumpHandler | null,
+) {
+    chatScrollJumpHandler = handler
+}
+
 /**
  * 滚动到目标消息（不自动加载）
  * @param seqName DOM 名（chat-xx）
@@ -67,14 +80,20 @@ export function scrollToMsg(seqName: string, showAnimation: boolean, showHighlig
     if (msg) {
         const pan = document.getElementById('msgPan')
         if (pan !== null) {
-            if (showAnimation === false) {
-                pan.style.scrollBehavior = 'unset'
-            } else {
-                pan.style.scrollBehavior = 'smooth'
+            const handled = chatScrollJumpHandler?.(msg, {
+                smooth: showAnimation !== false,
+                centerInView,
+            })
+            if (!handled) {
+                // A programmatic quote jump must not trigger scroll-at-zero paging.
+                const targetTop = centerInView? Math.max(1, msg.offsetTop - (pan.clientHeight - msg.offsetHeight) / 2): msg.offsetTop - msg.offsetHeight + 10
+                if (showAnimation !== false && typeof pan.scrollTo === 'function') {
+                    pan.scrollTo({ top: targetTop, behavior: 'smooth' })
+                } else {
+                    pan.style.scrollBehavior = 'auto'
+                    pan.scrollTop = targetTop
+                }
             }
-            // A programmatic quote jump must not trigger scroll-at-zero paging.
-            pan.scrollTop = centerInView? Math.max(1, msg.offsetTop - (pan.clientHeight - msg.offsetHeight) / 2): msg.offsetTop - msg.offsetHeight + 10
-            pan.style.scrollBehavior = 'smooth'
             if (showHighlight) {
                 msg.style.transition = 'background 1s'
                 msg.style.background = 'rgba(0, 0, 0, 0.06)'
@@ -114,14 +133,20 @@ export function openLink(url: string) {
  * 加载历史消息
  * @param info 聊天基本信息
  */
-export async function loadHistory(info: BaseChatInfoElem) {
+export async function loadHistory(
+    info: BaseChatInfoElem,
+    options?: { clearBeforeLoad?: boolean },
+) {
     const authStore = useAuthStore()
     const chatStore = useChatStore()
     const uiStore = useUIStore()
     const settingsStore = useSettingsStore()
     const request = historyRequestTracker.begin(info)
+    const clearBeforeLoad = options?.clearBeforeLoad !== false
 
-    chatStore.messageList = []
+    if (clearBeforeLoad) {
+        chatStore.messageList = []
+    }
     uiStore.nowGetHistory = false
     uiStore.canLoadHistory = true
     uiStore.loadHistoryFail = false
@@ -129,6 +154,7 @@ export async function loadHistory(info: BaseChatInfoElem) {
 
     // 本地有数据时立即显示，同时仍发网络请求以获取最新消息（避免遗漏）
     if (
+        clearBeforeLoad &&
         settingsStore.sysConfig.enable_local_history &&
         settingsStore.sysConfig.mixed_load_messages !== false
     ) {
@@ -156,7 +182,13 @@ export async function loadHistory(info: BaseChatInfoElem) {
         info.id,
         info.type,
         20,
-        createHistoryEcho('getChatHistoryFist', request),
+        createHistoryEcho(
+            'getChatHistoryFist',
+            request,
+            clearBeforeLoad ? undefined : 'replace',
+        ),
+        0,
+        !clearBeforeLoad,
     )) {
         new PopInfo().add(
             PopType.ERR,
@@ -171,6 +203,7 @@ export function loadHistoryMessage(
     count = 20,
     echo?: string,
     messageId: string | number = 0,
+    ignoreExistingCount = false,
 ) {
     const authStore = useAuthStore()
     const chatStore = useChatStore()
@@ -194,7 +227,7 @@ export function loadHistoryMessage(
             group_id: type == 'group' ? id : undefined,
             user_id: type != 'group' ? id : undefined,
             message_id: messageId,
-            count: fullPage ? chatStore.messageList.length + count : count,
+            count: fullPage && !ignoreExistingCount ? chatStore.messageList.length + count : count,
         },
         echo,
     )
