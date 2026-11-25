@@ -79,6 +79,7 @@ import { getUserAvatar } from '@renderer/function/utils/userAvatar'
 import {
     getSessionId,
     getMissingGroupPreviewSessions,
+    hasAccountSessionId,
     mergeEarlySessionContacts,
     resolveIncomingSession,
 } from './utils/sessionUtil'
@@ -2340,14 +2341,8 @@ function newMsg(_: string, data: any) {
             data.sender.nickname = data.sender.user_id
         }
         // 检查群组有没有开启通知
-        let isGroupNotice = false
-        if (data.message_type === 'group') {
-            const noticeInfo = Option.get('notice_group') ?? {}
-            const list = noticeInfo[authStore.loginInfo.uin]
-            if (list) {
-                isGroupNotice = list.indexOf(id) >= 0
-            }
-        }
+        const isGroupNotice = data.message_type === 'group' &&
+            hasAccountSessionId(Option.get('notice_group'), authStore.loginInfo.uin, id)
 
         const isGroupMessage = data.message_type === 'group'
         const isTempGroupMessage = data.sub_type === 'group'

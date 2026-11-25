@@ -202,7 +202,8 @@
     import { PopInfo, PopType } from '@renderer/function/base'
     import { library } from '@fortawesome/fontawesome-svg-core'
     import { login as loginInfo } from '@renderer/function/connect'
-    import { canGroupNotice, getShowName } from '@renderer/function/utils/msgUtil'
+    import { canGroupNotice, getShowName, updateBaseOnMsgList } from '@renderer/function/utils/msgUtil'
+    import { getSessionId, isSessionMenuTarget, toggleAccountSessionId } from '@renderer/function/utils/sessionUtil'
     import { getUserAvatar } from '@renderer/function/utils/userAvatar'
 
     import {
@@ -236,7 +237,8 @@
         loadHistory: [data: any]
     }>()
 
-    type MessageMenuTarget = (UserFriendElem & UserGroupElem) | { user_id: number }
+    type SystemNoticeMenuTarget = { user_id: -10000; is_system_notice: true }
+    type MessageMenuTarget = (UserFriendElem & UserGroupElem) | SystemNoticeMenuTarget
     type MessageMenuApi = MenuApi & {
         select?: MessageMenuTarget
     }
@@ -314,14 +316,14 @@
         showMenu.value = false
         info.list = ['clear_system_notice']
         listMenu.value = info
-        menu.select = { user_id: -10000 }
+        menu.select = { user_id: -10000, is_system_notice: true }
     }
 
     /**
      * 系统通知菜单长按开始
      */
     function systemNoticeMenuStart(event: TouchEvent) {
-        showMenuStart(event, { user_id: -10000 } as any)
+        showMenuStart(event, { user_id: -10000, is_system_notice: true } as any)
     }
 
     /**
@@ -436,7 +438,7 @@
         }
 
         const item = menu.select
-        if (!item || !('new_msg' in item)) {
+        if (!isSessionMenuTarget(item)) {
             menu.select = undefined
             return
         }
@@ -447,16 +449,23 @@
                     item.new_msg = true
                     contactStore.newMsgCount++
                 }
+                const targetId = getSessionId(item)
+                if (Number.isFinite(targetId) && targetId > 0 && !contactStore.baseOnMsgList.has(targetId)) {
+                    contactStore.baseOnMsgList.set(targetId, item)
+                }
+                updateBaseOnMsgList()
                 break
             }
             case 'readed':
                 readMsg(item)
+                updateBaseOnMsgList()
                 // 刷新 favicon
                 refreshFavicon()
                 break
             case 'remove': {
-                const id = item.user_id ? item.user_id : item.group_id
-                contactStore.baseOnMsgList.delete(id)
+                const targetId = getSessionId(item)
+                contactStore.baseOnMsgList.delete(targetId)
+                updateBaseOnMsgList()
                 refreshFavicon()
                 break
             }
@@ -483,44 +492,27 @@
      * @param item 菜单选中项
      * @param value 是否置顶
      */
-    function saveTop(item: any, value: boolean) {
+    function saveTop(item: UserFriendElem & UserGroupElem, value: boolean) {
         const id = authStore.loginInfo.uin
-        const upId = item.user_id ? item.user_id : item.group_id
-        // 完整的设置 JSON
-        let topInfo = settingsStore.sysConfig.top_info as {
-            [key: string]: number[]
-        }
-        if (topInfo == null || typeof topInfo !== 'object') {
-            topInfo = {}
-        }
-        // 本人的置顶信息
-        let topList = topInfo[id]
-        // 操作
-        if (value) {
-            if (topList) {
-                if (topList.indexOf(props.chat.show.id) < 0) {
-                    topList.push(upId)
-                }
-            } else {
-                topList = [upId]
-            }
-        } else {
-            if (topList) {
-                topList.splice(topList.indexOf(upId), 1)
-            }
-        }
-        // 刷新设置
-        if (topList) {
-            topInfo[id] = topList
-            Option.save('top_info', topInfo)
-        }
+        const upId = getSessionId(item)
+        const nextTopInfo = toggleAccountSessionId(
+            settingsStore.sysConfig.top_info,
+            id,
+            upId,
+            value,
+        )
+        Option.save('top_info', nextTopInfo)
         // 为消息列表内的对象刷新置顶标志
         item.always_top = value
+        if (value && Number.isFinite(upId) && upId > 0 && !contactStore.baseOnMsgList.has(upId)) {
+            contactStore.baseOnMsgList.set(upId, item)
+        }
+        updateBaseOnMsgList()
         // 刷新群收纳盒
-        if(item.group_id && settingsStore.sysConfig.bubble_sort_user) {
-            if(value) {
+        if (item.group_id && settingsStore.sysConfig.bubble_sort_user) {
+            if (value) {
                 showGroupAssist.value = false
-            } else {
+            } else if (contactStore.groupAssistList.length > 0) {
                 showGroupAssist.value = true
             }
         }

@@ -21,6 +21,7 @@ import { useChatStore } from '@renderer/state/chat'
 import {
     findSessionContact,
     getSessionId,
+    hasAccountSessionId,
 } from './sessionUtil'
 
 const logger = new Logger()
@@ -686,12 +687,11 @@ export function updateBaseOnMsgList() {
  */
 export function canGroupNotice(id: number) {
     const authStore = useAuthStore()
-    const noticeInfo = option.get('notice_group') ?? {}
-    const list = noticeInfo[authStore.loginInfo.uin]
-    if (list) {
-        return list.indexOf(id) >= 0
-    }
-    return false
+    return hasAccountSessionId(
+        option.get('notice_group'),
+        authStore.loginInfo.uin,
+        id,
+    )
 }
 
 /**

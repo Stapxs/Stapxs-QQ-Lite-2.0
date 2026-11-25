@@ -221,14 +221,31 @@ export function registerExtraOptionItem(cardId: string, item: ExtraOptionItem) {
         const key = item.optionKey
         if (Object.prototype.hasOwnProperty.call(item, 'defaultValue')) {
             if (optDefault[key] === undefined) {
-                optDefault[key] = item.defaultValue
+                optDefault[key] = cloneOptionDefault(item.defaultValue)
             }
             if (cacheConfigs && cacheConfigs[key] === undefined) {
-                cacheConfigs[key] = item.defaultValue
+                cacheConfigs[key] = cloneOptionDefault(item.defaultValue)
                 saveAll()
             }
         }
     }
+}
+
+function cloneOptionDefault<T>(value: T): T {
+    if (Array.isArray(value)) {
+        return value.map((item) => cloneOptionDefault(item)) as T
+    }
+    if (value && typeof value === 'object') {
+        const proto = Object.getPrototypeOf(value)
+        if (proto === Object.prototype || proto === null) {
+            const cloned: Record<string, any> = {}
+            for (const [k, v] of Object.entries(value)) {
+                cloned[k] = cloneOptionDefault(v)
+            }
+            return cloned as T
+        }
+    }
+    return value
 }
 
 function updateChatPan() {
@@ -578,7 +595,7 @@ function loadOptData(data: { [key: string]: any }) {
     Object.keys(optDefault).forEach((key) => {
         if (options[key] === undefined) {
             optChanged = true
-            options[key] = optDefault[key]
+            options[key] = cloneOptionDefault(optDefault[key])
         }
     })
     // 删除不存在的设置项
@@ -678,7 +695,9 @@ export function getRaw(name: string) {
  * @param value 设置项值
  */
 export function save(name: string, value: any) {
+    if (!cacheConfigs) cacheConfigs = {}
     cacheConfigs[name] = value
+    useSettingsStore().sysConfig[name] = value
     saveAll()
 }
 export function saveAll(config = {} as { [key: string]: any }) {
@@ -701,7 +720,7 @@ export function saveAll(config = {} as { [key: string]: any }) {
 
     // electron：将配置保存
     if (backend.isDesktop()) {
-        const saveConfig = config
+        const saveConfig: Record<string, any> = {}
         Object.keys(config).forEach((key) => {
             const isObject = typeof config[key] == 'object'
             saveConfig[key] = isObject ? JSON.stringify(config[key]): config[key]
