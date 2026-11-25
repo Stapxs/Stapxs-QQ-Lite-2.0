@@ -123,7 +123,9 @@
                                 class="msg-image-load-failure">
                                 <font-awesome-icon :icon="['fas', 'image']" />
                                 <span>{{ $t('加载图片失败') }}</span>
-                                <a :href="getImgSrc(item.url)" target="_blank" rel="noopener noreferrer">{{ $t('预览图片') }}</a>
+                                <a v-if="getImagePreviewHref(getImgSrc(item.url))"
+                                    :href="getImagePreviewHref(getImgSrc(item.url))"
+                                    target="_blank" rel="noopener noreferrer">{{ $t('预览图片') }}</a>
                             </div>
                             <button v-else-if="!shouldShowImagePlaceholder(item, Number(index))"
                                 :key="getImgSrc(item.url)"
@@ -575,6 +577,17 @@ function getImgSrc(url: string): string {
     return resolvedImages.value[url] ?? backend.proxyUrl(url)
 }
 
+function getImagePreviewHref(source: string): string | undefined {
+    if (!source?.trim()) return undefined
+
+    try {
+        const url = new URL(source, document.baseURI)
+        return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : undefined
+    } catch {
+        return undefined
+    }
+}
+
 function getImageKey(index: number, url: string) {
     return `${data.message_id}-${index}-${url}`
 }
@@ -730,10 +743,14 @@ function imgLoadFail(event: Event) {
         span.style.color = 'var(--color-font-1-r)'
     }
     parent.appendChild(span)
+    const previewHref = getImagePreviewHref(sender.src)
+    if (!previewHref) return
+
     const a = document.createElement('a')
     a.innerText = $t('预览图片')
-    a.target = '__blank'
-    a.href = sender.src
+    a.target = '_blank'
+    a.rel = 'noopener noreferrer'
+    a.href = previewHref
     a.style.marginTop = '10px'
     a.style.fontSize = '0.7rem'
     a.style.color = 'var(--color-font-2)'
