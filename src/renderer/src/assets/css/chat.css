@@ -114,6 +114,7 @@ input {
     pointer-events: all;
     overflow-y: scroll;
     overflow-x: hidden;
+    overflow-anchor: none;
     margin: -90px 0 20px 20px;
     padding-top: 90px;
     z-index: 1;

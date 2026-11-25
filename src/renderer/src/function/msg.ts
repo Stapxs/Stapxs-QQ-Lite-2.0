@@ -40,7 +40,7 @@ import {
     sendIdentifyData,
     sendStatEvent,
 } from '@renderer/function/utils/appUtil'
-import { reactive, markRaw, nextTick } from 'vue'
+import { reactive, markRaw } from 'vue'
 import { PopInfo, PopType, Logger, LogType } from './base'
 import { Connector, login, saveConnectionToHistory } from './connect'
 import {
@@ -86,6 +86,7 @@ import {
     getHistoryGeneration,
     historyRequestTracker,
 } from './utils/historyRequest'
+import { preserveTrailingLiveMessages } from './utils/chatScrollAnchor'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -655,28 +656,16 @@ function handleChatHistoryResponse(
 
     if (!appendToTop) {
         // 无论是否有本地预填充，都以网络数据替换（保证最新消息不遗漏）
-        saveMsg(msg, undefined, isActiveRequest, false, true).catch(onError)
+        const replaceExisting = echoList?.[2] === 'replace'
+        saveMsg(msg, undefined, isActiveRequest, false, true, replaceExisting).catch(onError)
         return
     }
 
-    const pan = document.getElementById('msgPan')
-    const oldScrollHeight = pan?.scrollHeight ?? 0
     saveMsg(msg, 'top', isActiveRequest).then(() => {
         if (!isActiveRequest()) return
         const uiStore = useUIStore()
         uiStore.nowGetHistory = false
         uiStore.historyBeforeTime = undefined
-        if (!pan) return
-        nextTick(() => {
-            setTimeout(() => {
-                if (!isActiveRequest() || document.getElementById('msgPan') !== pan) return
-                logger.debug(`滚动前高度：${oldScrollHeight}，当前高度：${pan.scrollHeight}，滚动位置：${pan.scrollHeight - oldScrollHeight}`)
-                pan.style.scrollBehavior = 'unset'
-                // 纠正滚动位置
-                pan.scrollTop = pan.scrollHeight - oldScrollHeight
-                pan.style.scrollBehavior = 'smooth'
-            }, 200);
-        })
     }).catch(onError)
 }
 
@@ -1760,7 +1749,14 @@ export async function appendHistoryForQuotedMessage(msg: any, isActive: () => bo
     await saveMsg(msg, 'top', isActive, true)
 }
 
-async function saveMsg(msg: any, append = undefined as undefined | string, isActive = () => true, keepExisting = false, expandEmpty = false) {
+async function saveMsg(
+    msg: any,
+    append = undefined as undefined | string,
+    isActive = () => true,
+    keepExisting = false,
+    expandEmpty = false,
+    replaceExisting = false,
+) {
     if (!isActive()) return
     let list = await normalizeMessagesFromPayload(msg, expandEmpty ? isActive : undefined)
     if (!isActive() || list == undefined || !isSavedMessageForCurrentChat(list)) return
@@ -1779,7 +1775,7 @@ async function saveMsg(msg: any, append = undefined as undefined | string, isAct
     saveMessagesWithSideEffects(selfId, list)
         .then(() => revokeEmptyHistoryRecords(selfId, list))
         .catch(error => logger.error(error as Error, '保存历史消息到本地失败'))
-    if (!applySavedMessages(list, append, keepExisting)) return
+    if (!applySavedMessages(list, append, keepExisting, replaceExisting)) return
     chatStore.messageList.forEach(item => sendMsgAppendInfo(item))
     updateSavedHistoryPreview()
     if (hasBoundary) uiStore.historyBeforeTime = undefined
@@ -1804,7 +1800,12 @@ function filterSavedHistory(list: any[], append: string | undefined, beforeTime:
     return list.filter(item => Number.isFinite(Number(item.time)) && Number(item.time) <= beforeTime)
 }
 
-function applySavedMessages(list: any[], append: string | undefined, keepExisting: boolean): boolean {
+function applySavedMessages(
+    list: any[],
+    append: string | undefined,
+    keepExisting: boolean,
+    replaceExisting = false,
+): boolean {
     const uiStore = useUIStore()
     const authStore = useAuthStore()
     const chatStore = useChatStore()
@@ -1815,6 +1816,12 @@ function applySavedMessages(list: any[], append: string | undefined, keepExistin
         uiStore.canLoadHistory = false
         uiStore.historyBeforeTime = undefined
         return false
+    }
+    if (replaceExisting && !isAppend) {
+        replaceMessageListInPlace(
+            preserveTrailingLiveMessages(chatStore.messageList, list),
+        )
+        return true
     }
     const mixed = settings.enable_local_history && settings.mixed_load_messages !== false
     const messages = isAppend || mixed ? mergeMessagesByIdAndTime(chatStore.messageList, list) : list
