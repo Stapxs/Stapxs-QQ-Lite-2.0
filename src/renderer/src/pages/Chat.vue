@@ -121,7 +121,6 @@
             <template v-else>
                 <!-- 搜索消息结果显示 -->
                 <TransitionGroup
-                    ref="searchListGroup"
                     :name="settingsStore.sysConfig.opt_fast_animation ? '' : 'msglist'"
                     tag="div">
                     <template v-for="(msgIndex, index) in tags.search.list">
@@ -634,6 +633,7 @@ import { loadHistoryToQuotedMessage } from '@renderer/function/utils/quotedMessa
 import { keepQuotedMessageInView } from '@renderer/function/utils/quotedScroll'
 import {
     classifyMessageListChange,
+    countAppendedMessages,
     createChatScrollAnchor,
 } from '@renderer/function/utils/chatScrollAnchor'
 import { useQuotedMessagesStore } from '@renderer/state/quotedMessages'
@@ -722,7 +722,6 @@ const mergePan = useTemplateRef<InstanceType<typeof MergePan>>('mergePan')
 const chatPan = useTemplateRef<HTMLDivElement>('chatPan')
 const msgPan = useTemplateRef<HTMLDivElement>('msgPan')
 const msgListGroup = useTemplateRef<InstanceType<typeof TransitionGroup>>('msgListGroup')
-const searchListGroup = useTemplateRef<InstanceType<typeof TransitionGroup>>('searchListGroup')
 const chatPadding = useTemplateRef<HTMLSpanElement>('chatPadding')
 const sendMore = useTemplateRef<HTMLDivElement>('sendMore')
 const mainInput = useTemplateRef<HTMLInputElement | HTMLTextAreaElement>('mainInput')
@@ -802,8 +801,7 @@ let searchJumpTimer: ReturnType<typeof setTimeout> | null = null
 let trimReloadPending = false
 const scrollAnchor = createChatScrollAnchor({
     getPan: () => msgPan.value,
-    getContent: () =>
-        ((details.value[3].open ? searchListGroup.value : msgListGroup.value) as any)?.$el ?? null,
+    getContent: () => (msgListGroup.value as any)?.$el ?? null,
     getBottomInset: () => {
         const pan = msgPan.value
         const paddingBottom =
@@ -956,6 +954,9 @@ watch(
 watch(
     () => [uiStore.nowGetHistory, uiStore.canLoadHistory, uiStore.loadHistoryFail],
     () => {
+        if (uiStore.loadHistoryFail) {
+            trimReloadPending = false
+        }
         nextTick(() => {
             if (!details.value[3].open && !scrollAnchor.isPinnedToBottom()) {
                 scrollAnchor.reconcile()
@@ -2867,6 +2868,116 @@ function sendParsedMsg(parsedMsg: any, echo: string) {
     }
 }
 
+function markFirstLoadedMessagesRead() {
+    const name = authStore.jsonMap.set_message_read?.name ?? undefined
+    let privateName = authStore.jsonMap.set_message_read?.private_name ?? name
+    if (!privateName) privateName = name
+    const lastMsgId = list[list.length - 1]?.message_id
+    if (chatStore.chatInfo.show.type == 'group') {
+        Connector.send(name, { group_id: chat.show.id, message_id: lastMsgId }, 'setMessageRead')
+    } else {
+        Connector.send(privateName, { user_id: chat.show.id, message_id: lastMsgId }, 'setMessageRead')
+    }
+    if (shouldAutoFocus()) {
+        toMainInput()
+    }
+}
+
+function maybeTrimOversizedList(wasPinned: boolean) {
+    if (list.length <= 200 || uiStore.nowGetHistory || !wasPinned || trimReloadPending) return
+    trimReloadPending = true
+    const info = {
+        type: chat.show.type,
+        id: chat.show.id,
+        name: chat.show.name,
+        avatar: chat.show.avatar,
+        jump: chat.show.jump,
+    } as BaseChatInfoElem
+    void loadHistoryFirst(info, { clearBeforeLoad: false })
+        .then((sent) => {
+            if (!sent) trimReloadPending = false
+        })
+        .catch(() => {
+            trimReloadPending = false
+        })
+}
+
+function updateUnreadCounter(
+    oldIds: string[],
+    newIds: string[],
+    changeKind: ReturnType<typeof classifyMessageListChange>,
+    wasPinned: boolean,
+) {
+    if (wasPinned || replyLoading.value) return
+    if (changeKind !== 'append' && changeKind !== 'mixed') return
+    const addedCount = countAppendedMessages(oldIds, newIds)
+    if (addedCount <= 0) return
+    NewMsgNum.value = NewMsgNum.value !== 0 ? NewMsgNum.value + addedCount : addedCount
+    tags.value.showBottomButton = true
+}
+
+function collectChatImageUrls(): string[] {
+    const urls: string[] = []
+    for (const item of list) {
+        if (item.message === undefined) continue
+        for (const msgItem of item.message) {
+            if (msgItem.type === 'image' && msgItem.file != 'marketface') {
+                urls.push(msgItem.url)
+            }
+        }
+    }
+    return urls
+}
+
+function releaseMoveAnimationSuppress() {
+    if (!suppressListMoveAnimation.value) return
+    const releaseMove = () => {
+        suppressListMoveAnimation.value = false
+    }
+    if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(releaseMove)
+    } else {
+        setTimeout(releaseMove, 0)
+    }
+}
+
+function applyInitialJumpOrBottom(): boolean {
+    const jumpId = chatStore.chatInfo.show?.jump
+    if (!jumpId) {
+        scrollAnchor.scrollToBottom(false)
+        return false
+    }
+    new Logger().debug('进入跳转至消息：' + jumpId)
+    const jumped = scrollToMsgLocal('chat-' + jumpId)
+    chatStore.chatInfo.show.jump = undefined
+    if (!jumped) {
+        scrollAnchor.scrollToBottom(false)
+    }
+    return true
+}
+
+function applyPostUpdateScroll(
+    changeKind: ReturnType<typeof classifyMessageListChange>,
+    wasPinned: boolean,
+): boolean {
+    if (changeKind === 'initial') return applyInitialJumpOrBottom()
+    if (changeKind === 'prepend') {
+        scrollAnchor.refreshObservers()
+        scrollAnchor.reconcile()
+        return false
+    }
+    if (changeKind === 'append') {
+        if (wasPinned) scrollAnchor.scrollToBottom(true)
+        else scrollAnchor.reconcile()
+        return false
+    }
+    if (changeKind === 'replace' || changeKind === 'mixed') {
+        if (wasPinned) scrollAnchor.scrollToBottom(false)
+        else scrollAnchor.reconcile()
+    }
+    return false
+}
+
 function updateList(newIds: string[], oldIds: string[]) {
     const newLength = newIds.length
     const oldLength = oldIds.length
@@ -2875,160 +2986,33 @@ function updateList(newIds: string[], oldIds: string[]) {
         trimReloadPending = false
     }
     if (oldLength == 0 && newLength > 0) {
-        const name =
-            authStore.jsonMap.set_message_read?.name ?? undefined
-        let private_name =
-            authStore.jsonMap.set_message_read?.private_name ??
-            name
-        if (!private_name) private_name = name
-        if (chatStore.chatInfo.show.type == 'group') {
-            Connector.send(
-                name,
-                {
-                    group_id: chat.show.id,
-                    message_id:
-                        list[list.length - 1].message_id,
-                },
-                'setMessageRead',
-            )
-        } else {
-            Connector.send(
-                private_name,
-                {
-                    user_id: chat.show.id,
-                    message_id:
-                        list[list.length - 1].message_id,
-                },
-                'setMessageRead',
-            )
-        }
-        if(shouldAutoFocus()) {
-            toMainInput()
-        }
+        markFirstLoadedMessagesRead()
     }
 
     const wasPinned = scrollAnchor.isPinnedToBottom()
-    if (
-        !wasPinned &&
-        (changeKind === 'append' || changeKind === 'mixed') &&
-        !replyLoading.value
-    ) {
-        const addedCount = Math.max(1, newLength - oldLength)
-        if (NewMsgNum.value !== 0) {
-            NewMsgNum.value = NewMsgNum.value + addedCount
-        } else {
-            NewMsgNum.value = addedCount
-        }
-        tags.value.showBottomButton = true
-    }
-    if (
-        list.length > 200 &&
-        !uiStore.nowGetHistory &&
-        wasPinned &&
-        !trimReloadPending
-    ) {
-        trimReloadPending = true
-        const info = {
-            type: chat.show.type,
-            id: chat.show.id,
-            name: chat.show.name,
-            avatar: chat.show.avatar,
-            jump: chat.show.jump,
-        } as BaseChatInfoElem
-        loadHistoryFirst(info, { clearBeforeLoad: false })
-    }
+    updateUnreadCounter(oldIds, newIds, changeKind, wasPinned)
+    maybeTrimOversizedList(wasPinned)
 
     const pan = msgPan.value ?? document.getElementById('msgPan')
-    if (pan !== null) {
-        if (changeKind === 'prepend' || changeKind === 'replace') {
-            suppressListMoveAnimation.value = true
-        }
-        if ((changeKind === 'prepend' || !wasPinned) && oldLength > 0) {
-            scrollAnchor.capture()
-        }
-        nextTick(() => {
-            const newPan = msgPan.value ?? document.getElementById('msgPan')
-            let consumedInitialJump = false
-            if (newPan !== null) {
-                if (changeKind === 'initial') {
-                    if (chatStore.chatInfo.show?.jump) {
-                        new Logger().debug(
-                            '进入跳转至消息：' +
-                                chatStore.chatInfo.show.jump,
-                        )
-                        const jumped = scrollToMsgLocal(
-                            'chat-' + chatStore.chatInfo.show.jump,
-                        )
-                        chatStore.chatInfo.show.jump = undefined
-                        consumedInitialJump = true
-                        if (!jumped) {
-                            scrollAnchor.scrollToBottom(false)
-                        }
-                    } else {
-                        scrollAnchor.scrollToBottom(false)
-                    }
-                } else if (changeKind === 'prepend') {
-                    scrollAnchor.refreshObservers()
-                    scrollAnchor.reconcile()
-                } else if (changeKind === 'append') {
-                    if (wasPinned) {
-                        scrollAnchor.scrollToBottom(true)
-                    } else {
-                        scrollAnchor.reconcile()
-                    }
-                } else if (changeKind === 'replace' || changeKind === 'mixed') {
-                    if (wasPinned) {
-                        scrollAnchor.scrollToBottom(false)
-                    } else {
-                        scrollAnchor.reconcile()
-                    }
-                }
-            }
+    if (pan === null) return
 
-            if (suppressListMoveAnimation.value) {
-                const releaseMove = () => {
-                    suppressListMoveAnimation.value = false
-                }
-                if (typeof requestAnimationFrame === 'function') {
-                    requestAnimationFrame(releaseMove)
-                } else {
-                    setTimeout(releaseMove, 0)
-                }
-            }
-
-            const getImgList = () => {
-                const getImgList = [] as string[]
-                for(const item of list) {
-                    if (item.message !== undefined) {
-                        for(const msgItem of item.message) {
-                            if (
-                                msgItem.type === 'image' &&
-                                msgItem.file != 'marketface'
-                            ) {
-                                getImgList.push(msgItem.url)
-                            }
-                        }
-                    }
-                }
-                return getImgList
-            }
-            chatImg.value = Img.fromList(getImgList())
-            if (
-                !consumedInitialJump &&
-                chatStore.chatInfo.show &&
-                chatStore.chatInfo.show.jump
-            ) {
-                new Logger().debug(
-                    '进入跳转至消息：' +
-                        chatStore.chatInfo.show.jump,
-                )
-                scrollToMsgLocal(
-                    'chat-' + chatStore.chatInfo.show.jump,
-                )
-                chatStore.chatInfo.show.jump = undefined
-            }
-        })
+    if (changeKind === 'prepend' || changeKind === 'replace') {
+        suppressListMoveAnimation.value = true
     }
+    if (!details.value[3].open && (changeKind === 'prepend' || !wasPinned) && oldLength > 0) {
+        scrollAnchor.capture()
+    }
+    nextTick(() => {
+        const newPan = msgPan.value ?? document.getElementById('msgPan')
+        const consumedInitialJump = newPan !== null ? applyPostUpdateScroll(changeKind, wasPinned) : false
+        releaseMoveAnimationSuppress()
+        chatImg.value = Img.fromList(collectChatImageUrls())
+        if (!consumedInitialJump && chatStore.chatInfo.show?.jump) {
+            new Logger().debug('进入跳转至消息：' + chatStore.chatInfo.show.jump)
+            scrollToMsgLocal('chat-' + chatStore.chatInfo.show.jump)
+            chatStore.chatInfo.show.jump = undefined
+        }
+    })
 }
 
 function msgClick(_: Event, data: any) {

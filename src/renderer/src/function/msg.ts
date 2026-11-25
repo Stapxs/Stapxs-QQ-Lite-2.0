@@ -86,6 +86,7 @@ import {
     getHistoryGeneration,
     historyRequestTracker,
 } from './utils/historyRequest'
+import { preserveTrailingLiveMessages } from './utils/chatScrollAnchor'
 
 const popInfo = new PopInfo()
 // eslint-disable-next-line
@@ -1816,7 +1817,13 @@ function applySavedMessages(
         uiStore.historyBeforeTime = undefined
         return false
     }
-    const mixed = !replaceExisting && settings.enable_local_history && settings.mixed_load_messages !== false
+    if (replaceExisting && !isAppend) {
+        replaceMessageListInPlace(
+            preserveTrailingLiveMessages(chatStore.messageList, list),
+        )
+        return true
+    }
+    const mixed = settings.enable_local_history && settings.mixed_load_messages !== false
     const messages = isAppend || mixed ? mergeMessagesByIdAndTime(chatStore.messageList, list) : list
     replaceMessageListInPlace(messages)
     return true

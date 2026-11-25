@@ -6,9 +6,11 @@ import {
     computeAnchoredScrollTop,
     computeBottomAnchoredScrollTop,
     computeDistanceFromBottomScrollTop,
+    countAppendedMessages,
     createChatScrollAnchor,
     DEFAULT_BOTTOM_THRESHOLD,
     isScrollAtBottom,
+    preserveTrailingLiveMessages,
     selectBottomVisibleAnchorIndex,
     selectViewportAnchor,
 } from '../src/renderer/src/function/utils/chatScrollAnchor.ts'
@@ -145,7 +147,7 @@ function createMockTimeline({ clientHeight = 600, initialHeights = [], bottomIns
     }
 }
 
-test('pure helpers classify list changes and compute bottom/top-edge anchors with inset clamping', () => {
+test('pure helpers classify list changes, count trailing appends, preserve live messages, and compute anchors', () => {
     assert.equal(DEFAULT_BOTTOM_THRESHOLD, 24)
     assert.equal(classifyMessageListChange(['1', '2'], []), 'empty')
     assert.equal(classifyMessageListChange([], ['1', '2']), 'initial')
@@ -153,6 +155,35 @@ test('pure helpers classify list changes and compute bottom/top-edge anchors wit
     assert.equal(classifyMessageListChange(['1', '2'], ['1', '2', '3']), 'append')
     assert.equal(classifyMessageListChange(['1', '2', '3'], ['1', '2b', '3']), 'replace')
     assert.equal(classifyMessageListChange(['2', '3'], ['1', '2', '3', '4']), 'mixed')
+
+    // Sourcery #5: mixed changes must count only appended suffix, not prepended history
+    assert.equal(countAppendedMessages(['2', '3'], ['0', '1', '2', '3', '4']), 1)
+    assert.equal(countAppendedMessages(['2', '3'], ['0', '1', '2', '3']), 0)
+    assert.equal(countAppendedMessages(['1', '2'], ['1', '2', '3', '4']), 2)
+
+    // Sourcery #1: preserve in-flight live & fake_msg trailing items across trim replacement
+    const current = [
+        { message_id: 'old-1', time: 10 },
+        { message_id: 'm-19', time: 100 },
+        { message_id: 'm-20', time: 200 },
+        { message_id: 'live-21', time: 205 },
+        { message_id: 'uuid-1', time: 205, fake_msg: true },
+    ]
+    const replacement = [
+        { message_id: 'm-19', time: 100 },
+        { message_id: 'm-20', time: 200 },
+    ]
+    assert.deepEqual(
+        preserveTrailingLiveMessages(current, replacement).map((m) => m.message_id),
+        ['m-19', 'm-20', 'live-21', 'uuid-1'],
+    )
+    assert.deepEqual(
+        preserveTrailingLiveMessages(
+            [{ message_id: 'old-1', time: 10 }, { message_id: 'm-20', time: 200 }],
+            replacement,
+        ).map((m) => m.message_id),
+        ['m-19', 'm-20'],
+    )
 
     assert.equal(isScrollAtBottom({ scrollTop: 376, clientHeight: 600, scrollHeight: 1000 }), true)
     assert.equal(isScrollAtBottom({ scrollTop: 375, clientHeight: 600, scrollHeight: 1000 }), false)
@@ -168,9 +199,7 @@ test('pure helpers classify list changes and compute bottom/top-edge anchors wit
     assert.equal(selectBottomVisibleAnchorIndex(items, -300, -100), 0)
     assert.equal(selectBottomVisibleAnchorIndex([], 0, 600), -1)
 
-    // Message #2 spans past viewportBottom (800 > 750) => anchor its visible top edge
     assert.deepEqual(selectViewportAnchor(items, 250, 750), { index: 2, edge: 'top' })
-    // Message #2 fits inside viewport (800 <= 800) => anchor its bottom edge
     assert.deepEqual(selectViewportAnchor(items, 250, 800), { index: 2, edge: 'bottom' })
 
     assert.equal(
@@ -250,13 +279,12 @@ test('scenario 2 & High-2: viewport placeholder bottom stays aligned while tall 
     tl.anchor.reconcile()
     assert.equal(tl.pan.scrollTop, 300)
 
-    // High-2: tall last visible message starts inside viewport (y=800..1100) with bottom outside (effectiveBottom=900)
     const tl2 = createMockTimeline({
         clientHeight: 600,
         initialHeights: [300, 500, 300, 200],
     })
-    tl2.userScrollTo(300) // viewport 300..900, child[2] spans 800..1100
-    tl2.content.children[2].offsetHeight = 460 // grows 160px off-screen below fold
+    tl2.userScrollTo(300)
+    tl2.content.children[2].offsetHeight = 460
     tl2.relayout()
     tl2.anchor.reconcile()
     assert.equal(tl2.pan.scrollTop, 300)
@@ -281,7 +309,7 @@ test('scenario 3: lower-viewport image growth and incoming bottom messages do no
     assert.equal(tl.pan.scrollTop, 300)
 })
 
-test('scenario 4 & High-4: pinned smooth scroll updates smoothly on media load and target jumps stay protected near bottom', () => {
+test('scenario 4, High-4 & Sourcery #3: pinned smooth scroll updates smoothly and in-flight smooth jump retargets on layout shift', () => {
     const tl = createMockTimeline({
         clientHeight: 600,
         initialHeights: Array.from({ length: 30 }, () => 100),
@@ -295,7 +323,6 @@ test('scenario 4 & High-4: pinned smooth scroll updates smoothly on media load a
     assert.equal(tl.scrollToCalls.at(-1)?.top, 2510)
     assert.equal(tl.scrollToCalls.at(-1)?.behavior, 'smooth')
 
-    // Image loads during in-flight smooth scroll-to-bottom: retarget smoothly instead of slamming scrollTop
     newMsg.offsetHeight = 350
     tl.relayout()
     tl.anchor.reconcile()
@@ -304,16 +331,24 @@ test('scenario 4 & High-4: pinned smooth scroll updates smoothly on media load a
     tl.finishSmoothScroll()
     assert.equal(tl.pan.scrollTop, 2750)
 
-    // Smooth jump to earlier message moving only 2px initially (still within 24px threshold) must NOT re-pin on media load
+    // Smooth jump to child[5] moving only 2px initially stays unpinned; upper layout shift retargets browser smooth scroll
     const jumped = tl.anchor.scrollToTarget(tl.content.children[5], { smooth: true, centerInView: true })
     assert.equal(jumped, true)
+    const initialTargetTop = tl.scrollToCalls.at(-1)?.top
+    assert.equal(initialTargetTop, 250)
     assert.equal(tl.anchor.isPinnedToBottom(), false)
+
     tl.userScrollTo(tl.pan.scrollTop - 2)
-    tl.content.children[29].offsetHeight = 400
+    // Upper message grows +150px while jump is in flight => child[5] shifts down 150px => retarget smooth scroll to 400
+    tl.content.children[0].offsetHeight = 250
     tl.relayout()
     tl.pan.dispatch('load')
     assert.equal(tl.anchor.isPinnedToBottom(), false)
+    assert.equal(tl.scrollToCalls.at(-1)?.top, 400)
+    assert.equal(tl.scrollToCalls.at(-1)?.behavior, 'smooth')
+
     tl.finishSmoothScroll()
+    assert.equal(tl.pan.scrollTop, 400)
     assert.equal(tl.anchor.isPinnedToBottom(), false)
 })
 
@@ -325,18 +360,15 @@ test('scenario 5 & High-5: wheel/16px upward scroll unpins immediately and activ
     tl.anchor.scrollToBottom(false)
     assert.equal(tl.pan.scrollTop, 1400)
 
-    // Wheel up even 16px (within 24px threshold) immediately unpins
     tl.userScrollTo(1384)
     assert.equal(tl.anchor.isPinnedToBottom(), false)
     tl.appendMessages([100])
     tl.anchor.reconcile()
     assert.equal(tl.pan.scrollTop, 1384)
 
-    // Scroll back down within threshold -> re-pins
     tl.userScrollTo(1485)
     assert.equal(tl.anchor.isPinnedToBottom(), true)
 
-    // High-5: active pointer drag suppresses reconcile until pointer release and keeps user position
     tl.userScrollTo(1299)
     tl.pan.dispatch('pointerdown')
     tl.content.children[0].offsetHeight = 260
@@ -348,24 +380,24 @@ test('scenario 5 & High-5: wheel/16px upward scroll unpins immediately and activ
     assert.equal(tl.anchor.isPinnedToBottom(), false)
 })
 
-test('scenario 6: wheel input during smooth scroll-to-bottom cancels auto scroll and yields control to user', () => {
+test('scenario 6 & Sourcery #8: wheel input immediately after starting smooth scroll cancels animation without resuming on reconcile', () => {
     const tl = createMockTimeline({
         clientHeight: 600,
         initialHeights: Array.from({ length: 20 }, () => 100),
     })
     tl.pan.scrollTop = 1000
     tl.anchor.scrollToBottom(true)
-    assert.equal(tl.scrollToCalls.length, 1)
+    const callCountAfterStart = tl.scrollToCalls.length
+    assert.equal(callCountAfterStart, 1)
 
-    tl.userScrollTo(1200)
-    assert.equal(tl.anchor.isPinnedToBottom(), true)
-
+    // Immediately dispatch upward wheel before any scroll event arrives
     tl.pan.dispatch('wheel', { deltaY: -40 })
     assert.equal(tl.anchor.isPinnedToBottom(), false)
 
     tl.appendMessages([120])
     tl.anchor.reconcile()
-    assert.equal(tl.pan.scrollTop, 1200)
+    assert.equal(tl.pan.scrollTop, 1000)
+    assert.equal(tl.scrollToCalls.length, callCountAfterStart)
 })
 
 test('scenario 7: suspended state prevents reconcile from interfering with reply jump anchoring', () => {
@@ -387,18 +419,16 @@ test('scenario 7: suspended state prevents reconcile from interfering with reply
 })
 
 test('Medium 1-4: bottom inset compensation, hidden zero-size preservation, short list clamp, and neighbor fallback anchor', () => {
-    // Medium 1: composer/drawer bottomInset grows by 100px => scrollTop shifts +100px to keep visible bottom line uncovered
     const tl1 = createMockTimeline({
         clientHeight: 600,
         initialHeights: Array.from({ length: 20 }, () => 100),
     })
-    tl1.userScrollTo(320) // effectiveBottom = 920
+    tl1.userScrollTo(320)
     tl1.setPaddingInset(100)
     tl1.anchor.reconcile()
     assert.equal(tl1.pan.scrollTop, 420)
 
-    // Medium 2: hidden (v-show zero clientHeight) preserves unpinned snapshot even if messages arrive while hidden
-    tl1.userScrollTo(500) // effectiveHeight = 500 -> effectiveBottom = 1000
+    tl1.userScrollTo(500)
     const oldClient = tl1.pan.clientHeight
     tl1.pan.clientHeight = 0
     tl1.pan.scrollHeight = 0
@@ -410,9 +440,8 @@ test('Medium 1-4: bottom inset compensation, hidden zero-size preservation, shor
     tl1.pan.clientHeight = oldClient
     tl1.relayout()
     tl1.anchor.reconcile()
-    assert.equal(tl1.pan.scrollTop, 500) // effectiveBottom remains 1000 with 100px inset -> scrollTop=500
+    assert.equal(tl1.pan.scrollTop, 500)
 
-    // Medium 3: expanding viewport so pinned list becomes shorter than viewport keeps pinned=true
     const tl3 = createMockTimeline({
         clientHeight: 500,
         initialHeights: Array.from({ length: 8 }, () => 100),
@@ -424,13 +453,11 @@ test('Medium 1-4: bottom inset compensation, hidden zero-size preservation, shor
     assert.equal(tl3.pan.scrollTop, 0)
     assert.equal(tl3.anchor.isPinnedToBottom(), true)
 
-    // Medium 4: anchor node replaced while lower off-screen message grows 130px uses neighbor fallback, not distanceFromBottom
     const tl4 = createMockTimeline({
         clientHeight: 600,
         initialHeights: Array.from({ length: 20 }, () => 100),
     })
-    tl4.userScrollTo(400) // viewport 400..1000, primaryAnchor index 9 (id chat-m-10), neighbors index 8, 7, 10, 11
-    // Replace primary anchor element with a different id and grow a lower off-screen row (#15) by 130px
+    tl4.userScrollTo(400)
     tl4.content.children[9] = tl4.makeMsg(100, 'chat-m-replaced')
     tl4.content.children[15].offsetHeight = 230
     tl4.relayout()
@@ -458,24 +485,30 @@ test('source invariants cover msg.ts, appUtil.ts, Chat.vue, and chat.css fixes',
 
     assert.match(chatCss, /\.chat-pan > div\.chat\s*\{[\s\S]*?overflow-anchor:\s*none;/)
 
-    // Blocking 1: msg.ts handleChatHistoryResponse has no legacy 200ms timer writing scrollTop
     const historyRespMatch = msgTs.match(/function handleChatHistoryResponse[\s\S]*?\n\}/)
     assert.ok(historyRespMatch)
     assert.doesNotMatch(historyRespMatch[0], /setTimeout\s*\(/)
     assert.doesNotMatch(historyRespMatch[0], /scrollTop/)
+    assert.match(msgTs, /preserveTrailingLiveMessages/)
 
-    // High 4 & High 3: appUtil.ts exports jump handler registration and loadHistory clearBeforeLoad option
-    assert.match(appUtil, /export function registerChatScrollJumpHandler/)
-    assert.match(appUtil, /clearBeforeLoad\?: boolean/)
+    // Sourcery #6 & #7: verify loadHistory only clears when clearBeforeLoad and scrollToMsg invokes registered jump handler
+    const loadHistoryMatch = appUtil.match(/export async function loadHistory[\s\S]*?\n\}/)
+    assert.ok(loadHistoryMatch)
+    assert.match(loadHistoryMatch[0], /if\s*\(clearBeforeLoad\)\s*\{\s*\r?\n\s*chatStore\.messageList = \[\]/)
     const scrollToMsgMatch = appUtil.match(/export function scrollToMsg[\s\S]*?\n\}/)
     assert.ok(scrollToMsgMatch)
+    assert.match(scrollToMsgMatch[0], /chatScrollJumpHandler\?\.\(msg,/)
+    assert.match(scrollToMsgMatch[0], /if\s*\(!handled\)/)
     assert.doesNotMatch(scrollToMsgMatch[0], /pan\.style\.scrollBehavior = 'smooth'/)
 
-    // Chat.vue invariants
+    // Sourcery #2, #4, #5 & SonarCloud S9383: Chat.vue keeps timeline content fixed, tracks trim failures, counts appended suffix
     assert.doesNotMatch(chatVue, /id="msgPan"[^>]*scroll-behavior:\s*smooth/)
+    assert.match(chatVue, /getContent:\s*\(\)\s*=>\s*\(msgListGroup\.value as any\)\?\.\$el \?\? null/)
+    assert.match(chatVue, /if \(!details\.value\[3\]\.open && \(changeKind === 'prepend' \|\| !wasPinned\) && oldLength > 0\)/)
+    assert.match(chatVue, /countAppendedMessages/)
+    assert.match(chatVue, /void loadHistoryFirst\(info, \{ clearBeforeLoad: false \}\)[\s\S]*?\.catch\(\(\)\s*=>\s*\{\s*\r?\n\s*trimReloadPending = false/)
     assert.match(chatVue, /suppressListMoveAnimation/)
     assert.match(chatVue, /classifyMessageListChange/)
     assert.match(chatVue, /function chatScroll\(event: Event, pass: boolean\) \{\s*\r?\n\s*if \(pass\) return/)
     assert.match(chatVue, /searchJumpTimer/)
-    assert.match(chatVue, /if \(!jumped\)/)
 })

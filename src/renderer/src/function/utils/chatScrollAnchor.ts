@@ -32,7 +32,8 @@ export function classifyMessageListChange(
     if (prevIds.length === 0) return 'initial'
 
     const firstIdx = nextIds.indexOf(prevIds[0])
-    const lastIdx = nextIds.lastIndexOf(prevIds[prevIds.length - 1])
+    const prevLast = prevIds.at(-1)
+    const lastIdx = prevLast === undefined ? -1 : nextIds.lastIndexOf(prevLast)
     if (firstIdx === -1 && lastIdx === -1) return 'replace'
 
     const hasPrepended = firstIdx > 0
@@ -41,6 +42,58 @@ export function classifyMessageListChange(
     if (hasPrepended) return 'prepend'
     if (hasAppended) return 'append'
     return 'replace'
+}
+
+export function countAppendedMessages(
+    prevIds: string[],
+    nextIds: string[],
+): number {
+    if (nextIds.length === 0) return 0
+    const prevLast = prevIds.at(-1)
+    if (prevLast === undefined) return nextIds.length
+    const lastIdx = nextIds.lastIndexOf(prevLast)
+    if (lastIdx !== -1) {
+        return Math.max(0, nextIds.length - 1 - lastIdx)
+    }
+    return Math.max(0, nextIds.length - prevIds.length)
+}
+
+export function preserveTrailingLiveMessages<T extends Record<string, any>>(
+    currentList: T[],
+    replacementList: T[],
+): T[] {
+    if (replacementList.length === 0 || currentList.length === 0) {
+        return replacementList
+    }
+    const replacementIds = new Set<string>()
+    let latestTime = Number.NEGATIVE_INFINITY
+    for (const item of replacementList) {
+        if (item?.message_id != null) {
+            replacementIds.add(String(item.message_id))
+        }
+        const time = Number(item?.time)
+        if (Number.isFinite(time) && time > latestTime) {
+            latestTime = time
+        }
+    }
+
+    const trailing: T[] = []
+    for (let i = currentList.length - 1; i >= 0; i--) {
+        const item = currentList[i]
+        const id = item?.message_id != null ? String(item.message_id) : ''
+        if (id && replacementIds.has(id)) break
+        const isFake = item?.fake_msg === true
+        const time = Number(item?.time)
+        const isRecentOrUnstamped =
+            isFake ||
+            !Number.isFinite(latestTime) ||
+            (Number.isFinite(time) && time >= latestTime)
+        if (!isRecentOrUnstamped) break
+        trailing.push(item)
+    }
+    if (trailing.length === 0) return replacementList
+    trailing.reverse()
+    return [...replacementList, ...trailing]
 }
 
 export function isScrollAtBottom(
@@ -298,6 +351,12 @@ export function createChatScrollAnchor(
         }
     }
 
+    function resetAnchorCandidates() {
+        primaryAnchor = null
+        fallbackAnchors = []
+        syncObservedAnchor(null)
+    }
+
     function capture() {
         const pan = options.getPan()
         if (!pan || !hasValidSize(pan)) return
@@ -313,25 +372,15 @@ export function createChatScrollAnchor(
         lastObservedMaxScrollTop = Math.max(0, pan.scrollHeight - pan.clientHeight)
 
         const content = options.getContent()
-        if (!content) {
-            primaryAnchor = null
-            fallbackAnchors = []
-            syncObservedAnchor(null)
-            return
-        }
-        const candidates = getAnchorCandidates(content)
+        const candidates = content ? getAnchorCandidates(content) : []
         if (candidates.length === 0) {
-            primaryAnchor = null
-            fallbackAnchors = []
-            syncObservedAnchor(null)
+            resetAnchorCandidates()
             return
         }
         const layouts = candidates.map((el) => getLayoutOffsetInContainer(el, pan))
         const selection = selectViewportAnchor(layouts, viewportTop, effectiveBottom)
         if (!selection) {
-            primaryAnchor = null
-            fallbackAnchors = []
-            syncObservedAnchor(null)
+            resetAnchorCandidates()
             return
         }
 
@@ -341,13 +390,10 @@ export function createChatScrollAnchor(
             effectiveBottom,
             selection.edge,
         )
-        const neighborOffsets = [-1, -2, 1, 2]
-        fallbackAnchors = neighborOffsets
+        fallbackAnchors = [-1, -2, 1, 2]
             .map((delta) => selection.index + delta)
             .filter((idx) => idx >= 0 && idx < candidates.length)
-            .map((idx) =>
-                createSnapshot(candidates[idx], layouts[idx], effectiveBottom),
-            )
+            .map((idx) => createSnapshot(candidates[idx], layouts[idx], effectiveBottom))
         syncObservedAnchor(primaryAnchor.el)
     }
 
@@ -375,79 +421,81 @@ export function createChatScrollAnchor(
         return null
     }
 
-    function reconcile(opts?: { forceBottom?: boolean; smoothBottom?: boolean }) {
-        const pan = options.getPan()
-        if (!pan || !hasValidSize(pan) || options.isSuspended?.()) return
+    function tryResolveSnapshotTop(
+        pan: HTMLElement,
+        snap: AnchorSnapshot | null,
+        candidates: HTMLElement[],
+        effectiveHeight: number,
+    ): { targetTop: number; el: HTMLElement } | null {
+        if (!snap) return null
+        const el = resolveSnapshotElement(pan, snap, candidates)
+        if (!el) return null
+        const layout = getLayoutOffsetInContainer(el, pan)
+        const coord = snap.edge === 'top' ? layout.top : layout.bottom
+        const targetTop = computeAnchoredScrollTop({
+            anchorCoord: coord,
+            effectiveViewportHeight: effectiveHeight,
+            clientHeight: pan.clientHeight,
+            scrollHeight: pan.scrollHeight,
+            anchorOffset: snap.offset,
+        })
+        return { targetTop, el }
+    }
 
-        if (isPointerInteracting && !opts?.forceBottom) {
-            pendingReconcileAfterInteraction = true
-            return
+    function reconcileTargetAnimation(pan: HTMLElement) {
+        const targetEl = activeAnimation?.targetEl
+        if (!activeAnimation || !targetEl || !isElementContained(pan, targetEl)) return
+        const nextTop = computeTargetScrollTop(
+            pan,
+            targetEl,
+            activeAnimation.centerInView === true,
+        )
+        const changed = Math.abs(activeAnimation.targetTop - nextTop) > 1
+        activeAnimation.targetTop = nextTop
+        if (changed && typeof pan.scrollTo === 'function') {
+            pan.scrollTo({ top: nextTop, behavior: 'smooth' })
         }
+    }
 
-        if (activeAnimation?.kind === 'target' && !opts?.forceBottom) {
-            const targetEl = activeAnimation.targetEl
-            if (targetEl && isElementContained(pan, targetEl)) {
-                activeAnimation.targetTop = computeTargetScrollTop(
-                    pan,
-                    targetEl,
-                    activeAnimation.centerInView === true,
-                )
-            }
-            return
-        }
+    function reconcileBottom(pan: HTMLElement, smoothBottom: boolean) {
+        const bottomTop = Math.max(0, pan.scrollHeight - pan.clientHeight)
+        setPinned(true)
+        clearAnchors()
 
-        if (opts?.forceBottom || pinnedToBottom) {
-            const bottomTop = Math.max(0, pan.scrollHeight - pan.clientHeight)
-            setPinned(true)
-            clearAnchors()
-
-            if (activeAnimation?.kind === 'bottom' && !opts?.forceBottom) {
-                if (
-                    Math.abs(activeAnimation.targetTop - bottomTop) > 1 &&
-                    typeof pan.scrollTo === 'function'
-                ) {
-                    activeAnimation.targetTop = bottomTop
-                    pan.scrollTo({ top: bottomTop, behavior: 'smooth' })
-                }
-                return
-            }
-
-            if (
-                opts?.smoothBottom &&
-                Math.abs(pan.scrollTop - bottomTop) > 1 &&
-                typeof pan.scrollTo === 'function'
-            ) {
-                activeAnimation = { kind: 'bottom', targetTop: bottomTop }
+        if (activeAnimation?.kind === 'bottom' && !smoothBottom) {
+            const changed = Math.abs(activeAnimation.targetTop - bottomTop) > 1
+            if (changed && typeof pan.scrollTo === 'function') {
+                activeAnimation.targetTop = bottomTop
                 pan.scrollTo({ top: bottomTop, behavior: 'smooth' })
-                return
             }
-
-            activeAnimation = null
-            applyImmediateScrollTop(bottomTop)
             return
         }
 
+        if (
+            smoothBottom &&
+            Math.abs(pan.scrollTop - bottomTop) > 1 &&
+            typeof pan.scrollTo === 'function'
+        ) {
+            activeAnimation = { kind: 'bottom', targetTop: bottomTop }
+            pan.scrollTo({ top: bottomTop, behavior: 'smooth' })
+            return
+        }
+
+        activeAnimation = null
+        applyImmediateScrollTop(bottomTop)
+    }
+
+    function reconcileUnpinned(pan: HTMLElement) {
         const effectiveHeight = getEffectiveHeight(pan)
         const content = options.getContent()
         const candidates = content ? getAnchorCandidates(content) : []
 
-        const trySnap = (snap: AnchorSnapshot | null): { targetTop: number; el: HTMLElement } | null => {
-            if (!snap) return null
-            const el = resolveSnapshotElement(pan, snap, candidates)
-            if (!el) return null
-            const layout = getLayoutOffsetInContainer(el, pan)
-            const coord = snap.edge === 'top' ? layout.top : layout.bottom
-            const targetTop = computeAnchoredScrollTop({
-                anchorCoord: coord,
-                effectiveViewportHeight: effectiveHeight,
-                clientHeight: pan.clientHeight,
-                scrollHeight: pan.scrollHeight,
-                anchorOffset: snap.offset,
-            })
-            return { targetTop, el }
-        }
-
-        const primaryResolved = trySnap(primaryAnchor)
+        const primaryResolved = tryResolveSnapshotTop(
+            pan,
+            primaryAnchor,
+            candidates,
+            effectiveHeight,
+        )
         if (primaryResolved) {
             if (Math.abs(pan.scrollTop - primaryResolved.targetTop) > 0.5) {
                 applyImmediateScrollTop(primaryResolved.targetTop)
@@ -464,7 +512,7 @@ export function createChatScrollAnchor(
         }
 
         for (const fallback of fallbackAnchors) {
-            const resolved = trySnap(fallback)
+            const resolved = tryResolveSnapshotTop(pan, fallback, candidates, effectiveHeight)
             if (!resolved) continue
             if (Math.abs(pan.scrollTop - resolved.targetTop) > 0.5) {
                 applyImmediateScrollTop(resolved.targetTop)
@@ -484,41 +532,69 @@ export function createChatScrollAnchor(
         capture()
     }
 
+    function reconcile(opts?: { forceBottom?: boolean; smoothBottom?: boolean }) {
+        const pan = options.getPan()
+        if (!pan || !hasValidSize(pan) || options.isSuspended?.()) return
+
+        if (isPointerInteracting && !opts?.forceBottom) {
+            pendingReconcileAfterInteraction = true
+            return
+        }
+
+        if (activeAnimation?.kind === 'target' && !opts?.forceBottom) {
+            reconcileTargetAnimation(pan)
+            return
+        }
+
+        if (opts?.forceBottom || pinnedToBottom) {
+            reconcileBottom(pan, opts?.smoothBottom === true)
+            return
+        }
+
+        reconcileUnpinned(pan)
+    }
+
+    function handleActiveAnimationScroll(
+        pan: HTMLElement,
+        atBottomRaw: boolean,
+        maxTop: number,
+    ): boolean {
+        if (!activeAnimation) return false
+        lastObservedScrollTop = pan.scrollTop
+        lastObservedMaxScrollTop = maxTop
+        if (activeAnimation.kind === 'bottom') {
+            if (atBottomRaw) {
+                activeAnimation = null
+                setPinned(true)
+                clearAnchors()
+            }
+            return true
+        }
+        setPinned(false)
+        if (Math.abs(pan.scrollTop - activeAnimation.targetTop) <= 2) {
+            activeAnimation = null
+            capture()
+        }
+        return true
+    }
+
+    function consumeProgrammaticScroll(pan: HTMLElement): boolean {
+        if (programmaticScrollTop === null) return false
+        const expected = programmaticScrollTop
+        programmaticScrollTop = null
+        if (Math.abs(pan.scrollTop - expected) > 1) return false
+        lastObservedScrollTop = pan.scrollTop
+        lastObservedMaxScrollTop = Math.max(0, pan.scrollHeight - pan.clientHeight)
+        return true
+    }
+
     function handleScroll() {
         const pan = options.getPan()
-        if (!pan || !hasValidSize(pan)) return
-
-        if (programmaticScrollTop !== null) {
-            const expected = programmaticScrollTop
-            programmaticScrollTop = null
-            if (Math.abs(pan.scrollTop - expected) <= 1) {
-                lastObservedScrollTop = pan.scrollTop
-                lastObservedMaxScrollTop = Math.max(0, pan.scrollHeight - pan.clientHeight)
-                return
-            }
-        }
+        if (!pan || !hasValidSize(pan) || consumeProgrammaticScroll(pan)) return
 
         const maxTop = Math.max(0, pan.scrollHeight - pan.clientHeight)
         const atBottomRaw = isScrollAtBottom(pan, threshold)
-
-        if (activeAnimation) {
-            lastObservedScrollTop = pan.scrollTop
-            lastObservedMaxScrollTop = maxTop
-            if (activeAnimation.kind === 'bottom') {
-                if (atBottomRaw) {
-                    activeAnimation = null
-                    setPinned(true)
-                    clearAnchors()
-                }
-                return
-            }
-            setPinned(false)
-            if (Math.abs(pan.scrollTop - activeAnimation.targetTop) <= 2) {
-                activeAnimation = null
-                capture()
-            }
-            return
-        }
+        if (handleActiveAnimationScroll(pan, atBottomRaw, maxTop)) return
 
         const clampedByShrink =
             maxTop <= 1 ||
@@ -699,11 +775,9 @@ export function createChatScrollAnchor(
 
     function refreshObservers() {
         if (typeof ResizeObserver === 'undefined') return
-        if (!resizeObserver) {
-            resizeObserver = new ResizeObserver(() => {
-                reconcile()
-            })
-        }
+        resizeObserver ??= new ResizeObserver(() => {
+            reconcile()
+        })
         const pan = options.getPan()
         const content = options.getContent()
         if (pan && pan !== attachedPan) {
