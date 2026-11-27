@@ -55,7 +55,14 @@ import {
 import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
 import { backend } from '@renderer/runtime/backend'
-import { dbRevokeMessage, saveMessagesWithSideEffects } from './utils/localHistoryUtil'
+import {
+    dbRefreshImageUrl,
+    dbRevokeMessage,
+    getOrDownloadHistoryImage,
+    isTauriHistoryAvailable,
+    saveMessagesWithSideEffects,
+} from './utils/localHistoryUtil'
+import { fillMissingForwards, hasForwardContent, normalizeForwardSegments } from './utils/messageMedia'
 import {
     addDownloadTask,
     completeUploadTask,
@@ -1946,6 +1953,9 @@ function normalizeNewIncomingMessage(data: any): any[] {
         msgPath.message_list.type,
         msgPath.message_value,
     )
+    for (const message of list) {
+        if (Array.isArray(message.message)) normalizeForwardSegments(message.message)
+    }
     return list
 }
 
@@ -2015,19 +2025,14 @@ function hasImageMessage(msg: any): boolean {
 function hasResolvableImageSource(msg: any): boolean {
     const imgs = getImageSegments(msg)
     if (imgs.length === 0) return false
-    return imgs.every((seg: any) => {
-        const url = typeof seg?.url === 'string' ? seg.url : ''
-        const file = typeof seg?.file === 'string' ? seg.file : ''
-        if (url.length > 0) return true
-        if (file.length > 0) return true
-        return false
-    })
+    return imgs.every((seg: any) => typeof seg.url === 'string' && seg.url.length > 0)
 }
 
 function shouldReplaceDuplicateMessage(existing: any, incoming: any): boolean {
     // 新的空记录（消息已被撤回）覆盖本地缓存中的旧内容
     if (isEmptyHistoryRecord(incoming) && existing?.message?.length > 0) return true
     const settingsStore = useSettingsStore()
+    if (!existing?.revoked) fillMissingForwards(existing?.message, incoming?.message)
     if (!hasImageMessage(incoming)) return false
     if (existing?._from_local_db !== true) return false
 
@@ -2116,48 +2121,85 @@ export async function getMessageList(list: any[] | undefined) {
     return Promise.all(list.map(msgPreprocess))
 }
 
+export async function fetchForwardContent(id: string | number | undefined) {
+    if (!id) return undefined
+    const origin = await Connector.callApi('forward_msg', { id }, 10000)
+    const content = await getMessageList(origin)
+    return hasForwardContent({ type: 'forward', content }) ? content : undefined
+}
+
+export function createMessageImageList(messages: any[], skipMarketFace = false) {
+    const selfId = useAuthStore().loginInfo.uin
+    const useLocalStorage = selfId && isTauriHistoryAvailable()
+    const images: Img[] = []
+    for (const message of messages) {
+        if (!Array.isArray(message?.message)) continue
+        for (const [index, item] of message.message.entries()) {
+            if (item?.type !== 'image' || (skipMarketFace && item.file === 'marketface')) continue
+            const load = useLocalStorage ? () => resolveHistoryMessageImage(selfId, message, index) : undefined
+            images.push(new Img(item.url ?? '', item, load))
+        }
+    }
+    return Img.fromList(images)
+}
+
+export async function resolveHistoryMessageImage(
+    selfId: string | number,
+    message: any,
+    index: number,
+): Promise<string | undefined> {
+    const authStore = useAuthStore()
+    const sameAccount = () => String(authStore.loginInfo.uin) === String(selfId)
+    const item = message.message?.[index]
+    if (!isTauriHistoryAvailable() || !sameAccount() || item?.type !== 'image') return
+    const previousUrl = typeof item.url === 'string' ? item.url : undefined
+    const resolved = previousUrl && await getOrDownloadHistoryImage(selfId, previousUrl)
+    if (!sameAccount()) return
+    if (resolved) return resolved
+    if (!login.status || message.revoked || !message.message_id) return
+
+    const messageId = String(message.message_id)
+    const numericId = Number(messageId)
+    const requestId = Number.isSafeInteger(numericId) && String(numericId) === messageId ? numericId : message.message_id
+    const action = authStore.jsonMap.get_message?.name ?? 'get_msg'
+    try {
+        const response = await Connector.callRawApi(action, { message_id: requestId }, 8000)
+        if (!sameAccount() || response?.status !== 'ok' || Number(response.retcode ?? 0) !== 0 ||
+            String(response.data?.message_id) !== messageId) return
+        const [fresh] = normalizeNewIncomingMessage(response.data)
+        const imageIndex = getImageSegments(message).indexOf(item)
+        const url = getImageSegments(fresh)[imageIndex]?.url
+        if (typeof url !== 'string') return
+        const src = await getOrDownloadHistoryImage(selfId, url)
+        if (!src || !sameAccount()) return
+        await dbRefreshImageUrl(selfId, message, index, previousUrl, url)
+        if (!sameAccount()) return
+        if (message.message[index] === item && item.url === previousUrl) item.url = url
+        return src
+    } catch {
+        // Leave the record available for another attempt when the bot or CDN recovers.
+    }
+    return undefined
+}
+
 /**
  * 消息预处理
  * @param msg 要处理的消息
  */
 async function msgPreprocess(msg: any): Promise<any> {
-    //#region == json 合并转发 ============================
-    if (msg.message.at(0)?.type === 'json') {
+    if (msg?._preprocessed || !Array.isArray(msg?.message)) return msg
+    normalizeForwardSegments(msg.message)
+    for (const segment of msg.message) {
+        if (segment?.type !== 'forward') continue
         try {
-            const data = JSON.parse(msg.message.at(0).data)
-            if (data['app'] === 'com.tencent.multimsg') {
-                msg.message = [{
-                    type: 'forward',
-                    id: data['meta']['detail']['resid'],
-                }]
-            }
-        } catch (e) {/**/ }
-    }
-    //#endregion
-
-    //#region == 合并转发解析 ==============================
-    if (msg.message.at(0)?.type === 'forward') {
-        const forwardId = msg.message.at(0).id
-        if (forwardId) {
-            try {
-                if (msg.message.at(0).content && msg.message.at(0).content.length > 0) {
-                    // 如果 content 里已经有内容了就直接用 content 里的内容
-                    const data = await getMessageList(msg.message.at(0).content)
-                    if (data) msg.message.at(0).content = data
-                } else {
-                    // 否则调用接口获取
-                    const originData = await Connector.callApi('forward_msg', { id: forwardId })
-                    const data = await getMessageList(originData)
-                    if (data) msg.message.at(0).content = data
-                }
-            } catch (e) {
-                logger.error(e as unknown as Error, '合并转发解析失败')
-            }
-        } else {
-            msg.message.at(0).content = []
+            const hasEmbeddedContent = Array.isArray(segment.content) && segment.content.length > 0
+            const content = hasEmbeddedContent ? await getMessageList(segment.content) : await fetchForwardContent(segment.id)
+            if (hasForwardContent({ type: 'forward', content })) segment.content = content
+            else if (!hasForwardContent(segment)) delete segment.content
+        } catch (e) {
+            logger.error(e as Error, '合并转发解析失败')
         }
     }
-    //#endregion
 
     //#region == lgr 商场表情 =============================
     // 过滤掉mface后面尾随的字符串

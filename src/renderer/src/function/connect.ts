@@ -396,7 +396,7 @@ export class Connector {
      * @param args 参数
      * @returns undefined 表示无此API, null表示调用失败, 其余为经getMsgData过滤的返回值
      */
-    static async callApi(api: string, args: {[key: string]: any}): Promise<any|undefined|null>{
+    static async callApi(api: string, args: {[key: string]: any}, timeout?: number): Promise<any|undefined|null>{
         // 组建信息
         const echo = uuid()
         const authStore = useAuthStore()
@@ -416,7 +416,7 @@ export class Connector {
 
         // 处理响应
         try{
-            const re = await this.waitReturn(echo)
+            const re = await this.waitReturn(echo, timeout)
             return getMsgData(api, re, apiMap)
         }catch (e) {
             if (e instanceof TimeoutError) {
