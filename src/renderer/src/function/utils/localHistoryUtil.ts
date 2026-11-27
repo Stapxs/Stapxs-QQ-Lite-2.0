@@ -464,20 +464,31 @@ export async function dbClearImages(
 async function cacheImagesFromMsgs(selfId: string | number, msgs: any[]): Promise<void> {
     if (!isTauriHistoryAvailable()) return
     const authStore = useAuthStore()
+    const isCurrentAccount = () => String(authStore.loginInfo.uin) === String(selfId)
     for (const msg of msgs) {
         if (!Array.isArray(msg.message) || msg.revoked || !msg.message_id) continue
         const chat = getMessageHistoryChat(selfId, msg)
         if (!chat) continue
         for (const [index, seg] of msg.message.entries()) {
-            if (String(authStore.loginInfo.uin) !== String(selfId)) return
+            if (!isCurrentAccount()) return
             if (msg.revoked || seg?.type !== 'image' || typeof seg.url !== 'string') continue
-            const url = seg.url
-            const image = await loadHistoryImage(selfId, url)
-            if (image?.cache && !msg.revoked && seg.url === url &&
-                String(authStore.loginInfo.uin) === String(selfId)) {
-                await dbRefreshImageUrl(selfId, chat, String(msg.message_id), index, url, url, image.cache)
-            }
+            await cacheMessageImage(selfId, msg, chat, index, seg, isCurrentAccount)
         }
+    }
+}
+
+async function cacheMessageImage(
+    selfId: number | string,
+    msg: any,
+    chat: HistoryChat,
+    index: number,
+    seg: { url: string },
+    isCurrentAccount: () => boolean,
+) {
+    const url = seg.url
+    const image = await loadHistoryImage(selfId, url)
+    if (image?.cache && !msg.revoked && seg.url === url && isCurrentAccount()) {
+        await dbRefreshImageUrl(selfId, chat, String(msg.message_id), index, url, url, image.cache)
     }
 }
 

@@ -2155,6 +2155,36 @@ export function createMessageImageList(messages: any[], skipMarketFace = false, 
     return Img.fromList(images)
 }
 
+async function loadHistoryImageForMessage(
+    selfId: string | number,
+    message: any,
+    item: object,
+    messageId: string,
+    previousUrl: string | undefined,
+    chat: HistoryChat | undefined,
+    isCurrent: () => boolean,
+) {
+    const existing = previousUrl ? await loadHistoryImage(selfId, previousUrl) : undefined
+    if (!isCurrent()) return undefined
+    if (previousUrl && existing) return { url: previousUrl, image: existing }
+    if (!chat || !login.status || !messageId) return undefined
+
+    const numericId = Number(messageId)
+    const requestId = Number.isSafeInteger(numericId) && String(numericId) === messageId ? numericId : message.message_id
+    const action = useAuthStore().jsonMap.get_message?.name ?? 'get_msg'
+    const response = await Connector.callRawApi(action, { message_id: requestId }, 8000)
+    if (!isCurrent() || response?.status !== 'ok' || Number(response.retcode ?? 0) !== 0 ||
+        String(response.data?.message_id) !== messageId) return undefined
+    const [fresh] = normalizeNewIncomingMessage(response.data)
+    if (fresh?.revoked || !sameHistoryChat(chat, getMessageHistoryChat(selfId, fresh, chat))) return undefined
+
+    const imageIndex = getImageSegments(message).indexOf(item)
+    const url = getImageSegments(fresh)[imageIndex]?.url
+    if (typeof url !== 'string') return undefined
+    const image = await loadHistoryImage(selfId, url)
+    return image && url ? { url, image } : undefined
+}
+
 export async function resolveHistoryMessageImage(
     selfId: string | number,
     message: any,
@@ -2171,34 +2201,19 @@ export async function resolveHistoryMessageImage(
     if (!isCurrent()) return
     const chat = owningChat && getMessageHistoryChat(selfId, message, owningChat)
     if (owningChat && !sameHistoryChat(owningChat, chat)) return
-    const messageId = message.message_id == null ? '' : String(message.message_id)
+    const messageId = String(message.message_id ?? '')
     const stopWatching = watchMediaRecall(selfId, chat, message)
     try {
-        let url = previousUrl
-        let image = url ? await loadHistoryImage(selfId, url) : undefined
+        const recovered = await loadHistoryImageForMessage(selfId, message, item, messageId, previousUrl, chat, isCurrent)
+        if (!recovered || !isCurrent()) return
+        const { url, image } = recovered
+        if (!chat || !messageId || (!image.cache && url === previousUrl && !message._from_local_db)) return image.src
+
+        const applied = await dbRefreshImageUrl(selfId, chat, messageId, index, previousUrl, url, image.cache)
         if (!isCurrent()) return
-        if (!image && chat && login.status && messageId) {
-            const numericId = Number(messageId)
-            const requestId = Number.isSafeInteger(numericId) && String(numericId) === messageId ? numericId : message.message_id
-            const action = authStore.jsonMap.get_message?.name ?? 'get_msg'
-            const response = await Connector.callRawApi(action, { message_id: requestId }, 8000)
-            if (!isCurrent() || response?.status !== 'ok' || Number(response.retcode ?? 0) !== 0 ||
-                String(response.data?.message_id) !== messageId) return
-            const [fresh] = normalizeNewIncomingMessage(response.data)
-            if (fresh?.revoked || !sameHistoryChat(chat, getMessageHistoryChat(selfId, fresh, chat))) return
-            const imageIndex = getImageSegments(message).indexOf(item)
-            url = getImageSegments(fresh)[imageIndex]?.url
-            if (typeof url !== 'string') return
-            image = await loadHistoryImage(selfId, url)
-        }
-        if (!image || !url || !isCurrent()) return
-        if (chat && messageId && (image.cache || url !== previousUrl || message._from_local_db)) {
-            const applied = await dbRefreshImageUrl(selfId, chat, messageId, index, previousUrl, url, image.cache)
-            if (!isCurrent()) return
-            // A live message can be previewed before its first save. A rejected write is stale.
-            if (applied === false || (applied === null && message._from_local_db)) return ''
-            if (applied === true && url !== previousUrl) item.url = url
-        }
+        // A live message can be previewed before its first save. A rejected write is stale.
+        if (applied === false || (applied === null && message._from_local_db)) return ''
+        if (applied === true && url !== previousUrl) item.url = url
         return image.src
     } catch {
         // Leave the record available for another attempt when the bot or CDN recovers.

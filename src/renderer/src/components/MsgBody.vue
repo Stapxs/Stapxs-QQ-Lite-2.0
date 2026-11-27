@@ -447,6 +447,7 @@ import {
     sameHistoryChat,
     watchMediaRecall,
     type ForwardSegment,
+    type HistoryChat,
 } from '@renderer/function/utils/messageMedia'
 import JsonSegComp from './msg-component/JsonSegComp.vue'
 import XmlSegComp from './msg-component/XmlSegComp.vue'
@@ -1099,51 +1100,69 @@ function sendPlay(info: MusicInfo) {
 async function openMerge(seg: ForwardSegment) {
     if (data.revoked) return
     if (!hasForwardContent(seg)) {
-        if (pendingForwards.has(seg)) return
-        const message = data
-        const selfId = authStore.loginInfo.uin
-        const viewedChat = chatStore.chatInfo.show
-        const viewId = viewedChat.id
-        const viewType = viewedChat.type
-        const isCurrent = () => !disposed && message === data && !message.revoked &&
-            selfId === authStore.loginInfo.uin && viewId === chatStore.chatInfo.show.id &&
-            viewType === chatStore.chatInfo.show.type && message.message?.includes(seg)
-        const saveHistory = type !== 'merge' && selfId && isTauriHistoryAvailable()
-        const chat = saveHistory ? historyChatForView(viewedChat) : undefined
-        const stopWatching = watchMediaRecall(selfId, chat, message)
-        pendingForwards.add(seg)
-        try {
-            const content = await fetchForwardContent(seg.id)
-            if (!isCurrent()) return
-            if (content) {
-                if (chat && message.message_id != null) {
-                    if (!sameHistoryChat(chat, getMessageHistoryChat(selfId, message, chat))) return
-                    const segments = message.message.map((item: any) => item === seg ? { ...seg, content } : item)
-                    const updated = await dbRepairStoredForward(selfId, chat, String(message.message_id), segments)
-                    if (!isCurrent() || (!updated && message._from_local_db)) return
-                }
-                seg.content = content
-            }
-        } catch (error) {
-            if (isCurrent()) new Logger().error(error as Error, '合并转发解析失败')
-        } finally {
-            stopWatching?.()
-            pendingForwards.delete(seg)
+        await openRecoveredForward(seg)
+        return
+    }
+    showForwardContent(data, seg.content)
+}
+
+async function openRecoveredForward(seg: ForwardSegment) {
+    if (pendingForwards.has(seg)) return
+    const message = data
+    const selfId = authStore.loginInfo.uin
+    const viewedChat = chatStore.chatInfo.show
+    const viewId = viewedChat.id
+    const viewType = viewedChat.type
+    const isCurrent = () => !disposed && message === data && !message.revoked &&
+        selfId === authStore.loginInfo.uin && viewId === chatStore.chatInfo.show.id &&
+        viewType === chatStore.chatInfo.show.type && message.message?.includes(seg)
+    const saveHistory = type !== 'merge' && selfId && isTauriHistoryAvailable()
+    const chat = saveHistory ? historyChatForView(viewedChat) : undefined
+    const stopWatching = watchMediaRecall(selfId, chat, message)
+    pendingForwards.add(seg)
+    try {
+        const content = await fetchForwardContent(seg.id)
+        if (!isCurrent()) return
+        if (content && chat && message.message_id != null) {
+            const canShow = await storeRecoveredForward(selfId, chat, message, seg, content)
+            if (!isCurrent() || !canShow) return
         }
-        if (!hasForwardContent(seg)) {
-            if (isCurrent()) new PopInfo().add(PopType.ERR, $t('合并转发解析失败'))
-            return
-        }
+        if (content) seg.content = content
+    } catch (error) {
+        if (isCurrent()) new Logger().error(error as Error, '合并转发解析失败')
+    } finally {
+        stopWatching?.()
+        pendingForwards.delete(seg)
     }
 
+    if (!isCurrent()) return
+    if (hasForwardContent(seg)) {
+        showForwardContent(message, seg.content)
+        return
+    }
+    new PopInfo().add(PopType.ERR, $t('合并转发解析失败'))
+}
+
+async function storeRecoveredForward(
+    selfId: number | string,
+    chat: HistoryChat,
+    message: any,
+    seg: ForwardSegment,
+    content: any[],
+) {
+    if (!sameHistoryChat(chat, getMessageHistoryChat(selfId, message, chat))) return false
+    const segments = message.message.map((item: any) => item === seg ? { ...seg, content } : item)
+    const updated = await dbRepairStoredForward(selfId, chat, String(message.message_id), segments)
+    return updated || !message._from_local_db
+}
+
+function showForwardContent(message: any, content: any[]) {
     const mergeData: MergeStackData = {
-        messageList: [],
+        messageList: content,
         imageList: [],
         placeCache: 0,
-        forwardMsg: data
+        forwardMsg: message
     }
-
-    mergeData.messageList = seg.content
     const imgList = [] as {
         index: number
         message_id: string
