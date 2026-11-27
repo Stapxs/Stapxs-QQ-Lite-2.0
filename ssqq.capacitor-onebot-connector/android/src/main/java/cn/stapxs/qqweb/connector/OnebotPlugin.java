@@ -83,7 +83,13 @@ public class OnebotPlugin extends Plugin {
     public synchronized void close(PluginCall call) {
         String connectionId = call.getString("connectionId");
         if (webSocketClient != null && (connectionId == null || connectionId.equals(webSocketClient.connectionId))) {
-            webSocketClient.close();
+            WebSocketClient target = webSocketClient;
+            webSocketClient = null;
+            if (Boolean.TRUE.equals(call.getBoolean("cancel", false))) {
+                target.cancel();
+            } else {
+                target.close();
+            }
         }
         JSObject ret = new JSObject();
         ret.put("success", true);

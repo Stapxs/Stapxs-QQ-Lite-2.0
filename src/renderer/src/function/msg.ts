@@ -270,7 +270,7 @@ function clearMetaEventWatchdog() {
     connectionStore.metaEventTimeoutTriggered = false
 }
 
-function refreshMetaEventWatchdog(intervalSeconds: number) {
+export function refreshMetaEventWatchdog(intervalSeconds: number) {
     if (intervalSeconds <= 0 || !Connector.shouldWatchHeartbeat()) return
 
     const connectionStore = useConnectionStore()

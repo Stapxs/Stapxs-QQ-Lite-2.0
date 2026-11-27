@@ -1,6 +1,6 @@
 import { WebPlugin } from '@capacitor/core';
 
-import type { OnebotPlugin } from './definitions';
+import type { OnebotCloseOptions, OnebotConnectOptions, OnebotPlugin } from './definitions';
 
 export class OnebotWeb extends WebPlugin implements OnebotPlugin {
     getFinalRedirectUrl(options: { url: string; }): Promise<{ url: string; }> {
@@ -19,7 +19,7 @@ export class OnebotWeb extends WebPlugin implements OnebotPlugin {
         console.warn('本插件不提供 Web 端实现。');
         return Promise.resolve({ data: '' });
     }
-    async connect(_: { url: string; }): Promise<{ success: boolean; }> {
+    async connect(_: OnebotConnectOptions): Promise<{ success: boolean; }> {
         console.warn('本插件不提供 Web 端实现。');
         return Promise.resolve({ success: true });
     }
@@ -29,7 +29,7 @@ export class OnebotWeb extends WebPlugin implements OnebotPlugin {
         return Promise.resolve({ success: true });
     }
 
-    async close(): Promise<{ success: boolean; }> {
+    async close(_?: OnebotCloseOptions): Promise<{ success: boolean; }> {
         console.warn('本插件不提供 Web 端实现。');
         return Promise.resolve({ success: true });
     }

@@ -11,7 +11,7 @@ import app from '@renderer/main'
 
 import { reactive } from 'vue'
 import { LogType, Logger, PopType, PopInfo } from './base'
-import { dispatch } from './msg'
+import { dispatch, refreshMetaEventWatchdog } from './msg'
 
 import { BotActionElem, LoginCacheElem, ConnectionHistoryItem } from './elements/system'
 import { updateMenu } from '@renderer/function/utils/appUtil'
@@ -154,7 +154,7 @@ export class Connector {
         connection.open = false
         if (login.status) connection.retries = 0
         this.clearAndroidTimer(connection)
-        if (closeNative) void backend.call('Onebot', 'onebot:close', false, { connectionId: id })
+        if (closeNative) void backend.call('Onebot', 'onebot:close', false, { connectionId: id, cancel: true })
         this.onclose(code, reason, connection.address, connection.token, false)
         this.scheduleAndroidReconnect(connection)
     }
@@ -209,12 +209,13 @@ export class Connector {
             this.scheduleAndroidReconnect(connection, true)
         } else if (connection.open) {
             const id = connection.id
+            const isCurrentAttempt = () => generation === this.androidActivityGeneration &&
+                this.androidConnection === connection && connection.id === id
             // An open native socket can outlive its network route while the app is suspended.
-            void this.callRawApi('get_login_info', {}, 5000).catch(() => {
-                if (generation === this.androidActivityGeneration &&
-                    this.androidConnection === connection && connection.id === id) {
-                    this.finishAndroidAttempt(1006, undefined, true)
-                }
+            void this.callRawApi('get_login_info', {}, 5000).then(() => {
+                if (isCurrentAttempt()) refreshMetaEventWatchdog(useConnectionStore().heartbeatTime)
+            }, () => {
+                if (isCurrentAttempt()) this.finishAndroidAttempt(1006, undefined, true)
             })
         }
     }
@@ -487,7 +488,12 @@ export class Connector {
             const connection = this.androidConnection
             this.androidConnection = undefined
             this.clearAndroidTimer(connection)
-            if (connection.id) void backend.call('Onebot', 'onebot:close', false, { connectionId: connection.id })
+            if (connection.id) {
+                void backend.call('Onebot', 'onebot:close', false, {
+                    connectionId: connection.id,
+                    cancel: !connection.open,
+                })
+            }
             this.onclose(1000, undefined, connection.address, connection.token, false)
         } else if(!backend.isWeb()) {
             backend.call('Onebot', 'onebot:close', false)
