@@ -105,6 +105,7 @@ type AndroidConnection = {
     id?: string
     open: boolean
     hasOpened: boolean
+    pausedHandshake: boolean
     retries: number
     timer?: number
 }
@@ -150,13 +151,15 @@ export class Connector {
         const connection = this.androidConnection
         if (!connection?.id) return
         const id = connection.id
+        const isNormalClose = Number(code) === 1000
         connection.id = undefined
         connection.open = false
+        if (isNormalClose) this.androidConnection = undefined
         if (login.status) connection.retries = 0
         this.clearAndroidTimer(connection)
         if (closeNative) void backend.call('Onebot', 'onebot:close', false, { connectionId: id, cancel: true })
         this.onclose(code, reason, connection.address, connection.token, false)
-        this.scheduleAndroidReconnect(connection)
+        if (!isNormalClose) this.scheduleAndroidReconnect(connection)
     }
 
     private static scheduleAndroidReconnect(connection: AndroidConnection, immediate = false) {
@@ -171,12 +174,13 @@ export class Connector {
 
     static receiveAndroidEvent(type: string, id: string, data: string) {
         const connection = this.androidConnection
-        if (!connection || id !== connection.id) return
+        if (!connection?.id || id !== connection.id) return
         switch (type) {
             case 'onopen':
                 this.clearAndroidTimer(connection)
                 connection.open = true
                 connection.hasOpened = true
+                connection.pausedHandshake = false
                 login.creating = false
                 this.onopen(connection.address, connection.token)
                 break
@@ -200,13 +204,30 @@ export class Connector {
             const store = useConnectionStore()
             clearTimeout(store.metaEventWatchTimer)
             store.metaEventWatchTimer = undefined
-            if (connection && !connection.id) this.clearAndroidTimer(connection)
+            if (connection) {
+                this.clearAndroidTimer(connection)
+                if (connection.id && !connection.open) {
+                    const pendingId = connection.id
+                    connection.id = undefined
+                    connection.pausedHandshake = true
+                    login.creating = false
+                    void backend.call('Onebot', 'onebot:close', false, {
+                        connectionId: pendingId,
+                        cancel: true,
+                    })
+                }
+            }
             return
         }
         if (!connection) return
         if (!connection.id) {
-            connection.retries = 0
-            this.scheduleAndroidReconnect(connection, true)
+            if (connection.hasOpened) connection.retries = 0
+            if (connection.pausedHandshake) {
+                connection.pausedHandshake = false
+                this.startAndroidAttempt(connection)
+            } else {
+                this.scheduleAndroidReconnect(connection, true)
+            }
         } else if (connection.open) {
             const id = connection.id
             const isCurrentAttempt = () => generation === this.androidActivityGeneration &&
@@ -244,7 +265,7 @@ export class Connector {
 
         if (this.isAndroid()) {
             if (this.androidConnection) this.clearAndroidTimer(this.androidConnection)
-            const connection = { address, token, open: false, hasOpened: false, retries: 0 }
+            const connection = { address, token, open: false, hasOpened: false, pausedHandshake: false, retries: 0 }
             this.androidConnection = connection
             this.startAndroidAttempt(connection)
             return
