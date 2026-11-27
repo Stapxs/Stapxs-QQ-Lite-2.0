@@ -245,48 +245,48 @@ export class Connector {
     static onmessage(message: string) {
         const data = JSON.parse(message)
         logger.add(LogType.WS, 'GET：', data)
-        if (data.echo === undefined){
+        const echo = data.echo
+        if (echo === undefined) {
             dispatch(data)
+            return
         }
-        if (data.echo) {
-            let echo: string = data.echo
-            delete data.echo
-            // 旧回调系统处理
-            if (echo.startsWith('send_')) {
-                echo = echo.slice(5)
-                dispatch(data, echo)
-                return
-            }
-            this.ReMap.set(echo, data)
+        if (typeof echo !== 'string' || !echo) return
+        delete data.echo
+        if (echo.startsWith('send_')) {
+            dispatch(data, echo.slice(5))
+            return
         }
+        this.pendingReplies.get(echo)?.(data)
     }
 
-    /**
-     * 返回值Map
-     */
-    private static ReMap: Map<string, any> = new Map()
+    private static pendingReplies = new Map<string, (data: any) => void>()
 
-    private static waitReturn(echo: string, timeout: number=50000): Promise<any> {
+    private static request(action: string, args: { [key: string]: any }, timeout = 50000): Promise<any> {
+        const echo = uuid()
         return new Promise((resolve, reject) => {
-            const startTime = Date.now()
-
-            const check = () => {
-                if (this.ReMap.has(echo)) {
-                    const re = this.ReMap.get(echo)
-                    this.ReMap.delete(echo)
-                    resolve(re)
-                    return
-                }
-
-                if (Date.now() - startTime > timeout) {
-                    reject(new TimeoutError(echo))
-                    return
-                }
-
-                setTimeout(check, 20)
+            const timer = setTimeout(() => {
+                clearPending()
+                reject(new TimeoutError(echo))
+            }, timeout)
+            const clearPending = () => {
+                clearTimeout(timer)
+                this.pendingReplies.delete(echo)
             }
+            this.pendingReplies.set(echo, data => {
+                clearPending()
+                resolve(data)
+            })
 
-            check()
+            try {
+                if (import.meta.env.VITE_APP_SSE_MODE === 'true') {
+                    this.sendSeeMod(action, args, echo)
+                } else {
+                    this.sendRaw(action, args, echo)
+                }
+            } catch (error) {
+                clearPending()
+                reject(error)
+            }
         })
     }
 
@@ -397,8 +397,6 @@ export class Connector {
      * @returns undefined 表示无此API, null表示调用失败, 其余为经getMsgData过滤的返回值
      */
     static async callApi(api: string, args: {[key: string]: any}, timeout?: number): Promise<any|undefined|null>{
-        // 组建信息
-        const echo = uuid()
         const authStore = useAuthStore()
         const apiMap = authStore.jsonMap[api]
         if (!apiMap) {
@@ -406,17 +404,8 @@ export class Connector {
             return undefined
         }
 
-        // 发送信息
-        if(import.meta.env.VITE_APP_SSE_MODE == 'true') {
-            // 使用 http POST 请求 /api/$name,body 为 json
-            this.sendSeeMod(apiMap.name, args, echo)
-        } else {
-            this.sendRaw(apiMap.name, args, echo)
-        }
-
-        // 处理响应
         try{
-            const re = await this.waitReturn(echo, timeout)
+            const re = await this.request(apiMap.name, args, timeout)
             return getMsgData(api, re, apiMap)
         }catch (e) {
             if (e instanceof TimeoutError) {
@@ -436,13 +425,7 @@ export class Connector {
         args: { [key: string]: any },
         timeout = 50000,
     ): Promise<any> {
-        const echo = uuid()
-        if(import.meta.env.VITE_APP_SSE_MODE == 'true') {
-            this.sendSeeMod(action, args, echo)
-        } else {
-            this.sendRaw(action, args, echo)
-        }
-        return this.waitReturn(echo, timeout)
+        return this.request(action, args, timeout)
     }
 
     /**

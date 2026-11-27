@@ -56,12 +56,15 @@ import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
 import { backend } from '@renderer/runtime/backend'
 import {
+    canDisplayRecoveredMedia,
     dbRefreshImageUrl,
     dbRevokeMessage,
     getMessageHistoryChat,
     isTauriHistoryAvailable,
     loadHistoryImage,
     saveMessagesWithSideEffects,
+    waitForMessageSave,
+    type HistoryImage,
 } from './utils/localHistoryUtil'
 import {
     fillMissingForwards,
@@ -2173,16 +2176,47 @@ async function loadHistoryImageForMessage(
     const requestId = Number.isSafeInteger(numericId) && String(numericId) === messageId ? numericId : message.message_id
     const action = useAuthStore().jsonMap.get_message?.name ?? 'get_msg'
     const response = await Connector.callRawApi(action, { message_id: requestId }, 8000)
-    if (!isCurrent() || response?.status !== 'ok' || Number(response.retcode ?? 0) !== 0 ||
-        String(response.data?.message_id) !== messageId) return undefined
+    if (!isCurrent()) return
+    if (response?.status !== 'ok' || Number(response.retcode ?? 0) !== 0 ||
+        String(response.data?.message_id) !== messageId) {
+        logger.debug('[LocalHistory] Bot 未返回对应的历史图片消息')
+        return
+    }
     const [fresh] = normalizeNewIncomingMessage(response.data)
-    if (fresh?.revoked || !sameHistoryChat(chat, getMessageHistoryChat(selfId, fresh, chat))) return undefined
+    if (fresh?.revoked || !sameHistoryChat(chat, getMessageHistoryChat(selfId, fresh, chat))) {
+        logger.debug('[LocalHistory] Bot 返回的历史图片消息已撤回或会话不匹配')
+        return
+    }
 
     const imageIndex = getImageSegments(message).indexOf(item)
     const url = getImageSegments(fresh)[imageIndex]?.url
-    if (typeof url !== 'string') return undefined
+    if (typeof url !== 'string') {
+        logger.debug('[LocalHistory] Bot 返回的消息缺少对应图片地址')
+        return
+    }
     const image = await loadHistoryImage(selfId, url)
     return image && url ? { url, image } : undefined
+}
+
+async function persistHistoryImage(
+    selfId: string | number,
+    message: any,
+    index: number,
+    chat: HistoryChat,
+    previousUrl: string | undefined,
+    recovered: { url: string, image: HistoryImage },
+    isCurrent: () => boolean,
+): Promise<string | undefined> {
+    const messageId = String(message.message_id)
+    await waitForMessageSave(selfId, messageId)
+    if (!isCurrent()) return
+    const { url, image } = recovered
+    const applied = await dbRefreshImageUrl(selfId, chat, messageId, index, previousUrl, url, image.cache)
+    if (!isCurrent()) return
+    if (!canDisplayRecoveredMedia(applied, !!message._from_local_db)) return ''
+    // Keep the expected SQLite URL on a write failure so the repair can be retried.
+    if (url !== previousUrl && (applied === true || applied === null)) message.message[index].url = url
+    return image.src
 }
 
 export async function resolveHistoryMessageImage(
@@ -2209,14 +2243,11 @@ export async function resolveHistoryMessageImage(
         const { url, image } = recovered
         if (!chat || !messageId || (!image.cache && url === previousUrl && !message._from_local_db)) return image.src
 
-        const applied = await dbRefreshImageUrl(selfId, chat, messageId, index, previousUrl, url, image.cache)
-        if (!isCurrent()) return
-        // A live message can be previewed before its first save. A rejected write is stale.
-        if (applied === false || (applied === null && message._from_local_db)) return ''
-        if (applied === true && url !== previousUrl) item.url = url
-        return image.src
-    } catch {
-        // Leave the record available for another attempt when the bot or CDN recovers.
+        return await persistHistoryImage(selfId, message, index, chat, previousUrl, recovered, isCurrent)
+    } catch (error) {
+        if (isCurrent()) {
+            logger.debug(`[LocalHistory] 恢复历史图片失败 (${error instanceof Error ? error.name : '未知错误'})`)
+        }
     } finally {
         stopWatching?.()
     }
@@ -2267,7 +2298,7 @@ function revokeMsg(_: string, msg: any) {
     const msgId = msg.message_id
     if (msgId == null) return
     const selfId = authStore.loginInfo.uin
-    dbRevokeMessage(selfId, String(msgId))
+    void dbRevokeMessage(selfId, String(msgId))
     const chat: HistoryChat = { id: Number(chatId), type: isGroup ? 'group' : 'private' }
     const localHistory = isTauriHistoryAvailable()
     if (localHistory) notifyMessageRecall({ selfId, chat, messageId: msgId })

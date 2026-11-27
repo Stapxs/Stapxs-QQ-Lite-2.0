@@ -260,6 +260,26 @@ fn has_forward_content(segment: &Value) -> bool {
         })
 }
 
+/// An absent row may still be saved later. An existing but ineligible row rejects the repair.
+fn missing_or_stale_message(
+    conn: &Connection,
+    self_id: &str,
+    message_id: &str,
+) -> rusqlite::Result<Option<bool>> {
+    let exists: bool = conn.query_row(
+        "SELECT EXISTS(SELECT 1 FROM messages WHERE self_id = ?1 AND message_id = ?2)",
+        params![self_id, message_id],
+        |row| row.get(0),
+    )?;
+    Ok(exists.then_some(false))
+}
+
+fn same_forward_segment(stored: &Value, incoming: &Value) -> bool {
+    let id = forward_id(incoming);
+    forward_id(stored) == id
+        && (id.is_some() || stored.get("type").and_then(Value::as_str) == Some("forward"))
+}
+
 fn repair_stored_forward(
     conn: &Connection,
     self_id: &str,
@@ -267,12 +287,12 @@ fn repair_stored_forward(
     chat_id: i64,
     chat_type: &str,
     message: &str,
-) -> rusqlite::Result<bool> {
+) -> rusqlite::Result<Option<bool>> {
     let Ok(incoming) = serde_json::from_str::<Vec<Value>>(message) else {
-        return Ok(false);
+        return Ok(Some(false));
     };
     if !incoming.iter().any(has_forward_content) {
-        return Ok(false);
+        return Ok(Some(false));
     }
     let stored: Option<String> = conn.query_row(
         "SELECT message FROM messages
@@ -280,19 +300,22 @@ fn repair_stored_forward(
         params![self_id, message_id, chat_id, chat_type],
         |row| row.get(0),
     ).optional()?;
-    let Some(mut stored) = stored.and_then(|value| serde_json::from_str::<Vec<Value>>(&value).ok()) else {
-        return Ok(false);
+    let Some(stored) = stored else {
+        return missing_or_stale_message(conn, self_id, message_id);
     };
+    let Ok(mut stored) = serde_json::from_str::<Vec<Value>>(&stored) else {
+        return Ok(Some(false));
+    };
+    let mut matched = false;
     let mut changed = false;
     for (old, new) in stored.iter_mut().zip(&incoming) {
-        if has_forward_content(new) && !has_forward_content(old) {
-            let id = forward_id(new);
-            if forward_id(old) == id
-                && (id.is_some() || old.get("type").and_then(Value::as_str) == Some("forward"))
-            {
-                *old = new.clone();
-                changed = true;
-            }
+        if !has_forward_content(new) || !same_forward_segment(old, new) {
+            continue;
+        }
+        matched = true;
+        if !has_forward_content(old) {
+            *old = new.clone();
+            changed = true;
         }
     }
     if changed {
@@ -301,9 +324,9 @@ fn repair_stored_forward(
              WHERE self_id = ?2 AND message_id = ?3 AND chat_id = ?4 AND chat_type = ?5 AND revoked = 0",
             params![Value::Array(stored).to_string(), self_id, message_id, chat_id, chat_type],
         )?;
-        return Ok(count > 0);
+        return Ok(Some(count > 0));
     }
-    Ok(true)
+    Ok(Some(matched))
 }
 
 #[tauri::command]
@@ -314,7 +337,7 @@ pub fn db_repair_stored_forward(
     chat_id: i64,
     chat_type: String,
     message: String,
-) -> Result<bool, String> {
+) -> Result<Option<bool>, String> {
     state.with_conn(|conn| {
         repair_stored_forward(conn, &self_id, &message_id, chat_id, &chat_type, &message)
             .map_err(|e| e.to_string())
@@ -382,12 +405,9 @@ pub struct HistoryImageCache {
     data: String,
 }
 
-/// Updates an existing message and stores its validated image in the same transaction.
-/// Returns None if the message has yet to be saved, or Some(false) if the update is stale.
-#[tauri::command]
-pub fn db_refresh_image_url(
-    state: State<DbState>,
-    self_id: String,
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoryImageUpdate {
     message_id: String,
     chat_id: i64,
     chat_type: String,
@@ -395,7 +415,17 @@ pub fn db_refresh_image_url(
     previous_url: Option<String>,
     url: String,
     cache: Option<HistoryImageCache>,
+}
+
+/// Updates an existing message and stores its validated image in the same transaction.
+/// Returns None if the message has yet to be saved, or Some(false) if the update is stale.
+#[tauri::command]
+pub fn db_refresh_image_url(
+    state: State<DbState>,
+    self_id: String,
+    update: HistoryImageUpdate,
 ) -> Result<Option<bool>, String> {
+    let HistoryImageUpdate { message_id, chat_id, chat_type, segment_index, previous_url, url, cache } = update;
     let url_path = format!("$[{segment_index}].url");
     let type_path = format!("$[{segment_index}].type");
     state.with_conn(|conn| {
@@ -409,12 +439,7 @@ pub fn db_refresh_image_url(
             params![url_path, url, self_id, message_id, chat_id, chat_type, type_path, previous_url],
         ).map_err(|e| e.to_string())?;
         if count == 0 {
-            let exists: bool = tx.query_row(
-                "SELECT EXISTS(SELECT 1 FROM messages WHERE self_id = ?1 AND message_id = ?2)",
-                params![self_id, message_id],
-                |row| row.get(0),
-            ).map_err(|e| e.to_string())?;
-            return Ok(exists.then_some(false));
+            return missing_or_stale_message(&tx, &self_id, &message_id).map_err(|e| e.to_string());
         }
         if let Some(cache) = cache {
             cache_image(&tx, &self_id, &cache.url_hash, &cache.mime_type, &cache.data)?;

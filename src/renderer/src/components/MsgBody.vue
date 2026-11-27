@@ -435,10 +435,12 @@ import EmojiFace from './EmojiFace.vue'
 import LazyLottie from './LazyLottie.vue'
 import { Img } from '@renderer/function/model/img'
 import {
+    canDisplayRecoveredMedia,
     dbRepairStoredForward,
     getCachedImageSrc,
     getMessageHistoryChat,
     isTauriHistoryAvailable,
+    waitForMessageSave,
 } from '@renderer/function/utils/localHistoryUtil'
 import { fetchForwardContent, resolveHistoryMessageImage } from '@renderer/function/msg'
 import {
@@ -1124,7 +1126,7 @@ async function openRecoveredForward(seg: ForwardSegment) {
         const content = await fetchForwardContent(seg.id)
         if (!isCurrent()) return
         if (content && chat && message.message_id != null) {
-            const canShow = await storeRecoveredForward(selfId, chat, message, seg, content)
+            const canShow = await storeRecoveredForward(selfId, chat, message, seg, content, isCurrent)
             if (!isCurrent() || !canShow) return
         }
         if (content) seg.content = content
@@ -1149,11 +1151,15 @@ async function storeRecoveredForward(
     message: any,
     seg: ForwardSegment,
     content: any[],
+    isCurrent: () => boolean,
 ) {
     if (!sameHistoryChat(chat, getMessageHistoryChat(selfId, message, chat))) return false
-    const segments = message.message.map((item: any) => item === seg ? { ...seg, content } : item)
-    const updated = await dbRepairStoredForward(selfId, chat, String(message.message_id), segments)
-    return updated || !message._from_local_db
+    const messageId = String(message.message_id)
+    await waitForMessageSave(selfId, messageId)
+    if (!isCurrent()) return false
+    const segments = message.message.map((item: any) => item === seg ? { ...seg, content } : null)
+    const updated = await dbRepairStoredForward(selfId, chat, messageId, segments)
+    return canDisplayRecoveredMedia(updated, !!message._from_local_db)
 }
 
 function showForwardContent(message: any, content: any[]) {

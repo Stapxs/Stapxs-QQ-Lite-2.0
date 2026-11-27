@@ -224,14 +224,36 @@ export async function dbSaveMessages(selfId: string | number, msgs: any[]): Prom
         return
     }
 
-    try {
-        await backend.call(undefined, 'db:saveMessages', true, {
-            selfId: String(selfId),
-            messages: records,
-        })
-    } catch (e) {
-        logger.error(e as unknown as Error, '[LocalHistory] dbSaveMessages 失败')
+    // Track the batches that have already serialized this record before rendering.
+    const keys = new Set(records.map(record => messageSaveKey(selfId, record.message_id)))
+    const save = callDb(selfId, 'db:saveMessages', { messages: records }, undefined, '[LocalHistory] dbSaveMessages 失败')
+    for (const key of keys) {
+        const pending = pendingMessageSaves.get(key) ?? new Set<Promise<unknown>>()
+        pending.add(save)
+        pendingMessageSaves.set(key, pending)
     }
+    try {
+        await save
+    } finally {
+        for (const key of keys) {
+            const pending = pendingMessageSaves.get(key)
+            if (!pending) continue
+            pending.delete(save)
+            if (pending.size === 0) pendingMessageSaves.delete(key)
+        }
+    }
+}
+
+const pendingMessageSaves = new Map<string, Set<Promise<unknown>>>()
+
+function messageSaveKey(selfId: string | number, messageId: string) {
+    // SQLite uses the account and message ID as the unique key.
+    return `${selfId}:${messageId}`
+}
+
+export async function waitForMessageSave(selfId: string | number, messageId: string) {
+    const pending = pendingMessageSaves.get(messageSaveKey(selfId, messageId))
+    if (pending) await Promise.allSettled(pending)
 }
 
 export async function saveMessagesWithSideEffects(selfId: string | number, msgs: any[]): Promise<void> {
@@ -243,7 +265,14 @@ export async function saveMessagesWithSideEffects(selfId: string | number, msgs:
 }
 
 type HistoryImageCache = { urlHash: string, mimeType: string, data: string }
-type HistoryImage = { src: string, cache?: HistoryImageCache }
+export type HistoryImage = { src: string, cache?: HistoryImageCache }
+
+// true: accepted, false: rejected as stale, null: missing row, undefined: storage unavailable.
+type HistoryRepairResult = boolean | null | undefined
+
+export function canDisplayRecoveredMedia(result: HistoryRepairResult, fromLocalDb: boolean) {
+    return result !== false && (result !== null || !fromLocalDb)
+}
 
 export async function dbRefreshImageUrl(
     selfId: number | string,
@@ -253,12 +282,14 @@ export async function dbRefreshImageUrl(
     previousUrl: string | undefined,
     url: string,
     cache?: HistoryImageCache,
-): Promise<boolean | null> {
+): Promise<HistoryRepairResult> {
     return callDb(selfId, 'db:refreshImageUrl', {
-        messageId, chatId: chat.id, chatType: chat.type,
-        segmentIndex, previousUrl: previousUrl ?? null, url,
-        cache: useSettingsStore().sysConfig.disable_local_history_image_cache === true ? null : cache ?? null,
-    }, false, '[LocalHistory] dbRefreshImageUrl 失败')
+        update: {
+            messageId, chatId: chat.id, chatType: chat.type,
+            segmentIndex, previousUrl: previousUrl ?? null, url,
+            cache: useSettingsStore().sysConfig.disable_local_history_image_cache === true ? null : cache ?? null,
+        },
+    }, undefined, '[LocalHistory] dbRefreshImageUrl 失败')
 }
 
 export async function dbRepairStoredForward(
@@ -266,10 +297,10 @@ export async function dbRepairStoredForward(
     chat: HistoryChat,
     messageId: string,
     segments: any[],
-): Promise<boolean> {
+): Promise<HistoryRepairResult> {
     return callDb(selfId, 'db:repairStoredForward', {
         messageId, chatId: chat.id, chatType: chat.type, message: serializeMsgSegments(segments),
-    }, false, '[LocalHistory] dbRepairStoredForward 失败')
+    }, undefined, '[LocalHistory] dbRepairStoredForward 失败')
 }
 
 /**
@@ -495,12 +526,18 @@ async function cacheMessageImage(
 async function downloadImageViaProxy(url: string): Promise<{ mimeType: string; base64: string } | null> {
     const fetchUrl = backend.proxy ? `http://localhost:${backend.proxy}/assets?url=${encodeURIComponent(url)}` : url
     const resp = await fetch(fetchUrl, { signal: AbortSignal.timeout(8000) })
-    if (!resp.ok) return null
+    if (!resp.ok) {
+        logger.debug(`[LocalHistory] 历史图片下载失败 (HTTP ${resp.status})`)
+        return null
+    }
 
     const mimeType = resp.headers.get('Content-Type')?.split(';')[0]?.trim() ?? 'image/jpeg'
     const buffer = await resp.arrayBuffer()
     const bytes = new Uint8Array(buffer)
-    if (!bytes.length) return null
+    if (!bytes.length) {
+        logger.debug('[LocalHistory] 历史图片下载返回空内容')
+        return null
+    }
     let binary = ''
     for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
     const base64 = btoa(binary)
@@ -518,6 +555,7 @@ async function decodeImageSource(mimeType: string, base64: string): Promise<stri
         await image.decode()
         return src
     } catch {
+        logger.debug('[LocalHistory] 历史图片解码失败')
         return undefined
     }
 }
@@ -540,7 +578,10 @@ export async function loadHistoryImage(selfId: string | number, url: string) {
     const key = `${selfId}:${url}`
     const pending = pendingImageDownloads.get(key)
     if (pending) return pending
-    const request = readOrDownloadHistoryImage(selfId, url).catch(() => undefined)
+    const request = readOrDownloadHistoryImage(selfId, url).catch(error => {
+        logger.debug(`[LocalHistory] 读取历史图片失败 (${error instanceof Error ? error.name : '未知错误'})`)
+        return undefined
+    })
     pendingImageDownloads.set(key, request)
     try {
         return await request
