@@ -41,7 +41,7 @@
     import MsgBody from '@renderer/components/MsgBody.vue'
     import NoticeBody from '@renderer/components/NoticeBody.vue'
 
-    import { Img } from '@renderer/function/model/img'
+    import { createMessageImageList } from '@renderer/function/msg'
     import { i18n } from '@renderer/main'
     import { useSettingsStore } from '@renderer/state/settings'
     import { type MergeStackData } from '@renderer/function/elements/information'
@@ -56,9 +56,7 @@
     const settingsStore = useSettingsStore()
     const stack = chatStore.mergeMsgStack
     const nowData = ref<MergeStackData | undefined>()
-    const mergeImgHead = computed(() =>
-        Img.fromList((nowData.value?.imageList ?? []).map(item => item.img_url))
-    )
+    const mergeImgHead = computed(() => createMessageImageList(nowData.value?.messageList ?? []))
 
     /**
      * 退出一层合并转发弹窗

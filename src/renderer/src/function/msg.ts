@@ -55,7 +55,27 @@ import {
 import { NotifyInfo } from './elements/system'
 import { Notify } from './notify'
 import { backend } from '@renderer/runtime/backend'
-import { dbRevokeMessage, saveMessagesWithSideEffects } from './utils/localHistoryUtil'
+import {
+    canDisplayRecoveredMedia,
+    dbRefreshImageUrl,
+    dbRevokeMessage,
+    getMessageHistoryChat,
+    isTauriHistoryAvailable,
+    loadHistoryImage,
+    saveMessagesWithSideEffects,
+    waitForMessageSave,
+    type HistoryImage,
+} from './utils/localHistoryUtil'
+import {
+    fillMissingForwards,
+    hasForwardContent,
+    historyChatForView,
+    normalizeForwardSegments,
+    notifyMessageRecall,
+    sameHistoryChat,
+    watchMediaRecall,
+    type HistoryChat,
+} from './utils/messageMedia'
 import {
     addDownloadTask,
     completeUploadTask,
@@ -1946,6 +1966,9 @@ function normalizeNewIncomingMessage(data: any): any[] {
         msgPath.message_list.type,
         msgPath.message_value,
     )
+    for (const message of list) {
+        if (Array.isArray(message.message)) normalizeForwardSegments(message.message)
+    }
     return list
 }
 
@@ -2015,19 +2038,14 @@ function hasImageMessage(msg: any): boolean {
 function hasResolvableImageSource(msg: any): boolean {
     const imgs = getImageSegments(msg)
     if (imgs.length === 0) return false
-    return imgs.every((seg: any) => {
-        const url = typeof seg?.url === 'string' ? seg.url : ''
-        const file = typeof seg?.file === 'string' ? seg.file : ''
-        if (url.length > 0) return true
-        if (file.length > 0) return true
-        return false
-    })
+    return imgs.every((seg: any) => typeof seg.url === 'string' && seg.url.length > 0)
 }
 
 function shouldReplaceDuplicateMessage(existing: any, incoming: any): boolean {
     // 新的空记录（消息已被撤回）覆盖本地缓存中的旧内容
     if (isEmptyHistoryRecord(incoming) && existing?.message?.length > 0) return true
     const settingsStore = useSettingsStore()
+    if (!existing?.revoked) fillMissingForwards(existing?.message, incoming?.message)
     if (!hasImageMessage(incoming)) return false
     if (existing?._from_local_db !== true) return false
 
@@ -2116,48 +2134,144 @@ export async function getMessageList(list: any[] | undefined) {
     return Promise.all(list.map(msgPreprocess))
 }
 
+export async function fetchForwardContent(id: string | number | undefined) {
+    if (!id) return undefined
+    const origin = await Connector.callApi('forward_msg', { id }, 10000)
+    const content = await getMessageList(origin)
+    return hasForwardContent({ type: 'forward', content }) ? content : undefined
+}
+
+export function createMessageImageList(messages: any[], skipMarketFace = false, chat?: HistoryChat) {
+    const authStore = useAuthStore()
+    const selfId = authStore.loginInfo.uin
+    const useLocalStorage = selfId && isTauriHistoryAvailable()
+    const images: Img[] = []
+    for (const message of messages) {
+        if (!Array.isArray(message?.message) || message.revoked) continue
+        const canShow = useLocalStorage ? () => !message.revoked && authStore.loginInfo.uin === selfId : undefined
+        for (const [index, item] of message.message.entries()) {
+            if (item?.type !== 'image' || (skipMarketFace && item.file === 'marketface')) continue
+            const load = useLocalStorage ? () => resolveHistoryMessageImage(selfId, message, index, chat) : undefined
+            images.push(new Img(item.url ?? '', item, load, canShow))
+        }
+    }
+    return Img.fromList(images)
+}
+
+async function loadHistoryImageForMessage(
+    selfId: string | number,
+    message: any,
+    item: object,
+    messageId: string,
+    previousUrl: string | undefined,
+    chat: HistoryChat | undefined,
+    isCurrent: () => boolean,
+) {
+    const existing = previousUrl ? await loadHistoryImage(selfId, previousUrl) : undefined
+    if (!isCurrent()) return undefined
+    if (previousUrl && existing) return { url: previousUrl, image: existing }
+    if (!chat || !login.status || !messageId) return undefined
+
+    const numericId = Number(messageId)
+    const requestId = Number.isSafeInteger(numericId) && String(numericId) === messageId ? numericId : message.message_id
+    const action = useAuthStore().jsonMap.get_message?.name ?? 'get_msg'
+    const response = await Connector.callRawApi(action, { message_id: requestId }, 8000)
+    if (!isCurrent()) return
+    if (response?.status !== 'ok' || Number(response.retcode ?? 0) !== 0 ||
+        String(response.data?.message_id) !== messageId) {
+        logger.debug('[LocalHistory] Bot 未返回对应的历史图片消息')
+        return
+    }
+    const [fresh] = normalizeNewIncomingMessage(response.data)
+    if (fresh?.revoked || !sameHistoryChat(chat, getMessageHistoryChat(selfId, fresh, chat))) {
+        logger.debug('[LocalHistory] Bot 返回的历史图片消息已撤回或会话不匹配')
+        return
+    }
+
+    const imageIndex = getImageSegments(message).indexOf(item)
+    const url = getImageSegments(fresh)[imageIndex]?.url
+    if (typeof url !== 'string') {
+        logger.debug('[LocalHistory] Bot 返回的消息缺少对应图片地址')
+        return
+    }
+    const image = await loadHistoryImage(selfId, url)
+    return image && url ? { url, image } : undefined
+}
+
+async function persistHistoryImage(
+    selfId: string | number,
+    message: any,
+    index: number,
+    chat: HistoryChat,
+    previousUrl: string | undefined,
+    recovered: { url: string, image: HistoryImage },
+    isCurrent: () => boolean,
+): Promise<string | undefined> {
+    const messageId = String(message.message_id)
+    await waitForMessageSave(selfId, messageId)
+    if (!isCurrent()) return
+    const { url, image } = recovered
+    const applied = await dbRefreshImageUrl(selfId, chat, messageId, index, previousUrl, url, image.cache)
+    if (!isCurrent()) return
+    if (!canDisplayRecoveredMedia(applied, !!message._from_local_db)) return ''
+    // Keep the expected SQLite URL on a write failure so the repair can be retried.
+    if (url !== previousUrl && (applied === true || applied === null)) message.message[index].url = url
+    return image.src
+}
+
+export async function resolveHistoryMessageImage(
+    selfId: string | number,
+    message: any,
+    index: number,
+    owningChat?: HistoryChat,
+): Promise<string | undefined> {
+    const authStore = useAuthStore()
+    const item = message.message?.[index]
+    if (item?.type !== 'image') return
+    const originalUrl = item.url
+    const previousUrl = typeof originalUrl === 'string' ? originalUrl : undefined
+    const isCurrent = () => isTauriHistoryAvailable() && String(authStore.loginInfo.uin) === String(selfId) &&
+        !message.revoked && message.message?.[index] === item && item.url === originalUrl
+    if (!isCurrent()) return
+    const chat = owningChat && getMessageHistoryChat(selfId, message, owningChat)
+    if (owningChat && !sameHistoryChat(owningChat, chat)) return
+    const messageId = String(message.message_id ?? '')
+    const stopWatching = watchMediaRecall(selfId, chat, message)
+    try {
+        const recovered = await loadHistoryImageForMessage(selfId, message, item, messageId, previousUrl, chat, isCurrent)
+        if (!recovered || !isCurrent()) return
+        const { url, image } = recovered
+        if (!chat || !messageId || (!image.cache && url === previousUrl && !message._from_local_db)) return image.src
+
+        return await persistHistoryImage(selfId, message, index, chat, previousUrl, recovered, isCurrent)
+    } catch (error) {
+        if (isCurrent()) {
+            logger.debug(`[LocalHistory] 恢复历史图片失败 (${error instanceof Error ? error.name : '未知错误'})`)
+        }
+    } finally {
+        stopWatching?.()
+    }
+    return undefined
+}
+
 /**
  * 消息预处理
  * @param msg 要处理的消息
  */
 async function msgPreprocess(msg: any): Promise<any> {
-    //#region == json 合并转发 ============================
-    if (msg.message.at(0)?.type === 'json') {
+    if (!Array.isArray(msg?.message)) return msg
+    normalizeForwardSegments(msg.message)
+    for (const segment of msg.message) {
+        if (segment?.type !== 'forward') continue
         try {
-            const data = JSON.parse(msg.message.at(0).data)
-            if (data['app'] === 'com.tencent.multimsg') {
-                msg.message = [{
-                    type: 'forward',
-                    id: data['meta']['detail']['resid'],
-                }]
-            }
-        } catch (e) {/**/ }
-    }
-    //#endregion
-
-    //#region == 合并转发解析 ==============================
-    if (msg.message.at(0)?.type === 'forward') {
-        const forwardId = msg.message.at(0).id
-        if (forwardId) {
-            try {
-                if (msg.message.at(0).content && msg.message.at(0).content.length > 0) {
-                    // 如果 content 里已经有内容了就直接用 content 里的内容
-                    const data = await getMessageList(msg.message.at(0).content)
-                    if (data) msg.message.at(0).content = data
-                } else {
-                    // 否则调用接口获取
-                    const originData = await Connector.callApi('forward_msg', { id: forwardId })
-                    const data = await getMessageList(originData)
-                    if (data) msg.message.at(0).content = data
-                }
-            } catch (e) {
-                logger.error(e as unknown as Error, '合并转发解析失败')
-            }
-        } else {
-            msg.message.at(0).content = []
+            const hasEmbeddedContent = Array.isArray(segment.content) && segment.content.length > 0
+            const content = hasEmbeddedContent ? await getMessageList(segment.content) : await fetchForwardContent(segment.id)
+            if (hasForwardContent({ type: 'forward', content })) segment.content = content
+            else if (!hasForwardContent(segment)) delete segment.content
+        } catch (e) {
+            logger.error(e as Error, '合并转发解析失败')
         }
     }
-    //#endregion
 
     //#region == lgr 商场表情 =============================
     // 过滤掉mface后面尾随的字符串
@@ -2176,22 +2290,26 @@ function revokeMsg(_: string, msg: any) {
     const authStore = useAuthStore()
     const chatStore = useChatStore()
     // 清除通知
-    const chatId = msg.notice_type.includes('group') ? msg.group_id : msg.user_id
+    const isGroup = msg.notice_type.includes('group')
+    const chatId = isGroup ? msg.group_id : msg.user_id
     new Notify().closeAll(chatId)
 
-    // 在本地 DB 中标记撤回
+    // 在本地 DB 中标记撤回，并使进行中的媒体补拉失效。
     const msgId = msg.message_id
-    dbRevokeMessage(authStore.loginInfo.uin, String(msgId))
-    if (String(chatId) === String(chatStore.chatInfo.show.id) &&
-        msg.notice_type.includes('group') === (chatStore.chatInfo.show.type === 'group')) {
-        useQuotedMessagesStore().revoke(msgId)
-    }
+    if (msgId == null) return
+    const selfId = authStore.loginInfo.uin
+    void dbRevokeMessage(selfId, String(msgId))
+    const chat: HistoryChat = { id: Number(chatId), type: isGroup ? 'group' : 'private' }
+    const localHistory = isTauriHistoryAvailable()
+    if (localHistory) notifyMessageRecall({ selfId, chat, messageId: msgId })
+    if (!sameHistoryChat(chat, historyChatForView(chatStore.chatInfo.show))) return
+    useQuotedMessagesStore().revoke(msgId)
 
     // 寻找消息
     let msgGet = null as { [key: string]: any } | null
     let msgIndex!: number
     for (const [index, msg] of chatStore.messageList.entries()) {
-        if (msg.message_id === msgId) {
+        if (String(msg.message_id) === String(msgId)) {
             msgGet = msg
             msgIndex = index
         }
@@ -2203,6 +2321,7 @@ function revokeMsg(_: string, msg: any) {
     }
     // 重复的撤回事件：保留已有提示及其 originMsg（重新编辑）
     if (msgGet.post_type === 'notice') return
+    if (localHistory) msgGet.revoked = true
 
     if (msgGet.sender.user_id === authStore.loginInfo.uin)
         msg.originMsg = msgGet

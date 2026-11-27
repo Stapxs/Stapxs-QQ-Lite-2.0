@@ -119,25 +119,32 @@
                                     {{ imageLoading(getImageKey(Number(index), item.url)) ? $t('加载中') : $t('点击加载图片') }}
                                 </span>
                             </button>
-                            <div v-if="!shouldShowImagePlaceholder(item, Number(index)) && failedImageSources[index] === getImgSrc(item.url)"
+                            <div v-if="!shouldShowImagePlaceholder(item, Number(index)) &&
+                                     (!getImgSrc(item.url, Number(index)) || failedImageSources[index] === getImgSrc(item.url, Number(index)))"
                                 class="msg-image-load-failure">
                                 <font-awesome-icon :icon="['fas', 'image']" />
                                 <span>{{ $t('加载图片失败') }}</span>
-                                <a :href="getImgSrc(item.url)" target="_blank" rel="noopener noreferrer">{{ $t('预览图片') }}</a>
+                                <button v-if="isTauriHistoryAvailable()" type="button"
+                                    :disabled="imageLoading(getImageKey(Number(index), item.url))"
+                                    @click="retryHistoryImage(item, Number(index))">
+                                    {{ $t('点击加载图片') }}
+                                </button>
+                                <a v-else :href="getImgSrc(item.url, Number(index))" target="_blank"
+                                    rel="noopener noreferrer">{{ $t('预览图片') }}</a>
                             </div>
                             <button v-else-if="!shouldShowImagePlaceholder(item, Number(index))"
-                                :key="getImgSrc(item.url)"
+                                :key="getImgSrc(item.url, Number(index))"
                                 type="button"
                                 class="msg-image-preview"
                                 :aria-label="item.summary || $t('预览图片')"
-                                @click="imgClick(item.url)">
+                                @click="imgClick(item)">
                                 <img :title="item.summary || $t('预览图片')"
                                     :alt="$t('图片')"
                                     :class="imgStyle(data.message.length, Number(index), isImageFace(item))"
-                                    :src="getImgSrc(item.url)"
+                                    :src="getImgSrc(item.url, Number(index))"
                                     data-type="image"
                                     @load="imageLoaded"
-                                    @error="failedImageSources[index] = getImgSrc(item.url)">
+                                    @error="messageImageFailed(item, Number(index), $event)">
                             </button>
                         </template>
                         <template v-else-if="item.type == 'face'">
@@ -206,7 +213,7 @@
                         </template>
                         <template v-else-if="item.type == 'forward'">
                             <div class="msg-raw-forward"
-                                @click="openMerge()">
+                                @click="openMerge(item)">
                                 <span>{{ $t('合并转发消息') }}</span>
                                 <div class="forward-msg">
                                     <template v-if="item.content && item.content.length > 0">
@@ -389,7 +396,7 @@ import Option from '@renderer/function/option'
 import markdownit from 'markdown-it'
 
 import { MsgBodyFuns as ViewFuns } from '@renderer/function/model/msg-body'
-import { watch, onMounted, nextTick, provide, inject, useTemplateRef, ref } from 'vue'
+import { watch, onMounted, onBeforeUnmount, nextTick, provide, inject, useTemplateRef, ref } from 'vue'
 import { Connector } from '@renderer/function/connect'
 import { useSettingsStore } from '@renderer/state/settings'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
@@ -427,7 +434,23 @@ import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from './EmojiFace.vue'
 import LazyLottie from './LazyLottie.vue'
 import { Img } from '@renderer/function/model/img'
-import { dbGetImage, hashUrl } from '@renderer/function/utils/localHistoryUtil'
+import {
+    canDisplayRecoveredMedia,
+    dbRepairStoredForward,
+    getCachedImageSrc,
+    getMessageHistoryChat,
+    isTauriHistoryAvailable,
+    waitForMessageSave,
+} from '@renderer/function/utils/localHistoryUtil'
+import { fetchForwardContent, resolveHistoryMessageImage } from '@renderer/function/msg'
+import {
+    hasForwardContent,
+    historyChatForView,
+    sameHistoryChat,
+    watchMediaRecall,
+    type ForwardSegment,
+    type HistoryChat,
+} from '@renderer/function/utils/messageMedia'
 import JsonSegComp from './msg-component/JsonSegComp.vue'
 import XmlSegComp from './msg-component/XmlSegComp.vue'
 import VoiceMsg from './VoiceMsg.vue'
@@ -517,6 +540,9 @@ const trueLang = getTrueLang()
 const textIndex = ref({} as { [key: string]: number })
 const resolvedImages = ref({} as Record<string, string>)
 const failedImageSources = ref<Record<number, string>>({})
+const pendingForwards = new Set<ForwardSegment>()
+let disposed = false
+onBeforeUnmount(() => { disposed = true })
 const manualImageLoads = ref({} as Record<string, boolean>)
 const pendingImageLoads = ref({} as Record<string, boolean>)
 
@@ -546,37 +572,37 @@ function getUserById(id: number): IUser | undefined {
 //#region == 方法函数 ================================================================
 
 async function loadCachedImages() {
-    const selfId = authStore.loginInfo?.uin
-    if (!selfId) return
-    for (const seg of data.message) {
-        if (seg.type !== 'image' || !seg.url) continue
-        await loadCachedImage(seg.url)
+    const message = data
+    for (const [index, seg] of message.message.entries()) {
+        if (disposed || message.revoked || data !== message) return
+        if (seg?.type === 'image' && seg.url) await loadCachedImage(seg.url, index)
     }
 }
 
-async function loadCachedImage(url: string) {
-    if (resolvedImages.value[url]) return resolvedImages.value[url]
-
+async function loadCachedImage(url: string, index: number) {
     const selfId = authStore.loginInfo?.uin
-    if (!selfId || !url) return undefined
-
-    const urlHash = await hashUrl(url)
-    const cached = await dbGetImage(selfId, urlHash)
-    if (cached) {
-        resolvedImages.value[url] =
-            `data:${cached.mimeType};base64,${cached.data}`
-        return resolvedImages.value[url]
+    if (!selfId || !url || data.revoked) return undefined
+    const message = data
+    const key = getImageKey(index, url)
+    if (resolvedImages.value[key]) return resolvedImages.value[key]
+    const src = await getCachedImageSrc(selfId, url)
+    if (src && !disposed && !message.revoked && message === data && selfId === authStore.loginInfo.uin) {
+        resolvedImages.value[key] = src
     }
-
-    return undefined
+    return src
 }
 
-function getImgSrc(url: string): string {
-    return resolvedImages.value[url] ?? backend.proxyUrl(url)
+function getImgSrc(url: string | undefined, index: number): string {
+    return resolvedImages.value[getImageKey(index, url)] ?? backend.proxyUrl(url ?? '')
 }
 
-function getImageKey(index: number, url: string) {
-    return `${data.message_id}-${index}-${url}`
+function getImageSlotKey(index: number) {
+    const chat = chatStore.chatInfo.show
+    return `${authStore.loginInfo.uin}-${chat.type}-${chat.id}-${data.message_id}-${index}`
+}
+
+function getImageKey(index: number, url: string | undefined) {
+    return `${getImageSlotKey(index)}-${url ?? ''}`
 }
 
 function imageLoading(key: string) {
@@ -587,7 +613,7 @@ function shouldShowImagePlaceholder(item: { type: string, url: string }, index: 
     if (item.type !== 'image') return false
     if (settingsStore.sysConfig.opt_no_auto_load_image !== true) return false
 
-    return manualImageLoads.value[getImageKey(index, item.url)] !== true
+    return manualImageLoads.value[getImageSlotKey(index)] !== true
 }
 
 function getAtClass(who: number | string) {
@@ -638,25 +664,52 @@ function imgStyle(length: number, at: number, isFace: boolean) {
     return style
 }
 
-function imgClick(url: string) {
+function imgClick(item: { url?: string }) {
     if (viewerRef?.value && imageListHeader) {
-        viewerRef.value.openBySrc(imageListHeader, url)
+        viewerRef.value.openBySrc(imageListHeader, item.url ?? '', item)
+    }
+}
+
+function messageImageFailed(item: { url?: string }, index: number, event: Event) {
+    const src = getImgSrc(item.url, index)
+    if (isTauriHistoryAvailable() && (event.currentTarget as HTMLImageElement).getAttribute('src') !== src) return
+    failedImageSources.value[index] = src
+    void retryHistoryImage(item, index)
+}
+
+async function retryHistoryImage(item: { url?: string }, index: number) {
+    const selfId = authStore.loginInfo.uin
+    const key = getImageKey(index, item.url)
+    if (!isTauriHistoryAvailable() || !selfId || pendingImageLoads.value[key]) return
+    const message = data
+    pendingImageLoads.value[key] = true
+    try {
+        const chat = type === 'merge' ? undefined : historyChatForView(chatStore.chatInfo.show)
+        const src = await resolveHistoryMessageImage(selfId, message, index, chat)
+        if (src && !disposed && !message.revoked && message === data && selfId === authStore.loginInfo.uin) {
+            resolvedImages.value[getImageKey(index, item.url)] = src
+            delete failedImageSources.value[index]
+        }
+    } finally {
+        pendingImageLoads.value[key] = false
     }
 }
 
 async function loadImage(item: { url: string }, index: number) {
+    const message = data
+    const slot = getImageSlotKey(index)
     const key = getImageKey(index, item.url)
-    if (manualImageLoads.value[key] || pendingImageLoads.value[key]) return
+    if (manualImageLoads.value[slot] || pendingImageLoads.value[key]) return
 
     pendingImageLoads.value[key] = true
     try {
-        if (data._from_local_db) {
-            await loadCachedImage(item.url)
-        }
-        manualImageLoads.value[key] = true
+        if (message._from_local_db) await loadCachedImage(item.url, index)
+        if (disposed || message.revoked || message !== data || slot !== getImageSlotKey(index)) return
+        manualImageLoads.value[slot] = true
     } finally {
         pendingImageLoads.value[key] = false
     }
+    if (!item.url) void retryHistoryImage(item, index)
 }
 
 function preImgClick(img: string) {
@@ -1046,21 +1099,76 @@ function sendPlay(info: MusicInfo) {
     addMusic(info, 'current', true)
 }
 
-function openMerge(){
-    const seg = data.message[0]
-    if (!seg.content) {
-        new PopInfo().add(PopType.ERR, $t('合并转发解析失败'))
+async function openMerge(seg: ForwardSegment) {
+    if (data.revoked) return
+    if (!hasForwardContent(seg)) {
+        await openRecoveredForward(seg)
         return
     }
+    showForwardContent(data, seg.content)
+}
 
-    const mergeData: MergeStackData = {
-        messageList: [],
-        imageList: [],
-        placeCache: 0,
-        forwardMsg: data
+async function openRecoveredForward(seg: ForwardSegment) {
+    if (pendingForwards.has(seg)) return
+    const message = data
+    const selfId = authStore.loginInfo.uin
+    const viewedChat = chatStore.chatInfo.show
+    const viewId = viewedChat.id
+    const viewType = viewedChat.type
+    const isCurrent = () => !disposed && message === data && !message.revoked &&
+        selfId === authStore.loginInfo.uin && viewId === chatStore.chatInfo.show.id &&
+        viewType === chatStore.chatInfo.show.type && message.message?.includes(seg)
+    const saveHistory = type !== 'merge' && selfId && isTauriHistoryAvailable()
+    const chat = saveHistory ? historyChatForView(viewedChat) : undefined
+    const stopWatching = watchMediaRecall(selfId, chat, message)
+    pendingForwards.add(seg)
+    try {
+        const content = await fetchForwardContent(seg.id)
+        if (!isCurrent()) return
+        if (content && chat && message.message_id != null) {
+            const canShow = await storeRecoveredForward(selfId, chat, message, seg, content, isCurrent)
+            if (!isCurrent() || !canShow) return
+        }
+        if (content) seg.content = content
+    } catch (error) {
+        if (isCurrent()) new Logger().error(error as Error, '合并转发解析失败')
+    } finally {
+        stopWatching?.()
+        pendingForwards.delete(seg)
     }
 
-    mergeData.messageList = seg.content
+    if (!isCurrent()) return
+    if (hasForwardContent(seg)) {
+        showForwardContent(message, seg.content)
+        return
+    }
+    new PopInfo().add(PopType.ERR, $t('合并转发解析失败'))
+}
+
+async function storeRecoveredForward(
+    selfId: number | string,
+    chat: HistoryChat,
+    message: any,
+    seg: ForwardSegment,
+    content: any[],
+    isCurrent: () => boolean,
+) {
+    if (!sameHistoryChat(chat, getMessageHistoryChat(selfId, message, chat))) return false
+    const messageId = String(message.message_id)
+    await waitForMessageSave(selfId, messageId)
+    if (!isCurrent()) return false
+    const segments = message.message.map((item: any) => item === seg ? { ...seg, content } : null)
+    const updated = await dbRepairStoredForward(selfId, chat, messageId, segments)
+    return canDisplayRecoveredMedia(updated, !!message._from_local_db)
+}
+
+function showForwardContent(message: any, content: any[]) {
+    const mergeData: MergeStackData = {
+        messageList: content,
+        imageList: [],
+        placeCache: 0,
+        forwardMsg: message
+    }
     const imgList = [] as {
         index: number
         message_id: string

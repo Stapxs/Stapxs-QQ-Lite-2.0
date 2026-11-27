@@ -10,6 +10,7 @@ import { getMsgRawTxt } from './msgUtil'
 import { Logger } from '../base'
 import { useSettingsStore } from '@renderer/state/settings'
 import { useAuthStore } from '@renderer/state/auth'
+import { normalizeForwardSegments, type HistoryChat } from './messageMedia'
 
 const logger = new Logger()
 
@@ -38,7 +39,7 @@ export interface LocalMsgRecord {
     revoked: boolean
 }
 
-function isTauriHistoryAvailable(): boolean {
+export function isTauriHistoryAvailable(): boolean {
     const settingsStore = useSettingsStore()
     return backend.type === 'tauri' && settingsStore.sysConfig.enable_local_history === true
 }
@@ -95,7 +96,8 @@ function serializeMsgSegments(segments: any[] | undefined): string {
 
 function deserializeMsgSegments(serialized: string): any[] {
     try {
-        return JSON.parse(serialized)
+        const segments = JSON.parse(serialized)
+        return Array.isArray(segments) ? segments : []
     } catch {
         return []
     }
@@ -107,6 +109,27 @@ function computeRawMessage(msg: any): string | null {
     } catch {
         return msg.raw_message ?? null
     }
+}
+
+export function getMessageHistoryChat(
+    selfId: string | number,
+    message: any,
+    fallback?: HistoryChat,
+): HistoryChat | undefined {
+    if (!message) return
+    const info = message.infoList
+    const groupId = info?.group_id ?? message.group_id
+    const targetId = info?.target_id ?? message.target_id
+    const inferredType = groupId != null ? 'group' : 'private'
+    const type = message.message_type ?? (groupId == null && targetId == null ? fallback?.type ?? inferredType : inferredType)
+    if (type !== 'group' && type !== 'private') return
+    const privateId = [targetId, info?.private_id, message.user_id, info?.sender]
+        .find(id => id != null && String(id) !== String(selfId))
+    const id = type === 'group' ? groupId ?? targetId : privateId
+    if (id == null) return fallback?.type === type ? fallback : undefined
+    const numberId = Number(id)
+    if (Number.isSafeInteger(numberId) && numberId > 0) return { id: numberId, type }
+    return undefined
 }
 
 function deriveChatId(selfId: string | number, msgs: any[]): number | undefined {
@@ -149,15 +172,15 @@ export function ensureChatIdOnMsgs(selfId: string | number, msgs: any[]): any[] 
  * 若必要字段缺失则返回 null，调用方需过滤掉 null。
  */
 export function msgToRecord(msg: any): LocalMsgRecord | null {
-    const messageId = msg.message_id
-    if (!messageId) return null
+    const messageId = msg?.message_id
+    if (!messageId || msg.revoked) return null
 
-    const chatId: number = msg.infoList.group_id ?? msg.infoList.target_id
+    const chatId: number = msg.infoList?.group_id ?? msg.infoList?.target_id
     if (chatId == null) return null
 
     const chatType: string =
         msg.message_type ?? (msg.group_id != null ? 'group' : 'private')
-    const senderId: number = msg.infoList.sender
+    const senderId: number = msg.infoList?.sender
     if (senderId == null) return null
 
     const senderName: string | null =
@@ -183,7 +206,7 @@ export function msgToRecord(msg: any): LocalMsgRecord | null {
 // ── 读写接口 ──────────────────────────────────────────────────────
 
 /**
- * 批量将消息保存到本地 SQLite（已有的 message_id 自动忽略，不覆盖）。
+ * 批量保存消息。已有记录可以补全缺失的合并转发正文。
  *
  * @param selfId  当前登录账号 uin
  * @param msgs    已完成预处理的消息对象数组（来自 chatStore.messageList 或 newMsg）
@@ -201,14 +224,36 @@ export async function dbSaveMessages(selfId: string | number, msgs: any[]): Prom
         return
     }
 
-    try {
-        await backend.call(undefined, 'db:saveMessages', true, {
-            selfId: String(selfId),
-            messages: records,
-        })
-    } catch (e) {
-        logger.error(e as unknown as Error, '[LocalHistory] dbSaveMessages 失败')
+    // Track the batches that have already serialized this record before rendering.
+    const keys = new Set(records.map(record => messageSaveKey(selfId, record.message_id)))
+    const save = callDb(selfId, 'db:saveMessages', { messages: records }, undefined, '[LocalHistory] dbSaveMessages 失败')
+    for (const key of keys) {
+        const pending = pendingMessageSaves.get(key) ?? new Set<Promise<unknown>>()
+        pending.add(save)
+        pendingMessageSaves.set(key, pending)
     }
+    try {
+        await save
+    } finally {
+        for (const key of keys) {
+            const pending = pendingMessageSaves.get(key)
+            if (!pending) continue
+            pending.delete(save)
+            if (pending.size === 0) pendingMessageSaves.delete(key)
+        }
+    }
+}
+
+const pendingMessageSaves = new Map<string, Set<Promise<unknown>>>()
+
+function messageSaveKey(selfId: string | number, messageId: string) {
+    // SQLite uses the account and message ID as the unique key.
+    return `${selfId}:${messageId}`
+}
+
+export async function waitForMessageSave(selfId: string | number, messageId: string) {
+    const pending = pendingMessageSaves.get(messageSaveKey(selfId, messageId))
+    if (pending) await Promise.allSettled(pending)
 }
 
 export async function saveMessagesWithSideEffects(selfId: string | number, msgs: any[]): Promise<void> {
@@ -217,6 +262,45 @@ export async function saveMessagesWithSideEffects(selfId: string | number, msgs:
     await dbSaveMessages(selfId, persistableMsgs)
     if (settingsStore.sysConfig.disable_local_history_image_cache === true) return
     cacheImagesFromMsgs(selfId, persistableMsgs).catch(() => {})
+}
+
+type HistoryImageCache = { urlHash: string, mimeType: string, data: string }
+export type HistoryImage = { src: string, cache?: HistoryImageCache }
+
+// true: accepted, false: rejected as stale, null: missing row, undefined: storage unavailable.
+type HistoryRepairResult = boolean | null | undefined
+
+export function canDisplayRecoveredMedia(result: HistoryRepairResult, fromLocalDb: boolean) {
+    return result !== false && (result !== null || !fromLocalDb)
+}
+
+export async function dbRefreshImageUrl(
+    selfId: number | string,
+    chat: HistoryChat,
+    messageId: string,
+    segmentIndex: number,
+    previousUrl: string | undefined,
+    url: string,
+    cache?: HistoryImageCache,
+): Promise<HistoryRepairResult> {
+    return callDb(selfId, 'db:refreshImageUrl', {
+        update: {
+            messageId, chatId: chat.id, chatType: chat.type,
+            segmentIndex, previousUrl: previousUrl ?? null, url,
+            cache: useSettingsStore().sysConfig.disable_local_history_image_cache === true ? null : cache ?? null,
+        },
+    }, undefined, '[LocalHistory] dbRefreshImageUrl 失败')
+}
+
+export async function dbRepairStoredForward(
+    selfId: number | string,
+    chat: HistoryChat,
+    messageId: string,
+    segments: any[],
+): Promise<HistoryRepairResult> {
+    return callDb(selfId, 'db:repairStoredForward', {
+        messageId, chatId: chat.id, chatType: chat.type, message: serializeMsgSegments(segments),
+    }, undefined, '[LocalHistory] dbRepairStoredForward 失败')
 }
 
 /**
@@ -410,53 +494,112 @@ export async function dbClearImages(
  */
 async function cacheImagesFromMsgs(selfId: string | number, msgs: any[]): Promise<void> {
     if (!isTauriHistoryAvailable()) return
-    const urls = extractImageUrlsFromMsgs(msgs)
-    for (const url of urls) {
-        try {
-            await cacheSingleImage(selfId, url)
-        } catch {
-            // 单张图片失败不影响其余图片
+    const authStore = useAuthStore()
+    const isCurrentAccount = () => String(authStore.loginInfo.uin) === String(selfId)
+    for (const msg of msgs) {
+        if (!Array.isArray(msg.message) || msg.revoked || !msg.message_id) continue
+        const chat = getMessageHistoryChat(selfId, msg)
+        if (!chat) continue
+        for (const [index, seg] of msg.message.entries()) {
+            if (!isCurrentAccount()) return
+            if (msg.revoked || seg?.type !== 'image' || typeof seg.url !== 'string') continue
+            await cacheMessageImage(selfId, msg, chat, index, seg, isCurrentAccount)
         }
     }
 }
 
-function extractImageUrlsFromMsgs(msgs: any[]): string[] {
-    const urls: string[] = []
-    for (const msg of msgs) {
-        if (!Array.isArray(msg.message)) continue
-        for (const seg of msg.message) {
-            if (seg.type === 'image' && seg.url && seg.url.startsWith('http')) {
-                urls.push(seg.url)
-            }
-        }
+async function cacheMessageImage(
+    selfId: number | string,
+    msg: any,
+    chat: HistoryChat,
+    index: number,
+    seg: { url: string },
+    isCurrentAccount: () => boolean,
+) {
+    const url = seg.url
+    const image = await loadHistoryImage(selfId, url)
+    if (image?.cache && !msg.revoked && seg.url === url && isCurrentAccount()) {
+        await dbRefreshImageUrl(selfId, chat, String(msg.message_id), index, url, url, image.cache)
     }
-    return urls
 }
 
 async function downloadImageViaProxy(url: string): Promise<{ mimeType: string; base64: string } | null> {
-    const fetchUrl = backend.proxy? `http://localhost:${backend.proxy}/proxy?url=${encodeURIComponent(url)}`: url
-
-    const resp = await fetch(fetchUrl)
-    if (!resp.ok) return null
+    const fetchUrl = backend.proxy ? `http://localhost:${backend.proxy}/assets?url=${encodeURIComponent(url)}` : url
+    const resp = await fetch(fetchUrl, { signal: AbortSignal.timeout(8000) })
+    if (!resp.ok) {
+        logger.debug(`[LocalHistory] 历史图片下载失败 (HTTP ${resp.status})`)
+        return null
+    }
 
     const mimeType = resp.headers.get('Content-Type')?.split(';')[0]?.trim() ?? 'image/jpeg'
     const buffer = await resp.arrayBuffer()
     const bytes = new Uint8Array(buffer)
+    if (!bytes.length) {
+        logger.debug('[LocalHistory] 历史图片下载返回空内容')
+        return null
+    }
     let binary = ''
     for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
     const base64 = btoa(binary)
     return { mimeType, base64 }
 }
 
-async function cacheSingleImage(selfId: string | number, url: string): Promise<void> {
-    const urlHash = await hashUrl(url)
-    const existing = await dbGetImage(selfId, urlHash)
-    if (existing) return
+async function decodeImageSource(mimeType: string, base64: string): Promise<string | undefined> {
+    if (!base64) return
+    // The old proxy stored some valid images with a text/html MIME type.
+    const mime = mimeType.startsWith('image/') ? mimeType : 'image/jpeg'
+    const src = `data:${mime};base64,${base64}`
+    const image = new Image()
+    image.src = src
+    try {
+        await image.decode()
+        return src
+    } catch {
+        logger.debug('[LocalHistory] 历史图片解码失败')
+        return undefined
+    }
+}
 
+async function readCachedImageSrc(selfId: string | number, hash: string) {
+    if (useSettingsStore().sysConfig.disable_local_history_image_cache === true) return undefined
+    const cached = await dbGetImage(selfId, hash)
+    return cached ? decodeImageSource(cached.mimeType, cached.data) : undefined
+}
+
+export async function getCachedImageSrc(selfId: string | number, url: string) {
+    if (!isTauriHistoryAvailable() || !url) return
+    return readCachedImageSrc(selfId, await hashUrl(url))
+}
+
+const pendingImageDownloads = new Map<string, Promise<HistoryImage | undefined>>()
+
+export async function loadHistoryImage(selfId: string | number, url: string) {
+    if (!isTauriHistoryAvailable() || !/^https?:\/\//i.test(url)) return
+    const key = `${selfId}:${url}`
+    const pending = pendingImageDownloads.get(key)
+    if (pending) return pending
+    const request = readOrDownloadHistoryImage(selfId, url).catch(error => {
+        logger.debug(`[LocalHistory] 读取历史图片失败 (${error instanceof Error ? error.name : '未知错误'})`)
+        return undefined
+    })
+    pendingImageDownloads.set(key, request)
+    try {
+        return await request
+    } finally {
+        pendingImageDownloads.delete(key)
+    }
+}
+
+async function readOrDownloadHistoryImage(selfId: string | number, url: string): Promise<HistoryImage | undefined> {
+    const urlHash = await hashUrl(url)
+    const existing = await readCachedImageSrc(selfId, urlHash)
+    if (existing) return { src: existing }
     const downloaded = await downloadImageViaProxy(url)
     if (!downloaded) return
 
-    await dbCacheImage(selfId, urlHash, downloaded.mimeType, downloaded.base64)
+    const src = await decodeImageSource(downloaded.mimeType, downloaded.base64)
+    if (!src) return
+    return { src, cache: { urlHash, mimeType: downloaded.mimeType, data: downloaded.base64 } }
 }
 
 /**
@@ -465,6 +608,7 @@ async function cacheSingleImage(selfId: string | number, url: string): Promise<v
 function deserializeRecord(record: LocalMsgRecord): any {
     const authStore = useAuthStore()
     const message = deserializeMsgSegments(record.message)
+    normalizeForwardSegments(message)
 
     // 判断是否为自己发送的消息，还原 post_type
     const isSelf = record.sender_id === Number(authStore.loginInfo.uin)

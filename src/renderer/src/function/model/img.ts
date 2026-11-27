@@ -7,20 +7,50 @@
  */
 
 import { backend } from '@renderer/runtime/backend'
-import { shallowRef } from 'vue'
+import { shallowRef, toRaw } from 'vue'
 
 export class Img {
     _src: string
+    private resolvedSource?: string
+    private readonly segment?: { url?: string }
     readonly _prev = shallowRef<Img | undefined>()
     readonly _next = shallowRef<Img | undefined>()
-    constructor(src: string) {
+    constructor(
+        src: string,
+        segment?: { url?: string },
+        private readonly loadSource?: () => Promise<string | undefined>,
+        private readonly canShow?: () => boolean,
+    ) {
         this._src = src
+        this.segment = segment && toRaw(segment)
+    }
+
+    get available() {
+        return this.canShow?.() ?? true
     }
 
     get src(): string {
-        return backend.proxyUrl(this._src)
+        if (!this.available) return ''
+        return this.resolvedSource ?? backend.proxyUrl(this.segment?.url ?? this._src)
     }
 
+    async resolveSrc() {
+        if (this.available && this.loadSource && this.resolvedSource === undefined) {
+            const source = await this.loadSource()
+            if (source === '') return ''
+            this.resolvedSource = source
+        }
+        return this.src
+    }
+
+    getBySegment(segment: object): Img | undefined {
+        const rawSegment = toRaw(segment)
+        if (this.segment === rawSegment) return this
+        for (let item = this.next; item; item = item.next) {
+            if (item.segment === rawSegment) return item
+        }
+        return undefined
+    }
 
     /**
      * 根据 src 获取图片节点
@@ -30,7 +60,7 @@ export class Img {
      * @returns 图片节点
      */
     getBySrc(src: string): Img | undefined {
-        if (this._src === src) return this
+        if ((this.segment?.url ?? this._src) === src) return this
         if (this.next) return this.next.getBySrc(src)
         return undefined
     }
@@ -136,12 +166,13 @@ export class Img {
     /**
      * 从 srcList 构建链表
      */
-    static fromList(srcList: string[]): Img | undefined {
+    static fromList(srcList: (string | Img)[]): Img | undefined {
         if (srcList.length === 0) return undefined
-        const head = new Img(srcList[0])
+        const head = typeof srcList[0] === 'string' ? new Img(srcList[0]) : srcList[0]
         let cur = head
         for (let i = 1; i < srcList.length; i++) {
-            const node = new Img(srcList[i])
+            const source = srcList[i]
+            const node = typeof source === 'string' ? new Img(source) : source
             cur.insertNext(node)
             cur = node
         }

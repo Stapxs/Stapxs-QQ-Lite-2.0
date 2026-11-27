@@ -1,6 +1,7 @@
 use base64::{engine::general_purpose, Engine as _};
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use log::{debug, error, info};
 use rand::RngCore;
 use std::fs;
@@ -226,7 +227,124 @@ fn try_open_encrypted(db_path: &std::path::Path) -> rusqlite::Result<Connection>
 
 // ── 命令实现 ─────────────────────────────────────────────────
 
-/// 批量保存消息（已存在的 message_id 自动忽略，不覆盖）
+fn forward_id(segment: &Value) -> Option<String> {
+    let legacy;
+    let id = match segment.get("type")?.as_str()? {
+        "forward" => segment.get("id")?,
+        "json" => {
+            let data = segment.get("data")?;
+            let data = if let Some(text) = data.as_str() {
+                legacy = serde_json::from_str::<Value>(text).ok()?;
+                &legacy
+            } else {
+                data
+            };
+            if data.get("app")?.as_str()? != "com.tencent.multimsg" {
+                return None;
+            }
+            data.pointer("/meta/detail/resid")?
+        }
+        _ => return None,
+    };
+    match id {
+        Value::String(id) if !id.is_empty() => Some(id.clone()),
+        Value::Number(id) => Some(id.to_string()),
+        _ => None,
+    }
+}
+
+fn has_forward_content(segment: &Value) -> bool {
+    segment.get("type").and_then(Value::as_str) == Some("forward")
+        && segment.get("content").and_then(Value::as_array).is_some_and(|nodes| {
+            !nodes.is_empty() && nodes.iter().all(|node| node.get("message").is_some_and(Value::is_array))
+        })
+}
+
+/// An absent row may still be saved later. An existing but ineligible row rejects the repair.
+fn missing_or_stale_message(
+    conn: &Connection,
+    self_id: &str,
+    message_id: &str,
+) -> rusqlite::Result<Option<bool>> {
+    let exists: bool = conn.query_row(
+        "SELECT EXISTS(SELECT 1 FROM messages WHERE self_id = ?1 AND message_id = ?2)",
+        params![self_id, message_id],
+        |row| row.get(0),
+    )?;
+    Ok(exists.then_some(false))
+}
+
+fn same_forward_segment(stored: &Value, incoming: &Value) -> bool {
+    let id = forward_id(incoming);
+    forward_id(stored) == id
+        && (id.is_some() || stored.get("type").and_then(Value::as_str) == Some("forward"))
+}
+
+fn repair_stored_forward(
+    conn: &Connection,
+    self_id: &str,
+    message_id: &str,
+    chat_id: i64,
+    chat_type: &str,
+    message: &str,
+) -> rusqlite::Result<Option<bool>> {
+    let Ok(incoming) = serde_json::from_str::<Vec<Value>>(message) else {
+        return Ok(Some(false));
+    };
+    if !incoming.iter().any(has_forward_content) {
+        return Ok(Some(false));
+    }
+    let stored: Option<String> = conn.query_row(
+        "SELECT message FROM messages
+         WHERE self_id = ?1 AND message_id = ?2 AND chat_id = ?3 AND chat_type = ?4 AND revoked = 0",
+        params![self_id, message_id, chat_id, chat_type],
+        |row| row.get(0),
+    ).optional()?;
+    let Some(stored) = stored else {
+        return missing_or_stale_message(conn, self_id, message_id);
+    };
+    let Ok(mut stored) = serde_json::from_str::<Vec<Value>>(&stored) else {
+        return Ok(Some(false));
+    };
+    let mut matched = false;
+    let mut changed = false;
+    for (old, new) in stored.iter_mut().zip(&incoming) {
+        if !has_forward_content(new) || !same_forward_segment(old, new) {
+            continue;
+        }
+        matched = true;
+        if !has_forward_content(old) {
+            *old = new.clone();
+            changed = true;
+        }
+    }
+    if changed {
+        let count = conn.execute(
+            "UPDATE messages SET message = ?1
+             WHERE self_id = ?2 AND message_id = ?3 AND chat_id = ?4 AND chat_type = ?5 AND revoked = 0",
+            params![Value::Array(stored).to_string(), self_id, message_id, chat_id, chat_type],
+        )?;
+        return Ok(Some(count > 0));
+    }
+    Ok(Some(matched))
+}
+
+#[tauri::command]
+pub fn db_repair_stored_forward(
+    state: State<DbState>,
+    self_id: String,
+    message_id: String,
+    chat_id: i64,
+    chat_type: String,
+    message: String,
+) -> Result<Option<bool>, String> {
+    state.with_conn(|conn| {
+        repair_stored_forward(conn, &self_id, &message_id, chat_id, &chat_type, &message)
+            .map_err(|e| e.to_string())
+    })
+}
+
+/// 批量保存消息，并补全已有记录里尚未加载的合并转发。
 ///
 /// 返回实际插入的条数。
 #[tauri::command]
@@ -265,12 +383,69 @@ pub fn db_save_messages(
                     ],
                 )
                 .map_err(|e| e.to_string())?;
+            if n == 0 && !msg.revoked {
+                repair_stored_forward(
+                    conn, &self_id, &msg.message_id, msg.chat_id, &msg.chat_type, &msg.message,
+                ).map_err(|e| e.to_string())?;
+            }
             inserted += n;
         }
 
         debug!("成功保存 {} 条消息", inserted);
 
         Ok(inserted)
+    })
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoryImageCache {
+    url_hash: String,
+    mime_type: String,
+    data: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoryImageUpdate {
+    message_id: String,
+    chat_id: i64,
+    chat_type: String,
+    segment_index: usize,
+    previous_url: Option<String>,
+    url: String,
+    cache: Option<HistoryImageCache>,
+}
+
+/// Updates an existing message and stores its validated image in the same transaction.
+/// Returns None if the message has yet to be saved, or Some(false) if the update is stale.
+#[tauri::command]
+pub fn db_refresh_image_url(
+    state: State<DbState>,
+    self_id: String,
+    update: HistoryImageUpdate,
+) -> Result<Option<bool>, String> {
+    let HistoryImageUpdate { message_id, chat_id, chat_type, segment_index, previous_url, url, cache } = update;
+    let url_path = format!("$[{segment_index}].url");
+    let type_path = format!("$[{segment_index}].type");
+    state.with_conn(|conn| {
+        let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
+        let count = tx.execute(
+            "UPDATE messages SET message = json_set(message, ?1, ?2)
+             WHERE self_id = ?3 AND message_id = ?4 AND chat_id = ?5 AND chat_type = ?6
+               AND revoked = 0 AND CASE WHEN json_valid(message) THEN
+                   json_extract(message, ?7) = 'image' AND json_extract(message, ?1) IS ?8
+               END",
+            params![url_path, url, self_id, message_id, chat_id, chat_type, type_path, previous_url],
+        ).map_err(|e| e.to_string())?;
+        if count == 0 {
+            return missing_or_stale_message(&tx, &self_id, &message_id).map_err(|e| e.to_string());
+        }
+        if let Some(cache) = cache {
+            cache_image(&tx, &self_id, &cache.url_hash, &cache.mime_type, &cache.data)?;
+        }
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(Some(true))
     })
 }
 
@@ -578,22 +753,35 @@ pub fn db_cache_image(
     mime_type: String,
     data: String,
 ) -> Result<(), String> {
-    state.with_conn(|conn| {
-        let bytes = general_purpose::STANDARD
-            .decode(&data)
-            .map_err(|e| e.to_string())?;
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs() as i64;
-        conn.execute(
-            "INSERT OR IGNORE INTO images (self_id, url_hash, mime_type, data, created_at) \
-             VALUES (?1, ?2, ?3, ?4, ?5)",
-            params![self_id, url_hash, mime_type, bytes, now],
-        )
+    state.with_conn(|conn| cache_image(conn, &self_id, &url_hash, &mime_type, &data))
+}
+
+fn cache_image(
+    conn: &Connection,
+    self_id: &str,
+    url_hash: &str,
+    mime_type: &str,
+    data: &str,
+) -> Result<(), String> {
+    let bytes = general_purpose::STANDARD
+        .decode(data)
         .map_err(|e| e.to_string())?;
-        Ok(())
-    })
+    if bytes.is_empty() {
+        return Err("图片数据为空".into());
+    }
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs() as i64;
+    conn.execute(
+        "INSERT INTO images (self_id, url_hash, mime_type, data, created_at)
+         VALUES (?1, ?2, ?3, ?4, ?5)
+         ON CONFLICT(self_id, url_hash) DO UPDATE SET
+             mime_type = excluded.mime_type, data = excluded.data, created_at = excluded.created_at",
+        params![self_id, url_hash, mime_type, bytes, now],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 /// 从本地数据库获取已缓存的图片

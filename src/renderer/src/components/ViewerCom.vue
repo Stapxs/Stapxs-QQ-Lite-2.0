@@ -196,6 +196,7 @@ import {
     shallowRef,
     toRaw,
     useTemplateRef,
+    watch,
 } from 'vue'
 import { backend } from '@renderer/runtime/backend'
 import { useUIStore } from '@renderer/state/ui'
@@ -218,6 +219,10 @@ const lineWidthList = [3, 5, 10, 15, 20]
 type Color = keyof typeof colorMap
 
 const currentImg = shallowRef<Img | undefined>()
+watch(() => currentImg.value?.available, (available) => {
+    if (available === false) close()
+})
+let imageLoadVersion = 0
 const modify = shallowReactive({
     rotate: 0,
     scale: 1,
@@ -307,9 +312,9 @@ function open(img: Img) {
     init()
 }
 
-function openBySrc(img: Img, src: string) {
-    currentImg.value = toRaw(img)
-    const target = currentImg.value.getBySrc(src)
+function openBySrc(img: Img, src: string, segment?: object) {
+    const head = toRaw(img)
+    const target = (segment && head.getBySegment(segment)) || head.getBySrc(src)
     if (!target) {
         new PopInfo().add(PopType.ERR, $t('定位图片失败'))
         return
@@ -399,10 +404,16 @@ function stdFit() {
  * 初始化参数
  */
 function init() {
-    if (!currentImg.value) return
+    const target = currentImg.value
+    if (!target) return
+    const version = ++imageLoadVersion
+    const isCurrent = () => target.available && currentImg.value === target && imageLoadVersion === version
     const img = new Image()
-    const loadFinish = () => {
-        if (!currentImg.value) return
+    currentImgInfo.value = undefined
+    loading.value = true
+    mouseMoveInfo.value = undefined
+    img.onload = () => {
+        if (!isCurrent()) return
         loading.value = false
         currentImgInfo.value = {
             width: img.width,
@@ -413,26 +424,35 @@ function init() {
 
         resetModify()
     }
+    const loadFailed = () => {
+        if (!isCurrent()) return
+        loading.value = false
+        new PopInfo().add(PopType.ERR, $t('加载图片失败'))
+    }
+    img.onerror = loadFailed
+    const loadSource = (src: string) => {
+        if (!isCurrent()) return
+        if (src) img.src = src
+        else loadFailed()
+    }
     if (canCors)
         img.crossOrigin = 'anonymous'
 
     if(backend.type === 'capacitor' && backend.function && 'plugins' in backend.function && 'CapacitorHttp' in backend.function.plugins) {
         const capacitorHttp = backend.function.plugins.CapacitorHttp
         capacitorHttp.get({
-            url: currentImg.value.src,
+            url: target.src,
             responseType: 'blob',
         }).then((r: any) => {
-            img.src = 'data:image/png;base64,' + r.data
+            loadSource('data:image/png;base64,' + r.data)
         }).catch(() => {
-            img.src = currentImg.value?.src || ''
+            loadSource(target.src)
         })
+    } else if (backend.type === 'tauri') {
+        void target.resolveSrc().then(loadSource, () => loadSource(target.src))
     } else {
-        img.src = currentImg.value.src
+        loadSource(target.src)
     }
-
-    img.onload = loadFinish
-    loading.value = true
-    mouseMoveInfo.value = undefined
 }
 function closeClick() {
     // 太容易误触了,干脆编辑模式禁止通过这样退出吧

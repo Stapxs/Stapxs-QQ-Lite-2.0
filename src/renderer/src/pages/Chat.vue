@@ -628,8 +628,9 @@ import {
 } from '@renderer/function/utils/msgUtil'
 import { Logger, LogType, PopInfo, PopType } from '@renderer/function/base'
 import { Connector } from '@renderer/function/connect'
-import { appendHistoryForQuotedMessage } from '@renderer/function/msg'
+import { appendHistoryForQuotedMessage, createMessageImageList } from '@renderer/function/msg'
 import { loadHistoryToQuotedMessage } from '@renderer/function/utils/quotedMessage'
+import { historyChatForView, onMessageRecall, sameHistoryChat } from '@renderer/function/utils/messageMedia'
 import { keepQuotedMessageInView } from '@renderer/function/utils/quotedScroll'
 import {
     classifyMessageListChange,
@@ -1010,7 +1011,20 @@ onMounted(() => {
     addFileDropListeners()
 })
 
+const stopSearchRecall = onMessageRecall((notice) => {
+    if (String(notice.selfId) !== String(authStore.loginInfo.uin) ||
+        !sameHistoryChat(notice.chat, historyChatForView(chatStore.chatInfo.show))) return
+    const search = tags.value.search
+    if (search.list === list) return
+    search.list = search.list.filter((message: any) => {
+        if (String(message.message_id) !== String(notice.messageId)) return true
+        message.revoked = true
+        return false
+    })
+})
+
 onBeforeUnmount(() => {
+    stopSearchRecall()
     cancelReplyJump()
     registerChatScrollJumpHandler(null)
     if (searchJumpTimer !== null) {
@@ -2916,19 +2930,6 @@ function updateUnreadCounter(
     tags.value.showBottomButton = true
 }
 
-function collectChatImageUrls(): string[] {
-    const urls: string[] = []
-    for (const item of list) {
-        if (item.message === undefined) continue
-        for (const msgItem of item.message) {
-            if (msgItem.type === 'image' && msgItem.file != 'marketface') {
-                urls.push(msgItem.url)
-            }
-        }
-    }
-    return urls
-}
-
 function releaseMoveAnimationSuppress() {
     if (!suppressListMoveAnimation.value) return
     const releaseMove = () => {
@@ -3006,7 +3007,7 @@ function updateList(newIds: string[], oldIds: string[]) {
         const newPan = msgPan.value ?? document.getElementById('msgPan')
         const consumedInitialJump = newPan !== null ? applyPostUpdateScroll(changeKind, wasPinned) : false
         releaseMoveAnimationSuppress()
-        chatImg.value = Img.fromList(collectChatImageUrls())
+        chatImg.value = createMessageImageList(list, true, historyChatForView(chatStore.chatInfo.show))
         if (!consumedInitialJump && chatStore.chatInfo.show?.jump) {
             new Logger().debug('进入跳转至消息：' + chatStore.chatInfo.show.jump)
             scrollToMsgLocal('chat-' + chatStore.chatInfo.show.jump)
