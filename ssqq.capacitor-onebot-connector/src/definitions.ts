@@ -1,6 +1,16 @@
+export interface OnebotConnectOptions {
+    url: string;
+    connectionId?: string;
+}
+
+export interface OnebotCloseOptions {
+    connectionId?: string;
+    cancel?: boolean;
+}
+
 export interface OnebotPlugin {
-    connect(options: { url: string }): Promise<{ success: boolean }>;
-    close(): Promise<{ success: boolean }>;
+    connect(options: OnebotConnectOptions): Promise<{ success: boolean }>;
+    close(options?: OnebotCloseOptions): Promise<{ success: boolean }>;
     send(options: { data: string }): Promise<{ success: boolean }>;
 
     findService(): Promise<{ success: boolean }>;

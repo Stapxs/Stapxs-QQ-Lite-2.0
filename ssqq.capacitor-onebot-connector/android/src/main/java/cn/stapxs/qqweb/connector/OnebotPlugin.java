@@ -27,6 +27,17 @@ public class OnebotPlugin extends Plugin {
         this.notifyListeners("onebot:event", ret);
     }
 
+    synchronized void notifySocketEvent(WebSocketClient source, String type, String data) {
+        if (webSocketClient != source) return;
+        if ("onclose".equals(type)) webSocketClient = null;
+
+        JSObject event = new JSObject();
+        event.put("connectionId", source.connectionId);
+        event.put("type", type);
+        event.put("data", data);
+        notifyListeners("onebot:event", event);
+    }
+
     public void sendIcon(String name) {
         JSObject ret = new JSObject();
         ret.put("name", name);
@@ -47,29 +58,50 @@ public class OnebotPlugin extends Plugin {
     }
 
     @PluginMethod
-    public void connect(PluginCall call) {
+    public synchronized void connect(PluginCall call) {
         String value = call.getString("url");
+        WebSocketClient previous = webSocketClient;
+        webSocketClient = new WebSocketClient(this, call.getString("connectionId"));
+        if (previous != null) previous.cancel();
+        webSocketClient.connect(value);
 
         JSObject ret = new JSObject();
-        webSocketClient = implementation.connect(this, webSocketClient, value);
         ret.put("success", true);
         call.resolve(ret);
     }
 
     @PluginMethod
-    public void send(PluginCall call) {
+    public synchronized void send(PluginCall call) {
         String value = call.getString("data");
 
         JSObject ret = new JSObject();
-        ret.put("success", implementation.send(webSocketClient, value));
+        ret.put("success", webSocketClient != null && webSocketClient.sendMessage(value));
         call.resolve(ret);
     }
 
     @PluginMethod
-    public void close(PluginCall call) {
+    public synchronized void close(PluginCall call) {
+        String connectionId = call.getString("connectionId");
+        if (webSocketClient != null && (connectionId == null || connectionId.equals(webSocketClient.connectionId))) {
+            WebSocketClient target = webSocketClient;
+            webSocketClient = null;
+            if (Boolean.TRUE.equals(call.getBoolean("cancel", false))) {
+                target.cancel();
+            } else {
+                target.close();
+            }
+        }
         JSObject ret = new JSObject();
-        ret.put("success", implementation.close(webSocketClient));
+        ret.put("success", true);
         call.resolve(ret);
+    }
+
+    @Override
+    protected synchronized void handleOnDestroy() {
+        WebSocketClient previous = webSocketClient;
+        webSocketClient = null;
+        if (previous != null) previous.cancel();
+        super.handleOnDestroy();
     }
 
     @PluginMethod

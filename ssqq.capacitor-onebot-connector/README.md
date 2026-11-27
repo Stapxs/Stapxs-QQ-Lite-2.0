@@ -14,7 +14,7 @@ npx cap sync
 <docgen-index>
 
 * [`connect(...)`](#connect)
-* [`close()`](#close)
+* [`close(...)`](#close)
 * [`send(...)`](#send)
 * [`findService()`](#findservice)
 * [`changeIcon(...)`](#changeicon)
@@ -25,6 +25,7 @@ npx cap sync
 * [`getHtml(...)`](#gethtml)
 * [`getApi(...)`](#getapi)
 * [`getImageData(...)`](#getimagedata)
+* [Interfaces](#interfaces)
 
 </docgen-index>
 
@@ -34,23 +35,27 @@ npx cap sync
 ### connect(...)
 
 ```typescript
-connect(options: { url: string; }) => Promise<{ success: boolean; }>
+connect(options: OnebotConnectOptions) => Promise<{ success: boolean; }>
 ```
 
-| Param         | Type                          |
-| ------------- | ----------------------------- |
-| **`options`** | <code>{ url: string; }</code> |
+| Param         | Type                                                              |
+| ------------- | ----------------------------------------------------------------- |
+| **`options`** | <code><a href="#onebotconnectoptions">OnebotConnectOptions</a></code> |
 
 **Returns:** <code>Promise&lt;{ success: boolean; }&gt;</code>
 
 --------------------
 
 
-### close()
+### close(...)
 
 ```typescript
-close() => Promise<{ success: boolean; }>
+close(options?: OnebotCloseOptions) => Promise<{ success: boolean; }>
 ```
+
+| Param         | Type                                                          |
+| ------------- | ------------------------------------------------------------- |
+| **`options`** | <code><a href="#onebotcloseoptions">OnebotCloseOptions</a></code> |
 
 **Returns:** <code>Promise&lt;{ success: boolean; }&gt;</code>
 
@@ -189,5 +194,23 @@ getImageData(options: { url: string; }) => Promise<{ data: string; }>
 **Returns:** <code>Promise&lt;{ data: string; }&gt;</code>
 
 --------------------
+
+### Interfaces
+
+
+#### OnebotConnectOptions
+
+| Prop               | Type                |
+| ------------------ | ------------------- |
+| **`url`**          | <code>string</code> |
+| **`connectionId`** | <code>string</code> |
+
+
+#### OnebotCloseOptions
+
+| Prop               | Type                 |
+| ------------------ | -------------------- |
+| **`connectionId`** | <code>string</code>  |
+| **`cancel`**       | <code>boolean</code> |
 
 </docgen-api>

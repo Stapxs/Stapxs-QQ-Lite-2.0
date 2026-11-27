@@ -270,8 +270,8 @@ function clearMetaEventWatchdog() {
     connectionStore.metaEventTimeoutTriggered = false
 }
 
-function refreshMetaEventWatchdog(intervalSeconds: number) {
-    if (intervalSeconds <= 0) return
+export function refreshMetaEventWatchdog(intervalSeconds: number) {
+    if (intervalSeconds <= 0 || !Connector.shouldWatchHeartbeat()) return
 
     const connectionStore = useConnectionStore()
     if (connectionStore.metaEventWatchTimer) {
@@ -287,7 +287,7 @@ function refreshMetaEventWatchdog(intervalSeconds: number) {
 
     connectionStore.metaEventTimeoutTriggered = false
     connectionStore.metaEventWatchTimer = setTimeout(() => {
-        if (connectionStore.metaEventTimeoutTriggered) return
+        if (connectionStore.metaEventTimeoutTriggered || !Connector.shouldWatchHeartbeat()) return
         connectionStore.metaEventTimeoutTriggered = true
         connectionStore.metaEventWatchTimer = undefined
         logger.add(LogType.WS, '心跳包超时，准备断开连接')
