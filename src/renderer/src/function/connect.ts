@@ -99,7 +99,126 @@ class TimeoutError extends Error {
     }
 }
 
+type AndroidConnection = {
+    address: string
+    token?: string
+    id?: string
+    open: boolean
+    hasOpened: boolean
+    retries: number
+    timer?: number
+}
+
 export class Connector {
+    private static androidConnection?: AndroidConnection
+    private static androidActive = true
+    private static androidActivityGeneration = 0
+
+    private static isAndroid() {
+        return backend.isMobile() && backend.platform === 'android'
+    }
+
+    static shouldWatchHeartbeat() {
+        return !this.isAndroid() || (this.androidActive && !document.hidden)
+    }
+
+    private static clearAndroidTimer(connection: AndroidConnection) {
+        window.clearTimeout(connection.timer)
+        connection.timer = undefined
+    }
+
+    private static startAndroidAttempt(connection: AndroidConnection) {
+        this.clearAndroidTimer(connection)
+        const id = uuid()
+        connection.id = id
+        login.creating = true
+        connection.timer = window.setTimeout(() => {
+            if (this.androidConnection !== connection || connection.id !== id || connection.open) return
+            this.finishAndroidAttempt(1006, undefined, true)
+        }, 10000)
+        void backend.call('Onebot', 'onebot:connect', true, {
+            url: appendAccessToken(connection.address, connection.token),
+            connectionId: id,
+        }).then((started) => {
+            if (started !== true && this.androidConnection === connection && connection.id === id) {
+                this.finishAndroidAttempt(-1, undefined, true)
+            }
+        })
+    }
+
+    private static finishAndroidAttempt(code: number, reason?: string, closeNative = false) {
+        const connection = this.androidConnection
+        if (!connection?.id) return
+        const id = connection.id
+        connection.id = undefined
+        connection.open = false
+        if (login.status) connection.retries = 0
+        this.clearAndroidTimer(connection)
+        if (closeNative) void backend.call('Onebot', 'onebot:close', false, { connectionId: id })
+        this.onclose(code, reason, connection.address, connection.token, false)
+        this.scheduleAndroidReconnect(connection)
+    }
+
+    private static scheduleAndroidReconnect(connection: AndroidConnection, immediate = false) {
+        if (!this.androidActive || !connection.hasOpened || connection.retries >= 5) return
+        const delay = immediate ? 0 : Math.min(1000 * 2 ** connection.retries, 8000)
+        connection.timer = window.setTimeout(() => {
+            if (!this.androidActive || this.androidConnection !== connection || connection.id) return
+            connection.retries++
+            this.startAndroidAttempt(connection)
+        }, delay)
+    }
+
+    static receiveAndroidEvent(type: string, id: string, data: string) {
+        const connection = this.androidConnection
+        if (!connection || id !== connection.id) return
+        switch (type) {
+            case 'onopen':
+                this.clearAndroidTimer(connection)
+                connection.open = true
+                connection.hasOpened = true
+                login.creating = false
+                this.onopen(connection.address, connection.token)
+                break
+            case 'onmessage':
+                this.onmessage(data)
+                break
+            case 'onclose': {
+                const event = JSON.parse(data)
+                this.finishAndroidAttempt(event.code, event.message)
+                break
+            }
+        }
+    }
+
+    static setAndroidActive(active: boolean) {
+        if (this.androidActive === active) return
+        this.androidActive = active
+        const generation = ++this.androidActivityGeneration
+        const connection = this.androidConnection
+        if (!active) {
+            const store = useConnectionStore()
+            clearTimeout(store.metaEventWatchTimer)
+            store.metaEventWatchTimer = undefined
+            if (connection && !connection.id) this.clearAndroidTimer(connection)
+            return
+        }
+        if (!connection) return
+        if (!connection.id) {
+            connection.retries = 0
+            this.scheduleAndroidReconnect(connection, true)
+        } else if (connection.open) {
+            const id = connection.id
+            // An open native socket can outlive its network route while the app is suspended.
+            void this.callRawApi('get_login_info', {}, 5000).catch(() => {
+                if (generation === this.androidActivityGeneration &&
+                    this.androidConnection === connection && connection.id === id) {
+                    this.finishAndroidAttempt(1006, undefined, true)
+                }
+            })
+        }
+    }
+
     /**
      * 创建 Websocket 连接
      * @param address 地址
@@ -114,13 +233,6 @@ export class Connector {
         const settingsStore = useSettingsStore()
         login.creating = true
 
-        // 设置连接超时保护
-        window.setTimeout(() => {
-            if (login.creating) {
-                login.creating = false
-            }
-        }, 10000)
-
         logger.add(LogType.WS, '当前处于 ALL 日志模式。连接器将输出全部收发消息 ……')
 
         // 确保 address 包含路径部分，避免部分服务器因 HTTP 请求路径为空而返回 400
@@ -128,6 +240,19 @@ export class Connector {
         if (!withoutProtocol.includes('/')) {
             address = address + '/'
         }
+
+        if (this.isAndroid()) {
+            if (this.androidConnection) this.clearAndroidTimer(this.androidConnection)
+            const connection = { address, token, open: false, hasOpened: false, retries: 0 }
+            this.androidConnection = connection
+            this.startAndroidAttempt(connection)
+            return
+        }
+
+        // 设置连接超时保护
+        window.setTimeout(() => {
+            if (login.creating) login.creating = false
+        }, 10000)
 
         // Electron 默认使用后端连接模式
         if (!backend.isWeb()) {
@@ -295,6 +420,7 @@ export class Connector {
         msg: string | undefined,
         address: string,
         token: string | undefined,
+        autoReconnect = true,
     ) {
         const { $t } = app.config.globalProperties
         const connectionStore = useConnectionStore()
@@ -315,6 +441,7 @@ export class Connector {
             case 1006: {
                 // 非正常关闭，尝试重连
                 popInfo.add(PopType.ERR, $t('连接失败') + ': ' + $t('连接异常关闭'), false)
+                if (!autoReconnect) break
                 if (login.status) {
                     this.create(address, token, undefined)
                 } else {
@@ -327,12 +454,13 @@ export class Connector {
             case 1015: {
                 // TLS 错误，尝试使用 ws 连接
                 popInfo.add(PopType.ERR, $t('连接失败') + ': ' + $t('TLS错误'), false)
-                this.create(address, token, false)
+                if (autoReconnect) this.create(address, token, false)
                 break
             }
             default: {
                 login.creating = false
-                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + $t('未知的错误 {code}',{ code: code }), false)
+                const detail = !autoReconnect && msg ? msg + ' (' + code + ')' : $t('未知的错误 {code}',{ code: code })
+                popInfo.add(PopType.ERR, $t('连接失败') + ': ' + detail, false)
             }
         }
 
@@ -355,7 +483,13 @@ export class Connector {
         connectionStore.metaEventTimeoutTriggered = false
         forceCloseReason = undefined
 
-        if(!backend.isWeb()) {
+        if (this.androidConnection) {
+            const connection = this.androidConnection
+            this.androidConnection = undefined
+            this.clearAndroidTimer(connection)
+            if (connection.id) void backend.call('Onebot', 'onebot:close', false, { connectionId: connection.id })
+            this.onclose(1000, undefined, connection.address, connection.token, false)
+        } else if(!backend.isWeb()) {
             backend.call('Onebot', 'onebot:close', false)
         } else {
             popInfo.add(
@@ -367,6 +501,10 @@ export class Connector {
     }
 
     static forceDisconnect(reason: string) {
+        if (this.androidConnection) {
+            this.finishAndroidAttempt(1006, reason, true)
+            return
+        }
         const connectionStore = useConnectionStore()
         if (connectionStore.metaEventWatchTimer) {
             clearTimeout(connectionStore.metaEventWatchTimer)

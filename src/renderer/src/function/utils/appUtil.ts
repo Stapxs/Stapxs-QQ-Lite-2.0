@@ -703,6 +703,10 @@ export async function loadMobile() {
     if (backend.isMobile()) {
         // 注册回调监听
         backend.addListener('Onebot', 'onebot:event', (data) => {
+            if (typeof data.connectionId === 'string') {
+                Connector.receiveAndroidEvent(data.type, data.connectionId, data.data)
+                return
+            }
             const msg = JSON.parse(data.data)
             switch (data.type) {
                 case 'onopen': {
@@ -725,6 +729,9 @@ export async function loadMobile() {
                 default: break
             }
         })
+        if (backend.platform === 'android') {
+            backend.addListener('App', 'appStateChange', ({ isActive }) => Connector.setAndroidActive(isActive))
+        }
         // initial-scale 缩放固定为 0.9
         const viewport = document.getElementById('viewport')
         if (viewport) {
