@@ -12,20 +12,34 @@ import { shallowRef, toRaw } from 'vue'
 export class Img {
     _src: string
     private resolvedSource?: string
-    private readonly segment?: object
+    private readonly segment?: { url?: string }
     readonly _prev = shallowRef<Img | undefined>()
     readonly _next = shallowRef<Img | undefined>()
-    constructor(src: string, segment?: object, private readonly loadSource?: () => Promise<string | undefined>) {
+    constructor(
+        src: string,
+        segment?: { url?: string },
+        private readonly loadSource?: () => Promise<string | undefined>,
+        private readonly canShow?: () => boolean,
+    ) {
         this._src = src
         this.segment = segment && toRaw(segment)
     }
 
+    get available() {
+        return this.canShow?.() ?? true
+    }
+
     get src(): string {
-        return this.resolvedSource ?? backend.proxyUrl(this._src)
+        if (!this.available) return ''
+        return this.resolvedSource ?? backend.proxyUrl(this.segment?.url ?? this._src)
     }
 
     async resolveSrc() {
-        this.resolvedSource ??= await this.loadSource?.()
+        if (this.available && this.loadSource && this.resolvedSource === undefined) {
+            const source = await this.loadSource()
+            if (source === '') return ''
+            this.resolvedSource = source
+        }
         return this.src
     }
 
@@ -46,7 +60,7 @@ export class Img {
      * @returns 图片节点
      */
     getBySrc(src: string): Img | undefined {
-        if (this._src === src) return this
+        if ((this.segment?.url ?? this._src) === src) return this
         if (this.next) return this.next.getBySrc(src)
         return undefined
     }

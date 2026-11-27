@@ -10,7 +10,7 @@ import { getMsgRawTxt } from './msgUtil'
 import { Logger } from '../base'
 import { useSettingsStore } from '@renderer/state/settings'
 import { useAuthStore } from '@renderer/state/auth'
-import { normalizeForwardSegments } from './messageMedia'
+import { normalizeForwardSegments, type HistoryChat } from './messageMedia'
 
 const logger = new Logger()
 
@@ -111,6 +111,27 @@ function computeRawMessage(msg: any): string | null {
     }
 }
 
+export function getMessageHistoryChat(
+    selfId: string | number,
+    message: any,
+    fallback?: HistoryChat,
+): HistoryChat | undefined {
+    if (!message) return
+    const info = message.infoList
+    const groupId = info?.group_id ?? message.group_id
+    const targetId = info?.target_id ?? message.target_id
+    const inferredType = groupId != null ? 'group' : 'private'
+    const type = message.message_type ?? (groupId == null && targetId == null ? fallback?.type ?? inferredType : inferredType)
+    if (type !== 'group' && type !== 'private') return
+    const privateId = [targetId, info?.private_id, message.user_id, info?.sender]
+        .find(id => id != null && String(id) !== String(selfId))
+    const id = type === 'group' ? groupId ?? targetId : privateId
+    if (id == null) return fallback?.type === type ? fallback : undefined
+    const numberId = Number(id)
+    if (Number.isSafeInteger(numberId) && numberId > 0) return { id: numberId, type }
+    return undefined
+}
+
 function deriveChatId(selfId: string | number, msgs: any[]): number | undefined {
     const firstMsg = msgs[0]
     let chatId: number | undefined = firstMsg?.infoList?.group_id ?? firstMsg?.infoList?.target_id
@@ -152,7 +173,7 @@ export function ensureChatIdOnMsgs(selfId: string | number, msgs: any[]): any[] 
  */
 export function msgToRecord(msg: any): LocalMsgRecord | null {
     const messageId = msg?.message_id
-    if (!messageId) return null
+    if (!messageId || msg.revoked) return null
 
     const chatId: number = msg.infoList?.group_id ?? msg.infoList?.target_id
     if (chatId == null) return null
@@ -221,20 +242,34 @@ export async function saveMessagesWithSideEffects(selfId: string | number, msgs:
     cacheImagesFromMsgs(selfId, persistableMsgs).catch(() => {})
 }
 
+type HistoryImageCache = { urlHash: string, mimeType: string, data: string }
+type HistoryImage = { src: string, cache?: HistoryImageCache }
+
 export async function dbRefreshImageUrl(
     selfId: number | string,
-    message: any,
+    chat: HistoryChat,
+    messageId: string,
     segmentIndex: number,
     previousUrl: string | undefined,
     url: string,
-) {
-    const [entry] = ensureChatIdOnMsgs(selfId, [message])
-    const record = msgToRecord(entry)
-    if (!record || message.revoked || previousUrl === url) return
+    cache?: HistoryImageCache,
+): Promise<boolean | null> {
     return callDb(selfId, 'db:refreshImageUrl', {
-        messageId: record.message_id, chatId: record.chat_id, chatType: record.chat_type,
+        messageId, chatId: chat.id, chatType: chat.type,
         segmentIndex, previousUrl: previousUrl ?? null, url,
+        cache: useSettingsStore().sysConfig.disable_local_history_image_cache === true ? null : cache ?? null,
     }, false, '[LocalHistory] dbRefreshImageUrl 失败')
+}
+
+export async function dbRepairStoredForward(
+    selfId: number | string,
+    chat: HistoryChat,
+    messageId: string,
+    segments: any[],
+): Promise<boolean> {
+    return callDb(selfId, 'db:repairStoredForward', {
+        messageId, chatId: chat.id, chatType: chat.type, message: serializeMsgSegments(segments),
+    }, false, '[LocalHistory] dbRepairStoredForward 失败')
 }
 
 /**
@@ -428,27 +463,22 @@ export async function dbClearImages(
  */
 async function cacheImagesFromMsgs(selfId: string | number, msgs: any[]): Promise<void> {
     if (!isTauriHistoryAvailable()) return
-    const urls = extractImageUrlsFromMsgs(msgs)
-    for (const url of urls) {
-        try {
-            await getOrDownloadHistoryImage(selfId, url)
-        } catch {
-            // 单张图片失败不影响其余图片
-        }
-    }
-}
-
-function extractImageUrlsFromMsgs(msgs: any[]): string[] {
-    const urls: string[] = []
+    const authStore = useAuthStore()
     for (const msg of msgs) {
-        if (!Array.isArray(msg.message)) continue
-        for (const seg of msg.message) {
-            if (seg.type === 'image' && seg.url && seg.url.startsWith('http')) {
-                urls.push(seg.url)
+        if (!Array.isArray(msg.message) || msg.revoked || !msg.message_id) continue
+        const chat = getMessageHistoryChat(selfId, msg)
+        if (!chat) continue
+        for (const [index, seg] of msg.message.entries()) {
+            if (String(authStore.loginInfo.uin) !== String(selfId)) return
+            if (msg.revoked || seg?.type !== 'image' || typeof seg.url !== 'string') continue
+            const url = seg.url
+            const image = await loadHistoryImage(selfId, url)
+            if (image?.cache && !msg.revoked && seg.url === url &&
+                String(authStore.loginInfo.uin) === String(selfId)) {
+                await dbRefreshImageUrl(selfId, chat, String(msg.message_id), index, url, url, image.cache)
             }
         }
     }
-    return urls
 }
 
 async function downloadImageViaProxy(url: string): Promise<{ mimeType: string; base64: string } | null> {
@@ -492,14 +522,14 @@ export async function getCachedImageSrc(selfId: string | number, url: string) {
     return readCachedImageSrc(selfId, await hashUrl(url))
 }
 
-const pendingImageDownloads = new Map<string, Promise<string | undefined>>()
+const pendingImageDownloads = new Map<string, Promise<HistoryImage | undefined>>()
 
-export async function getOrDownloadHistoryImage(selfId: string | number, url: string) {
+export async function loadHistoryImage(selfId: string | number, url: string) {
     if (!isTauriHistoryAvailable() || !/^https?:\/\//i.test(url)) return
     const key = `${selfId}:${url}`
     const pending = pendingImageDownloads.get(key)
     if (pending) return pending
-    const request = downloadAndCacheImage(selfId, url).catch(() => undefined)
+    const request = readOrDownloadHistoryImage(selfId, url).catch(() => undefined)
     pendingImageDownloads.set(key, request)
     try {
         return await request
@@ -508,18 +538,16 @@ export async function getOrDownloadHistoryImage(selfId: string | number, url: st
     }
 }
 
-async function downloadAndCacheImage(selfId: string | number, url: string) {
+async function readOrDownloadHistoryImage(selfId: string | number, url: string): Promise<HistoryImage | undefined> {
     const urlHash = await hashUrl(url)
     const existing = await readCachedImageSrc(selfId, urlHash)
-    if (existing) return existing
+    if (existing) return { src: existing }
     const downloaded = await downloadImageViaProxy(url)
     if (!downloaded) return
 
     const src = await decodeImageSource(downloaded.mimeType, downloaded.base64)
-    if (src && useSettingsStore().sysConfig.disable_local_history_image_cache !== true) {
-        await dbCacheImage(selfId, urlHash, downloaded.mimeType, downloaded.base64)
-    }
-    return src
+    if (!src) return
+    return { src, cache: { urlHash, mimeType: downloaded.mimeType, data: downloaded.base64 } }
 }
 
 /**

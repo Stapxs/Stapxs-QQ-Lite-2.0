@@ -1,3 +1,48 @@
+export type HistoryChat = { id: number, type: 'group' | 'private' }
+
+type MessageRecall = {
+    selfId: number | string
+    chat: HistoryChat
+    messageId: number | string
+}
+
+const recallListeners = new Set<(notice: MessageRecall) => void>()
+
+export function onMessageRecall(listener: (notice: MessageRecall) => void) {
+    recallListeners.add(listener)
+    return () => { recallListeners.delete(listener) }
+}
+
+export function notifyMessageRecall(notice: MessageRecall) {
+    for (const listener of recallListeners) listener(notice)
+}
+
+export function historyChatForView(view: { id: number, type: string }): HistoryChat | undefined {
+    const id = Number(view.id)
+    if (!Number.isSafeInteger(id) || id <= 0) return
+    return { id, type: view.type === 'group' ? 'group' : 'private' }
+}
+
+export function sameHistoryChat(a: HistoryChat | undefined, b: HistoryChat | undefined) {
+    return !!a && !!b && a.id === b.id && a.type === b.type
+}
+
+// Only active media requests subscribe. The app holds no history of recall notifications.
+export function watchMediaRecall(
+    selfId: number | string,
+    chat: HistoryChat | undefined,
+    message: { message_id?: number | string, revoked?: boolean },
+) {
+    if (!chat || message.message_id == null) return
+    const messageId = String(message.message_id)
+    return onMessageRecall((notice) => {
+        if (String(notice.selfId) === String(selfId) && sameHistoryChat(chat, notice.chat) &&
+            String(notice.messageId) === messageId) {
+            message.revoked = true
+        }
+    })
+}
+
 export type ForwardSegment = {
     type: 'forward'
     id?: string | number

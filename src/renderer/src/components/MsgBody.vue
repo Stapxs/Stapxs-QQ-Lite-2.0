@@ -434,9 +434,20 @@ import Emoji from '@renderer/function/model/emoji'
 import EmojiFace from './EmojiFace.vue'
 import LazyLottie from './LazyLottie.vue'
 import { Img } from '@renderer/function/model/img'
-import { dbSaveMessages, getCachedImageSrc, isTauriHistoryAvailable } from '@renderer/function/utils/localHistoryUtil'
+import {
+    dbRepairStoredForward,
+    getCachedImageSrc,
+    getMessageHistoryChat,
+    isTauriHistoryAvailable,
+} from '@renderer/function/utils/localHistoryUtil'
 import { fetchForwardContent, resolveHistoryMessageImage } from '@renderer/function/msg'
-import { hasForwardContent, type ForwardSegment } from '@renderer/function/utils/messageMedia'
+import {
+    hasForwardContent,
+    historyChatForView,
+    sameHistoryChat,
+    watchMediaRecall,
+    type ForwardSegment,
+} from '@renderer/function/utils/messageMedia'
 import JsonSegComp from './msg-component/JsonSegComp.vue'
 import XmlSegComp from './msg-component/XmlSegComp.vue'
 import VoiceMsg from './VoiceMsg.vue'
@@ -560,19 +571,19 @@ function getUserById(id: number): IUser | undefined {
 async function loadCachedImages() {
     const message = data
     for (const [index, seg] of message.message.entries()) {
-        if (disposed || data !== message) return
+        if (disposed || message.revoked || data !== message) return
         if (seg?.type === 'image' && seg.url) await loadCachedImage(seg.url, index)
     }
 }
 
 async function loadCachedImage(url: string, index: number) {
     const selfId = authStore.loginInfo?.uin
-    if (!selfId || !url) return undefined
+    if (!selfId || !url || data.revoked) return undefined
     const message = data
     const key = getImageKey(index, url)
     if (resolvedImages.value[key]) return resolvedImages.value[key]
     const src = await getCachedImageSrc(selfId, url)
-    if (src && !disposed && message === data && selfId === authStore.loginInfo.uin) {
+    if (src && !disposed && !message.revoked && message === data && selfId === authStore.loginInfo.uin) {
         resolvedImages.value[key] = src
     }
     return src
@@ -582,8 +593,13 @@ function getImgSrc(url: string | undefined, index: number): string {
     return resolvedImages.value[getImageKey(index, url)] ?? backend.proxyUrl(url ?? '')
 }
 
+function getImageSlotKey(index: number) {
+    const chat = chatStore.chatInfo.show
+    return `${authStore.loginInfo.uin}-${chat.type}-${chat.id}-${data.message_id}-${index}`
+}
+
 function getImageKey(index: number, url: string | undefined) {
-    return `${authStore.loginInfo.uin}-${data.message_id}-${index}-${url ?? ''}`
+    return `${getImageSlotKey(index)}-${url ?? ''}`
 }
 
 function imageLoading(key: string) {
@@ -594,7 +610,7 @@ function shouldShowImagePlaceholder(item: { type: string, url: string }, index: 
     if (item.type !== 'image') return false
     if (settingsStore.sysConfig.opt_no_auto_load_image !== true) return false
 
-    return manualImageLoads.value[getImageKey(index, item.url)] !== true
+    return manualImageLoads.value[getImageSlotKey(index)] !== true
 }
 
 function getAtClass(who: number | string) {
@@ -665,8 +681,9 @@ async function retryHistoryImage(item: { url?: string }, index: number) {
     const message = data
     pendingImageLoads.value[key] = true
     try {
-        const src = await resolveHistoryMessageImage(selfId, message, index)
-        if (src && !disposed && message === data && selfId === authStore.loginInfo.uin) {
+        const chat = type === 'merge' ? undefined : historyChatForView(chatStore.chatInfo.show)
+        const src = await resolveHistoryMessageImage(selfId, message, index, chat)
+        if (src && !disposed && !message.revoked && message === data && selfId === authStore.loginInfo.uin) {
             resolvedImages.value[getImageKey(index, item.url)] = src
             delete failedImageSources.value[index]
         }
@@ -676,18 +693,20 @@ async function retryHistoryImage(item: { url?: string }, index: number) {
 }
 
 async function loadImage(item: { url: string }, index: number) {
+    const message = data
+    const slot = getImageSlotKey(index)
     const key = getImageKey(index, item.url)
-    if (manualImageLoads.value[key] || pendingImageLoads.value[key]) return
+    if (manualImageLoads.value[slot] || pendingImageLoads.value[key]) return
 
     pendingImageLoads.value[key] = true
     try {
-        if (data._from_local_db) {
-            await loadCachedImage(item.url, index)
-        }
-        manualImageLoads.value[key] = true
+        if (message._from_local_db) await loadCachedImage(item.url, index)
+        if (disposed || message.revoked || message !== data || slot !== getImageSlotKey(index)) return
+        manualImageLoads.value[slot] = true
     } finally {
         pendingImageLoads.value[key] = false
     }
+    if (!item.url) void retryHistoryImage(item, index)
 }
 
 function preImgClick(img: string) {
@@ -1078,28 +1097,41 @@ function sendPlay(info: MusicInfo) {
 }
 
 async function openMerge(seg: ForwardSegment) {
+    if (data.revoked) return
     if (!hasForwardContent(seg)) {
         if (pendingForwards.has(seg)) return
         const message = data
         const selfId = authStore.loginInfo.uin
-        const chatId = chatStore.chatInfo.show.id
-        const chatType = chatStore.chatInfo.show.type
+        const viewedChat = chatStore.chatInfo.show
+        const viewId = viewedChat.id
+        const viewType = viewedChat.type
+        const isCurrent = () => !disposed && message === data && !message.revoked &&
+            selfId === authStore.loginInfo.uin && viewId === chatStore.chatInfo.show.id &&
+            viewType === chatStore.chatInfo.show.type && message.message?.includes(seg)
+        const saveHistory = type !== 'merge' && selfId && isTauriHistoryAvailable()
+        const chat = saveHistory ? historyChatForView(viewedChat) : undefined
+        const stopWatching = watchMediaRecall(selfId, chat, message)
         pendingForwards.add(seg)
         try {
             const content = await fetchForwardContent(seg.id)
-            if (disposed || message !== data || selfId !== authStore.loginInfo.uin ||
-                chatId !== chatStore.chatInfo.show.id || chatType !== chatStore.chatInfo.show.type) return
+            if (!isCurrent()) return
             if (content) {
+                if (chat && message.message_id != null) {
+                    if (!sameHistoryChat(chat, getMessageHistoryChat(selfId, message, chat))) return
+                    const segments = message.message.map((item: any) => item === seg ? { ...seg, content } : item)
+                    const updated = await dbRepairStoredForward(selfId, chat, String(message.message_id), segments)
+                    if (!isCurrent() || (!updated && message._from_local_db)) return
+                }
                 seg.content = content
-                if (selfId && !message.revoked && type !== 'merge') void dbSaveMessages(selfId, [message])
             }
         } catch (error) {
-            if (!disposed && message === data) new Logger().error(error as Error, '合并转发解析失败')
+            if (isCurrent()) new Logger().error(error as Error, '合并转发解析失败')
         } finally {
+            stopWatching?.()
             pendingForwards.delete(seg)
         }
         if (!hasForwardContent(seg)) {
-            if (!disposed && message === data) new PopInfo().add(PopType.ERR, $t('合并转发解析失败'))
+            if (isCurrent()) new PopInfo().add(PopType.ERR, $t('合并转发解析失败'))
             return
         }
     }

@@ -196,6 +196,7 @@ import {
     shallowRef,
     toRaw,
     useTemplateRef,
+    watch,
 } from 'vue'
 import { backend } from '@renderer/runtime/backend'
 import { useUIStore } from '@renderer/state/ui'
@@ -218,6 +219,9 @@ const lineWidthList = [3, 5, 10, 15, 20]
 type Color = keyof typeof colorMap
 
 const currentImg = shallowRef<Img | undefined>()
+watch(() => currentImg.value?.available, (available) => {
+    if (available === false) close()
+})
 let imageLoadVersion = 0
 const modify = shallowReactive({
     rotate: 0,
@@ -403,7 +407,7 @@ function init() {
     const target = currentImg.value
     if (!target) return
     const version = ++imageLoadVersion
-    const isCurrent = () => currentImg.value === target && imageLoadVersion === version
+    const isCurrent = () => target.available && currentImg.value === target && imageLoadVersion === version
     const img = new Image()
     currentImgInfo.value = undefined
     loading.value = true
